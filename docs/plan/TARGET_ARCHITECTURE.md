@@ -172,45 +172,86 @@ For non-developer stakeholders:
 
 ### Purpose
 
-Prompt packages that guide AI agents to produce quality V-model artifacts. Two sub-layers with SOLID separation.
+Skills, agents, and commands that guide AI to produce quality V-model artifacts. Built as standard Claude Code skills following the [agentskills.io](https://agentskills.io) open spec, using the `/skill-creator` plugin for development and evaluation.
 
-### Craft Skills (standalone, composable)
+> Research: `research/pillar3/` — covers agents vs skills vs commands, HumanLayer workflow patterns, HITL integration, skill composition, LLM-tier compatibility, and existing libraries.
 
-Each craft skill:
-- Has **one responsibility** (write a requirement, review a design, characterize code)
-- Defines **typed input/output contracts** referencing Pillar 1 artifact schemas
-- Has **no workflow knowledge** (doesn't know what comes before or after)
-- Has **model-tier variants** (frontier, mid-tier, small model prompts)
-- Has **deterministic validation** rules on its output
-- Has **examples** (test cases + few-shot material)
-- Is **independently usable** — someone can use just this skill outside the framework
+### Three Layers (bottom-up, no orchestration until proven)
+
+```
+Layer 1: Craft Skills          Layer 2: Pillar 1+2 Integration     Layer 3: Repo Investigation
+(pure domain knowledge)        (framework-aware)                   (existing codebase)
+
+┌──────────────────────┐      ┌──────────────────────┐           ┌──────────────────────┐
+│ write-requirement    │      │ Output templates     │           │ Analyze existing     │
+│ review-requirement   │      │ (Pillar 1 schemas)   │           │ module structure      │
+│ write-architecture   │      │                      │           │                      │
+│ review-architecture  │      │ Framework info       │           │ Bootstrap artifacts  │
+│ write-test-case      │      │ (how to use schemas, │           │ from code            │
+│ review-test-case     │      │  trace model)        │           │                      │
+│ write-detailed-design│      │                      │           │ Gap analysis         │
+│ ...                  │      │ Pillar 2 scripts     │           │                      │
+│                      │      │ (validation helpers) │           │ HumanLayer-style     │
+│ No Pillar 1/2 knowledge     │                      │           │ codebase research    │
+│ No framework awareness│      │ Knows our schemas    │           │ agents               │
+│ Independently usable │      │ and trace model      │           │                      │
+└──────────────────────┘      └──────────────────────┘           └──────────────────────┘
+  ~/.claude/skills/ (global)    .claude/skills/ (project)          .claude/skills/ (project)
+```
+
+### Layer 1: Craft Skills (current focus)
+
+Each craft skill follows the agentskills.io / mgechev best practices format:
+
+```
+skills/craft/write-requirement/
+├── SKILL.md              # < 500 lines, frontmatter + procedures
+├── scripts/              # Deterministic validation helpers
+├── references/           # Flat: EARS templates, quality checklists
+└── assets/               # Output templates, examples
+```
+
+Properties:
+- **One responsibility** (write a requirement, review a design, characterize code)
+- **No framework knowledge** (doesn't know about our YAML schemas or trace model)
+- **Independently usable** — someone can use just this skill outside DoWorkflow
+- **Third-person imperative** instructions, step-by-step numbered procedures
+- **Progressive disclosure** — SKILL.md is navigation, references loaded JiT
+- **Deterministic scripts** for fragile/repetitive operations
+- **Evaluated** using skill-creator's eval framework (test prompts, assertions, benchmarks)
 
 Skill categories:
 
 | Category | Examples |
 |---|---|
-| Requirements | Requirement writing (uses EARS), requirement review, decomposition |
+| Requirements | Requirement writing (EARS), requirement review, decomposition |
 | Design | Architecture design, detailed design, design review |
-| Verification | Test writing, test review, coverage analysis |
+| Verification | Test case writing, test review, coverage interpretation |
 | Implementation | Implement from tests, refactor, code review |
 | Analysis | Code structure analysis, behavior characterization, change impact |
-| Traceability | Trace link creation, trace validation (temp engine) |
 
-EARS is a preference of our craft skills, not a framework requirement. The requirement-writing skill uses EARS syntax and validates against EARS patterns. Other users could write their own requirement-writing skill using a different approach.
+EARS is a preference of our craft skills, not a framework requirement.
 
-### Orchestration (framework interaction)
+### Layer 2: Pillar 1+2 Integration (future)
 
-Composes craft skills into workflows:
-- **Sequencing** — which skill runs in what order
-- **Handoffs** — routing outputs to inputs via contracts
-- **Gates** — human approval points
-- **Retry logic** — escalation on failure
-- **Progress tracking** — status across work items
+Thin skills that bridge craft output to our framework:
+- **Output templates** from Pillar 1 artifact schemas (YAML templates an agent fills in)
+- **Framework context** (how to use schemas, what trace links to create)
+- **Pillar 2 scripts** (validation helpers that check schema compliance, link completeness)
 
-Orchestration pipelines:
-- DRTDD pipeline (new development or retrofit)
-- Scan pipeline (legacy codebase analysis)
-- Report pipeline (compliance evidence assembly)
+These skills call or compose with Layer 1 craft skills but add framework awareness.
+
+### Layer 3: Repo Investigation (future)
+
+Skills and agents for creating artifacts in existing codebases (the pilot):
+- **Codebase analysis agents** — inspired by HumanLayer's read-only specialized agents (codebase-locator, codebase-analyzer pattern)
+- **Artifact bootstrapping** — extract implicit requirements from code
+- **Gap analysis** — what's missing, what needs formalization
+- **Handoff documents** — cross-session continuity for large analysis work
+
+### Orchestration (deferred)
+
+Orchestration pipelines (DRTDD, scan, report) are deferred until individual craft skills are proven in practice. Will revisit when Layer 1 skills are stable and evaluated.
 
 ## Key Design Decisions
 
@@ -248,5 +289,6 @@ Internal terms are generic. Domain-specific vocabulary applied via translation l
 | **Reliability** | Deterministic tools for validation; agents for creative work |
 | **Usability** | Works for human-only, agent-only, or mixed teams |
 | **Maintainability** | YAML schemas are self-documenting; skills are self-contained |
-| **Testability** | Skills have example I/O; engine has deterministic expected outputs |
-| **Composability** | Small craft skills recombined into workflows via orchestration |
+| **Testability** | Skills evaluated via skill-creator (test prompts, assertions, benchmarks); engine has deterministic expected outputs |
+| **Composability** | Small craft skills, independently usable; orchestration deferred until proven |
+| **Portability** | agentskills.io open standard; skills usable in other tools (Cursor, Codex CLI) |

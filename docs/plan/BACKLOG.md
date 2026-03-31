@@ -104,14 +104,46 @@ Define YAML schemas for each V-model artifact type (the `body` content).
 
 ## Pillar 3: Agentic Skills
 
-### 3.0 Skill Contract Framework
+> Research: `research/pillar3/` — agents vs skills vs commands, HumanLayer patterns, HITL, composition, LLM-tier compatibility, existing libraries.
+> Skills follow agentskills.io spec (mgechev best practices). Use `/skill-creator` plugin for development and evaluation.
+> Build bottom-up: craft skills first, then integration, then orchestration when proven.
 
-- [x] Define craft skill contract schema
-- [x] Define orchestration pipeline contract schema
+### 3.0 Skill Foundation
 
-> Done: `schemas/core/craft-skill.schema.yaml`, `schemas/core/orchestration-pipeline.schema.yaml`
+- [x] Define craft skill contract schema (design-time reference)
+- [x] Define orchestration pipeline contract schema (design-time reference)
+- [ ] Reconcile `schemas/core/craft-skill.schema.yaml` with agentskills.io SKILL.md format — keep as design-time checklist, not runtime format
 
-### 3.1 Craft Skills — Analysis
+> Existing schemas: `schemas/core/craft-skill.schema.yaml`, `schemas/core/orchestration-pipeline.schema.yaml`
+> These are design-time specs. Runtime format is agentskills.io SKILL.md.
+
+### 3.1 Craft Skills — Requirements (current focus)
+
+Pure domain knowledge. No Pillar 1/2 awareness. Each a standalone SKILL.md.
+
+- [ ] Requirement Writing skill (EARS approach, step-by-step procedure)
+- [ ] Requirement Review skill (quality checklist, EARS compliance check)
+- [ ] Requirement Decomposition skill (split compound requirements)
+
+### 3.2 Craft Skills — Design
+
+- [ ] Architecture Design skill
+- [ ] Detailed Design skill
+- [ ] Design Review skill
+
+### 3.3 Craft Skills — Verification
+
+- [ ] Test Case Writing skill
+- [ ] Test Review skill
+- [ ] Coverage Analysis skill (interpret tool output, not generate numbers)
+
+### 3.4 Craft Skills — Implementation
+
+- [ ] Implementation skill (from failing tests + design)
+- [ ] Refactor skill
+- [ ] Code Review skill
+
+### 3.5 Craft Skills — Analysis
 
 Single-responsibility skills for analyzing existing code. Each independently usable.
 
@@ -121,41 +153,30 @@ Single-responsibility skills for analyzing existing code. Each independently usa
 - [ ] Requirement Candidate Generation skill
 - [ ] Change Impact Analysis skill
 
-### 3.2 Craft Skills — Requirements
+### 3.6 Pillar 1+2 Integration Skills (future — after craft skills proven)
 
-- [ ] Requirement Writing skill (uses EARS as its approach)
-- [ ] Requirement Review skill
-- [ ] Requirement Decomposition skill
+Thin bridge between craft output and our framework:
 
-### 3.3 Craft Skills — Design
-
-- [ ] Architecture Design skill
-- [ ] Detailed Design skill
-- [ ] Design Review skill
-
-### 3.4 Craft Skills — Verification
-
-- [ ] Test Writing skill
-- [ ] Test Review skill
-- [ ] Coverage Analysis skill (interpret tool output, not generate numbers)
-
-### 3.5 Craft Skills — Implementation
-
-- [ ] Implementation skill (from failing tests + design)
-- [ ] Refactor skill
-- [ ] Code Review skill
-
-### 3.6 Craft Skills — Traceability
-
+- [ ] Output templates from Pillar 1 artifact schemas
+- [ ] Framework context skill (how to use schemas, trace model)
+- [ ] Pillar 2 validation scripts (schema compliance, link completeness)
 - [ ] Trace Link Creation skill
 - [ ] Trace Validation skill (temporary engine — see 2A-temp)
 
-### 3.7 Orchestration Pipelines
+### 3.7 Repo Investigation Skills (future — for pilot)
+
+Skills and agents for creating artifacts in existing codebases:
+
+- [ ] Codebase analysis agents (HumanLayer locator/analyzer pattern)
+- [ ] Artifact bootstrapping from code
+- [ ] Gap analysis skill
+- [ ] Cross-session handoff documents
+
+### 3.8 Orchestration Pipelines (deferred — after individual skills proven)
 
 - [ ] DRTDD pipeline (phase sequencing, handoffs, gates, retry)
 - [ ] Scan pipeline (module-by-module analysis, gap report assembly)
 - [ ] Report pipeline (compliance evidence aggregation)
-- [ ] Batch orchestration (mature usage, parallel work items)
 
 ---
 
@@ -164,7 +185,7 @@ Single-responsibility skills for analyzing existing code. Each independently usa
 ### Now (Phase 1)
 
 ```
-Pillar 1 (all)  +  Pillar 2A (data model)  +  Pillar 3 (skills)
+Pillar 1 (all)  +  Pillar 2A (data model)  +  Pillar 3 craft skills
                    Pillar 2A-temp (agent skill as temp engine)
 ```
 
@@ -172,19 +193,21 @@ Within Phase 1, suggested order:
 1. Pillar 1.1 (envelope) — everything references this
 2. Pillar 1.2 (artifact schemas) + Pillar 2A (link model) — can parallel
 3. Pillar 1.3 + 1.4 (assurance levels, translations) — builds on schemas
-4. Pillar 3.1-3.6 (craft skills) — builds on schemas
-5. Pillar 3.7 (orchestration) — composes craft skills
+4. Pillar 3.1-3.5 (craft skills) — builds on domain knowledge, NOT on schemas
+5. Pillar 3.6 (integration skills) — bridges craft skills to Pillar 1+2
 
 ### Later (Phase 2)
 
 ```
 Pillar 2B (deterministic engine + scaffold tool)
+Pillar 3.7 (repo investigation — pilot)
 ```
 
 ### Future (Phase 3)
 
 ```
 Pillar 2C (web GUI)
+Pillar 3.8 (orchestration — after individual skills proven in practice)
 Integration pilot on legacy Java codebase
 ```
 
@@ -200,5 +223,7 @@ Integration pilot on legacy Java codebase
 6. **Validate everything.** AI output gets deterministic validation.
 7. **Human gates are mandatory.** No artifact enters baseline without human approval.
 8. **Incremental always.** Module-by-module. Requirement-by-requirement.
-9. **Model-tier aware.** Skills have frontier, mid-tier, and small-model variants.
-10. **Composability over monoliths.** Small skills, recombined via orchestration.
+9. **Model-tier aware.** Front-load instructions, explicit over implicit, one skill one task.
+10. **Bottom-up.** Prove craft skills individually before adding orchestration.
+11. **Follow agentskills.io spec.** SKILL.md format, progressive disclosure, scripts for determinism.
+12. **Use `/skill-creator` for development.** Draft, test, evaluate, iterate — not manual.
