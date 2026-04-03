@@ -1,6 +1,6 @@
 # Skill Creation Learnings
 
-Lessons learned from the derive-test-cases skill creation session (2026-04-01 to 2026-04-03).
+Lessons learned from skill creation sessions (2026-04-01 to 2026-04-03).
 
 ## Key Finding: Less Is More for Agentic Skills
 

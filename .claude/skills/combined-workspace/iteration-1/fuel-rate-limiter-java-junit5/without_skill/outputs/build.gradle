@@ -1,0 +1,129 @@
+plugins {
+    id 'java'
+    id 'jacoco'
+    id 'java-library'
+}
+
+group = 'com.example.fuel'
+version = '1.0.0'
+description = 'Real-time fuel rate limiting for engine control systems'
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+dependencies {
+    // JUnit 5 (Jupiter)
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.9.3'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.3'
+
+    // JUnit Platform Console (optional, for CLI)
+    testImplementation 'org.junit.platform:junit-platform-console-standalone:1.9.3'
+}
+
+test {
+    useJUnitPlatform()
+
+    // Show test output
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat "full"
+        showStandardStreams false
+    }
+
+    // Generate JaCoCo coverage data
+    finalizedBy jacocoTestReport
+}
+
+// JaCoCo Coverage Report Configuration
+jacoco {
+    toolVersion = "0.8.10"
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+}
+
+// Coverage verification
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            element = 'PACKAGE'
+            excludes = ['*Test']
+
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.90
+            }
+
+            limit {
+                counter = 'BRANCH'
+                value = 'COVEREDRATIO'
+                minimum = 0.80
+            }
+        }
+    }
+}
+
+// Make the build task depend on coverage verification
+build.dependsOn jacocoTestCoverageVerification
+
+// Custom tasks
+tasks.register('testReport') {
+    dependsOn test
+    doLast {
+        println '\n' + '='.repeat(70)
+        println 'Test Report Summary'
+        println '='.repeat(70)
+
+        // Count test files
+        def testFiles = fileTree('src/test/java').include('**/*Test.java')
+        println "Test files: ${testFiles.size()}"
+
+        // Print coverage location
+        println "\nCoverage Report:"
+        println "  HTML: build/reports/jacoco/test/html/index.html"
+        println "  XML:  build/reports/jacoco/test/jacocoTestReport.xml"
+        println "\nTest Report:"
+        println "  HTML: build/reports/tests/test/index.html"
+        println '='.repeat(70) + '\n'
+    }
+}
+
+// Alias for convenience
+tasks.register('cov') {
+    dependsOn jacocoTestReport
+    doLast {
+        println "Coverage report generated: build/reports/jacoco/test/html/index.html"
+    }
+}
+
+// Display task that shows build configuration
+tasks.register('showConfig') {
+    doLast {
+        println '\n' + '='.repeat(70)
+        println 'Build Configuration'
+        println '='.repeat(70)
+        println "Project: ${project.name}"
+        println "Version: ${project.version}"
+        println "Source Compatibility: ${java.sourceCompatibility}"
+        println "Target Compatibility: ${java.targetCompatibility}"
+        println "\nDependencies:"
+        configurations.testImplementation.each {
+            println "  - ${it.name}"
+        }
+        println '='.repeat(70) + '\n'
+    }
+}

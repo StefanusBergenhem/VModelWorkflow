@@ -1,0 +1,29 @@
+{
+  "skill_name": "develop-code",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Implement the FuelRateLimiter from the design in evals/files/fuel-rate-limiter-design.md. Use Java 17.",
+      "expected_output": "Java class implementing all behavior rules, error handling, and configuration. Should respect complexity limits, use clean error handling (no null returns), and include implementation notes.",
+      "files": ["evals/files/fuel-rate-limiter-design.md"]
+    },
+    {
+      "id": 2,
+      "prompt": "Implement the temperature controller from the design in evals/files/temperature-controller-design.md. Use Python.",
+      "expected_output": "Python class implementing the deadband/hysteresis controller with all behavior, error clamping, and state tracking. Clean code, no dead code, proper error handling.",
+      "files": ["evals/files/temperature-controller-design.md"]
+    },
+    {
+      "id": 3,
+      "prompt": "Implement the MessageParser from the design in evals/files/message-parser-design.md. Use Go.",
+      "expected_output": "Go implementation with struct types, sequential validation, CRC-16, and the union return type (result or error). Functions should be small and focused.",
+      "files": ["evals/files/message-parser-design.md"]
+    },
+    {
+      "id": 4,
+      "prompt": "Implement the session management component from evals/files/session-manager-design-L1.md. This is a Layer 1 design — there are no detailed unit contracts, just the component overview. Use Java 17. Implement what you can from the available information.",
+      "expected_output": "Java implementation of SessionStore, SessionValidator, and SessionCleaner based on component-level information. Should note assumptions made due to missing Layer 2 detail. Thread-safe, respects constraints (10k sessions, timing).",
+      "files": ["evals/files/session-manager-design-L1.md"]
+    }
+  ]
+}

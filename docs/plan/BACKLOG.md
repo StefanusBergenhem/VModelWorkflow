@@ -117,7 +117,28 @@ Define YAML schemas for each V-model artifact type (the `body` content).
 > Existing schemas: `schemas/core/craft-skill.schema.yaml`, `schemas/core/orchestration-pipeline.schema.yaml`
 > These are design-time specs. Runtime format is agentskills.io SKILL.md.
 
-### 3.1 Craft Skills — Requirements (current focus)
+### 3.1 Craft Skills — Code Developer Agent (current focus)
+
+Skills for the "code developer" agent persona. Independent of Pillar 1/2.
+Research: `research/implementation/`. Human docs: `docs/guide/best-practices/implementation/`.
+
+- [x] derive-test-cases skill — V-model test derivation (4 strategies, coverage matrix)
+  - Reworked: removed Pillar 1 format dependency, accepts any design format
+  - Evaluated: +67% delta vs baseline on Haiku (iteration 1, combined eval)
+  - Output: test source files only (documentation artifacts deferred to integration skill)
+- [x] develop-code skill — implementation with quantified quality rules
+  - New skill: complexity limits, error handling rules, architecture boundaries, no scope creep
+  - Evaluated: +67% delta vs baseline on Haiku (iteration 1, combined eval)
+  - Output: source code files only (documentation artifacts deferred to integration skill)
+- [ ] develop-in-DoWorkflow skill — Pillar 1+2 integration layer
+  - Thin bridge: where to find design input (Pillar 1), what trace artifacts to produce (Pillar 2),
+    what documentation to generate (coverage matrix, implementation notes, review prep)
+  - Design: keeps framework knowledge in one place; if schemas change, only this skill updates
+
+> Eval workspace: `.claude/skills/combined-workspace/`
+> Eval results: iteration-1 — 3 test cases (Layer 2/plain markdown/Layer 1), Java/Python/Go, combined implement+test
+
+### 3.2 Craft Skills — Requirements
 
 Pure domain knowledge. No Pillar 1/2 awareness. Each a standalone SKILL.md.
 
@@ -125,21 +146,19 @@ Pure domain knowledge. No Pillar 1/2 awareness. Each a standalone SKILL.md.
 - [ ] Requirement Review skill (quality checklist, EARS compliance check)
 - [ ] Requirement Decomposition skill (split compound requirements)
 
-### 3.2 Craft Skills — Design
+### 3.3 Craft Skills — Design
 
 - [ ] Architecture Design skill
 - [ ] Detailed Design skill
 - [ ] Design Review skill
 
-### 3.3 Craft Skills — Verification
+### 3.4 Craft Skills — Verification (beyond derive-test-cases)
 
-- [ ] Test Case Writing skill
 - [ ] Test Review skill
 - [ ] Coverage Analysis skill (interpret tool output, not generate numbers)
 
-### 3.4 Craft Skills — Implementation
+### 3.5 Craft Skills — Implementation (beyond develop-code)
 
-- [ ] Implementation skill (from failing tests + design)
 - [ ] Refactor skill
 - [ ] Code Review skill
 

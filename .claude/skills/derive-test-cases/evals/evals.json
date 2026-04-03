@@ -3,21 +3,27 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "Derive test cases for the FuelRateLimiter unit. The detailed design is in evals/files/fuel-rate-limiter-design.yaml. Use Python with pytest.",
+      "prompt": "Derive test cases for the FuelRateLimiter unit. The detailed design is in evals/files/fuel-rate-limiter-design.md. Use Python with pytest.",
       "expected_output": "A comprehensive pytest test file covering all behavior rules, error handling, boundary values, and equivalence classes from the design. Should include a coverage matrix.",
-      "files": ["evals/files/fuel-rate-limiter-design.yaml"]
+      "files": ["evals/files/fuel-rate-limiter-design.md"]
     },
     {
       "id": 2,
-      "prompt": "I need tests for the MessageParser. Design artifact is at evals/files/message-parser-design.yaml. Use Java with JUnit 5.",
+      "prompt": "I need tests for the MessageParser. Design artifact is at evals/files/message-parser-design.md. Use Java with JUnit 5.",
       "expected_output": "JUnit 5 test class covering the sequential parsing steps, each error path, boundary values for raw_data length, and the union return type. Should include coverage matrix.",
-      "files": ["evals/files/message-parser-design.yaml"]
+      "files": ["evals/files/message-parser-design.md"]
     },
     {
       "id": 3,
-      "prompt": "Write test cases for the FuelRateLimiter from the design in evals/files/fuel-rate-limiter-design.yaml. Use Go with the standard testing package. Focus especially on the rate-of-change limiting in cruise mode and the stateful behavior.",
-      "expected_output": "Go test file with table-driven tests where appropriate, covering rate-of-change limiting across multiple calls (stateful), mode transitions, and configuration boundary values.",
-      "files": ["evals/files/fuel-rate-limiter-design.yaml"]
+      "prompt": "Write tests for the temperature controller described in evals/files/temperature-controller-design.md. Use Go with the standard testing package.",
+      "expected_output": "Go test file with table-driven tests covering hysteresis/deadband behavior, state transitions, error cases (out-of-range inputs, clamping), and boundary values. Should include coverage matrix.",
+      "files": ["evals/files/temperature-controller-design.md"]
+    },
+    {
+      "id": 4,
+      "prompt": "Here's a Layer 1 component design for a session manager: evals/files/session-manager-design-L1.md. There are no detailed unit contracts — just the component overview with external interfaces, unit inventory, shared patterns, and constraints. Derive what test cases you can from this level of information. Use Python with pytest.",
+      "expected_output": "Test cases derived from component-level information: external interface contracts, constraint validation (10k sessions, timing, TTL), error strategy (result types), threading safety. Should clearly note what can and cannot be tested at this design level. Coverage matrix should map to component-level elements.",
+      "files": ["evals/files/session-manager-design-L1.md"]
     }
   ]
 }
