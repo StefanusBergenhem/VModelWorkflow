@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unit Test — VModelWorkflow Guide</title>
+  <link rel="stylesheet" href="../css/main.css">
+</head>
+<body>
+
+<!-- ============================================================
+     SIDEBAR
+     ============================================================ -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <h1>VModelWorkflow</h1>
+    <div class="subtitle">V-Model Development Guide</div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-group">
+      <span class="nav-group-label">Navigation</span>
+      <a class="nav-link" href="../index.html">Back to Main Guide</a>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-group-label">Unit Test</span>
+      <a class="nav-link" href="#ut-intro">What is Unit Testing?</a>
+      <a class="nav-link" href="#ut-vmodel">V-Model Context</a>
+      <a class="nav-link" href="#ut-quality">Producing Quality Tests</a>
+      <a class="nav-link" href="#ut-design-principles">Test Design Principles</a>
+      <a class="nav-link" href="#ut-derivation-strategies">Derivation Strategies</a>
+      <a class="nav-link" href="#ut-structure-readability">Structure &amp; Readability</a>
+      <a class="nav-link" href="#ut-test-doubles">Test Doubles</a>
+      <a class="nav-link" href="#ut-smells-maintainability">Smells &amp; Maintainability</a>
+      <a class="nav-link" href="#ut-coverage">Coverage &amp; Completeness</a>
+      <a class="nav-link" href="#ut-ai-development">AI-Assisted Testing</a>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-group-label">V-Model &amp; Framework</span>
+      <a class="nav-link" href="#ut-vmodel-considerations">V-Model Considerations</a>
+      <a class="nav-link" href="#ut-framework">Framework Integration</a>
+      <a class="nav-link" href="#ut-skills">AI Skills <span class="status-badge stub">stub</span></a>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-group-label">Other</span>
+      <a class="nav-link" href="#ut-references">References</a>
+      <a class="nav-link" href="source-code.html">Source Code (related)</a>
+    </div>
+  </nav>
+
+  <div class="domain-switcher">
+    <label for="domain-select">Domain Vocabulary</label>
+    <select id="domain-select">
+      <option value="generic">Generic V-Model</option>
+      <option value="do178c">DO-178C (Aviation)</option>
+      <option value="aspice">ASPICE / ISO 26262 (Automotive)</option>
+    </select>
+  </div>
+</aside>
+
+<!-- ============================================================
+     MAIN CONTENT
+     ============================================================ -->
+<main class="main-content" style="margin-left: var(--sidebar-width); padding: var(--space-3xl) var(--space-2xl); max-width: calc(var(--content-max) + var(--space-2xl) * 2 + var(--sidebar-width));">
+
+  <!-- ===================== SECTION 1: INTRO ===================== -->
+  <section id="ut-intro">
+    <div class="level-indicator right">Level 3 &mdash; Verification</div>
+    <h2>What is Unit Testing?</h2>
+    <p class="lead">Unit testing is the practice of verifying individual software units &mdash; functions, classes, or modules &mdash; in isolation. It is the most granular level of testing, targeting the smallest pieces of behavior that can be independently exercised.</p>
+
+    <p>A unit test answers one question: <strong>&ldquo;Does this unit do what it was designed to do?&rdquo;</strong></p>
+
+    <p>Effective unit testing provides:</p>
+    <ul>
+      <li><strong>Fast feedback</strong> &mdash; unit tests run in milliseconds, catching bugs immediately</li>
+      <li><strong>Design pressure</strong> &mdash; code that is hard to unit test is poorly designed (tight coupling, hidden dependencies, mixed concerns)</li>
+      <li><strong>Regression protection</strong> &mdash; when code changes, failing tests pinpoint exactly what broke</li>
+      <li><strong>Living documentation</strong> &mdash; tests describe what the unit does, with executable examples</li>
+      <li><strong>Refactoring safety net</strong> &mdash; confident refactoring because tests catch behavioral regressions</li>
+    </ul>
+
+    <div class="card">
+      <h3>What is a &ldquo;Unit&rdquo;?</h3>
+      <p>A unit is the smallest piece of code that can be meaningfully tested in isolation. In object-oriented code, it is typically a single class or method. In functional code, it is a single function. The key criterion: the unit has defined inputs, defined outputs, and defined behavior rules &mdash; all specified in the <span data-term="detailed-design">Detailed Design</span>.</p>
+    </div>
+  </section>
+
+  <!-- ===================== SECTION 2: V-MODEL CONTEXT ===================== -->
+  <section id="ut-vmodel">
+    <h2><span data-term="unit-test">Unit Testing</span> in the V-Model</h2>
+    <p class="lead"><span data-term="unit-test">Unit tests</span> sit on the right side of the V at Level 3, directly opposite the <span data-term="detailed-design">Detailed Design</span> on the left side. They verify that each unit behaves exactly as its design specifies.</p>
+
+    <h3>Position in the V</h3>
+    <p>The right arm of the V verifies each specification level:</p>
+    <div class="trace-flow">
+      <span class="artifact-ref" data-term="unit-test">Unit Test</span>
+      <span class="arrow">&rarr;</span>
+      <span class="artifact-ref">Integration Test</span>
+      <span class="arrow">&rarr;</span>
+      <span class="artifact-ref" data-term="sw-verification">SW Verification</span>
+      <span class="arrow">&rarr;</span>
+      <span class="artifact-ref">System Test</span>
+    </div>
+    <p><span data-term="unit-test">Unit tests</span> are the first verification activity. They take the <span data-term="detailed-design">Detailed Design</span> as input and verify that the <span data-term="source-code">source code</span> correctly implements each design element.</p>
+
+    <h3>The Critical Principle: Tests Verify Design, Not Code</h3>
+    <div class="card">
+      <p>This is the most important concept in V-model testing. Tests are derived from the <strong>design specification</strong>, not from the code. You read the design, derive test cases from what the design says should happen, and then check whether the code does that.</p>
+      <p>If you derive tests by reading the code, you are testing that the code does what the code does &mdash; a tautology. You will never find a bug this way, because the tests will mirror whatever the code actually does, including its mistakes.</p>
+    </div>
+
+    <h3>What &ldquo;Verifies&rdquo; Means</h3>
+    <p>Verification at the unit level means proving that:</p>
+    <ul>
+      <li>Every behavior rule in the design is correctly implemented</li>
+      <li>Every interface contract (inputs, outputs, types, constraints) is honored</li>
+      <li>Every error condition produces the specified error response</li>
+      <li>State transitions (if any) follow the design specification</li>
+      <li>Boundary conditions are handled correctly</li>
+    </ul>
+
+    <h3>Standards Perspective</h3>
+    <table class="field-table">
+      <thead>
+        <tr><th>Standard</th><th>Section</th><th>Key Requirement</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>DO-178C</td><td>&sect;6.4</td><td>Requirements-based test case selection. Structural coverage analysis (statement, decision, MC/DC by DAL). Tests must be traceable to <span data-term="detailed-design">low-level requirements</span>.</td></tr>
+        <tr><td>ASPICE</td><td>SWE.4</td><td>Software unit verification against detailed design. Criteria defined before testing. Results documented with pass/fail and traceability.</td></tr>
+        <tr><td>ISO 26262</td><td>Part 6, Tables 10&ndash;12</td><td>Explicitly names test derivation methods: requirements-based, equivalence class partitioning, boundary value analysis. Structural coverage: statement (ASIL A), branch (ASIL B), MC/DC (ASIL D).</td></tr>
+        <tr><td>IEC 62304</td><td>&sect;5.5</td><td>Software unit verification required for Class B and C. Methods include review, static analysis, and testing.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ===================== SECTION 3: QUALITY ===================== -->
+  <section id="ut-quality">
+    <h2>Producing Quality Unit Tests</h2>
+    <p class="lead">This section is the comprehensive guide to writing effective, industry-standard unit tests. It covers test design philosophy, derivation strategies, test structure, test doubles, common smells, coverage analysis, and AI-assisted testing. Each principle includes a concrete example.</p>
+  </section>
+
+  <!-- ===================== 3.1: TEST DESIGN PRINCIPLES ===================== -->
+  <section id="ut-design-principles">
+    <h3>3.1 Test Design Principles</h3>
+    <p>Before writing any test, you need to understand what makes a test <em>good</em>. These principles are the foundation of the testing craft &mdash; they apply regardless of language, framework, or safety standard.</p>
+
+    <h4>Test Behavior, Not Implementation</h4>
+    <p>The most consistently cited principle across testing literature: verify <strong>what a unit does</strong> (its observable outputs given specific inputs), not <strong>how it does it</strong> (which internal methods it calls, what data structures it uses, or how its algorithm works).</p>
+
+    <p>David Bernstein articulates this as: &ldquo;Writing tests against the behaviors you want to create rather than how you implement those behaviors is one of the keys to having the tests support you in refactoring code rather than breaking when you refactor code.&rdquo; <cite>&mdash; <a href="https://tobeagile.com/test-behaviors-not-implementations/">Test Behaviors, Not Implementations</a>, tobeagile.com</cite></p>
+
+    <div class="example-block bad">
+      <div class="example-label">Bad &mdash; Tests the internal mechanism</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>@Test
+void calculatesDiscount() {
+    DiscountService service = new DiscountService(mockPriceRepo);
+
+    service.applyDiscount(order, 10);
+
+    // Verifying internal call sequence, not outcome
+    verify(mockPriceRepo).fetchBasePrice(order.getId());
+    verify(mockPriceRepo).updatePrice(order.getId(), any());
+    verifyNoMoreInteractions(mockPriceRepo);
+}</code></div>
+    </div>
+    <div class="example-block good">
+      <div class="example-label">Good &mdash; Tests the observable outcome</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>@Test
+void ten_percent_discount_reduces_price_from_100_to_90() {
+    Order order = anOrder().withTotal(Money.of(100)).build();
+    DiscountService service = new DiscountService(priceRepository);
+
+    Order discounted = service.applyDiscount(order, 10);
+
+    assertEquals(Money.of(90), discounted.getTotal());
+}</code></div>
+    </div>
+
+    <p>Why this matters:</p>
+    <ul>
+      <li><strong>Behavior tests survive refactoring.</strong> Change from a list to a priority queue internally? Behavior tests still pass &mdash; the external result hasn&rsquo;t changed.</li>
+      <li><strong>Behavior tests only fail when behavior changes.</strong> A test that breaks when you rename a private method provides noise, not signal.</li>
+      <li><strong>Implementation tests double the cost of change.</strong> You change the code <em>and</em> the tests, because the tests are coupled to the mechanism.</li>
+    </ul>
+
+    <p>Kent Beck separates these into two distinct properties of good tests: &ldquo;Respond to behavior changes&rdquo; and &ldquo;Ignore structure changes.&rdquo; When tests satisfy both, they enable confident refactoring. <cite>&mdash; Kent Beck, <a href="https://medium.com/@kentbeck_7670/programmer-test-principles-d01c064d7934">&ldquo;Programmer Test Principles&rdquo;</a>, Medium, 2019</cite></p>
+
+    <div class="card">
+      <h4>V-Model Connection</h4>
+      <p>In safety-critical development, this maps directly to the V-model principle: <strong>tests verify requirements, not code.</strong> DO-178C&rsquo;s &ldquo;low-level requirements-based testing&rdquo; is behavior testing by another name. The requirement specifies <em>what</em> the unit should do &mdash; its contract. The test verifies that contract.</p>
+    </div>
+
+    <h4>Tests as Executable Specifications</h4>
+    <p>A well-written test suite is the most accurate documentation of what a system actually does. Unlike written documentation, tests are verified by the compiler and runtime on every build &mdash; they cannot silently go stale.</p>
+
+    <p>Kent Beck positioned TDD as &ldquo;primarily a specification technique with a side effect of ensuring that your source code is thoroughly tested.&rdquo; <cite>&mdash; Scott Ambler, <a href="https://agiledata.org/essays/tdd.html">&ldquo;Introduction to Test Driven Development&rdquo;</a>, summarizing Beck&rsquo;s <em>Test-Driven Development: By Example</em>, Addison-Wesley, 2003</cite></p>
+    <p>Robert C. Martin goes further: &ldquo;What makes a clean test? Three things: readability, readability, and readability. Readability is perhaps even more important in unit tests than it is in production code.&rdquo; <cite>&mdash; Robert C. Martin, <em>Clean Code: A Handbook of Agile Software Craftsmanship</em>, Chapter 9: Unit Tests, Prentice Hall, 2008</cite></p>
+
+    <p>The elements that make tests communicate effectively:</p>
+    <ol>
+      <li><strong>Test name describes the scenario and expected outcome.</strong> A test named <code>should_reject_withdrawal_when_balance_insufficient</code> communicates the requirement being verified.</li>
+      <li><strong>Arrange-Act-Assert structure is visible.</strong> The reader immediately sees setup, action, and verification.</li>
+      <li><strong>Noise is eliminated.</strong> Irrelevant setup, magic numbers, and infrastructure concerns are extracted to helpers and builders.</li>
+      <li><strong>Domain language is used.</strong> Tests use the same vocabulary as the requirements they verify.</li>
+    </ol>
+
+    <h4>What Makes a Good Assertion</h4>
+    <p>Assertions are the core of a test &mdash; they define what &ldquo;correct&rdquo; means. A test without a meaningful assertion is not a test.</p>
+
+    <p><strong>Specificity:</strong> Assert on exact expected values, not vague properties.</p>
+    <div class="example-block bad">
+      <div class="example-label">Weak &mdash; passes even if the result is completely wrong</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>assertNotNull(result);
+assertTrue(result.getItems().size() > 0);</code></div>
+    </div>
+    <div class="example-block good">
+      <div class="example-label">Strong &mdash; verifies exact expected behavior</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>assertEquals(Money.of(150, Currency.USD), calculator.calculateTotal(order));
+assertThat(result.getItems()).containsExactly("Widget", "Gadget");</code></div>
+    </div>
+
+    <p><strong>Determinism:</strong> Assertions must produce the same result every time. Assertions that depend on wall-clock time, random values, or network state are non-deterministic and produce flaky tests. All external sources of non-determinism must be controlled (inject a <code>Clock</code>, seed a <code>Random</code>, stub external calls).</p>
+
+    <p><strong>One logical concept per test:</strong> The &ldquo;one assertion per test&rdquo; rule is widely cited but misunderstood. The actual principle is <strong>one logical concept</strong>. Multiple assertions verifying the same outcome are fine &mdash; if cancelling a reservation should return HTTP 200 <em>and</em> remove it from the database, those two assertions belong together. Multiple assertions verifying <em>different</em> behaviors are problematic. Gerard Meszaros calls the anti-pattern &ldquo;Assertion Roulette&rdquo; &mdash; unrelated assertions that make it impossible to determine which behavior failed. <cite>&mdash; Gerard Meszaros, <em>xUnit Test Patterns: Refactoring Test Code</em>, Addison-Wesley, 2007; see also <a href="https://stackoverflow.blog/2022/11/03/multiple-assertions-per-test-are-fine/">&ldquo;Stop requiring only one assertion per unit test&rdquo;</a>, Stack Overflow Blog, 2022</cite></p>
+
+    <p><strong>Meaningful failure messages:</strong> When a test fails, the combination of the test name and the assertion message should diagnose the problem without reading the test body. Fluent assertion libraries (AssertJ for Java) produce clear messages by default:</p>
+    <div class="code-block"><span class="lang-label">AssertJ failure output</span><code>Expecting:
+  &lt;45.00 USD&gt;
+to be equal to:
+  &lt;50.00 USD&gt;
+but was not.</code></div>
+
+    <h4>Testability Is a Design Signal</h4>
+    <p>Multiple authorities converge on this insight: <strong>if a unit is hard to test in isolation, the design is coupled.</strong> This is not a testing problem &mdash; it is a design problem. <cite>&mdash; See Michael Feathers, <em>Working Effectively with Legacy Code</em>, Prentice Hall, 2004; Steve Freeman &amp; Nat Pryce, <em>Growing Object-Oriented Software, Guided by Tests</em>, Addison-Wesley, 2009</cite></p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Testable (Good Design)</th><th>Untestable (Bad Design)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Dependencies injected via constructor</td><td>Dependencies created internally with <code>new</code></td></tr>
+        <tr><td>Pure functions (same input &rarr; same output)</td><td>Functions that read global state or system clock</td></tr>
+        <tr><td>Small, focused classes</td><td>God classes with 20+ methods</td></tr>
+        <tr><td>Clear interfaces at boundaries</td><td>Direct calls to infrastructure</td></tr>
+      </tbody>
+    </table>
+
+    <p>TDD advocates argue that writing tests first improves design precisely because it forces you to confront coupling, hidden dependencies, and mixed concerns before they are baked into the implementation.</p>
+
+    <h4>The F.I.R.S.T. Properties</h4>
+    <p>Robert C. Martin defines five non-negotiable properties for unit tests: <cite>&mdash; Robert C. Martin, <em>Clean Code</em>, Chapter 9: Unit Tests, Prentice Hall, 2008</cite></p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Property</th><th>Meaning</th><th>Violation</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Fast</strong></td><td>Tests run in milliseconds. A slow test suite is a test suite that developers stop running.</td><td>Tests that hit databases, networks, or file systems without justification</td></tr>
+        <tr><td><strong>Independent</strong></td><td>No test depends on another test. Run any test alone, in any order, in parallel.</td><td>Shared mutable state between tests, tests that must run in sequence</td></tr>
+        <tr><td><strong>Repeatable</strong></td><td>Same result on any machine, any time. No environmental dependencies.</td><td>Tests that depend on timezone, locale, file paths, or network availability</td></tr>
+        <tr><td><strong>Self-validating</strong></td><td>Boolean output: pass or fail. No human interpretation needed.</td><td>Tests that print output for manual inspection</td></tr>
+        <tr><td><strong>Timely</strong></td><td>Written close in time to the code &mdash; ideally before (TDD).</td><td>Tests written weeks later from memory, missing edge cases the developer has forgotten</td></tr>
+      </tbody>
+    </table>
+
+    <h4>The Economics of Testing</h4>
+    <p>Defects found later cost more to fix. The mechanism is straightforward: a requirements bug requires changing a document; a production bug requires diagnosis, code changes, rebuilds, re-testing, patch deployment, customer support, and potential safety/regulatory reporting.</p>
+
+    <p>Key data points:</p>
+    <ul>
+      <li>The NIST 2002 study estimated the annual cost of software defects in the US at <strong>$59.5 billion</strong>, with improved testing infrastructure able to reduce this by $22.2 billion <cite>&mdash; <a href="https://www.nist.gov/document/report02-3pdf">NIST Planning Report 02-3</a>, &ldquo;The Economic Impacts of Inadequate Infrastructure for Software Testing&rdquo;, 2002</cite></li>
+      <li>Google found that <strong>84% of test failure pass-to-fail transitions are flaky, not real bugs</strong> &mdash; meaning bad tests waste enormous engineering time <cite>&mdash; <a href="https://testing.googleblog.com/2016/05/flaky-tests-at-google-and-how-we.html">&ldquo;Flaky Tests at Google and How We Mitigate Them&rdquo;</a>, Google Testing Blog, 2016</cite></li>
+      <li>Atlassian estimated <strong>150,000 developer hours per year</strong> lost to flaky test investigation <cite>&mdash; <a href="https://www.atlassian.com/engineering/measuring-the-cost-of-flaky-tests">&ldquo;Measuring the Cost of Flaky Tests&rdquo;</a>, Atlassian Engineering Blog</cite></li>
+    </ul>
+
+    <p>In safety-critical domains, post-release defect costs are amplified further by <strong>re-certification impact</strong>: a defect found after certification may require re-verification, re-validation, and regulatory notification &mdash; costs that can dwarf the original development effort.</p>
+
+    <div class="card">
+      <h4>Bad Tests Are Worse Than No Tests</h4>
+      <p>A test suite that is brittle, slow, flaky, or coupled to implementation becomes a liability. Developers stop trusting the suite, stop running it, and stop writing tests. The &ldquo;test tax&rdquo; &mdash; the cost of maintaining bad tests &mdash; compounds with every refactoring. The solution is not fewer tests but <em>better</em> tests: behavior-focused, specific assertions, fast execution, zero flakiness.</p>
+    </div>
+  </section>
+
+  <!-- ===================== 3.2: DERIVATION STRATEGIES ===================== -->
+  <section id="ut-derivation-strategies">
+    <h3>3.2 Test Derivation Strategies</h3>
+    <p>Test derivation is systematic, not creative. Four strategies exist, each targeting a different dimension of coverage. A well-tested unit uses all four. No single strategy is sufficient alone.</p>
+
+    <p>ISO 26262 is the only safety standard that explicitly names these methods (Part 6, Table 11). DO-178C requires the same practices in substance (&ldquo;normal range testing&rdquo; per Section 6.4.2.1 + &ldquo;robustness testing&rdquo; per Section 6.4.2.2) but uses different terminology. ASPICE and IEC 62304 leave method selection to the project. <cite>&mdash; See ISO 26262-6:2018 &sect;9&ndash;10; DO-178C &sect;6.4; ASPICE SWE.4; IEC 62304 &sect;5.5</cite></p>
+
+    <h4>Strategy 1: Requirement-Based Testing</h4>
+    <p><strong>Source:</strong> The behavior rules in the <span data-term="detailed-design">Detailed Design</span>.</p>
+    <p>Each behavior entry describes a rule, condition, or processing step. Every one is a testable claim about what the unit does. Read the rule, identify the trigger and expected outcome, write one test.</p>
+
+    <p><strong>Compound conditions</strong> require decision table testing &mdash; when a behavior has multiple conditions (e.g., &ldquo;when mode is startup AND rate exceeds limit&rdquo;), test each meaningful combination:</p>
+
+    <div class="example-block good">
+      <div class="example-label">Example &mdash; Decision table for compound condition</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>// Design says: "When mode is startup AND rate exceeds limit, clamp to minimum"
+@Test
+void startup_mode_with_excess_rate_clamps_to_minimum() {
+    calculator.setMode(Mode.STARTUP);
+    FuelResult result = calculator.calculate(rateAboveLimit);
+    assertEquals(MINIMUM_RATE, result.adjustedRate(), 0.001);
+}
+
+@Test
+void startup_mode_within_limit_does_not_clamp() {
+    calculator.setMode(Mode.STARTUP);
+    FuelResult result = calculator.calculate(rateWithinLimit);
+    assertNotEquals(MINIMUM_RATE, result.adjustedRate(), 0.001);
+}
+
+@Test
+void normal_mode_with_excess_rate_does_not_clamp() {
+    calculator.setMode(Mode.NORMAL);
+    FuelResult result = calculator.calculate(rateAboveLimit);
+    assertNotEquals(MINIMUM_RATE, result.adjustedRate(), 0.001);
+}</code></div>
+    </div>
+
+    <p><strong>Sequential steps:</strong> If the behavior describes a sequence, test the full happy path plus each step&rsquo;s failure path.</p>
+
+    <h4>Strategy 2: Equivalence Class Partitioning</h4>
+    <p><strong>Source:</strong> The input and output specifications in the design.</p>
+    <p>Divides the input domain into groups where the unit should behave identically for all values within a group. Test one representative from each group instead of exhaustively testing all values.</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Input Type</th><th>Classes to Derive</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>enum</code> with values</td><td>One class per enum value</td></tr>
+        <tr><td><code>integer/float</code> with constraints</td><td>Valid range, below range, above range</td></tr>
+        <tr><td><code>String</code></td><td>Empty, typical, at max length (if constrained)</td></tr>
+        <tr><td><code>boolean</code></td><td>true, false</td></tr>
+        <tr><td><code>List</code></td><td>Empty, single element, multiple elements, at max (if constrained)</td></tr>
+        <tr><td><code>Object</code></td><td>Valid complete, missing optional fields, missing required fields</td></tr>
+      </tbody>
+    </table>
+
+    <div class="example-block good">
+      <div class="example-label">Example &mdash; Equivalence classes for a temperature input (range: &minus;40 to 150)</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>@Test
+void nominal_temperature_classified_as_normal() {
+    assertEquals("NORMAL", sensor.classify(55.0));   // mid-range representative
+}
+
+@Test
+void below_range_temperature_rejected() {
+    assertThrows(OutOfRangeException.class,
+        () -> sensor.classify(-41.0));               // below minimum
+}
+
+@Test
+void above_range_temperature_rejected() {
+    assertThrows(OutOfRangeException.class,
+        () -> sensor.classify(151.0));               // above maximum
+}</code></div>
+    </div>
+
+    <p><strong>Combining inputs:</strong> Don&rsquo;t test all combinations (combinatorial explosion). Test each input&rsquo;s classes independently while holding others at valid defaults. Add combination tests only for inputs the design says interact.</p>
+
+    <h4>Strategy 3: Boundary Value Analysis</h4>
+    <p><strong>Source:</strong> The input constraints and configuration defaults in the design.</p>
+    <p>Targets the edges of valid ranges, where off-by-one errors and incorrect comparisons hide. For a numeric input with constraint <code>&gt;= min</code> and <code>&lt;= max</code>:</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Test Point</th><th>Value</th><th>Expected</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Below minimum</td><td>min &minus; 1 (or min &minus; epsilon for floats)</td><td>Error / rejection</td></tr>
+        <tr><td>At minimum</td><td>min</td><td>Valid behavior</td></tr>
+        <tr><td>Nominal</td><td>(min + max) / 2</td><td>Valid behavior</td></tr>
+        <tr><td>At maximum</td><td>max</td><td>Valid behavior</td></tr>
+        <tr><td>Above maximum</td><td>max + 1 (or max + epsilon)</td><td>Error / rejection</td></tr>
+      </tbody>
+    </table>
+
+    <div class="example-block good">
+      <div class="example-label">Example &mdash; Boundary tests for fuel rate (valid range: 0.0 to 100.0)</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>@Test
+void rate_below_minimum_rejected() {
+    assertThrows(InvalidRateException.class,
+        () -> calculator.process(-0.001));     // just below 0.0
+}
+
+@Test
+void rate_at_minimum_accepted() {
+    FuelResult result = calculator.process(0.0);
+    assertTrue(result.isValid());
+}
+
+@Test
+void rate_at_maximum_accepted() {
+    FuelResult result = calculator.process(100.0);
+    assertTrue(result.isValid());
+}
+
+@Test
+void rate_above_maximum_rejected() {
+    assertThrows(InvalidRateException.class,
+        () -> calculator.process(100.001));    // just above 100.0
+}</code></div>
+    </div>
+
+    <p><strong>String and collection boundaries:</strong></p>
+    <table class="field-table">
+      <thead>
+        <tr><th>Input Type</th><th>Boundary Tests</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>String with length constraint</td><td>Empty, length 1, at max length, max + 1</td></tr>
+        <tr><td>List with min/max items</td><td>Empty, min items, max items, max + 1</td></tr>
+        <tr><td>Map/object</td><td>Empty, one entry, at capacity</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Strategy 4: Error Handling and Fault Injection</h4>
+    <p><strong>Source:</strong> The error handling specification, plus gaps not covered by explicit error handling.</p>
+
+    <p><strong>Explicit error handling:</strong> Each entry in the design&rsquo;s error handling section has a condition and a specified behavior. For each: set up the condition, call the unit, assert the specified response.</p>
+
+    <div class="example-block good">
+      <div class="example-label">Example &mdash; Testing explicit error handling</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>// Design says: "When sensor returns NaN, unit shall return last known good value"
+@Test
+void nan_sensor_reading_returns_last_known_good() {
+    unit.process(validReading(42.0));         // establish last known good
+    FuelResult result = unit.process(nanReading());  // inject NaN
+    assertEquals(42.0, result.value(), 0.001);
+}</code></div>
+    </div>
+
+    <p><strong>Implicit error handling (fault injection):</strong> The design may not cover every failure mode. Probe for these:</p>
+    <table class="field-table">
+      <thead>
+        <tr><th>Fault Category</th><th>What to Test</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Null inputs</td><td>Pass null for each input &mdash; does it fail gracefully?</td></tr>
+        <tr><td>Type violations</td><td>Pass wrong types if the language allows (dynamic languages)</td></tr>
+        <tr><td>Resource exhaustion</td><td>Empty collections, zero-length strings, maximum-size inputs</td></tr>
+        <tr><td>Dependency failures</td><td>If the design implies external calls, what if they fail/timeout?</td></tr>
+        <tr><td>Concurrent access</td><td>If constraints mention thread-safety, test concurrent calls</td></tr>
+        <tr><td>State corruption</td><td>If internal state exists, call methods in unexpected order</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Combining Strategies: The Coverage Matrix</h4>
+    <p>A coverage matrix maps every design element to the test cases that verify it. It is the primary tool for ensuring completeness &mdash; every row must have at least one test.</p>
+
+    <div class="example-block good">
+      <div class="example-label">Example &mdash; Coverage matrix</div>
+      <div class="code-block"><code>| Design Element              | Test Case(s)                          | Strategy    |
+|-----------------------------|---------------------------------------|-------------|
+| behavior: startup limit     | startup_mode_limits_rate_to_min       | req-based   |
+| behavior: normal calc       | normal_mode_applies_correction        | req-based   |
+| error: negative rate        | negative_rate_throws                  | error       |
+| input: rate range [0,100]   | rate_at_zero, rate_at_max             | boundary    |
+| input: rate range [0,100]   | rate_at_fifty (nominal)               | equivalence |
+| input: rate above max       | rate_above_max_rejected               | boundary    |</code></div>
+    </div>
+
+    <p>Walk the checklist after writing all tests: every behavior rule tested? Every error condition? Every input covered by at least equivalence class + boundary tests? Stateful transitions? Configuration variants?</p>
+  </section>
+
+  <!-- ===================== 3.3: STRUCTURE AND READABILITY ===================== -->
+  <section id="ut-structure-readability">
+    <h3>3.3 Test Structure and Readability</h3>
+    <p>Consistent test structure makes tests readable, maintainable, and self-documenting. Tests should be &ldquo;boring and obvious&rdquo; &mdash; no cleverness, no surprises.</p>
+
+    <h4>Arrange / Act / Assert</h4>
+    <p>Every test has three clear sections, visually separated:</p>
+    <ol>
+      <li><strong>Arrange</strong> &mdash; set up inputs, state, and dependencies</li>
+      <li><strong>Act</strong> &mdash; call the unit under test exactly once</li>
+      <li><strong>Assert</strong> &mdash; verify the output matches the expected result from the design</li>
+    </ol>
+
+    <div class="example-block good">
+      <div class="example-label">Good &mdash; Clear Arrange/Act/Assert with visual separation</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>@Test
+void startup_mode_limits_rate_to_minimum() {
+    // Arrange
+    var config = new FuelConfig(Mode.STARTUP, 0.0, 100.0, 0.75);
+    var calculator = new FuelRateCalculator(config);
+    double excessRate = 150.0;
+
+    // Act
+    FuelResult result = calculator.calculate(excessRate);
+
+    // Assert
+    assertEquals(0.0, result.adjustedRate(), 0.001);
+    assertFalse(result.withinLimits());
+}</code></div>
+    </div>
+
+    <p>The <strong>one Act rule:</strong> each test calls the unit under test exactly once. Multiple Act sections in one test usually means the test is verifying multiple behaviors. The BDD equivalent &mdash; <strong>Given/When/Then</strong> &mdash; maps directly: Given (Arrange), When (Act), Then (Assert).</p>
+
+    <h4>Test Naming</h4>
+    <p>A test name is the first thing a developer reads when a test fails. It should communicate the scenario and expected outcome without requiring the developer to read the test body.</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Convention</th><th>Example</th><th>Trade-off</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>method_condition_expected</code></td><td><code>calculateTotal_withDiscount_returnsReducedPrice</code></td><td>Systematic; breaks if method is renamed</td></tr>
+        <tr><td><code>should_expected_when_condition</code></td><td><code>should_return_zero_when_list_is_empty</code></td><td>Reads like a requirement; verbose</td></tr>
+        <tr><td><code>given_when_then</code></td><td><code>given_empty_cart_when_checkout_then_throw</code></td><td>Maps to BDD and AAA; very verbose</td></tr>
+        <tr><td>Sentence (with <code>@DisplayName</code>)</td><td><code>@DisplayName("Rejects negative fuel rate with error")</code></td><td>Most readable in reports; extra annotation</td></tr>
+      </tbody>
+    </table>
+
+    <p>Pick one convention per project and stick with it. All conventions share the same goal: <strong>describe the scenario, not the method being tested.</strong></p>
+
+    <div class="example-block bad">
+      <div class="example-label">Bad &mdash; Method names, not scenarios</div>
+      <div class="code-block"><code>test_calculate
+test_error
+test1
+testProcess</code></div>
+    </div>
+    <div class="example-block good">
+      <div class="example-label">Good &mdash; Scenarios that read like requirements</div>
+      <div class="code-block"><code>rejects_negative_fuel_rate_with_error
+startup_mode_limits_rate_to_minimum
+normal_mode_applies_correction_factor
+nan_sensor_reading_returns_last_known_good</code></div>
+    </div>
+
+    <h4>Parameterized Tests</h4>
+    <p>When multiple test cases follow the same structure but differ only in input values and expected outputs, parameterized tests eliminate duplication. In JUnit 5:</p>
+
+    <div class="example-block good">
+      <div class="example-label">Example &mdash; Parameterized boundary value tests</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>@ParameterizedTest(name = "rate {0} is valid")
+@ValueSource(doubles = {0.0, 50.0, 100.0})
+void valid_rates_are_accepted(double rate) {
+    FuelResult result = calculator.process(rate);
+    assertTrue(result.isValid());
+}
+
+@ParameterizedTest(name = "rate {0} is rejected")
+@ValueSource(doubles = {-0.001, 100.001, -100.0, 999.9})
+void invalid_rates_are_rejected(double rate) {
+    assertThrows(InvalidRateException.class,
+        () -> calculator.process(rate));
+}</code></div>
+    </div>
+
+    <p>Parameterized tests map naturally to test derivation strategies: <code>@ValueSource</code> for boundary values, <code>@CsvSource</code> for equivalence classes with expected outputs, <code>@EnumSource</code> for enum-based partitioning.</p>
+
+    <p><strong>When not to parameterize:</strong> If different inputs require different assertion logic, separate tests are clearer. Parameterized tests should share both structure <em>and</em> assertion pattern. When the test name with parameters doesn&rsquo;t clearly communicate the scenario, use separate named tests instead.</p>
+
+    <h4>Test File Organization</h4>
+    <p>The universally accepted convention is <strong>mirror structure</strong>: the test directory mirrors the source directory. In Maven/Gradle projects:</p>
+    <div class="code-block"><code>src/main/java/com/example/billing/InvoiceCalculator.java
+src/test/java/com/example/billing/InvoiceCalculatorTest.java</code></div>
+
+    <p>One test class per production class supports discoverability, package-private access in Java, automatic build tool discovery, and direct V-model traceability (each unit has a corresponding verification artifact).</p>
+
+    <p>For complex units, use <strong>@Nested classes</strong> (JUnit 5) to group related tests:</p>
+    <div class="example-block good">
+      <div class="example-label">Example &mdash; @Nested for grouping by state or behavior</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>class FuelRateCalculatorTest {
+
+    @Nested
+    class WhenInStartupMode {
+        @Test void limits_rate_to_minimum() { ... }
+        @Test void ignores_correction_factor() { ... }
+    }
+
+    @Nested
+    class WhenInNormalMode {
+        @Test void applies_correction_factor() { ... }
+        @Test void rejects_negative_rate() { ... }
+    }
+
+    @Nested
+    class ErrorHandling {
+        @Test void nan_returns_last_known_good() { ... }
+        @Test void null_input_throws_IllegalArgument() { ... }
+    }
+}</code></div>
+    </div>
+
+    <h4>Reducing Noise, Highlighting Intent</h4>
+    <p>A test should make the <em>relevant</em> details obvious and hide the <em>irrelevant</em> ones. If a test creates a 10-field object but only the &ldquo;rate&rdquo; field matters, only the rate should be visible in the test body. Use builders or factory methods for the rest (see Section 3.5 for Test Data Builders).</p>
+
+    <p>Rules for test code:</p>
+    <ul>
+      <li><strong>No conditional logic.</strong> Tests should be straight-line code. If your test has <code>if</code>/<code>else</code> or loops, it is doing too much.</li>
+      <li><strong>No inheritance.</strong> Sharing setup through test class hierarchies hides context and creates Mystery Guest problems. Prefer composition (helper methods, builders).</li>
+      <li><strong>Minimal shared state.</strong> Use <code>@BeforeEach</code> for genuinely common setup, but keep it short. If a reader must scroll to <code>@BeforeEach</code> to understand a test, the setup is hiding too much.</li>
+    </ul>
+  </section>
+
+  <!-- ===================== 3.4: TEST DOUBLES ===================== -->
+  <section id="ut-test-doubles">
+    <h3>3.4 Test Doubles</h3>
+    <p>A test double is any object that stands in for a real dependency during testing &mdash; analogous to a stunt double in film. Gerard Meszaros defined the taxonomy in <em>xUnit Test Patterns: Refactoring Test Code</em> (Addison-Wesley, 2007); Martin Fowler popularized it in <a href="https://martinfowler.com/articles/mocksArentStubs.html">&ldquo;Mocks Aren&rsquo;t Stubs&rdquo;</a> (martinfowler.com, 2007).</p>
+
+    <h4>The Taxonomy</h4>
+    <table class="field-table">
+      <thead>
+        <tr><th>Type</th><th>Purpose</th><th>Has Behavior?</th><th>Verifies Interactions?</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Dummy</strong></td><td>Fills a parameter list; never actually used</td><td>No</td><td>No</td></tr>
+        <tr><td><strong>Stub</strong></td><td>Returns canned answers to control indirect inputs</td><td>Canned only</td><td>No</td></tr>
+        <tr><td><strong>Spy</strong></td><td>Records calls for later assertion</td><td>Canned only</td><td>After the fact</td></tr>
+        <tr><td><strong>Mock</strong></td><td>Pre-programmed with expectations about calls it should receive</td><td>Canned only</td><td>Yes (behavior verification)</td></tr>
+        <tr><td><strong>Fake</strong></td><td>Working but simplified implementation (e.g., in-memory database)</td><td>Yes</td><td>No</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>The terminology problem:</strong> In practice, &ldquo;mock&rdquo; is used as a generic term for all test doubles. Developers say &ldquo;I&rsquo;ll mock that&rdquo; when they might actually create a stub or fake. Mocking frameworks like Mockito compound this &mdash; <code>mock(SomeClass.class)</code> creates an object that can function as a stub, spy, or mock depending on configuration. The imprecision matters because the <em>choice</em> of test double type has real consequences for test quality.</p>
+
+    <h4>State Verification vs. Behavior Verification</h4>
+    <p>This is Fowler&rsquo;s key distinction (<a href="https://martinfowler.com/articles/mocksArentStubs.html">&ldquo;Mocks Aren&rsquo;t Stubs&rdquo;</a>). <strong>State verification</strong> checks the outcome &mdash; what state the system is in after the action. <strong>Behavior verification</strong> checks the interactions &mdash; what calls were made to collaborators.</p>
+
+    <div class="example-block good">
+      <div class="example-label">State verification &mdash; checks the outcome</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>@Test
+void filling_order_reduces_warehouse_inventory() {
+    Warehouse warehouse = new Warehouse();
+    warehouse.add("Widget", 50);
+    Order order = new Order("Widget", 10);
+
+    order.fill(warehouse);
+
+    assertTrue(order.isFilled());
+    assertEquals(40, warehouse.getInventory("Widget"));
+}</code></div>
+    </div>
+    <div class="example-block bad">
+      <div class="example-label">Behavior verification &mdash; checks the interactions (fragile)</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>@Test
+void filling_order_calls_warehouse_correctly() {
+    Warehouse mockWarehouse = mock(Warehouse.class);
+    when(mockWarehouse.hasInventory("Widget", 10)).thenReturn(true);
+    Order order = new Order("Widget", 10);
+
+    order.fill(mockWarehouse);
+
+    // Breaks if implementation changes HOW it checks inventory
+    verify(mockWarehouse).hasInventory("Widget", 10);
+    verify(mockWarehouse).remove("Widget", 10);
+}</code></div>
+    </div>
+
+    <p>State verification aligns with behavior testing (Section 3.1) because it verifies <em>what happened</em> rather than <em>how it happened</em>. Only use behavior verification when the interaction itself <em>is</em> the observable behavior (e.g., verifying that a notification was sent).</p>
+
+    <h4>When to Use Test Doubles</h4>
+    <ul>
+      <li><strong>External dependencies</strong> &mdash; network, file system, database, hardware sensors</li>
+      <li><strong>Slow dependencies</strong> &mdash; anything that would make tests too slow to run frequently</li>
+      <li><strong>Non-deterministic dependencies</strong> &mdash; system clock, random number generators, external APIs</li>
+      <li><strong>Hard-to-configure dependencies</strong> &mdash; require complex infrastructure or state setup</li>
+      <li><strong>Error paths</strong> &mdash; when you need to simulate failures that are hard to trigger naturally</li>
+    </ul>
+
+    <p><strong>The preference hierarchy:</strong> Use the simplest double that gives the right signal.</p>
+    <div class="trace-flow">
+      <span class="artifact-ref">Real implementation</span>
+      <span class="arrow">&rarr; prefer over &rarr;</span>
+      <span class="artifact-ref">Verified fake</span>
+      <span class="arrow">&rarr; prefer over &rarr;</span>
+      <span class="artifact-ref">Stub</span>
+      <span class="arrow">&rarr; prefer over &rarr;</span>
+      <span class="artifact-ref">Mock</span>
+    </div>
+
+    <h4>When NOT to Use Test Doubles (Over-Mocking)</h4>
+    <p>Over-mocking is the most common test double mistake. It produces tests that pass against a fiction &mdash; they verify that the code does what the mocks say it should do, not what the real system does.</p>
+
+    <div class="example-block bad">
+      <div class="example-label">Bad &mdash; Over-mocking: testing interaction choreography</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>@Test
+void processOrder_callsEverythingInOrder() {
+    verify(validator).validate(order);
+    verify(pricer).calculatePrice(order);
+    verify(taxService).applyTax(any());
+    verify(repository).save(any());
+    verify(notifier).sendConfirmation(any());
+    // Tests pass even if the actual business logic is completely wrong
+    // because nothing verifies the final state or output
+}</code></div>
+    </div>
+
+    <p>Signs of over-mocking:</p>
+    <ul>
+      <li>Test setup is longer than the test itself</li>
+      <li>Tests break when you refactor internal structure without changing behavior</li>
+      <li>The test uses <code>verify()</code> more than <code>assertEquals()</code></li>
+      <li>You cannot describe what the mock replaces and why in one sentence</li>
+      <li>You are mocking value objects, data structures, or types you don&rsquo;t own</li>
+    </ul>
+
+    <h4>Only Mock Types You Own</h4>
+    <p>Freeman and Pryce: don&rsquo;t mock third-party APIs directly. When you mock a library, you encode assumptions about its behavior that can be wrong or go stale. Instead: <cite>&mdash; Steve Freeman &amp; Nat Pryce, <em>Growing Object-Oriented Software, Guided by Tests</em>, Addison-Wesley, 2009, Chapter 8; see also <a href="https://tech.findmypast.com/dont-mock-what-you-dont-own/">&ldquo;Don&rsquo;t mock what you don&rsquo;t own&rdquo;</a>, Findmypast Tech</cite></p>
+    <ol>
+      <li>Define an interface in <strong>your</strong> domain language for what you need</li>
+      <li>Write an adapter that implements the interface using the third-party API</li>
+      <li>Mock the interface you own in unit tests</li>
+      <li>Integration-test the adapter against the real API</li>
+    </ol>
+    <p>This connects directly to the Dependency Inversion Principle (DIP) and hexagonal architecture &mdash; depend on abstractions you control, not on implementations you don&rsquo;t.</p>
+
+    <h4>Contract Testing: Keeping Fakes Honest</h4>
+    <p>Fakes can drift from reality &mdash; the real database has a quirk that the in-memory fake doesn&rsquo;t replicate. Contract tests solve this: write an abstract test suite for the interface, then run it against both the fake and the real implementation.</p>
+
+    <div class="example-block good">
+      <div class="example-label">Example &mdash; Contract test shared between fake and real implementation</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>// Abstract contract test — defines what any UserRepository must do
+abstract class UserRepositoryContractTest {
+    abstract UserRepository createRepository();
+
+    @Test
+    void saved_user_can_be_found_by_id() {
+        UserRepository repo = createRepository();
+        User user = new User("u-1", "Alice");
+        repo.save(user);
+        assertEquals(Optional.of(user), repo.findById("u-1"));
+    }
+
+    @Test
+    void finding_nonexistent_user_returns_empty() {
+        UserRepository repo = createRepository();
+        assertEquals(Optional.empty(), repo.findById("no-such-id"));
+    }
+}
+
+// Run against the fake (in unit tests)
+class InMemoryUserRepositoryTest extends UserRepositoryContractTest {
+    UserRepository createRepository() { return new InMemoryUserRepository(); }
+}
+
+// Run against the real implementation (in integration tests)
+class PostgresUserRepositoryIT extends UserRepositoryContractTest {
+    UserRepository createRepository() { return new PostgresUserRepository(testDb); }
+}</code></div>
+    </div>
+
+    <div class="card">
+      <h4>Test Doubles and Documentation</h4>
+      <p>Every test double in a test suite should be documentable: what it replaces, what contract it implements, and why a real implementation isn&rsquo;t used. In safety-critical domains, an auditor may ask why tests use substitutes rather than real components &mdash; the answer must be defensible (speed, determinism, isolation from hardware) and the substitution must not mask integration issues.</p>
+    </div>
+  </section>
+
+  <!-- ===================== 3.5: TEST SMELLS AND MAINTAINABILITY ===================== -->
+  <section id="ut-smells-maintainability">
+    <h3>3.5 Test Smells and Maintainability</h3>
+    <p>Test smells are surface indicators of deeper test design problems &mdash; the testing equivalent of code smells. The concept was introduced by van Deursen, Moonen, van den Bergh, and Kok in their paper <a href="https://testsmells.org/">&ldquo;Refactoring Test Code&rdquo;</a> (XP2001 conference, 2001) and expanded by Meszaros into a comprehensive catalog of 18 smells in <em>xUnit Test Patterns: Refactoring Test Code</em> (Addison-Wesley, 2007; <a href="http://xunitpatterns.com/TestSmells.html">online catalog</a>).</p>
+
+    <h4>The Most Damaging Smells</h4>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Smell</th><th>Symptom</th><th>Harm</th><th>Fix</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Fragile Test</strong></td><td>Test breaks when unrelated code changes</td><td>Developers stop trusting tests, stop refactoring</td><td>Test behavior not implementation; use builders</td></tr>
+        <tr><td><strong>Obscure Test</strong></td><td>Cannot see cause and effect between setup, action, and assertion</td><td>Tests fail as documentation; maintenance cost increases</td><td>Inline essential setup; extract irrelevant details to helpers</td></tr>
+        <tr><td><strong>Eager Test</strong></td><td>Tests too many things in one test method</td><td>When it fails, you don&rsquo;t know which behavior broke</td><td>Split into focused tests, one concept each</td></tr>
+        <tr><td><strong>Mystery Guest</strong></td><td>Test depends on data or resources not visible in the test body</td><td>Cannot understand the test without reading external files or setup</td><td>Make all relevant data visible in the test; use inline test data</td></tr>
+        <tr><td><strong>General Fixture</strong></td><td>@BeforeEach creates far more state than any single test needs</td><td>Hard to understand what each test depends on; changes to fixture break unrelated tests</td><td>Move setup into individual tests or use Test Data Builders</td></tr>
+        <tr><td><strong>Conditional Test Logic</strong></td><td>if/else or loops in test code</td><td>The test itself might have bugs; test should be straight-line</td><td>Split into separate tests for each condition</td></tr>
+        <tr><td><strong>Erratic Test (Flaky)</strong></td><td>Passes sometimes, fails sometimes, without code changes</td><td>Erodes trust in entire suite; wastes investigation time</td><td>Control non-determinism (inject Clock, seed Random, isolate state)</td></tr>
+        <tr><td><strong>Slow Test</strong></td><td>Test takes seconds instead of milliseconds</td><td>Developers run tests less often; bugs accumulate</td><td>Replace I/O with test doubles; move slow tests to integration tier</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Fragile Tests: The Deep Dive</h4>
+    <p>Fragile tests are the most damaging smell because they directly undermine the purpose of testing. Meszaros identifies four types of fragility (<a href="http://xunitpatterns.com/Fragile%20Test.html">xUnit Patterns: Fragile Test</a>):</p>
+
+    <p><strong>Interface Sensitivity:</strong> Tests break when method signatures or constructors change, even when behavior is preserved. Common when tests call constructors with positional arguments.</p>
+    <div class="example-block bad">
+      <div class="example-label">Fragile &mdash; Constructor with positional args breaks when signature changes</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>Order order = new Order("ORD-001", "customer-42", "2024-01-15",
+                       "PENDING", "USD", null, null);</code></div>
+    </div>
+    <div class="example-block good">
+      <div class="example-label">Robust &mdash; Builder with sensible defaults</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>Order order = anOrder().withId("ORD-001").build();</code></div>
+    </div>
+
+    <p><strong>Behavior Sensitivity:</strong> Tests break when internal implementation changes but observable behavior does not. Strongly associated with behavior verification using mock objects &mdash; the test describes <em>how</em> the software works, so it only passes if implemented one specific way.</p>
+
+    <p><strong>Data Sensitivity:</strong> Tests break when test data changes. A shared fixture used by 50 tests breaks 30 of them when one test adds a new field.</p>
+
+    <p><strong>Context Sensitivity:</strong> Tests break in different environments (different timezone, locale, machine, database). Caused by failing to isolate from external context.</p>
+
+    <h4>Common Anti-Patterns</h4>
+
+    <p><strong>The &ldquo;Doesn&rsquo;t Throw&rdquo; Test:</strong> The only assertion is that calling the function doesn&rsquo;t raise an exception.</p>
+    <div class="example-block bad">
+      <div class="example-label">Bad</div>
+      <div class="code-block"><code>@Test void processes_input() {
+    unit.process(validInput);  // no assertion — passes for any implementation
+}</code></div>
+    </div>
+
+    <p><strong>The Mirror Test:</strong> The test recomputes the expected value using the same logic as the implementation. If the formula has a bug, the test has the same bug.</p>
+    <div class="example-block bad">
+      <div class="example-label">Bad &mdash; Duplicating implementation logic</div>
+      <div class="code-block"><code>double expected = input.volume / input.time * CORRECTION_FACTOR;
+assertEquals(expected, unit.calculateRate(input));</code></div>
+    </div>
+    <div class="example-block good">
+      <div class="example-label">Fix &mdash; Hardcoded expected value from design spec</div>
+      <div class="code-block"><code>// 100.0 / 10.0 * 0.75 = 7.5, per design spec Table 3
+assertEquals(7.5, unit.calculateRate(input));</code></div>
+    </div>
+
+    <p><strong>The Tautology Test:</strong> Asserts something always true regardless of implementation.</p>
+    <div class="example-block bad">
+      <div class="example-label">Bad</div>
+      <div class="code-block"><code>assertNotNull(result);  // any non-trivial implementation returns something</code></div>
+    </div>
+
+    <p><strong>The Test That Tests the Framework:</strong> Tests that the language or framework works, not that your code works. If removing your implementation would still let the test pass, it is worthless.</p>
+
+    <div class="card">
+      <h4>Quick Self-Check</h4>
+      <p>For each test you write, ask:</p>
+      <ol>
+        <li><strong>Delete test:</strong> If I deleted the implementation, would this test fail? If no &rarr; worthless.</li>
+        <li><strong>Wrong answer test:</strong> If the implementation returned a wrong but structurally valid answer, would this test catch it? If no &rarr; weak assertion.</li>
+        <li><strong>Mock audit:</strong> For every test double &mdash; can I state in one sentence what it replaces and why? If no &rarr; unclear dependency.</li>
+        <li><strong>Name check:</strong> Does the test name tell me what scenario it covers? If no &rarr; poor documentation value.</li>
+      </ol>
+    </div>
+
+    <h4>Maintainability Patterns</h4>
+
+    <p><strong>Test Data Builders:</strong> Fluent builders for creating test objects with sensible defaults. Only the field relevant to the specific test is set explicitly; everything else uses a valid default.</p>
+    <div class="example-block good">
+      <div class="example-label">Example &mdash; Test Data Builder</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>public class OrderBuilder {
+    private String id = "ORD-" + UUID.randomUUID().toString().substring(0, 8);
+    private Money total = Money.of(100.00);
+    private String currency = "USD";
+    private OrderStatus status = OrderStatus.PENDING;
+
+    public static OrderBuilder anOrder() { return new OrderBuilder(); }
+
+    public OrderBuilder withTotal(Money total) { this.total = total; return this; }
+    public OrderBuilder withStatus(OrderStatus s) { this.status = s; return this; }
+
+    public Order build() { return new Order(id, total, currency, status); }
+}
+
+// In tests — only the relevant field is visible
+Order order = anOrder().withTotal(Money.of(250)).build();</code></div>
+    </div>
+
+    <p><strong>Custom Assertion Methods:</strong> Domain-specific assertions that improve readability and centralize verification logic.</p>
+    <div class="example-block good">
+      <div class="example-label">Example &mdash; Custom assertion with AssertJ</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>// Instead of three low-level assertions:
+assertEquals("ACTIVE", account.getStatus());
+assertTrue(account.getBalance().compareTo(BigDecimal.ZERO) > 0);
+assertNotNull(account.getActivationDate());
+
+// One domain-specific assertion:
+assertThat(account).isActiveWithPositiveBalance();</code></div>
+    </div>
+
+    <p><strong>Object Mother:</strong> Factory methods for common test objects. Simpler than builders but less flexible &mdash; best for objects that rarely need customization.</p>
+
+    <p><strong>The Rule of Three:</strong> Tolerate duplication in tests until you see the same pattern three times. Then extract a shared helper. Premature extraction creates obscure tests where the reader must chase through helper hierarchies to understand a single test.</p>
+  </section>
+
+  <!-- ===================== 3.6: COVERAGE AND COMPLETENESS ===================== -->
+  <section id="ut-coverage">
+    <h3>3.6 Coverage and Completeness</h3>
+    <p>Coverage measures how thoroughly tests exercise the code and the design. There are two fundamentally different types, and confusing them is a common mistake.</p>
+
+    <h4>Requirements Coverage vs. Structural Coverage</h4>
+    <table class="field-table">
+      <thead>
+        <tr><th>Type</th><th>What It Measures</th><th>How to Achieve</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Requirements Coverage</td><td>Every design element has at least one test</td><td>Coverage matrix (Section 3.2)</td></tr>
+        <tr><td>Structural Coverage</td><td>Every code path has been executed by tests</td><td>Code coverage tools (JaCoCo, lcov, coverage.py)</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>Requirements coverage comes first.</strong> It answers: &ldquo;Did we test what the design says the unit should do?&rdquo; Structural coverage comes second. It answers: &ldquo;Did we accidentally leave any code paths untested?&rdquo;</p>
+
+    <div class="card">
+      <h4>Why 100% Structural Coverage Is Not Enough</h4>
+      <p>You can achieve 100% line coverage with tests that assert nothing. You can achieve 100% branch coverage without testing any boundary values. Structural coverage is a <em>necessary complement</em> to requirements coverage, not a replacement for it. A test suite with 100% structural coverage but no requirements traceability is a compliance failure in every safety standard.</p>
+      <p>DO-178C Section 6.4.4 makes this explicit: structural coverage is an <strong>adequacy check</strong>, not a test derivation method. If coverage analysis reveals unexecuted code, the response is to add requirements-based tests, identify dead code, or trace the gap to a missing requirement &mdash; not to write tests &ldquo;to the code&rdquo; just to achieve numbers. <cite>&mdash; DO-178C &sect;6.4.4, &ldquo;Structural Coverage Analysis&rdquo;</cite></p>
+    </div>
+
+    <h4>Structural Coverage Levels</h4>
+    <table class="field-table">
+      <thead>
+        <tr><th>Level</th><th>What It Measures</th><th>When Required</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Statement Coverage</td><td>Every executable statement has been invoked at least once</td><td>ASIL A / DAL D &mdash; minimum baseline</td></tr>
+        <tr><td>Decision (Branch) Coverage</td><td>Every branch (true/false) of every decision has been taken</td><td>ASIL B / DAL C</td></tr>
+        <tr><td>MC/DC</td><td>Every condition in a decision independently affects the outcome</td><td>ASIL D / DAL A &mdash; most rigorous</td></tr>
+      </tbody>
+    </table>
+
+    <div class="card">
+      <h4>MC/DC Explained</h4>
+      <p>Modified Condition/Decision Coverage requires test cases that show each condition in a compound decision independently affects the result. For <code>if (a &amp;&amp; b)</code>:</p>
+      <table class="field-table">
+        <thead>
+          <tr><th>Test</th><th>a</th><th>b</th><th>Result</th><th>Shows</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>true</td><td>true</td><td>true</td><td rowspan="2">Changing <code>a</code> alone flips the result</td></tr>
+          <tr><td>2</td><td>false</td><td>true</td><td>false</td></tr>
+          <tr><td>3</td><td>true</td><td>false</td><td>false</td><td>Changing <code>b</code> alone flips the result (compare with test 1)</td></tr>
+        </tbody>
+      </table>
+      <p>Three test cases are sufficient: tests 1, 2, 3.</p>
+    </div>
+
+    <h4>Mutation Testing: The Real Quality Metric</h4>
+    <p>Code coverage answers &ldquo;was this line executed?&rdquo; but not &ldquo;would the test catch a bug here?&rdquo; Mutation testing answers the second question.</p>
+
+    <p><strong>How it works:</strong> A mutation testing tool (PIT/pitest for Java) systematically introduces small faults (&ldquo;mutants&rdquo;) into the code &mdash; negating a condition, changing a return value, removing a method call &mdash; and runs the test suite against each mutant. If the tests <strong>kill</strong> the mutant (detect the fault), the tests are effective at that location. If the mutant <strong>survives</strong> (tests still pass despite the fault), the tests have a gap.</p>
+
+    <p><strong>Common mutation operators:</strong></p>
+    <table class="field-table">
+      <thead>
+        <tr><th>Operator</th><th>Example Mutation</th><th>What a Surviving Mutant Reveals</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Negate conditional</td><td><code>if (a &gt; b)</code> &rarr; <code>if (a &lt;= b)</code></td><td>Boundary not tested or assertion too weak</td></tr>
+        <tr><td>Change return value</td><td><code>return true;</code> &rarr; <code>return false;</code></td><td>Return value not asserted</td></tr>
+        <tr><td>Remove method call</td><td><code>list.add(item);</code> &rarr; deleted</td><td>Side effect not verified</td></tr>
+        <tr><td>Math operator change</td><td><code>a + b</code> &rarr; <code>a - b</code></td><td>Calculation result not checked against specific expected value</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>Why it matters:</strong> A test suite can achieve 100% line and branch coverage while having a mutation score near zero &mdash; meaning the tests execute every line but verify nothing meaningful. This is especially common with AI-generated tests (see Section 3.7). Mutation testing is the quality gate that catches tautological tests, weak assertions, and missing edge cases that coverage metrics miss.</p>
+
+    <h4>Dealing with Coverage Gaps</h4>
+    <p>When structural coverage analysis reveals uncovered code:</p>
+    <ol>
+      <li><strong>Missing test case:</strong> The design specifies a behavior you forgot to test. Add the test.</li>
+      <li><strong>Dead code:</strong> The code cannot be reached by any input. This is a defect &mdash; remove the dead code or fix the design.</li>
+      <li><strong>Defensive code:</strong> Error handling for conditions that &ldquo;should never happen.&rdquo; Either test it through fault injection or document why it cannot be reached.</li>
+    </ol>
+  </section>
+
+  <!-- ===================== 3.7: AI-ASSISTED TESTING ===================== -->
+  <section id="ut-ai-development">
+    <h3>3.7 AI-Assisted Test Development</h3>
+    <p>AI-generated tests are increasingly common. This section addresses the specific quality risks of AI-assisted test development, grounded in empirical data from 2023&ndash;2025 studies.</p>
+
+    <h4>The Empirical Reality</h4>
+    <table class="field-table">
+      <thead>
+        <tr><th>Finding</th><th>Source</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>34&ndash;62% of LLM-generated unit tests are syntactically invalid (won&rsquo;t compile)</td><td><a href="https://arxiv.org/html/2406.18181v1">Yuan et al., &ldquo;On the Evaluation of Large Language Models in Unit Test Generation&rdquo;</a>, 2024</td></tr>
+        <tr><td>Without existing test context, only 7.5% of Copilot-generated tests pass</td><td><a href="https://dl.acm.org/doi/10.1145/3644032.3644443">TU Delft, &ldquo;Using GitHub Copilot for Test Generation in Python&rdquo;</a>, AST 2024</td></tr>
+        <tr><td>AI tests can achieve 100% line/branch coverage with only 4% mutation score</td><td><a href="https://arxiv.org/html/2506.02954v2">&ldquo;On Mutation-Guided Unit Test Generation&rdquo;</a>, 2025</td></tr>
+        <tr><td>47.4% of Copilot-generated tests contain at least one test smell (most common: Assertion Roulette, Magic Number Test)</td><td>Reported in multiple secondary analyses of Copilot test quality, 2024; primary source unverified</td></tr>
+        <tr><td>AI coding agents use mocking 95% of the time vs. 91% for humans, with less diversity in test double strategies</td><td><a href="https://arxiv.org/html/2602.00409v1">Islam et al., &ldquo;Are Coding Agents Generating Over-Mocked Tests?&rdquo;</a>, MSR 2026</td></tr>
+      </tbody>
+    </table>
+
+    <p>The headline number: <strong>100% coverage with 4% mutation score.</strong> AI tests can execute every line without detecting any faults &mdash; they run the code but verify nothing meaningful. Coverage metrics are near-worthless as a quality indicator for AI-generated tests.</p>
+
+    <h4>Common AI Testing Failures</h4>
+    <ul>
+      <li><strong>Tautological tests</strong> &mdash; recomputing expected values using the same logic as the implementation (the Mirror Test from Section 3.5)</li>
+      <li><strong>Assertion-free tests</strong> &mdash; tests that only check &ldquo;doesn&rsquo;t throw&rdquo; or <code>assertNotNull</code></li>
+      <li><strong>Happy-path bias</strong> &mdash; AI generates mostly positive test cases, misses error paths and boundaries</li>
+      <li><strong>Over-mocking</strong> &mdash; mocks everything, including things that should use real implementations</li>
+      <li><strong>Hallucinated assertions</strong> &mdash; assertions on properties that don&rsquo;t exist or don&rsquo;t mean what the LLM thinks</li>
+      <li><strong>Copy-paste patterns</strong> &mdash; many structurally identical tests with slight variations that don&rsquo;t add meaningful coverage</li>
+    </ul>
+
+    <h4>Code-to-Test vs. Spec-to-Test</h4>
+    <p>A fundamental distinction:</p>
+    <ul>
+      <li><strong>Code-to-test:</strong> &ldquo;Generate tests for this code.&rdquo; The AI reads the implementation and produces tests that exercise it. This is what every current AI testing tool does (Copilot, Diffblue Cover, EvoSuite, CodiumAI).</li>
+      <li><strong>Spec-to-test:</strong> &ldquo;Derive tests from this specification.&rdquo; The AI reads the design and produces tests that verify the specified behavior, independent of the implementation.</li>
+    </ul>
+    <p>Code-to-test is structurally at odds with the V-model principle that tests verify the design, not the code. Tests generated from code will mirror the implementation &mdash; including its bugs. Spec-to-test aligns with requirements-based testing.</p>
+
+    <h4>Best Practices for AI-Assisted Testing</h4>
+    <ol>
+      <li><strong>Provide design specifications as context</strong>, not just code. AI test quality improves dramatically with a clear specification of expected behavior.</li>
+      <li><strong>Generate incrementally.</strong> One test class at a time. Review and validate before moving on.</li>
+      <li><strong>Explicitly prompt for edge cases.</strong> AI rarely generates boundary values, error paths, or concurrent access tests unless specifically asked.</li>
+      <li><strong>Review every test against the anti-pattern checklist</strong> (Section 3.5). AI tests frequently contain Mirror Tests, assertion-free tests, and over-mocking.</li>
+      <li><strong>Run mutation testing as the quality gate.</strong> Coverage metrics are insufficient. Mutation score is the reliable indicator of whether AI-generated tests actually catch faults.</li>
+      <li><strong>Treat AI tests as first drafts.</strong> They are starting points for a human engineer, not finished artifacts.</li>
+    </ol>
+
+    <h4>Safety-Critical Implications</h4>
+    <p>LLMs are non-deterministic and unexplainable, making formal tool qualification (DO-330 TQL-1, ISO 26262 Part 8) currently infeasible. AI-generated tests must be treated as <strong>developer artifacts subject to full human review</strong> &mdash; the same scrutiny as human-written tests, with additional attention to the failure modes listed above.</p>
+
+    <p>If an AI agent writes both the code and the tests, the &ldquo;tests verify design, not code&rdquo; principle is at risk &mdash; the agent may unconsciously align test expectations with implementation behavior rather than design intent. Independent human review of the test derivation rationale (the coverage matrix, not just the test code) is a mitigation.</p>
+  </section>
+
+  <!-- ===================== SECTION 4: V-MODEL CONSIDERATIONS ===================== -->
+  <section id="ut-vmodel-considerations">
+    <h2>V-Model Specific Considerations</h2>
+    <p class="lead">Beyond writing quality tests, the V-model imposes specific requirements on how unit testing is managed and documented.</p>
+
+    <h3>Test Independence</h3>
+    <p>Safety standards require varying degrees of independence between the person who writes the code and the person who writes or reviews the tests:</p>
+    <table class="field-table">
+      <thead>
+        <tr><th>Assurance Level</th><th>Independence Requirement</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Low (DAL D / ASIL A)</td><td>Same developer may write code and tests</td></tr>
+        <tr><td>Medium (DAL C / ASIL B)</td><td>Tests should be reviewed by someone other than the author</td></tr>
+        <tr><td>High (DAL A&ndash;B / ASIL C&ndash;D)</td><td>Tests should be derived and/or reviewed by an independent team</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Test Documentation</h3>
+    <p>Standards require documented evidence of testing. The level of formality scales with assurance:</p>
+    <ul>
+      <li><strong>Test plan</strong> (what will be tested, how, with what criteria for pass/fail)</li>
+      <li><strong>Test cases</strong> (the actual tests with expected results)</li>
+      <li><strong>Test results</strong> (evidence of execution: pass/fail, coverage metrics, environment)</li>
+      <li><strong>Traceability data</strong> (mapping from design elements to tests to results)</li>
+    </ul>
+
+    <h3>Traceability Requirements</h3>
+    <p>Unit tests must trace bidirectionally to the <span data-term="detailed-design">Detailed Design</span>:</p>
+    <ul>
+      <li><strong>Forward trace</strong> (design &rarr; test): every design element has at least one test</li>
+      <li><strong>Backward trace</strong> (test &rarr; design): every test maps to a specific design element</li>
+    </ul>
+    <p>Orphan tests (tests with no corresponding design element) are as problematic as orphan code &mdash; they indicate either missing design or scope creep in testing.</p>
+
+    <h3>Robustness Testing</h3>
+    <p>DO-178C requires robustness test cases at DAL C and above (Section 6.4.2.2): boundary values, error paths, timing edge cases, invalid state transitions, out-of-range inputs. ISO 26262 requires fault injection testing at ASIL C and D (Table 10). These map to Strategies 3 and 4 in Section 3.2.</p>
+
+    <h3>Regression Testing</h3>
+    <p>When code changes, all previously passing tests must continue to pass. In V-model terms, any code change that causes a previously-passing test to fail requires either a fix to the code (the change introduced a defect) or a documented update to the design and corresponding test update (the requirement changed).</p>
+  </section>
+
+  <!-- ===================== SECTION 5: FRAMEWORK INTEGRATION ===================== -->
+  <section id="ut-framework">
+    <h2>Framework Integration</h2>
+    <p class="lead">How <span data-term="unit-test">unit tests</span> integrate with the VModelWorkflow templates, schemas, and traceability system.</p>
+
+    <h3>Input: <span data-term="detailed-design">Detailed Design</span> Artifact</h3>
+    <p><span data-term="unit-test">Unit tests</span> are derived from the <span data-term="detailed-design">Detailed Design</span> artifact (defined in <code>schemas/artifacts/detailed-design.schema.yaml</code>). The derivation strategies in Section 3.2 map to the design artifact&rsquo;s structure:</p>
+    <ul>
+      <li><code>behavior</code> &rarr; Strategy 1 (requirement-based testing)</li>
+      <li><code>interfaces.inputs</code> &rarr; Strategies 2 and 3 (equivalence classes and boundaries)</li>
+      <li><code>error_handling</code> &rarr; Strategy 4 (error handling and fault injection)</li>
+      <li><code>internal_state</code> &rarr; State transition tests</li>
+      <li><code>configuration</code> &rarr; Configuration variant tests</li>
+    </ul>
+
+    <h3>Traceability Links</h3>
+    <p><span data-term="unit-test">Unit tests</span> participate in the following trace link types (defined in <code>schemas/traceability/link-types.yaml</code>):</p>
+    <div class="trace-flow">
+      <span class="artifact-ref" data-term="detailed-design">Detail Design</span>
+      <span class="arrow">&rarr; verified-by &rarr;</span>
+      <span class="artifact-ref" data-term="unit-test">Unit Test</span>
+    </div>
+    <div class="trace-flow">
+      <span class="artifact-ref" data-term="source-code">Source Code</span>
+      <span class="arrow">&rarr; verified-by &rarr;</span>
+      <span class="artifact-ref" data-term="unit-test">Unit Test</span>
+    </div>
+
+    <h3>Coverage Matrix as Trace Validation</h3>
+    <p>The coverage matrix (Section 3.2) is not just a testing tool &mdash; it is a traceability artifact. It provides the mapping that the traceability validation engine needs to check completeness: every design element has a test, every test maps to a design element.</p>
+
+    <h3>Test Result Artifacts</h3>
+    <p>Test execution produces result artifacts that feed into the traceability system: test execution logs, pass/fail status per test case, structural coverage reports, and the coverage matrix with pass/fail annotations.</p>
+  </section>
+
+  <!-- ===================== SECTION 6: AI SKILLS ===================== -->
+  <section id="ut-skills">
+    <h2>AI Skills Integration</h2>
+    <div class="stub-banner">
+      <h3>Coming Soon</h3>
+      <p>This section will document how the <code>derive-test-cases</code> craft skill and future test review skills integrate with this documentation. The craft skills are distilled extractions of Sections 3.1&ndash;3.6, optimized for LLM consumption.</p>
+    </div>
+  </section>
+
+  <!-- ===================== REFERENCES ===================== -->
+  <section id="ut-references">
+    <h2>References</h2>
+
+    <h3>Books</h3>
+    <table class="field-table">
+      <thead>
+        <tr><th>Author</th><th>Title</th><th>Publisher, Year</th><th>Relevant Chapters</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Kent Beck</td><td><em>Test-Driven Development: By Example</em></td><td>Addison-Wesley, 2003</td><td>TDD as specification; red-green-refactor</td></tr>
+        <tr><td>Robert C. Martin</td><td><em>Clean Code: A Handbook of Agile Software Craftsmanship</em></td><td>Prentice Hall, 2008</td><td>Ch. 9: Unit Tests (F.I.R.S.T., readability)</td></tr>
+        <tr><td>Gerard Meszaros</td><td><em>xUnit Test Patterns: Refactoring Test Code</em></td><td>Addison-Wesley, 2007</td><td>Test double taxonomy; test smell catalog; Assertion Roulette</td></tr>
+        <tr><td>Steve Freeman &amp; Nat Pryce</td><td><em>Growing Object-Oriented Software, Guided by Tests</em></td><td>Addison-Wesley, 2009</td><td>Ch. 8: &ldquo;Only mock types you own&rdquo;; London school TDD</td></tr>
+        <tr><td>Michael Feathers</td><td><em>Working Effectively with Legacy Code</em></td><td>Prentice Hall, 2004</td><td>Testability as design signal; characterization tests; seams</td></tr>
+        <tr><td>Gojko Adzic</td><td><em>Specification by Example</em></td><td>Manning, 2011</td><td>Tests as living documentation</td></tr>
+        <tr><td>Roy Osherove</td><td><em>The Art of Unit Testing</em></td><td>Manning, 2009 (2nd ed. 2013)</td><td>Test naming conventions; test structure</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Articles and Web Sources</h3>
+    <ul>
+      <li>Beck, Kent. <a href="https://medium.com/@kentbeck_7670/programmer-test-principles-d01c064d7934">&ldquo;Programmer Test Principles&rdquo;</a>, Medium, 2019</li>
+      <li>Fowler, Martin. <a href="https://martinfowler.com/articles/mocksArentStubs.html">&ldquo;Mocks Aren&rsquo;t Stubs&rdquo;</a>, martinfowler.com, 2007</li>
+      <li>Fowler, Martin. <a href="https://martinfowler.com/bliki/UnitTest.html">&ldquo;Unit Test&rdquo;</a>, martinfowler.com (sociable vs. solitary taxonomy)</li>
+      <li>Fowler, Martin. <a href="https://martinfowler.com/bliki/TestPyramid.html">&ldquo;Test Pyramid&rdquo;</a>, martinfowler.com</li>
+      <li>Fowler, Martin. <a href="https://martinfowler.com/articles/practical-test-pyramid.html">&ldquo;The Practical Test Pyramid&rdquo;</a>, martinfowler.com</li>
+      <li>Bernstein, David. <a href="https://tobeagile.com/test-behaviors-not-implementations/">&ldquo;Test Behaviors, Not Implementations&rdquo;</a>, tobeagile.com</li>
+      <li>van Deursen, Arie et al. <a href="https://testsmells.org/">&ldquo;Refactoring Test Code&rdquo;</a>, XP2001 conference, 2001</li>
+      <li>Meszaros, Gerard. <a href="http://xunitpatterns.com/TestSmells.html">Test Smells catalog</a>, xunitpatterns.com</li>
+      <li>Findmypast Tech. <a href="https://tech.findmypast.com/dont-mock-what-you-dont-own/">&ldquo;Don&rsquo;t mock what you don&rsquo;t own&rdquo;</a></li>
+      <li>Stack Overflow Blog. <a href="https://stackoverflow.blog/2022/11/03/multiple-assertions-per-test-are-fine/">&ldquo;Stop requiring only one assertion per unit test&rdquo;</a>, 2022</li>
+    </ul>
+
+    <h3>Standards</h3>
+    <ul>
+      <li>RTCA DO-178C, &ldquo;Software Considerations in Airborne Systems and Equipment Certification&rdquo;, 2011. Sections 6.3, 6.4, 6.4.2, 6.4.4.</li>
+      <li>ISO 26262-6:2018, &ldquo;Road vehicles &mdash; Functional safety &mdash; Part 6: Product development at the software level.&rdquo; Tables 10, 11, 12.</li>
+      <li>Automotive SPICE (ASPICE) v3.1, Process SWE.4: Software Unit Verification.</li>
+      <li>IEC 62304:2006+AMD1:2015, &ldquo;Medical device software &mdash; Software life cycle processes.&rdquo; Section 5.5.</li>
+    </ul>
+
+    <h3>Empirical Studies and Industry Data</h3>
+    <ul>
+      <li>NIST. <a href="https://www.nist.gov/document/report02-3pdf">&ldquo;The Economic Impacts of Inadequate Infrastructure for Software Testing&rdquo;</a>, Planning Report 02-3, 2002</li>
+      <li>Google Testing Blog. <a href="https://testing.googleblog.com/2016/05/flaky-tests-at-google-and-how-we.html">&ldquo;Flaky Tests at Google and How We Mitigate Them&rdquo;</a>, 2016</li>
+      <li>Yuan et al. <a href="https://arxiv.org/html/2406.18181v1">&ldquo;On the Evaluation of Large Language Models in Unit Test Generation&rdquo;</a>, 2024</li>
+      <li>TU Delft. <a href="https://dl.acm.org/doi/10.1145/3644032.3644443">&ldquo;Using GitHub Copilot for Test Generation in Python: An Empirical Study&rdquo;</a>, AST 2024</li>
+      <li><a href="https://arxiv.org/html/2506.02954v2">&ldquo;On Mutation-Guided Unit Test Generation&rdquo;</a>, 2025</li>
+      <li>Islam et al. <a href="https://arxiv.org/html/2602.00409v1">&ldquo;Are Coding Agents Generating Over-Mocked Tests?&rdquo;</a>, MSR 2026</li>
+    </ul>
+  </section>
+
+</main>
+
+<script src="../js/domain.js"></script>
+<script>
+  // Initialize domain translation
+  const dm = createDomainManager(document);
+
+  // Load domain plugins
+  ['do178c', 'aspice'].forEach(id => {
+    fetch('../domains/' + id + '.json')
+      .then(r => r.json())
+      .then(plugin => {
+        dm.registerDomain(plugin);
+      })
+      .catch(() => {});
+  });
+
+  // Domain switcher
+  const select = document.getElementById('domain-select');
+  if (select) {
+    select.addEventListener('change', function() {
+      dm.switchDomain(this.value);
+      dm.applyToDOM();
+    });
+  }
+
+  // Smooth scroll for sidebar links
+  document.querySelectorAll('.sidebar-nav a[href^="#"]').forEach(link => {
+    link.addEventListener('click', function(e) {
+      const target = document.querySelector(this.getAttribute('href'));
+      if (target) {
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        this.classList.add('active');
+      }
+    });
+  });
+
+  // Highlight active section on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.sidebar-nav a[href^="#"]');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(link => {
+          link.classList.toggle('active',
+            link.getAttribute('href') === '#' + entry.target.id);
+        });
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

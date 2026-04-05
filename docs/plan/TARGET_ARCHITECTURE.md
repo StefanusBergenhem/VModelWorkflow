@@ -114,12 +114,15 @@ Links are many-to-many, typed, attributed, and stored separately from artifacts.
 
 The single source of truth for all domain knowledge. Everything else (templates, skills) is derived from or validated against the documentation.
 
-**Per artifact type / V-model activity, documentation covers:**
-1. **V-model context** — Where does this artifact sit? What level? What are the inputs/outputs? Why does it exist?
-2. **Best practices** — How to produce a high-quality artifact. Detailed, exhaustive guidance. Enough for a junior engineer to produce industry-standard output.
-3. **Anti-patterns** — What to avoid, with examples of common mistakes.
-4. **Examples** — Concrete illustrations of good and bad artifacts.
+**Per artifact type, documentation follows a 6-section structure (see BACKLOG.md for details):**
+1. **What it is** — V-model independent introduction to the artifact type
+2. **V-model context** — Where does this artifact sit? What level? What are the inputs/outputs? Standards perspective.
+3. **Producing a quality workproduct** — THE BULK. Organized by knowledge domains (not procedures). Best practices, patterns, anti-patterns, quality metrics, concrete examples for every principle. V-model independent, craft-level. Enough for a junior engineer to produce industry-standard output.
+4. **V-model specific considerations** — Additional V-model gotchas beyond general quality (traceability, independence, dead code rules)
 5. **Framework integration** — Which template to use, how it links in the traceability model, which AI skills are coupled to this artifact type.
+6. **AI skills integration** — How the corresponding craft/framework skills relate to this documentation (stub until skills are built).
+
+**Each documentation page requires thorough research before writing** — see "Procedure: Research Before Documentation" in BACKLOG.md. Typical research: 1 standards doc + 3-5 craft best practices docs + 1 AI-specific doc.
 
 **Scope:** Not a summary — equivalent in depth to the union of major V-model standards (DO-178C, ISO 26262, ASPICE, IEC 62304, EN 50128), expressed in generic V-model terms. This is a major content effort but is non-negotiable: the documentation proves the framework is sound, and AI skills are derived from it.
 

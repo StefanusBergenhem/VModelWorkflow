@@ -16,7 +16,7 @@ Questions identified during architecture refinement (2026-04-05) that need resol
 
 4. **Orchestration commonality:** Each V-model layer gets its own implementation loop initially. After building 3-4 layers, what patterns emerge? When do we refactor to shared orchestration?
 
-5. **Documentation format:** The exhaustive per-artifact documentation — is it markdown files in docs/? Integrated into the HTML guide? Both? Current thinking: markdown source files that feed into the HTML guide.
+5. **Documentation format:** ~~RESOLVED (2026-04-05).~~ Per-artifact documentation is HTML pages in `docs/guide/artifacts/`. Three-tier knowledge system: research (raw sources) → HTML docs (refined, single source of truth) → agent skills (LLM-distilled). No markdown intermediate layer — absorbed into HTML and deleted.
 
 6. **Test environment argumentation:** Host/target-like/target test environment selection and justification. Deferred until system test work begins.
 
@@ -116,28 +116,50 @@ Single source of truth. AI skills are derived from this. Per-artifact documentat
 
 ### Documentation Structure Per Artifact Type
 
-Each artifact type gets a complete documentation page covering:
-1. V-model context (what, where, why, inputs/outputs)
-2. Best practices (how to produce a high-quality artifact)
-3. Anti-patterns (common mistakes with examples)
-4. Examples (good and bad)
-5. Framework integration (template reference, traceability links, related AI skills)
+Each artifact type gets a comprehensive HTML page (`docs/guide/artifacts/<artifact>.html`) covering:
+1. What it is (V-model independent introduction)
+2. V-model context (where it fits, why, standards perspective)
+3. Producing a quality workproduct (the bulk — V-model independent, craft-level)
+   - Best practices, patterns/anti-patterns, quality metrics, examples for every principle
+4. V-model specific considerations (if any additional V-model gotchas)
+5. Framework integration (our templates, schemas, traceability)
+6. AI skills integration (future — how agent skills relate)
 
-### 3.1 Code Implementation Documentation (current — lowest V-level)
+Priority: quality workproduct first, V-model fit second.
 
-- [x] Clean code best practices (`docs/guide/best-practices/implementation/`)
-- [ ] V-model context for code implementation (where code sits in V-model, what "implements" means, relationship to detailed design)
-- [ ] Anti-patterns for code implementation (beyond clean code — V-model specific: untraceable code, scope creep beyond design, missing error handling specified in design)
-- [ ] Examples of good and bad implementation relative to detailed design input
-- [ ] Framework integration section (how code links to detailed design via traceability, how test results link back)
+### 3.1 Code Implementation Documentation (DONE — lowest V-level)
 
-### 3.2 Unit Test Documentation (current — lowest V-level)
+- [x] Complete artifact page: `docs/guide/artifacts/source-code.html` (1200+ lines)
+- [x] Section 1: What is source code (general intro)
+- [x] Section 2: V-model context (position, "implements" meaning, standards perspective)
+- [x] Section 3: Producing quality source code (coding standards, SOLID, clean code, DRY/KISS/YAGNI, function/class design, code smells, immutability, design patterns, architecture at code level, hexagonal/ports-adapters, testability, cohesion/coupling, AI-assisted development, code review checklist)
+- [x] Section 4: V-model specific considerations (traceability, dead code, gold plating, source-to-object, review independence)
+- [x] Section 5: Framework integration (detailed design input, trace links, artifact envelope, review record)
+- [x] Section 6: AI skills integration (stub)
+- [x] Absorbed and deleted `docs/guide/best-practices/implementation/` (5 markdown files)
 
-- [ ] V-model context for unit testing (verification of detailed design, what "verifies" means at this level)
-- [ ] Best practices for unit test writing (test derivation strategies: requirement-based, equivalence partitioning, boundary value analysis, fault injection)
-- [ ] Anti-patterns for unit testing (code-based testing instead of requirement-based, testing implementation details, missing coverage criteria)
-- [ ] Examples of good and bad unit tests relative to detailed design input
-- [ ] Framework integration section (how tests trace to detailed design, coverage criteria per assurance level)
+> Done: `docs/guide/artifacts/source-code.html`
+
+### 3.2 Unit Test Documentation (DONE — lowest V-level, reworked 2026-04-05)
+
+- [x] Complete artifact page: `docs/guide/artifacts/unit-test.html` (1150+ lines)
+- [x] Section 1: What is unit testing (general intro)
+- [x] Section 2: V-model context ("tests verify design, not code", standards perspective, coverage criteria by assurance level)
+- [x] Section 3: Producing quality unit tests — 7 knowledge-domain subsections:
+  - [x] 3.1 Test design principles (behavior vs implementation, tests as specifications, assertion quality, testability as design signal, F.I.R.S.T. properties, economics)
+  - [x] 3.2 Test derivation strategies (4 strategies with examples, coverage matrix — reframed from procedure to knowledge)
+  - [x] 3.3 Test structure and readability (AAA, naming conventions, parameterized tests, @Nested, reducing noise)
+  - [x] 3.4 Test doubles (Meszaros taxonomy, state vs behavior verification, preference hierarchy, over-mocking, contract testing)
+  - [x] 3.5 Test smells and maintainability (8 smells, fragile test deep dive, anti-patterns, builders, custom assertions)
+  - [x] 3.6 Coverage and completeness (requirements vs structural, MC/DC, mutation testing as quality metric)
+  - [x] 3.7 AI-assisted test development (empirical data, failure modes, spec-to-test vs code-to-test, safety implications)
+- [x] Section 4: V-model specific considerations (independence, documentation, traceability, robustness, regression)
+- [x] Section 5: Framework integration (design artifact mapping, trace links, coverage matrix as trace validation)
+- [x] Section 6: AI skills integration (stub)
+- [x] Absorbed and deleted `docs/guide/best-practices/testing/` (3 markdown files)
+- [x] Backed by 6 research documents in `research/implementation/`
+
+> Done: `docs/guide/artifacts/unit-test.html`
 
 ### 3.3 Detailed Design Documentation (next — one layer up)
 
@@ -215,7 +237,7 @@ Two categories: craft skills (standalone, derived from documentation) and framew
 - [ ] code-implementation orchestration — agent-orchestrated implement → self-check → review loop for code + tests
 - [ ] code-review framework skill — review agent validates code against detailed design, template, traceability
 
-> Eval results (iteration 1, Haiku, combined): +67% delta vs baseline. Research: `research/implementation/`. Docs: `docs/guide/best-practices/implementation/`.
+> Eval results (iteration 1, Haiku, combined): +67% delta vs baseline. Research: `research/implementation/`. Docs: `docs/guide/artifacts/source-code.html`.
 
 ### 4.2 Unit Test Skills (current — lowest V-level)
 
@@ -307,11 +329,11 @@ Bottom-up, one V-model layer at a time. For each layer: documentation first, the
 ### Phase 1: Lowest V-Level (Code + Unit Tests) — CURRENT
 
 ```
-1. Documentation for code implementation (3.1)
-   └── V-model context, anti-patterns, examples, framework integration
-2. Documentation for unit testing (3.2)
-   └── V-model context, test derivation best practices, coverage criteria
-3. Framework skills for code + unit test layer (4.1, 4.2)
+1. [DONE] Documentation for code implementation (3.1)
+   └── docs/guide/artifacts/source-code.html — comprehensive, 6 sections
+2. [DONE] Documentation for unit testing (3.2)
+   └── docs/guide/artifacts/unit-test.html — comprehensive, 6 sections
+3. [NEXT] Framework skills for code + unit test layer (4.1, 4.2)
    └── Orchestration loop, review skills, traceability integration
 4. Traceability: link type rules for code ↔ detailed design (2A partial)
 ```
@@ -383,3 +405,105 @@ Bottom-up, one V-model layer at a time. For each layer: documentation first, the
 10. **Incremental always.** Module-by-module. Layer-by-layer.
 11. **Follow agentskills.io spec.** SKILL.md format, progressive disclosure, scripts for determinism.
 12. **Use `/skill-creator` for development.** Draft, test, evaluate, iterate.
+
+---
+
+## Procedure: Research Before Documentation
+
+Every artifact documentation page (Component 3) requires thorough research before writing. This procedure ensures the documentation is authoritative, sourced, and at the caliber needed to serve as the single source of truth from which AI skills are derived.
+
+### Why This Exists
+
+The unit test documentation (3.2) was initially written from V-model standards research alone. On review, it read like an expanded agent skill — procedural, thin on craft knowledge, organized as workflow steps rather than knowledge domains. The source code documentation (3.1), which had three research documents behind it (standards, clean code best practices, and a synthesis), was significantly deeper. The difference is directly attributable to research depth.
+
+**Rule: documentation quality is bounded by research quality.** No amount of writing skill compensates for thin source material.
+
+### Research Categories Per Artifact
+
+Each artifact documentation page covers six sections. Research must support all of them, but the bulk goes to Section 3 (producing quality work products). The research breaks into three categories:
+
+#### Category A: V-Model Standards Research
+**What:** What do DO-178C, ISO 26262, ASPICE, and IEC 62304 specifically require or recommend for this artifact type? Cross-standard comparison tables. Scaling by assurance level.
+
+**Already done for:** Source code (`research/implementation/v-model-standards-implementation.md`), Unit tests (`research/implementation/v-model-standards-unit-testing.md`).
+
+**Typical output:** One research document, 300-500 lines. Covers each standard's specific sections, then a cross-standard comparison.
+
+#### Category B: Craft Best Practices Research
+**What:** The professional engineering knowledge needed to produce a high-quality artifact of this type, independent of any V-model or safety standard. This is the equivalent of "Clean Code" for source code — the authoritative body of knowledge from recognized experts.
+
+**This is the bulk of the research and the most commonly underestimated.** For each artifact type, identify:
+
+1. **Foundational authors and works** — who are the recognized authorities? (e.g., for source code: Martin, Fowler, Beck, Meszaros, Freeman/Pryce. For requirements: Robertson, Wiegers, Hull/Jackson/Dick, Mavin for EARS.)
+2. **Core principles and philosophy** — the "why" behind the practices, not just the "how"
+3. **Patterns and anti-patterns** — with concrete examples, attributed to sources
+4. **Quality metrics** — measurable indicators of quality for this artifact type
+5. **Common mistakes** — what goes wrong in practice, with empirical data where available
+
+**Expect 3-5 research documents per artifact type for this category.** The source code chapter needed: SOLID/clean code, architecture patterns, design patterns, AI-assisted development. The unit test chapter needs: test design philosophy, test doubles, test smells/maintainability, test organization, AI test quality.
+
+**Typical output per document:** 300-600 lines. Specific claims attributed to specific sources with URLs.
+
+#### Category C: AI-Specific Research
+**What:** How does AI-assisted development specifically affect this artifact type? Empirical data on AI quality for this artifact. Common AI failure modes. Mitigation strategies.
+
+**Typical output:** One research document, 200-400 lines. Must include quantitative data where available (2023-2025 studies preferred).
+
+### Research Quality Bar
+
+Each research document must meet these criteria:
+
+- **Attributed claims.** Every factual claim cites a specific source. No "it is generally accepted that..." without a source.
+- **Real sources.** Web-searchable, verifiable. Published books, peer-reviewed papers, recognized industry blogs (Fowler, Google Testing Blog), official standards documents. Never present LLM training knowledge as research.
+- **Cross-referenced.** Where multiple sources address the same topic, note agreement or disagreement.
+- **Practical examples.** Key concepts illustrated with concrete code or artifact examples.
+- **Honest about gaps.** If a claim's provenance is questionable, say so (e.g., the IBM "100x cost" data).
+
+### Procedure Steps
+
+For each artifact documentation page:
+
+```
+1. IDENTIFY research needs
+   - List the knowledge domains needed for Section 3 (quality workproduct)
+   - Check what research already exists in research/
+   - Gap analysis: what's covered vs. what's needed
+
+2. RESEARCH (parallelizable)
+   - Category A: V-model standards (if not already done)
+   - Category B: Craft best practices (typically 3-5 parallel research efforts)
+   - Category C: AI-specific concerns (1 research effort)
+   - All research written to research/ directory
+
+3. REVIEW research with human
+   - Present findings summary
+   - Identify gaps or areas needing deeper investigation
+   - Get approval before proceeding to documentation
+
+4. WRITE documentation
+   - Section 3 first (the bulk — craft knowledge)
+   - Sections 1-2 (intro and V-model context)
+   - Section 4 (V-model considerations)
+   - Section 5 (framework integration)
+   - Section 6 (AI skills — stub until skills are built)
+
+5. REVIEW documentation against source code chapter caliber
+   - Is Section 3 organized by knowledge domains (not procedures)?
+   - Does every principle have a concrete example (good and bad)?
+   - Is the depth comparable to source-code.html?
+   - Would this be useful to a human engineer with no AI agent context?
+```
+
+### Research Needs Per Upcoming Artifact (preliminary)
+
+| Artifact (Section) | Cat A: Standards | Cat B: Craft (estimated docs) | Cat C: AI |
+|---|---|---|---|
+| Unit Test (3.2 rework) | Done | 5 docs (in progress) | 1 doc (in progress) |
+| Detailed Design (3.3) | Needed | ~3-4 (design documentation, interface specification, algorithm description, state modeling) | Needed |
+| SW Architecture (3.4) | Needed | ~3-4 (component decomposition, architecture styles, interface design, modularity/coupling metrics) | Needed |
+| SW Requirements (3.5) | Partially done (EARS research exists) | ~3-4 (requirements engineering, EARS deep dive, testability/verifiability, requirements management) | Needed |
+| System Requirements (3.6) | Needed | ~2-3 (system-level requirements, allocation, derived requirements) | Needed |
+| System Test (3.7) | Needed | ~3-4 (system test strategy, test environment, acceptance criteria, regression strategy) | Needed |
+| Review (3.8) | Needed | ~2-3 (review techniques, inspection process, review psychology) | Needed |
+
+These estimates will be refined when each artifact's research phase begins.

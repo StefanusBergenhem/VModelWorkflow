@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Source Code — VModelWorkflow Guide</title>
+  <link rel="stylesheet" href="../css/main.css">
+</head>
+<body>
+
+<!-- ============================================================
+     SIDEBAR
+     ============================================================ -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <h1>VModelWorkflow</h1>
+    <div class="subtitle">V-Model Development Guide</div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-group">
+      <span class="nav-group-label">Navigation</span>
+      <a class="nav-link" href="../index.html">Back to Main Guide</a>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-group-label">Source Code</span>
+      <a class="nav-link" href="#sc-intro">What is Source Code?</a>
+      <a class="nav-link" href="#sc-vmodel">V-Model Context</a>
+      <a class="nav-link" href="#sc-quality">Producing Quality Code</a>
+      <a class="nav-link" href="#sc-coding-standards">Coding Standards</a>
+      <a class="nav-link" href="#sc-clean-code">Clean Code Principles</a>
+      <a class="nav-link" href="#sc-architecture">Architecture at Code Level</a>
+      <a class="nav-link" href="#sc-ai-development">AI-Assisted Development</a>
+      <a class="nav-link" href="#sc-code-review">Code Review</a>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-group-label">V-Model &amp; Framework</span>
+      <a class="nav-link" href="#sc-vmodel-considerations">V-Model Considerations</a>
+      <a class="nav-link" href="#sc-framework">Framework Integration</a>
+      <a class="nav-link" href="#sc-skills">AI Skills <span class="status-badge stub">stub</span></a>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-group-label">Related Artifacts</span>
+      <a class="nav-link" href="unit-test.html">Unit Test</a>
+    </div>
+  </nav>
+
+  <div class="domain-switcher">
+    <label for="domain-select">Domain Vocabulary</label>
+    <select id="domain-select">
+      <option value="generic">Generic V-Model</option>
+      <option value="do178c">DO-178C (Aviation)</option>
+      <option value="aspice">ASPICE / ISO 26262 (Automotive)</option>
+    </select>
+  </div>
+</aside>
+
+<!-- ============================================================
+     MAIN CONTENT
+     ============================================================ -->
+<main class="main-content" style="margin-left: var(--sidebar-width); padding: var(--space-3xl) var(--space-2xl); max-width: calc(var(--content-max) + var(--space-2xl) * 2 + var(--sidebar-width));">
+
+  <!-- ===================== SECTION 1: INTRO ===================== -->
+  <section id="sc-intro">
+    <div class="level-indicator bottom">Level 4 &mdash; Implementation</div>
+    <h2>What is Source Code?</h2>
+    <p class="lead">Source code is the human-readable instructions that tell a computer what to do. But in professional software engineering, source code is more than &ldquo;the thing that runs&rdquo; &mdash; it is a <strong>traceable engineering artifact</strong> that implements a design specification.</p>
+
+    <p>The distinction matters. Writing code that works is necessary but not sufficient. Professional source code must be:</p>
+    <ul>
+      <li><strong>Correct</strong> &mdash; it implements the design specification faithfully, no more and no less</li>
+      <li><strong>Verifiable</strong> &mdash; a tester can derive tests from the design and check that the code passes them</li>
+      <li><strong>Traceable</strong> &mdash; every public function, class, or module maps back to a specific design element</li>
+      <li><strong>Maintainable</strong> &mdash; another engineer (or a future version of yourself) can read, understand, and safely modify the code</li>
+      <li><strong>Reviewable</strong> &mdash; a reviewer can assess whether the code complies with the design and coding standards</li>
+    </ul>
+
+    <div class="card">
+      <h3>Code as a Communication Medium</h3>
+      <p>Code is read far more often than it is written. It communicates intent to three audiences: the compiler (which enforces syntax), the test suite (which enforces behavior), and other humans (who enforce understanding). Writing code that satisfies only the compiler is the lowest possible bar.</p>
+    </div>
+  </section>
+
+  <!-- ===================== SECTION 2: V-MODEL CONTEXT ===================== -->
+  <section id="sc-vmodel">
+    <h2><span data-term="source-code">Source Code</span> in the V-Model</h2>
+    <p class="lead"><span data-term="source-code">Source code</span> sits at the bottom of the V &mdash; the vertex where the left side (specification) meets the right side (verification). It is the concrete realization of the <span data-term="detailed-design">Detailed Design</span>.</p>
+
+    <h3>Position in the V</h3>
+    <p>The left arm of the V progressively decomposes abstract requirements into concrete designs:</p>
+    <div class="trace-flow">
+      <span class="artifact-ref" data-term="system-requirement">System Req</span>
+      <span class="arrow">&rarr;</span>
+      <span class="artifact-ref" data-term="sw-requirement">SW Req</span>
+      <span class="arrow">&rarr;</span>
+      <span class="artifact-ref" data-term="sw-architecture">Architecture</span>
+      <span class="arrow">&rarr;</span>
+      <span class="artifact-ref" data-term="detailed-design">Detail Design</span>
+      <span class="arrow">&rarr;</span>
+      <span class="artifact-ref" data-term="source-code">Source Code</span>
+    </div>
+    <p><span data-term="source-code">Source code</span> is the final output of the specification side. It takes the <span data-term="detailed-design">Detailed Design</span> as input and produces executable software. On the right side, <span data-term="unit-test">unit tests</span> verify that the code correctly implements the design.</p>
+
+    <h3>What &ldquo;Implements&rdquo; Means</h3>
+    <p>In V-model terms, implementation is a <strong>one-to-one mapping</strong> from design elements to code structures:</p>
+    <table class="field-table">
+      <thead>
+        <tr><th>Design Element</th><th>Code Structure</th><th>Traceability</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Unit (in detailed design)</td><td>Class or module</td><td>One design unit &rarr; one code file (typically)</td></tr>
+        <tr><td>Interface inputs/outputs</td><td>Method signatures</td><td>Types, names, and constraints match the design</td></tr>
+        <tr><td>Behavior rules</td><td>Method bodies</td><td>Logic implements each rule faithfully</td></tr>
+        <tr><td>Error handling</td><td>Exception handling, return codes</td><td>Each error condition has a corresponding code path</td></tr>
+        <tr><td>Internal state</td><td>Instance fields</td><td>State variables match the design specification</td></tr>
+        <tr><td>Configuration</td><td>Constructor parameters, config objects</td><td>Configurable values match design defaults and constraints</td></tr>
+      </tbody>
+    </table>
+
+    <div class="card">
+      <h4>The Implementation Contract</h4>
+      <p>Implementation is <strong>not freewheeling</strong>. The code must implement exactly what the design specifies &mdash; no more, no less. Adding functionality beyond the design (&ldquo;gold plating&rdquo;) creates untraceable code. Omitting functionality creates verification gaps. Both are compliance failures in safety-critical domains.</p>
+    </div>
+
+    <h3>Standards Perspective</h3>
+    <p>Every major safety standard explicitly addresses source code as a controlled artifact:</p>
+    <table class="field-table">
+      <thead>
+        <tr><th>Standard</th><th>Section</th><th>Key Requirement</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>DO-178C</td><td>&sect;5.3</td><td>Source code must implement the <span data-term="detailed-design">low-level requirements</span> and be developed per coding standards. Source-to-object code traceability required at DAL A.</td></tr>
+        <tr><td>ASPICE</td><td>SWE.3</td><td>Software units must be produced according to the detailed design. Coding standards compliance is a base practice.</td></tr>
+        <tr><td>ISO 26262</td><td>Part 6</td><td>Software unit implementation must follow coding guidelines including enforcement of low complexity, use of language subsets, and naming conventions.</td></tr>
+        <tr><td>IEC 62304</td><td>&sect;5.5</td><td>Software units must be implemented and verified per the software development plan. Coding standards required for Class B and C.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ===================== SECTION 3: QUALITY ===================== -->
+  <section id="sc-quality">
+    <h2>Producing Quality Source Code</h2>
+    <p class="lead">This section is the comprehensive guide to writing professional, industry-standard source code. It covers coding standards, clean code principles, architecture at the code level, AI-assisted development practices, and code review. Each principle includes a concrete example.</p>
+  </section>
+
+  <!-- ===================== 3.1: CODING STANDARDS ===================== -->
+  <section id="sc-coding-standards">
+    <h3>3.1 Coding Standards</h3>
+    <p>A coding standard is a documented set of rules governing how source code is written in a project. It is not a style preference &mdash; it is an engineering control required by every major safety standard.</p>
+
+    <h4>Why You Need a Coding Standard</h4>
+    <p>Every safety standard (DO-178C, ISO 26262, ASPICE, IEC 62304) requires a defined coding standard. The reasons are practical:</p>
+    <ul>
+      <li>Reduces ambiguity &mdash; two developers make the same choice for the same situation</li>
+      <li>Enables static analysis &mdash; tools can check compliance automatically</li>
+      <li>Reduces cognitive load during review &mdash; reviewers focus on logic, not formatting</li>
+      <li>Prevents dangerous language features &mdash; language subsets exclude error-prone constructs</li>
+    </ul>
+
+    <h4>Components of a Coding Standard</h4>
+
+    <h4>1. Naming Conventions</h4>
+    <p>Names are the primary documentation. A name should reveal intent, provide context, and be searchable.</p>
+
+    <div class="example-block bad">
+      <div class="example-label">Bad</div>
+      <div class="code-block"><code>double d = t * 7;
+int n = getN();
+void proc(String s) { ... }</code></div>
+    </div>
+    <div class="example-block good">
+      <div class="example-label">Good</div>
+      <div class="code-block"><code>double weeklyDistanceKm = dailyDistanceKm * DAYS_PER_WEEK;
+int activeConnectionCount = connectionPool.getActiveCount();
+void validateSensorReading(String rawReading) { ... }</code></div>
+    </div>
+
+    <p>Rules of thumb:</p>
+    <ul>
+      <li>Use domain vocabulary from the project glossary &mdash; if the design says &ldquo;fuel rate&rdquo;, the code says <code>fuelRate</code>, not <code>rate</code> or <code>fr</code></li>
+      <li>Boolean variables and methods read as true/false questions: <code>isValid</code>, <code>hasExpired</code>, <code>canRetry</code></li>
+      <li>Avoid abbreviations unless universally understood in the domain (<code>rpm</code>, <code>id</code>)</li>
+      <li>Class names are nouns (<code>SensorReader</code>), method names are verbs (<code>readSensor</code>)</li>
+    </ul>
+
+    <h4>2. Code Structure and Style</h4>
+    <ul>
+      <li>Consistent indentation (spaces or tabs &mdash; pick one, enforce it)</li>
+      <li>One concept per file &mdash; a class and its directly related types</li>
+      <li>Braces always, even for single-line blocks (prevents dangling-else bugs)</li>
+      <li>Import grouping: standard library, third-party, internal &mdash; separated by blank lines</li>
+    </ul>
+
+    <h4>3. Complexity Constraints</h4>
+    <p>Complexity limits are measurable, enforceable, and directly linked to defect rates.</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Metric</th><th>Limit</th><th>Why</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Cyclomatic complexity</td><td>&le; 10 per function</td><td>Above 10, defect probability increases sharply. Each independent path through a function adds 1.</td></tr>
+        <tr><td>Nesting depth</td><td>&le; 3&ndash;4 levels</td><td>Deep nesting makes control flow hard to follow. Extract nested blocks into named functions.</td></tr>
+        <tr><td>Function length</td><td>&le; 50 lines (target 5&ndash;15)</td><td>Short functions are easier to test, review, and understand.</td></tr>
+        <tr><td>File length</td><td>&le; 300&ndash;500 lines</td><td>Long files indicate a class doing too much.</td></tr>
+        <tr><td>Parameters per function</td><td>&le; 3&ndash;4</td><td>More parameters increase calling complexity. Group related parameters into an object.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="card">
+      <h4>Cyclomatic Complexity Explained</h4>
+      <p>Cyclomatic complexity counts the number of independent paths through a function. Start at 1, add 1 for each <code>if</code>, <code>else if</code>, <code>for</code>, <code>while</code>, <code>case</code>, <code>catch</code>, <code>&amp;&amp;</code>, or <code>||</code>.</p>
+      <div class="code-block"><span class="lang-label">Java</span><code>// Complexity: 1 (straight-line code)
+double calculateArea(double radius) {
+    return Math.PI * radius * radius;
+}
+
+// Complexity: 4 (1 + 3 conditions)
+String classify(int score) {
+    if (score >= 90) return "A";       // +1
+    else if (score >= 70) return "B";  // +1
+    else if (score >= 50) return "C";  // +1
+    else return "F";
+}</code></div>
+    </div>
+
+    <h4>4. Language Subset</h4>
+    <p>A language subset restricts which language features may be used. This prevents error-prone constructs that are legal but dangerous.</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Language</th><th>Established Standard</th><th>Key Restrictions</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>C</td><td>MISRA C:2023</td><td>No dynamic memory after init, no recursion, no pointer arithmetic beyond arrays</td></tr>
+        <tr><td>C++</td><td>AUTOSAR C++14 / JSF++ AV</td><td>No exceptions in safety-critical paths, no multiple inheritance of implementation, RAII required</td></tr>
+        <tr><td>Java</td><td>CERT Java / project-specific</td><td>No reflection in safety paths, no raw types, no mutable static fields</td></tr>
+      </tbody>
+    </table>
+
+    <p>Common prohibited patterns across languages:</p>
+    <ul>
+      <li><strong>Implicit type conversions</strong> that lose precision (e.g., <code>double</code> to <code>int</code>)</li>
+      <li><strong>Goto</strong> or unrestricted jumps</li>
+      <li><strong>Dynamic memory allocation</strong> in runtime loops (safety-critical systems)</li>
+      <li><strong>Mutable global state</strong> &mdash; makes concurrency and testing unpredictable</li>
+      <li><strong>Variadic functions</strong> &mdash; no compile-time type checking on arguments</li>
+    </ul>
+
+    <h4>5. Error Handling</h4>
+    <p>Error handling is not optional. Every error path must be explicitly handled.</p>
+    <ul>
+      <li>Use exceptions (or Result types) over error codes &mdash; error codes are easy to ignore</li>
+      <li>Use <code>Optional</code> / <code>Option</code> instead of returning <code>null</code></li>
+      <li>Never swallow exceptions with empty catch blocks</li>
+      <li>Fail fast &mdash; detect errors at system boundaries, not deep in business logic</li>
+      <li>Include diagnostic context in error messages (what failed, with what inputs, what was expected)</li>
+    </ul>
+
+    <div class="example-block bad">
+      <div class="example-label">Bad</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>// Swallowed exception, null return, no context
+Config loadConfig(String path) {
+    try {
+        return parser.parse(readFile(path));
+    } catch (Exception e) {
+        return null;  // caller gets null with no idea why
+    }
+}</code></div>
+    </div>
+    <div class="example-block good">
+      <div class="example-label">Good</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>// Specific exception, diagnostic context, fail-fast
+Config loadConfig(String path) {
+    String content = readFile(path);  // throws IOException — let it propagate
+    Config config = parser.parse(content);
+    if (!config.isValid()) {
+        throw new ConfigValidationException(
+            "Invalid config at " + path + ": " + config.getValidationErrors());
+    }
+    return config;
+}</code></div>
+    </div>
+
+    <h4>6. Comments and Documentation</h4>
+    <p>Comments explain <strong>why</strong>, not <strong>what</strong>. If you need a comment to explain what the code does, the code is not clear enough.</p>
+    <ul>
+      <li>Public API: document contracts (preconditions, postconditions, exceptions thrown)</li>
+      <li>Non-obvious business rules: explain the domain context</li>
+      <li>Do <em>not</em> comment obvious code &mdash; <code>i++ // increment i</code> adds noise, not clarity</li>
+      <li>Comments rot &mdash; when code changes, comments often don&rsquo;t. Prefer expressive code over explanatory comments</li>
+    </ul>
+
+    <h4>Scaling by Assurance Level</h4>
+    <p>Not every project needs the same rigor. Scale the coding standard to the assurance level:</p>
+    <table class="field-table">
+      <thead>
+        <tr><th>Aspect</th><th>Low Assurance</th><th>Medium Assurance</th><th>High Assurance</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Coding standard</td><td>Project-defined guidelines</td><td>Formal standard (e.g., project CERT subset)</td><td>Industry standard (MISRA, AUTOSAR) with tool enforcement</td></tr>
+        <tr><td>Complexity limits</td><td>Guidelines, not enforced</td><td>Enforced by CI, exceptions documented</td><td>Enforced by CI, no exceptions</td></tr>
+        <tr><td>Language subset</td><td>Avoid known pitfalls</td><td>Documented restricted features</td><td>Formal subset with static analysis verification</td></tr>
+        <tr><td>Code review</td><td>Peer review</td><td>Checklist-based review</td><td>Independent review with traceability check</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ===================== 3.2: CLEAN CODE ===================== -->
+  <section id="sc-clean-code">
+    <h3>3.2 Clean Code Principles</h3>
+    <p>Clean code principles are about writing code that humans can understand and safely modify. These principles are independent of any specific language or framework.</p>
+
+    <h4>SOLID Principles</h4>
+    <p>SOLID is the foundation of maintainable object-oriented design. Each principle solves a specific problem that, left unchecked, makes code brittle, hard to test, and expensive to change.</p>
+
+    <h4>Single Responsibility Principle (SRP)</h4>
+    <p>A class should have one, and only one, reason to change. &ldquo;Reason to change&rdquo; means one stakeholder or business rule.</p>
+    <p><strong>Practical test:</strong> Can you describe the class&rsquo;s purpose in one sentence without using &ldquo;and&rdquo;?</p>
+
+    <div class="example-block bad">
+      <div class="example-label">Bad &mdash; Three responsibilities in one class</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>class ReportGenerator {
+    List&lt;Sale&gt; fetchSalesData(DateRange range) { ... }  // data access
+    Report applyBusinessRules(List&lt;Sale&gt; sales) { ... }  // domain logic
+    void formatAndSendEmail(Report report) { ... }       // presentation + I/O
+}</code></div>
+    </div>
+    <div class="example-block good">
+      <div class="example-label">Good &mdash; One responsibility per class</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>class SalesRepository {
+    List&lt;Sale&gt; fetchByDateRange(DateRange range) { ... }
+}
+
+class SalesReportBuilder {
+    Report buildFrom(List&lt;Sale&gt; sales) { ... }
+}
+
+class ReportEmailSender {
+    void send(Report report, EmailAddress recipient) { ... }
+}</code></div>
+    </div>
+    <p>Now each class traces to one design element. Testing each is trivial. Changing data access doesn&rsquo;t affect email formatting.</p>
+
+    <h4>Open/Closed Principle (OCP)</h4>
+    <p>Software entities should be open for extension, closed for modification. New behavior should not require editing existing, tested code.</p>
+
+    <div class="example-block bad">
+      <div class="example-label">Bad &mdash; Adding a format requires modifying existing code</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>class ReportExporter {
+    void export(Report report, String format) {
+        if (format.equals("PDF")) { ... }
+        else if (format.equals("CSV")) { ... }
+        else if (format.equals("XML")) { ... }  // every new format = edit here
+    }
+}</code></div>
+    </div>
+    <div class="example-block good">
+      <div class="example-label">Good &mdash; New formats added without modifying existing code</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>interface ReportFormatter {
+    byte[] format(Report report);
+}
+
+class PdfFormatter implements ReportFormatter { ... }
+class CsvFormatter implements ReportFormatter { ... }
+// Adding XML: create XmlFormatter, no existing code changes
+
+class ReportExporter {
+    void export(Report report, ReportFormatter formatter) {
+        byte[] output = formatter.format(report);
+        // ...
+    }
+}</code></div>
+    </div>
+
+    <h4>Liskov Substitution Principle (LSP)</h4>
+    <p>Subtypes must be substitutable for their base types without altering program correctness. If code works with a base type, it must work with any derived type.</p>
+    <p><strong>Practical test:</strong> Can you replace every instance of the parent class with the child class and have all existing tests still pass?</p>
+
+    <div class="example-block bad">
+      <div class="example-label">Bad &mdash; Square violates Rectangle contract</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>class Rectangle {
+    void setWidth(int w) { this.width = w; }
+    void setHeight(int h) { this.height = h; }
+    int area() { return width * height; }
+}
+
+class Square extends Rectangle {
+    void setWidth(int w) { this.width = w; this.height = w; }  // surprise!
+    void setHeight(int h) { this.width = h; this.height = h; } // surprise!
+}
+
+// Code expecting Rectangle: set width=5, height=3, expect area=15
+// With Square: area is 9. Contract violated.</code></div>
+    </div>
+    <div class="example-block good">
+      <div class="example-label">Good &mdash; Model the actual relationship instead of forcing inheritance</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>interface Shape {
+    int area();
+}
+
+class Rectangle implements Shape {
+    private final int width, height;
+    Rectangle(int width, int height) { this.width = width; this.height = height; }
+    int area() { return width * height; }
+}
+
+class Square implements Shape {
+    private final int side;
+    Square(int side) { this.side = side; }
+    int area() { return side * side; }
+}
+
+// Both are Shapes. No inheritance means no broken contract.
+// Code that takes Shape and calls area() works correctly for both.</code></div>
+    </div>
+
+    <h4>Interface Segregation Principle (ISP)</h4>
+    <p>Clients should not be forced to depend on methods they do not use. Prefer several small, focused interfaces over one large interface.</p>
+
+    <div class="example-block bad">
+      <div class="example-label">Bad &mdash; Fat interface forces unnecessary implementations</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>interface Vehicle {
+    void drive();
+    void fly();
+    void sail();
+}
+// A car must implement fly() and sail() with empty bodies or exceptions</code></div>
+    </div>
+    <div class="example-block good">
+      <div class="example-label">Good &mdash; Segregated interfaces</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>interface Drivable { void drive(); }
+interface Flyable  { void fly(); }
+interface Sailable { void sail(); }
+
+class Car implements Drivable { ... }
+class Seaplane implements Drivable, Flyable, Sailable { ... }</code></div>
+    </div>
+
+    <h4>Dependency Inversion Principle (DIP)</h4>
+    <p>High-level modules should not depend on low-level modules. Both should depend on abstractions.</p>
+
+    <div class="example-block bad">
+      <div class="example-label">Bad &mdash; Business logic depends on infrastructure</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>class OrderService {
+    private MySqlDatabase db = new MySqlDatabase();  // hardwired dependency
+    void placeOrder(Order order) {
+        db.insert("orders", order.toMap());
+    }
+}</code></div>
+    </div>
+    <div class="example-block good">
+      <div class="example-label">Good &mdash; Both depend on abstraction</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>interface OrderRepository {
+    void save(Order order);
+}
+
+class OrderService {
+    private final OrderRepository repository;
+    OrderService(OrderRepository repository) { this.repository = repository; }
+    void placeOrder(Order order) { repository.save(order); }
+}
+
+// In production: new OrderService(new MySqlOrderRepository())
+// In tests: new OrderService(new InMemoryOrderRepository())</code></div>
+    </div>
+
+    <h4>DRY, KISS, YAGNI</h4>
+
+    <p><strong>DRY (Don&rsquo;t Repeat Yourself):</strong> Every piece of knowledge has a single, authoritative representation. Duplicated logic means duplicated bugs and inconsistent fixes.</p>
+
+    <div class="example-block bad">
+      <div class="example-label">Bad &mdash; DRY violation: tax logic duplicated across methods</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>class InvoiceService {
+    Money calculateTotal(List&lt;LineItem&gt; items) {
+        Money subtotal = sumItems(items);
+        Money tax = subtotal.multiply(0.21);  // tax logic here
+        return subtotal.add(tax);
+    }
+
+    Money calculateRefund(LineItem item) {
+        Money tax = item.price().multiply(0.21);  // same tax logic, duplicated
+        return item.price().add(tax);
+    }
+}
+// If tax rate changes to 0.25, you must find and update both places.
+// Miss one and invoices disagree with refunds.</code></div>
+    </div>
+    <div class="example-block good">
+      <div class="example-label">Good &mdash; Single source of truth for tax calculation</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>class TaxCalculator {
+    private static final BigDecimal TAX_RATE = new BigDecimal("0.21");
+    Money calculateTax(Money amount) { return amount.multiply(TAX_RATE); }
+}
+
+class InvoiceService {
+    private final TaxCalculator tax;
+    Money calculateTotal(List&lt;LineItem&gt; items) {
+        Money subtotal = sumItems(items);
+        return subtotal.add(tax.calculateTax(subtotal));
+    }
+    Money calculateRefund(LineItem item) {
+        return item.price().add(tax.calculateTax(item.price()));
+    }
+}</code></div>
+    </div>
+
+    <p><strong>KISS (Keep It Simple, Stupid):</strong> The simplest solution that works correctly is the best solution. Complexity is a cost, not a feature.</p>
+
+    <div class="example-block bad">
+      <div class="example-label">Bad &mdash; KISS violation: over-engineered for a simple task</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>// Task: check if a list contains a negative number
+boolean hasNegative(List&lt;Integer&gt; numbers) {
+    return numbers.stream()
+        .collect(Collectors.partitioningBy(n -> n < 0))
+        .get(true)
+        .stream()
+        .findFirst()
+        .isPresent();
+}</code></div>
+    </div>
+    <div class="example-block good">
+      <div class="example-label">Good &mdash; Simplest correct solution</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>boolean hasNegative(List&lt;Integer&gt; numbers) {
+    return numbers.stream().anyMatch(n -> n < 0);
+}</code></div>
+    </div>
+
+    <p><strong>YAGNI (You Ain&rsquo;t Gonna Need It):</strong> Don&rsquo;t build for hypothetical future requirements. Build what is needed now, make it clean, and extend later if needed.</p>
+
+    <div class="example-block bad">
+      <div class="example-label">Bad &mdash; YAGNI violation: building for hypothetical future</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>// Requirement: "Calculate fuel rate from a sensor reading"
+// Developer builds: a plugin system, three strategy interfaces, a factory,
+// and a config-driven pipeline — because "we might need multiple algorithms someday"
+
+interface FuelStrategy { double calculate(double input); }
+interface FuelStrategyFactory { FuelStrategy create(String name); }
+class FuelStrategyRegistry { ... }
+class ConfigDrivenFuelPipeline { ... }
+// 200 lines of framework for a 5-line calculation</code></div>
+    </div>
+    <div class="example-block good">
+      <div class="example-label">Good &mdash; Build what is needed now</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>// Requirement: "Calculate fuel rate from a sensor reading"
+double calculateFuelRate(double rawRate, double correctionFactor) {
+    return rawRate * correctionFactor;
+}
+// If a second algorithm is needed later, refactor then.
+// You'll know the actual requirement, not a guess.</code></div>
+    </div>
+
+    <div class="card">
+      <h4>The Tension Between DRY and KISS</h4>
+      <p>DRY can conflict with KISS. Extracting three similar-but-different code blocks into a shared abstraction satisfies DRY but may introduce a complex abstraction that violates KISS. The rule of thumb: tolerate duplication until you&rsquo;ve seen the pattern three times (the &ldquo;Rule of Three&rdquo;). Then extract, because by the third occurrence you understand the actual commonality.</p>
+    </div>
+
+    <h4>Function Design</h4>
+    <p>Functions are the atomic unit of code. Well-designed functions make code readable, testable, and composable.</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Rule</th><th>Guideline</th><th>Why</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Length</td><td>5&ndash;15 lines (max 50)</td><td>Short functions do one thing and are easy to name</td></tr>
+        <tr><td>Do one thing</td><td>Describable in one sentence without &ldquo;and&rdquo;</td><td>Enables meaningful names and focused testing</td></tr>
+        <tr><td>One abstraction level</td><td>Don&rsquo;t mix high-level orchestration with low-level byte manipulation</td><td>Mixing levels makes code hard to follow</td></tr>
+        <tr><td>Arguments</td><td>&le; 3 (ideally 0&ndash;2)</td><td>Many arguments suggest the function is doing too much</td></tr>
+        <tr><td>No side effects</td><td>A function named <code>validate</code> should not also save to database</td><td>Hidden effects cause bugs that are hard to trace</td></tr>
+        <tr><td>No flag arguments</td><td>Don&rsquo;t pass booleans that switch behavior</td><td>A boolean argument means the function does two things</td></tr>
+      </tbody>
+    </table>
+
+    <div class="example-block bad">
+      <div class="example-label">Bad &mdash; Function does multiple things at different abstraction levels</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>void processOrder(Order order) {
+    // Validate
+    if (order.getItems().isEmpty()) throw new ValidationException("no items");
+    if (order.getTotal() < 0) throw new ValidationException("negative total");
+    // Calculate tax
+    double tax = order.getTotal() * 0.21;
+    order.setTax(tax);
+    // Save
+    String sql = "INSERT INTO orders (id, total, tax) VALUES (?, ?, ?)";
+    db.execute(sql, order.getId(), order.getTotal(), tax);
+    // Send email
+    emailService.send(order.getCustomerEmail(), "Order confirmed", buildBody(order));
+}</code></div>
+    </div>
+    <div class="example-block good">
+      <div class="example-label">Good &mdash; Each function does one thing at one abstraction level</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>void processOrder(Order order) {
+    validateOrder(order);
+    applyTax(order);
+    orderRepository.save(order);
+    notificationService.sendConfirmation(order);
+}</code></div>
+    </div>
+
+    <h4>Class Design</h4>
+    <ul>
+      <li><strong>Single Responsibility</strong> &mdash; same as SRP above, applied at the class level</li>
+      <li><strong>High Cohesion</strong> &mdash; all methods in a class operate on the same data. If half the methods ignore half the fields, the class has low cohesion and should be split.</li>
+      <li><strong>Composition over Inheritance</strong> &mdash; prefer &ldquo;has-a&rdquo; over &ldquo;is-a&rdquo;. Inheritance couples parent and child tightly and makes changes to the parent ripple unpredictably.</li>
+      <li><strong>Depend on Abstractions at Boundaries</strong> &mdash; at the edges of your module (where it talks to I/O, databases, external services), depend on interfaces, not implementations.</li>
+    </ul>
+
+    <div class="example-block bad">
+      <div class="example-label">Bad &mdash; Inheritance for code reuse</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>// SpecialStack extends ArrayList just to reuse add/get methods
+class SpecialStack extends ArrayList&lt;String&gt; {
+    // Inherits 30+ methods, most of which break stack semantics
+    // e.g., .add(0, item) inserts at bottom — not stack behavior
+}</code></div>
+    </div>
+    <div class="example-block good">
+      <div class="example-label">Good &mdash; Composition: use a list, don&rsquo;t be a list</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>class SpecialStack {
+    private final List&lt;String&gt; items = new ArrayList&lt;&gt;();
+    void push(String item) { items.add(item); }
+    String pop() { return items.remove(items.size() - 1); }
+    String peek() { return items.get(items.size() - 1); }
+    boolean isEmpty() { return items.isEmpty(); }
+    // Only stack operations exposed — no way to break semantics
+}</code></div>
+    </div>
+
+    <h4>Code Smells</h4>
+    <p>Code smells are surface indicators of deeper design problems. Recognizing them is the first step to refactoring.</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Smell</th><th>Symptom</th><th>Refactoring</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Long Method</td><td>Function &gt; 20 lines with multiple concerns</td><td>Extract Method</td></tr>
+        <tr><td>Large Class</td><td>Class with &gt; 10 fields or responsibilities</td><td>Extract Class</td></tr>
+        <tr><td>Feature Envy</td><td>Method uses more data from another class than its own</td><td>Move Method</td></tr>
+        <tr><td>Data Clumps</td><td>Same group of parameters passed together repeatedly</td><td>Introduce Parameter Object</td></tr>
+        <tr><td>Primitive Obsession</td><td>Using <code>String</code> for email, <code>int</code> for temperature</td><td>Replace with Value Object</td></tr>
+        <tr><td>Switch Statements</td><td>Same switch/if-else chain in multiple places</td><td>Replace with Polymorphism</td></tr>
+        <tr><td>Shotgun Surgery</td><td>One change requires editing many classes</td><td>Move related logic together</td></tr>
+        <tr><td>Dead Code</td><td>Unreachable or unused code</td><td>Delete it</td></tr>
+        <tr><td>Speculative Generality</td><td>Abstractions for &ldquo;someday&rdquo; use cases</td><td>Remove until actually needed</td></tr>
+        <tr><td>Magic Numbers</td><td>Unnamed numeric literals in logic</td><td>Extract Named Constant</td></tr>
+      </tbody>
+    </table>
+
+    <div class="example-block bad">
+      <div class="example-label">Bad &mdash; Primitive obsession and magic number</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>void applyDiscount(double price, int type) {
+    if (type == 1) return price * 0.9;
+    if (type == 2) return price * 0.8;
+    // What is type 1? What is 0.9?
+}</code></div>
+    </div>
+    <div class="example-block good">
+      <div class="example-label">Good &mdash; Named constants and meaningful types</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>enum DiscountType { MEMBER, VIP }
+static final double MEMBER_DISCOUNT = 0.10;
+static final double VIP_DISCOUNT = 0.20;
+
+Money applyDiscount(Money price, DiscountType type) {
+    return switch (type) {
+        case MEMBER -> price.subtract(price.multiply(MEMBER_DISCOUNT));
+        case VIP -> price.subtract(price.multiply(VIP_DISCOUNT));
+    };
+}</code></div>
+    </div>
+
+    <h4>Immutability</h4>
+    <p>Immutable objects cannot be changed after creation. This eliminates an entire category of bugs: unexpected mutation, stale references, and concurrency issues.</p>
+
+    <div class="example-block good">
+      <div class="example-label">Good &mdash; Java Record as immutable value object</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>// Java 17 record: immutable by default, equals/hashCode/toString generated
+record SensorReading(String sensorId, double valueCelsius, Instant timestamp) {
+    SensorReading {
+        if (sensorId == null || sensorId.isBlank()) {
+            throw new IllegalArgumentException("sensorId must not be blank");
+        }
+    }
+}</code></div>
+    </div>
+
+    <p>Guidelines:</p>
+    <ul>
+      <li>Make fields <code>final</code> by default. Only make them mutable with explicit justification.</li>
+      <li>Use records or value objects for data that doesn&rsquo;t change after creation.</li>
+      <li>Return defensive copies of mutable collections from getters.</li>
+      <li>Exception: performance-critical inner loops where object allocation is measured as a bottleneck.</li>
+    </ul>
+
+    <h4>Design Patterns</h4>
+    <p>The Gang of Four (GoF) catalogued 23 design patterns in 1994, organized into Creational, Structural, and Behavioral categories. Not all 23 are equally useful in modern practice. The six below are selected because they directly solve problems this guide already covers:</p>
+    <ul>
+      <li><strong>Strategy</strong> &rarr; enforces OCP (add behavior without modifying existing code)</li>
+      <li><strong>Factory Method</strong> &rarr; enforces DIP (decouple creation from usage)</li>
+      <li><strong>Adapter</strong> &rarr; enables hexagonal architecture (wrap external interfaces)</li>
+      <li><strong>Decorator</strong> &rarr; enforces SRP + OCP (add cross-cutting concerns without modifying classes)</li>
+      <li><strong>Builder</strong> &rarr; manages complexity for objects with many parameters</li>
+      <li><strong>Null Object</strong> &rarr; eliminates defensive null checks, simplifies control flow</li>
+    </ul>
+
+    <p>The remaining GoF patterns (Abstract Factory, Prototype, Singleton, Bridge, Composite, Facade, Flyweight, Proxy, Chain of Responsibility, Command, Interpreter, Iterator, Mediator, Memento, Observer, State, Template Method, Visitor) are valid solutions to specific problems. Learn them, but don&rsquo;t apply them preemptively. If you encounter a problem that a pattern solves, use it. If not, simpler code is better code (KISS, YAGNI).</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Pattern</th><th>Problem It Solves</th><th>Principle</th><th>Example</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Strategy</td><td>Multiple algorithms for the same task, selected at runtime</td><td>OCP</td><td>Different compression algorithms, sorting strategies</td></tr>
+        <tr><td>Factory Method</td><td>Object creation logic is complex or varies by type</td><td>DIP</td><td>Creating validators based on configuration</td></tr>
+        <tr><td>Adapter</td><td>Integrating code with an incompatible interface</td><td>DIP</td><td>Wrapping a legacy API to match your domain port</td></tr>
+        <tr><td>Decorator</td><td>Adding behavior without modifying existing classes</td><td>SRP + OCP</td><td>Adding logging, caching, or validation around a service</td></tr>
+        <tr><td>Builder</td><td>Constructing complex objects step by step</td><td>KISS</td><td>Building test data or configuration objects</td></tr>
+        <tr><td>Null Object</td><td>Eliminating null checks with a do-nothing implementation</td><td>LSP</td><td><code>NoOpLogger</code> instead of <code>if (logger != null)</code></td></tr>
+      </tbody>
+    </table>
+
+    <div class="example-block good">
+      <div class="example-label">Example &mdash; Strategy pattern solving an OCP problem</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>// The problem: adding a new validation rule requires editing the validator
+// The pattern: each rule is a Strategy, new rules are added without touching existing code
+
+interface ValidationRule {
+    Optional&lt;String&gt; validate(Order order);
+}
+
+class MinimumAmountRule implements ValidationRule {
+    Optional&lt;String&gt; validate(Order order) {
+        return order.total().isLessThan(Money.of(10))
+            ? Optional.of("Order total must be at least 10")
+            : Optional.empty();
+    }
+}
+
+class OrderValidator {
+    private final List&lt;ValidationRule&gt; rules;
+    OrderValidator(List&lt;ValidationRule&gt; rules) { this.rules = rules; }
+
+    List&lt;String&gt; validate(Order order) {
+        return rules.stream()
+            .map(rule -> rule.validate(order))
+            .flatMap(Optional::stream)
+            .toList();
+    }
+}
+// Adding a new rule: create a class, add it to the list. No existing code changes.</code></div>
+    </div>
+
+    <div class="example-block good">
+      <div class="example-label">Example &mdash; Decorator pattern adding logging without modifying the service</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>// Original service — untouched
+class FuelRateService implements RateService {
+    FuelResult calculate(double rawRate) { /* core logic */ }
+}
+
+// Decorator — adds logging, delegates to the wrapped service
+class LoggingRateService implements RateService {
+    private final RateService delegate;
+    private final Logger logger;
+
+    LoggingRateService(RateService delegate, Logger logger) {
+        this.delegate = delegate;
+        this.logger = logger;
+    }
+
+    FuelResult calculate(double rawRate) {
+        logger.info("Calculating rate for input: {}", rawRate);
+        FuelResult result = delegate.calculate(rawRate);
+        logger.info("Result: {}", result);
+        return result;
+    }
+}
+
+// Usage: new LoggingRateService(new FuelRateService(), logger)
+// FuelRateService has no idea it's being logged. SRP preserved.</code></div>
+    </div>
+
+    <p><strong>Anti-patterns to avoid:</strong></p>
+    <ul>
+      <li><strong>Singleton</strong> &mdash; hidden global state, untestable, concurrency hazard. Use dependency injection instead.</li>
+      <li><strong>Service Locator</strong> &mdash; hides dependencies, makes code hard to reason about. Use constructor injection instead.</li>
+      <li><strong>God Object</strong> &mdash; one class that knows and does everything. Split by responsibility.</li>
+      <li><strong>Anemic Domain Model</strong> &mdash; domain objects with only getters/setters, all logic in service classes. Put behavior where the data is.</li>
+    </ul>
+  </section>
+
+  <!-- ===================== 3.3: ARCHITECTURE ===================== -->
+  <section id="sc-architecture">
+    <h3>3.3 Architecture at the Code Level</h3>
+    <p>Architecture at the code level is about how you organize modules, enforce boundaries, and manage dependencies. Good code-level architecture makes the system testable, changeable, and understandable.</p>
+
+    <h4>Separation of Concerns</h4>
+    <p>Each unit of code should address one concern. Concerns separate at multiple levels:</p>
+    <ul>
+      <li><strong>Function level</strong> &mdash; each function handles one operation</li>
+      <li><strong>Class level</strong> &mdash; each class handles one responsibility</li>
+      <li><strong>Module level</strong> &mdash; each module handles one domain concept</li>
+      <li><strong>Layer level</strong> &mdash; each layer handles one type of concern (domain, application, infrastructure)</li>
+    </ul>
+
+    <h4>The Core Rule: Business Logic Must Not Depend on Infrastructure</h4>
+    <p>This is the single most important architectural rule at the code level. Business logic (domain rules, calculations, validations) must never import, reference, or depend on infrastructure (databases, HTTP frameworks, file systems, message queues).</p>
+    <p>If your <code>FuelCalculator</code> class imports <code>java.sql.Connection</code>, the architecture is broken.</p>
+
+    <h4>Hexagonal Architecture (Ports and Adapters)</h4>
+    <p>Hexagonal architecture enforces the core rule through a simple structure:</p>
+
+    <div class="card">
+      <p><strong>Ports</strong> are interfaces defined by the domain. They express what the domain <em>needs</em> (e.g., &ldquo;I need to save an order&rdquo;) without specifying how.</p>
+      <p><strong>Adapters</strong> are implementations of ports that connect to infrastructure (e.g., &ldquo;save an order to PostgreSQL&rdquo;).</p>
+      <p><strong>The Rule:</strong> Dependencies point inward. Domain code never imports adapter code. Adapters import domain interfaces.</p>
+    </div>
+
+    <div class="code-block"><span class="lang-label">Directory Structure</span><code>src/
+  domain/           &larr; Pure business logic (no framework imports)
+    model/          &larr; Entities, value objects
+    ports/          &larr; Interfaces (OrderRepository, NotificationSender)
+    services/       &larr; Domain services (FuelCalculator, RiskAssessor)
+  application/      &larr; Use cases / orchestration
+    PlaceOrderUseCase.java
+  infrastructure/   &larr; Adapters (implementations of ports)
+    persistence/    &larr; PostgresOrderRepository
+    messaging/      &larr; RabbitMqNotificationSender
+  api/              &larr; HTTP controllers, CLI handlers</code></div>
+
+    <div class="card">
+      <h4>Testing Benefit</h4>
+      <p>Because domain code depends only on interfaces (ports), unit tests can use in-memory fakes:</p>
+      <div class="code-block"><span class="lang-label">Java</span><code>// Test uses fake adapter — no database, no network
+var repository = new InMemoryOrderRepository();
+var service = new OrderService(repository);
+service.placeOrder(testOrder);
+assertEquals(testOrder, repository.findById(testOrder.getId()));</code></div>
+    </div>
+
+    <h4>Testability as a Design Constraint</h4>
+    <p>If code is hard to test, the design is wrong. Testability is a <em>signal</em>, not a goal &mdash; it reveals design quality.</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Good Signal (Testable)</th><th>Bad Signal (Untestable)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Dependencies injected via constructor</td><td>Dependencies created internally with <code>new</code></td></tr>
+        <tr><td>Pure functions (same input &rarr; same output)</td><td>Functions that read global state or system clock</td></tr>
+        <tr><td>Small, focused classes</td><td>God classes with 20+ methods</td></tr>
+        <tr><td>Clear interfaces at boundaries</td><td>Direct calls to frameworks or infrastructure</td></tr>
+        <tr><td>Value objects (immutable data)</td><td>Mutable objects passed through many layers</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Functional Core, Imperative Shell</h4>
+    <p>Separate pure logic (calculations, decisions) from impure I/O (reading sensors, writing databases). The pure core is trivially testable. The impure shell is thin and simple.</p>
+
+    <div class="example-block good">
+      <div class="example-label">Good &mdash; Pure core, imperative shell</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>// PURE CORE — no I/O, no side effects, easy to test
+record FuelResult(double adjustedRate, boolean withinLimits) {}
+
+FuelResult calculateFuelRate(double rawRate, FuelConfig config) {
+    double adjusted = rawRate * config.correctionFactor();
+    boolean withinLimits = adjusted >= config.minRate() && adjusted <= config.maxRate();
+    return new FuelResult(adjusted, withinLimits);
+}
+
+// IMPERATIVE SHELL — thin, does I/O, calls the pure core
+void processSensorReading() {
+    double rawRate = sensorPort.readFuelRate();     // I/O
+    FuelConfig config = configPort.loadFuelConfig(); // I/O
+    FuelResult result = calculateFuelRate(rawRate, config);  // PURE
+    telemetryPort.report(result);                   // I/O
+}</code></div>
+    </div>
+
+    <h4>Cohesion and Coupling</h4>
+    <p><strong>Cohesion</strong> (internal) measures how related the elements within a module are. High cohesion is good &mdash; everything in the module serves the same purpose.</p>
+    <p><strong>Coupling</strong> (external) measures how dependent modules are on each other. Low coupling is good &mdash; changing one module doesn&rsquo;t force changes in others.</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Cohesion Type</th><th>Quality</th><th>Example</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Functional</td><td>Best</td><td>All methods work together to perform one task</td></tr>
+        <tr><td>Sequential</td><td>Good</td><td>Output of one method feeds into the next</td></tr>
+        <tr><td>Communicational</td><td>OK</td><td>Methods operate on the same data</td></tr>
+        <tr><td>Coincidental</td><td>Worst</td><td>Methods are unrelated, just grouped together (&ldquo;Utils&rdquo; class)</td></tr>
+      </tbody>
+    </table>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Coupling Type</th><th>Quality</th><th>Example</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Data</td><td>Best</td><td>Modules communicate via simple parameters</td></tr>
+        <tr><td>Stamp</td><td>OK</td><td>Modules share composite data structures</td></tr>
+        <tr><td>Control</td><td>Bad</td><td>Module passes a flag telling another what to do</td></tr>
+        <tr><td>Content</td><td>Worst</td><td>Module reaches into another&rsquo;s internals</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Interface-Driven Design</h4>
+    <p>Interfaces define contracts between modules. Use them at boundaries &mdash; not everywhere.</p>
+    <p><strong>When to use interfaces:</strong></p>
+    <ul>
+      <li>At infrastructure boundaries (database, external service, file system)</li>
+      <li>When multiple implementations exist or are likely</li>
+      <li>When you need to swap implementations for testing</li>
+    </ul>
+    <p><strong>When NOT to use interfaces:</strong></p>
+    <ul>
+      <li>For every class (YAGNI &mdash; don&rsquo;t create <code>FooService</code> and <code>FooServiceImpl</code> when there will only ever be one implementation)</li>
+      <li>For internal domain logic that has no reason to vary</li>
+    </ul>
+
+    <div class="card">
+      <h4>Architecture Checklist</h4>
+      <ol>
+        <li>Can you draw the dependency graph, and do arrows point inward (toward domain)?</li>
+        <li>Does any domain class import infrastructure code?</li>
+        <li>Can you test business logic without a database, network, or file system?</li>
+        <li>Is each module describable in one sentence?</li>
+        <li>If you delete an adapter, does domain code still compile?</li>
+        <li>Are interfaces defined by the consumer (domain), not the provider (infrastructure)?</li>
+        <li>Is there one clear entry point for each use case?</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ===================== 3.4: AI-ASSISTED DEVELOPMENT ===================== -->
+  <section id="sc-ai-development">
+    <h3>3.4 AI-Assisted Development</h3>
+    <p>AI-generated code is increasingly common. This section addresses the specific quality risks of AI-assisted development and provides practices for managing them.</p>
+
+    <h4>The Reality of AI-Generated Code (2025&ndash;2026 Data)</h4>
+    <p>Research and industry data show consistent patterns:</p>
+    <table class="field-table">
+      <thead>
+        <tr><th>Finding</th><th>Source</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>AI-generated code has ~1.7x more bugs than human-written code</td><td>Stack Overflow Developer Survey 2025; GitClear analysis</td></tr>
+        <tr><td>Code review time increased ~91% for AI-heavy PRs</td><td>Industry reports from large enterprises</td></tr>
+        <tr><td>Security vulnerabilities 1.5&ndash;2x more common in AI code</td><td>Security research studies 2024&ndash;2025</td></tr>
+        <tr><td>AI excels at boilerplate but struggles with domain-specific logic</td><td>Consistent across multiple studies</td></tr>
+      </tbody>
+    </table>
+    <p>This is not an argument against AI &mdash; it is an argument for <strong>structured processes</strong> around AI code. The V-model&rsquo;s specification-first, verification-heavy approach is exactly what AI-assisted development needs.</p>
+
+    <h4>Common Mistakes AI Agents Make</h4>
+
+    <p><strong>Logic and Correctness:</strong></p>
+    <ul>
+      <li>Plausible-but-wrong formulas (correct structure, wrong operator or constant)</li>
+      <li>Off-by-one errors in loops and boundary conditions</li>
+      <li>Hallucinated API methods that don&rsquo;t exist in the actual library version</li>
+      <li>Stale knowledge about deprecated or renamed APIs</li>
+    </ul>
+
+    <div class="example-block bad">
+      <div class="example-label">Bad &mdash; Plausible but wrong (off-by-one)</div>
+      <div class="code-block"><span class="lang-label">Java</span><code>// AI generates this — looks reasonable, but wrong for inclusive ranges
+int countInRange(List&lt;Integer&gt; items, int min, int max) {
+    return (int) items.stream()
+        .filter(i -> i > min && i < max)  // should be >= and <=
+        .count();
+}</code></div>
+    </div>
+
+    <p><strong>Architectural Problems:</strong></p>
+    <ul>
+      <li>No awareness of existing architecture &mdash; creates new patterns instead of following established ones</li>
+      <li>Copy-paste across modules instead of reusing shared components</li>
+      <li>Over-abstraction (&ldquo;AbstractStrategyFactoryBuilder&rdquo;) for simple problems</li>
+      <li>Inconsistent style between generated segments</li>
+    </ul>
+
+    <p><strong>Testing Failures:</strong></p>
+    <ul>
+      <li>Tautological tests that recompute expected values using the same logic</li>
+      <li>Missing edge cases and boundary conditions</li>
+      <li>Over-mocking that disconnects tests from real behavior</li>
+      <li>Tests that pass for any implementation (assertion-free or structural-only)</li>
+    </ul>
+
+    <p><strong>Security:</strong></p>
+    <ul>
+      <li>Hardcoded credentials or API keys in generated examples</li>
+      <li>SQL injection via string concatenation instead of parameterized queries</li>
+      <li>Missing input validation at system boundaries</li>
+    </ul>
+
+    <h4>Best Practices for AI-Assisted Development</h4>
+
+    <p><strong>1. Specification First:</strong> Always have a detailed design before generating code. AI performs dramatically better with a clear specification than with a vague instruction. The V-model&rsquo;s DRTDD approach (Design &rarr; Require &rarr; Test &rarr; Implement) is ideal.</p>
+
+    <p><strong>2. Review Every Line:</strong> Treat AI output the same as a junior developer&rsquo;s pull request. Key review areas:</p>
+    <table class="field-table">
+      <thead>
+        <tr><th>Area</th><th>What to Check</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Logic</td><td>Are operators correct? Off-by-one? Edge cases handled?</td></tr>
+        <tr><td>Error handling</td><td>All paths covered? No swallowed exceptions?</td></tr>
+        <tr><td>API usage</td><td>Do the methods actually exist in this library version?</td></tr>
+        <tr><td>Security</td><td>Input validated? No injection vectors? No hardcoded secrets?</td></tr>
+        <tr><td>Architecture</td><td>Follows project patterns? No new unnecessary abstractions?</td></tr>
+        <tr><td>Naming</td><td>Consistent with project vocabulary? Meaningful?</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>3. Incremental Generation:</strong> Generate one function or class at a time. Verify it before moving on. Do not generate an entire module in one shot.</p>
+
+    <p><strong>4. Context Management:</strong> AI quality depends on context. Provide:</p>
+    <ul>
+      <li>The detailed design artifact</li>
+      <li>Existing code patterns from the same module</li>
+      <li>The project&rsquo;s coding standard</li>
+      <li>The target test framework and conventions</li>
+    </ul>
+
+    <h4>Structuring Code for AI Maintainability</h4>
+    <p>Code that is easy for AI to understand is also easy for humans. The principles overlap:</p>
+    <ul>
+      <li><strong>One concept per file</strong>, under 300 lines</li>
+      <li><strong>2&ndash;3 directory levels</strong> maximum depth</li>
+      <li><strong>Functions 5&ndash;20 lines</strong> with explicit types</li>
+      <li><strong>No hidden state</strong> &mdash; all dependencies visible in the constructor</li>
+      <li><strong>Descriptive names</strong> as the primary context signal &mdash; AI uses names to understand intent</li>
+    </ul>
+
+    <h4>AI Anti-Patterns</h4>
+    <table class="field-table">
+      <thead>
+        <tr><th>Anti-Pattern</th><th>Symptom</th><th>Fix</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Hallucinated API</td><td>Uses methods that don&rsquo;t exist</td><td>Verify every API call against actual library docs</td></tr>
+        <tr><td>Tautological Test</td><td>Test recomputes expected value</td><td>Use hardcoded values from design spec</td></tr>
+        <tr><td>Over-Mocking</td><td>Tests pass but real integration fails</td><td>Mock only external boundaries</td></tr>
+        <tr><td>Shotgun Abstraction</td><td>Creates 5 interfaces for 1 implementation</td><td>YAGNI &mdash; remove abstractions until needed</td></tr>
+        <tr><td>Tutorial Code</td><td>Generates textbook examples, not production code</td><td>Provide project context and conventions</td></tr>
+        <tr><td>Hardcoded Secrets</td><td>API keys or passwords in source</td><td>Use environment variables or secret managers</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ===================== 3.5: CODE REVIEW ===================== -->
+  <section id="sc-code-review">
+    <h3>3.5 Code Review</h3>
+    <p>Code review is the final quality gate before code becomes part of the product. A structured review catches issues that automated tools miss.</p>
+
+    <h4>How to Use This Checklist</h4>
+    <p>Review each category in order. Items marked <span class="required">REQ</span> are required for all assurance levels. Items marked <span class="optional">REC</span> are recommended. A review passes only when all required items are satisfied.</p>
+
+    <h4>1. Design Compliance</h4>
+    <table class="field-table">
+      <thead>
+        <tr><th>Check</th><th>Level</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Every public method traces to a design element</td><td><span class="required">REQ</span></td></tr>
+        <tr><td>Data flow matches the design&rsquo;s interface specification</td><td><span class="required">REQ</span></td></tr>
+        <tr><td>Control flow matches the design&rsquo;s behavior rules</td><td><span class="required">REQ</span></td></tr>
+        <tr><td>No functionality exists beyond what the design specifies</td><td><span class="required">REQ</span></td></tr>
+        <tr><td>Algorithm implementation matches the design description</td><td><span class="required">REQ</span></td></tr>
+        <tr><td>Error handling matches the design&rsquo;s error specification</td><td><span class="required">REQ</span></td></tr>
+        <tr><td>Interface types and names match the design</td><td><span class="required">REQ</span></td></tr>
+      </tbody>
+    </table>
+
+    <h4>2. Coding Standard Compliance</h4>
+    <table class="field-table">
+      <thead>
+        <tr><th>Check</th><th>Level</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Naming follows project conventions</td><td><span class="required">REQ</span></td></tr>
+        <tr><td>Formatting is consistent</td><td><span class="required">REQ</span></td></tr>
+        <tr><td>Cyclomatic complexity &le; limit</td><td><span class="required">REQ</span></td></tr>
+        <tr><td>No prohibited language features used</td><td><span class="required">REQ</span></td></tr>
+        <tr><td>Static analysis passes with no suppressions</td><td><span class="required">REQ</span></td></tr>
+      </tbody>
+    </table>
+
+    <h4>3. Clean Code</h4>
+    <table class="field-table">
+      <thead>
+        <tr><th>Check</th><th>Level</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Names reveal intent</td><td><span class="required">REQ</span></td></tr>
+        <tr><td>Functions do one thing</td><td><span class="required">REQ</span></td></tr>
+        <tr><td>Functions operate at one abstraction level</td><td><span class="optional">REC</span></td></tr>
+        <tr><td>No flag arguments</td><td><span class="optional">REC</span></td></tr>
+        <tr><td>No hidden side effects</td><td><span class="required">REQ</span></td></tr>
+        <tr><td>No dead code</td><td><span class="required">REQ</span></td></tr>
+        <tr><td>No magic numbers</td><td><span class="required">REQ</span></td></tr>
+        <tr><td>Single responsibility per class</td><td><span class="required">REQ</span></td></tr>
+        <tr><td>High cohesion within classes</td><td><span class="optional">REC</span></td></tr>
+        <tr><td>Low coupling between modules</td><td><span class="optional">REC</span></td></tr>
+        <tr><td>Composition preferred over inheritance</td><td><span class="optional">REC</span></td></tr>
+        <tr><td>No premature abstraction</td><td><span class="optional">REC</span></td></tr>
+      </tbody>
+    </table>
+
+    <h4>4. Error Handling</h4>
+    <table class="field-table">
+      <thead>
+        <tr><th>Check</th><th>Level</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>All error paths explicitly handled</td><td><span class="required">REQ</span></td></tr>
+        <tr><td>No swallowed exceptions (empty catch blocks)</td><td><span class="required">REQ</span></td></tr>
+        <tr><td>Error messages include diagnostic context</td><td><span class="required">REQ</span></td></tr>
+        <tr><td>No null returns where Optional is appropriate</td><td><span class="optional">REC</span></td></tr>
+        <tr><td>Fail-fast at system boundaries</td><td><span class="required">REQ</span></td></tr>
+        <tr><td>Error handling separated from business logic</td><td><span class="optional">REC</span></td></tr>
+        <tr><td>Resources properly closed (try-with-resources)</td><td><span class="required">REQ</span></td></tr>
+      </tbody>
+    </table>
+
+    <h4>5. Architecture Compliance</h4>
+    <table class="field-table">
+      <thead>
+        <tr><th>Check</th><th>Level</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>No infrastructure imports in domain code</td><td><span class="required">REQ</span></td></tr>
+        <tr><td>Dependencies point inward</td><td><span class="required">REQ</span></td></tr>
+        <tr><td>Interfaces defined by consumer, not provider</td><td><span class="optional">REC</span></td></tr>
+        <tr><td>No circular dependencies between modules</td><td><span class="required">REQ</span></td></tr>
+        <tr><td>External systems accessed only through interfaces</td><td><span class="required">REQ</span></td></tr>
+      </tbody>
+    </table>
+
+    <h4>6. AI-Specific Checks</h4>
+    <table class="field-table">
+      <thead>
+        <tr><th>Check</th><th>Level</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Every API call verified to exist in the actual library version</td><td><span class="required">REQ</span></td></tr>
+        <tr><td>No hallucinated configuration properties</td><td><span class="required">REQ</span></td></tr>
+        <tr><td>Logic manually verified (operators, boundaries, edge cases)</td><td><span class="required">REQ</span></td></tr>
+        <tr><td>Tests are not tautological (no mirror tests)</td><td><span class="required">REQ</span></td></tr>
+        <tr><td>Code follows project style, not generic AI tutorial style</td><td><span class="optional">REC</span></td></tr>
+        <tr><td>No hardcoded secrets or credentials</td><td><span class="required">REQ</span></td></tr>
+      </tbody>
+    </table>
+
+    <h4>7. Traceability</h4>
+    <table class="field-table">
+      <thead>
+        <tr><th>Check</th><th>Level</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Every public element traces bidirectionally to a design element</td><td><span class="required">REQ</span></td></tr>
+        <tr><td>No orphan code (code without a corresponding design element)</td><td><span class="required">REQ</span></td></tr>
+        <tr><td>No dead code (unreachable or unused)</td><td><span class="required">REQ</span></td></tr>
+        <tr><td>Deactivated code documented with rationale</td><td><span class="optional">REC</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ===================== SECTION 4: V-MODEL CONSIDERATIONS ===================== -->
+  <section id="sc-vmodel-considerations">
+    <h2>V-Model Specific Considerations</h2>
+    <p class="lead">Beyond writing quality code, the V-model imposes specific requirements on how source code is managed as an artifact.</p>
+
+    <h3>Traceability Requirements</h3>
+    <p>Every public code element must trace to a <span data-term="detailed-design">Detailed Design</span> element. This is bidirectional:</p>
+    <ul>
+      <li><strong>Forward trace</strong> (design &rarr; code): every design element has a corresponding code implementation</li>
+      <li><strong>Backward trace</strong> (code &rarr; design): every public code element maps to a design element</li>
+    </ul>
+    <p>Orphan code (code with no design element) and orphan design (design with no code) are both compliance gaps.</p>
+
+    <h3>Dead Code and Deactivated Code</h3>
+    <p>Safety standards are strict about code that doesn&rsquo;t execute:</p>
+    <ul>
+      <li><strong>Dead code</strong> (unreachable code) must be removed. In DO-178C, dead code requires a justification for why it exists and cannot be removed.</li>
+      <li><strong>Deactivated code</strong> (code disabled by configuration or build flags) must be documented with: what it does, why it is deactivated, under what conditions it would be activated, and how it was verified.</li>
+    </ul>
+
+    <h3>No Gold Plating</h3>
+    <p>Adding functionality beyond the design specification creates untraceable code. In safety-critical domains, untraceable code is a finding. The discipline is: implement exactly what the design specifies, nothing more.</p>
+
+    <h3>Source-to-Object Code Traceability</h3>
+    <p>At the highest assurance levels (DO-178C DAL A), you must demonstrate that the compiled object code corresponds to the source code. This means understanding compiler optimizations, ensuring no unintended code is introduced by the toolchain, and verifying that the object code does not contain functionality absent from the source.</p>
+
+    <h3>Code Review Independence</h3>
+    <p>Review independence scales with assurance level:</p>
+    <table class="field-table">
+      <thead>
+        <tr><th>Assurance Level</th><th>Review Independence</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Low (DAL D / ASIL A)</td><td>Peer review (same team member)</td></tr>
+        <tr><td>Medium (DAL C / ASIL B)</td><td>Independent review (different team member, not the author)</td></tr>
+        <tr><td>High (DAL A&ndash;B / ASIL C&ndash;D)</td><td>Independent review with documented evidence, potentially by an independent verification team</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ===================== SECTION 5: FRAMEWORK INTEGRATION ===================== -->
+  <section id="sc-framework">
+    <h2>Framework Integration</h2>
+    <p class="lead">How <span data-term="source-code">source code</span> integrates with the VModelWorkflow templates, schemas, and traceability system.</p>
+
+    <h3>Input: <span data-term="detailed-design">Detailed Design</span> Artifact</h3>
+    <p>Source code takes the <span data-term="detailed-design">Detailed Design</span> as its specification. The design artifact (defined in <code>schemas/artifacts/detailed-design.schema.yaml</code>) provides:</p>
+    <ul>
+      <li><code>interfaces</code> &mdash; the public API that the code must implement</li>
+      <li><code>behavior</code> &mdash; the rules that the code must follow</li>
+      <li><code>error_handling</code> &mdash; the error conditions the code must handle</li>
+      <li><code>internal_state</code> &mdash; the state the code must manage</li>
+      <li><code>configuration</code> &mdash; the configurable parameters</li>
+    </ul>
+
+    <h3>Traceability Links</h3>
+    <p>Source code participates in two primary trace link types (defined in <code>schemas/traceability/link-types.yaml</code>):</p>
+    <div class="trace-flow">
+      <span class="artifact-ref" data-term="detailed-design">Detail Design</span>
+      <span class="arrow">&rarr; implemented-by &rarr;</span>
+      <span class="artifact-ref" data-term="source-code">Source Code</span>
+    </div>
+    <div class="trace-flow">
+      <span class="artifact-ref" data-term="source-code">Source Code</span>
+      <span class="arrow">&rarr; verified-by &rarr;</span>
+      <span class="artifact-ref" data-term="unit-test">Unit Test</span>
+    </div>
+
+    <h3>Artifact Envelope</h3>
+    <p>Like all VModelWorkflow artifacts, source code is wrapped in an artifact envelope (defined in <code>schemas/artifacts/artifact-envelope.schema.yaml</code>). The envelope provides metadata: artifact ID, version, status (draft/review/approved), author, and content hash for staleness detection.</p>
+
+    <h3>Review Record</h3>
+    <p>Code reviews produce a review record artifact with findings, verdicts, and traceability to the code under review. The review checklist in Section 3.5 above maps directly to the review record template fields.</p>
+  </section>
+
+  <!-- ===================== SECTION 6: AI SKILLS ===================== -->
+  <section id="sc-skills">
+    <h2>AI Skills Integration</h2>
+    <div class="stub-banner">
+      <h3>Coming Soon</h3>
+      <p>This section will document how the <code>develop-code</code> craft skill and the framework-specific implementation skill integrate with this documentation. The craft skill is a distilled extraction of Section 3, optimized for LLM consumption.</p>
+    </div>
+  </section>
+
+</main>
+
+<script src="../js/domain.js"></script>
+<script>
+  // Initialize domain translation
+  const dm = createDomainManager(document);
+
+  // Load domain plugins
+  ['do178c', 'aspice'].forEach(id => {
+    fetch('../domains/' + id + '.json')
+      .then(r => r.json())
+      .then(plugin => {
+        dm.registerDomain(plugin);
+      })
+      .catch(() => {});
+  });
+
+  // Domain switcher
+  const select = document.getElementById('domain-select');
+  if (select) {
+    select.addEventListener('change', function() {
+      dm.switchDomain(this.value);
+      dm.applyToDOM();
+    });
+  }
+
+  // Smooth scroll for sidebar links
+  document.querySelectorAll('.sidebar-nav a[href^="#"]').forEach(link => {
+    link.addEventListener('click', function(e) {
+      const target = document.querySelector(this.getAttribute('href'));
+      if (target) {
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Update active state
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        this.classList.add('active');
+      }
+    });
+  });
+
+  // Highlight active section on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.sidebar-nav a[href^="#"]');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(link => {
+          link.classList.toggle('active',
+            link.getAttribute('href') === '#' + entry.target.id);
+        });
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
