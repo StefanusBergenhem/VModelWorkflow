@@ -142,27 +142,37 @@ Documentation (human-readable)          AI Skill (AI-optimized)
 
 ### AI Skills
 
-Two distinct categories of skills, plus agentic engineering practices baked into all skills:
+> **Detailed design document:** [`docs/guide/skills-architecture.html`](../guide/skills-architecture.html) — the authoritative design for all skills, agents, orchestration, contracts, and configuration. The summary below is kept in sync; the HTML page is the source of truth.
 
-**Craft Skills (standalone, framework-independent):**
-- AI-optimized versions of the documentation best practices
-- Each skill teaches how to do one thing well (write requirements, derive tests, review code)
-- No knowledge of our templates, schemas, or traceability
-- Independently usable on any project, in any framework
-- Follows agentskills.io open standard (SKILL.md format)
-- Must work on smaller/cheaper models (Haiku, Sonnet) — tested with baseline comparison
+Three-layer architecture, organized by concern:
 
-**Framework Skills (VModelWorkflow-specific):**
-- How to use our templates, produce trace artifacts, follow our schemas
-- Per-layer orchestration: research/plan → implement → review loops
-- Human transition between V-model layers, agent orchestration within layers
-- Thin bridge: if templates/schemas change, only framework skills update
+**Layer 1 — Skills (atomic knowledge units):**
+- *Craft skills* — standalone best practices, framework-independent, derived from documentation. Each skill teaches one thing well. Independently usable on any project. Follows agentskills.io open standard (SKILL.md format). Must work on cheapest viable model tier — tested with baseline comparison.
+- *Framework skills* — thin VModelWorkflow adapters. Template formats, traceability link creation, tool check execution. No craft knowledge — only schema and format information. If templates/schemas change, only these update.
 
-**Agentic Engineering Practices (cross-cutting, baked into skill design):**
-- Context management (small, focused context windows)
-- Task splitting (break large work into scoped pieces)
-- Handoff discipline (structured contracts between phases)
-- These are design principles of the skills, not a separate skill category
+**Layer 2 — Agents (specialized execution environments):**
+- Subagents with isolated context windows, scoped tool access, and structured input/output contracts
+- Compose Layer 1 skills into roles: TDD developer, code reviewer, DD developer, DD reviewer, task decomposer
+- Fresh context per task — no pollution from prior tasks
+- Producer agents (developers) have write access; reviewer agents are read-only
+
+**Layer 3 — Orchestration (pipeline control):**
+- Research/plan runs in its own session (context-intensive human discussion produces a clean artifact)
+- Task decomposer runs as subagent (reads plan, produces scoped task contracts)
+- Pipeline controller is a lean skill that reads state files and spawns agents
+- Human gates: after task decomposition (approve scope) and after all tasks (final review)
+
+**Key architectural decision — document-based handoffs:**
+Every boundary between pipeline components is a file on disk (YAML). No direct agent-to-agent communication. Any session can crash, run out of context, or need human intervention — and restart from the last written artifact.
+
+**Naming convention:** `vmodel-skill-*` for skills, `vmodel-agent-*` for agents.
+
+**Model tier classification (vendor-neutral):**
+- Tier 1 (Reasoning): planning, decomposition, safety-critical review
+- Tier 2 (Workhorse): implementation, standard review, pipeline control
+- Tier 3 (Fast): craft skills standalone, file finding, simple transformations
+
+**SOLID for skills:** Single responsibility per skill. Shared knowledge factored into `references/*.md` files, duplicated into each skill directory for self-containment per agentskills.io spec.
 
 ## Human-Agent Interaction Model
 
@@ -210,17 +220,22 @@ This is the **primary selling point** — the volume of legacy codebases needing
 - Traceability (link discovered artifacts)
 - Best practices documentation (suggest improvements)
 
-## Per-Layer Skill Set
+## Per-Layer Component Set
 
-For each V-model layer, we develop:
+For each V-model layer, we develop (see [skills-architecture.html](../guide/skills-architecture.html) for full details):
 
-| Skill | Type | Purpose |
-|-------|------|---------|
-| **Research/Plan** | Framework, interactive | Context gathering, impact analysis, back-and-forth with human, produces implementation contract |
-| **Implement** | Framework, orchestrated | Agent writes artifact following template + craft skill, self-checks against checklist |
-| **Review** | Framework, orchestrated | Review agent validates against best practices + template + traceability |
-| **Craft: Write** | Standalone | Best practices for producing this artifact type (derived from documentation) |
-| **Craft: Review** | Standalone | Best practices for reviewing this artifact type (derived from documentation) |
+| Component | Layer | Purpose |
+|-----------|-------|---------|
+| **vmodel-skill-develop-**** | L1 Craft | Best practices for producing this artifact type |
+| **vmodel-skill-review-**** | L1 Craft | Best practices for reviewing this artifact type |
+| **vmodel-skill-*-template** | L1 Framework | Schema format and ID conventions for this layer's template |
+| **vmodel-skill-traceability** | L1 Framework | Trace link creation (shared across all layers) |
+| **vmodel-skill-tool-checks** | L1 Framework | Config-driven automated checks (shared across all layers) |
+| **vmodel-agent-*-developer** | L2 Agent | Producer role: composes craft + framework skills, runs TDD/design |
+| **vmodel-agent-*-reviewer** | L2 Agent | Reviewer role: read-only, produces verdict (APPROVED/REJECTED/DESIGN_ISSUE) |
+| **vmodel-agent-task-decomposer** | L2 Agent | Breaks implementation plan into agent-sized task contracts |
+| **Research/Plan** | L3 Orchestration | Own session, interactive with human, produces implementation-plan.yaml |
+| **Pipeline Controller** | L3 Orchestration | Lean skill, reads state files, spawns agents, manages feedback loops |
 
 ## Key Design Decisions
 

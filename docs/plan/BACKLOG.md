@@ -234,93 +234,344 @@ Priority: quality workproduct first, V-model fit second.
 
 ## Component 4: AI Skills
 
-Two categories: craft skills (standalone, derived from documentation) and framework skills (VModelWorkflow-specific).
+> **Architecture design document:** [`docs/guide/skills-architecture.html`](../guide/skills-architecture.html) — defines all skills, agents, orchestration, contracts, config, and file layout. This backlog tracks what to build and in what order; the architecture doc defines what each component is.
+
+Three-layer architecture: Layer 1 (craft + framework skills) → Layer 2 (agents) → Layer 3 (orchestration). All components use `vmodel-skill-*` / `vmodel-agent-*` naming. Vendor-neutral model tiers (Tier 1 Reasoning / Tier 2 Workhorse / Tier 3 Fast).
 
 ### Skill Foundation
 
 - [x] Define craft skill contract schema (design-time reference)
 - [x] Define orchestration pipeline contract schema (design-time reference)
+- [x] Skills architecture designed (`docs/guide/skills-architecture.html`, 2026-04-06)
 - [ ] Reconcile `schemas/core/craft-skill.schema.yaml` with agentskills.io SKILL.md format
+- [ ] Finalize `.vmodel/config.yaml` schema (Phase A2)
 
-### 4.1 Code Implementation Skills (current — lowest V-level)
+---
 
-**Craft skills (standalone, framework-independent):**
-- [x] derive-test-cases — V-model test derivation (4 strategies, coverage matrix)
-- [x] develop-code — implementation with quantified quality rules
+### Lower V Skill Build Plan (Detailed Design + Code + Unit Tests)
 
-**Framework skills (VModelWorkflow-specific):**
-- [ ] code-implementation orchestration — agent-orchestrated implement → self-check → review loop for code + tests
-- [ ] code-review framework skill — review agent validates code against detailed design, template, traceability
+Structured as six phases. Each phase lists tasks, context to load, and inputs needed.
 
-> Eval results (iteration 1, Haiku, combined): +67% delta vs baseline. Research: `research/implementation/`. Docs: `docs/guide/artifacts/source-code.html`.
+#### Phase A: Foundation (reference files, config schema, eval scenarios)
 
-### 4.2 Unit Test Skills (current — lowest V-level)
+Everything downstream depends on this phase. The reference `.md` files are the distilled knowledge that skills point to. Eval scenarios are needed to test every skill.
+
+**A1. Extract/update shared reference files from documentation**
+
+Audit existing reference files against the comprehensive documentation, then create missing ones.
+
+| Reference File | Status | Source Documentation | Gap Analysis |
+|---|---|---|---|
+| `code-quality-checks.md` | EXISTS — needs audit | `docs/guide/artifacts/source-code.html` §3 | Existing file covers functions, error handling, naming, architecture, dead code. May be missing: design patterns guidance, immutability depth, AI-specific pitfalls from §3.4 |
+| `testing-anti-patterns.md` | EXISTS — needs audit | `docs/guide/artifacts/unit-test.html` §3.5, §3.7 | Existing file has 6 anti-patterns + self-check. Documentation adds 8 test smells (fragile, obscure, eager, mystery guest, general fixture, conditional logic, erratic, slow) + AI failure modes (tautological, assertion-free, happy-path bias, over-mocking, hallucinated assertions, copy-paste). Significant gap. |
+| `derivation-strategies.md` | EXISTS — needs audit | `docs/guide/artifacts/unit-test.html` §3.2 | Existing file covers all 4 strategies. Check if decision table method for compound conditions and coverage matrix format need updating. |
+| `design-quality-criteria.md` | NEW | `docs/guide/artifacts/detailed-design.html` §3.1-§3.6 | Interface completeness (DbC), behavioral specification (decision tables, state machines), rationale requirements, error handling design, dynamic behavior/concurrency |
+| `review-checklist-code.md` | NEW | `docs/guide/artifacts/source-code.html` §3.5 + `unit-test.html` §3.5 | Combined code + test review. Three sections: code quality, test quality, cross-checks |
+| `review-checklist-dd.md` | NEW | `docs/guide/artifacts/detailed-design.html` §3 all | Interface completeness, behavioral specification, rationale, error handling, testability |
+| `retrofit-risks.md` | NEW | `docs/guide/artifacts/detailed-design.html` §3.8 | Post-hoc rationalization, code paraphrase trap, missing intent, human involvement triggers |
+
+Context to load:
+- `docs/guide/artifacts/source-code.html` (all of §3)
+- `docs/guide/artifacts/unit-test.html` (all of §3)
+- `docs/guide/artifacts/detailed-design.html` (all of §3)
+- Existing reference files: `.claude/skills/develop-code/references/code-quality-checks.md`, `.claude/skills/derive-test-cases/references/testing-anti-patterns.md`, `.claude/skills/derive-test-cases/references/derivation-strategies.md`
+
+**A2. Finalize `.vmodel/config.yaml` schema**
+
+Define the project configuration schema per the architecture doc (§Configuration). Needed before `vmodel-skill-tool-checks` can be written.
+
+Context to load:
+- `docs/guide/skills-architecture.html` §Configuration section
+
+**A3. Create/update eval scenarios**
+
+Existing evals: fuel-rate-limiter, message-parser, temperature-controller, session-manager-L1. These test code generation and test derivation from design docs.
+
+New eval scenarios needed:
+- [ ] **Design-level scenarios** (for develop-dd, retrofit-dd, review-dd): component with requirements/architecture as input (forward), existing code as input (retrofit)
+- [ ] **Adversarial review scenarios** (for review-code, review-dd): deliberately flawed code/designs with known defects planted — test whether the reviewer catches them
+- [ ] **Review existing code+test evals**: verify they still test the delta that matters after reference file updates
+- [ ] **Cross-language coverage**: existing evals cover Java, Python, Go. Check if this is sufficient.
+
+Context to load:
+- `.claude/skills/derive-test-cases/evals/` (existing evals and design files)
+- `.claude/skills/develop-code/evals/` (existing evals and design files)
+- `docs/guide/skills-architecture.html` §Craft Skills (what each skill is supposed to do)
+
+---
+
+#### Phase B: Revise existing craft skills
+
+The existing skills were created before the comprehensive documentation existed. Need to audit, rename, update references, and re-evaluate.
+
+**B1. vmodel-skill-develop-code** (rename from `develop-code`)
+
+- [ ] Rename skill directory: `develop-code` → `vmodel-skill-develop-code`
+- [ ] Update SKILL.md frontmatter (name, description with vmodel-skill prefix)
+- [ ] Replace `references/code-quality-checks.md` with updated version from Phase A1
+- [ ] Audit SKILL.md body against `docs/guide/artifacts/source-code.html` — check if any key delta was missed
+- [ ] Re-run evals with updated skill, compare to previous iteration results
+- [ ] Iterate if regression detected
+
+Context to load:
+- `.claude/skills/develop-code/SKILL.md` (current skill)
+- `.claude/skills/develop-code/references/code-quality-checks.md` (current reference)
+- Updated `code-quality-checks.md` from Phase A1
+- `docs/guide/artifacts/source-code.html` (§3 for gap check)
+- `.claude/skills/develop-code/evals/evals.json` (existing eval prompts)
+- Previous eval results in `.claude/skills/develop-code-workspace/` and `.claude/skills/combined-workspace/`
+
+**B2. vmodel-skill-derive-test-cases** (rename from `derive-test-cases`)
+
+- [ ] Rename skill directory: `derive-test-cases` → `vmodel-skill-derive-test-cases`
+- [ ] Update SKILL.md frontmatter
+- [ ] Replace `references/testing-anti-patterns.md` with updated version from Phase A1 (significant gap — 8 smells + AI failures missing)
+- [ ] Replace `references/derivation-strategies.md` with updated version from Phase A1
+- [ ] Audit SKILL.md body against `docs/guide/artifacts/unit-test.html`
+- [ ] Re-run evals, compare to iteration-3 results
+- [ ] Iterate if regression detected
+
+Context to load:
+- `.claude/skills/derive-test-cases/SKILL.md` (current skill)
+- `.claude/skills/derive-test-cases/references/` (both files)
+- Updated reference files from Phase A1
+- `docs/guide/artifacts/unit-test.html` (§3 for gap check)
+- `.claude/skills/derive-test-cases/evals/evals.json`
+- Previous eval results in `.claude/skills/derive-test-cases-workspace/`
+
+---
+
+#### Phase C: New craft skills
+
+Each skill follows: draft SKILL.md → create evals → run with skill-creator → iterate. Skills in this phase are independent of each other and can be built in any order.
+
+**C1. vmodel-skill-review-code** (combined code + test review)
+
+- [ ] Draft SKILL.md with three review sections: code quality, test quality, cross-checks
+- [ ] Include references: `review-checklist-code.md`, `code-quality-checks.md`, `testing-anti-patterns.md`
+- [ ] Create adversarial eval scenarios: good code, code with planted defects, code with test gaps
+- [ ] Output format: structured verdict (APPROVED / REJECTED with findings)
+- [ ] Eval and iterate with `/skill-creator`
+
+Context to load:
+- `docs/guide/artifacts/source-code.html` §3.5 (Code Review)
+- `docs/guide/artifacts/unit-test.html` §3.5 (Test Smells), §3.7 (AI Testing Failures)
+- `docs/guide/skills-architecture.html` §Craft Skills → vmodel-skill-review-code
+- Reference files from Phase A1: `review-checklist-code.md`, `code-quality-checks.md`, `testing-anti-patterns.md`
+
+**C2. vmodel-skill-develop-dd** (forward detailed design)
+
+- [ ] Draft SKILL.md: interface specification (DbC), behavioral specification, rationale, error handling design, tiering guidance
+- [ ] Include reference: `design-quality-criteria.md`
+- [ ] Create eval scenarios: component with requirements as input, different complexity levels
+- [ ] Output format: Markdown with YAML frontmatter (per detailed-design schema v2.0)
+- [ ] Eval and iterate
+
+Context to load:
+- `docs/guide/artifacts/detailed-design.html` §3.1-§3.7
+- `docs/guide/skills-architecture.html` §Craft Skills → vmodel-skill-develop-dd
+- `schemas/artifacts/detailed-design.schema.yaml` (v2.0 with Layer model)
+- Reference file from Phase A1: `design-quality-criteria.md`
+
+**C3. vmodel-skill-retrofit-dd** (reverse-engineer design from code)
+
+- [ ] Draft SKILL.md: guards against post-hoc paraphrase, decision vs happenstance identification, human involvement triggers
+- [ ] Include references: `design-quality-criteria.md`, `retrofit-risks.md`
+- [ ] Create eval scenarios: existing code of varying quality, some with comments, some without
+- [ ] Output format: same as develop-dd (Markdown with YAML frontmatter)
+- [ ] Eval and iterate — expect more HALT conditions than develop-dd
+
+Context to load:
+- `docs/guide/artifacts/detailed-design.html` §3.8 (AI-Assisted Design, retrofit section)
+- `docs/guide/skills-architecture.html` §Craft Skills → vmodel-skill-retrofit-dd
+- Reference files from Phase A1: `design-quality-criteria.md`, `retrofit-risks.md`
+
+**C4. vmodel-skill-review-dd** (detailed design review)
+
+- [ ] Draft SKILL.md: interface completeness checklist, behavioral specification check, rationale presence, testability assessment
+- [ ] Include references: `review-checklist-dd.md`, `design-quality-criteria.md`
+- [ ] Create adversarial eval scenarios: good designs, designs with missing interfaces, designs without rationale, post-hoc paraphrase designs
+- [ ] Output format: structured verdict (APPROVED / REJECTED / DESIGN_ISSUE)
+- [ ] Eval and iterate
+
+Context to load:
+- `docs/guide/artifacts/detailed-design.html` §3 (all subsections — this is what the reviewer checks against)
+- `docs/guide/skills-architecture.html` §Craft Skills → vmodel-skill-review-dd
+- Reference files from Phase A1: `review-checklist-dd.md`, `design-quality-criteria.md`
+
+---
+
+#### Phase D: Framework skills
+
+Thin schema adapters. No craft knowledge. Validation is primarily "does the output match the schema?"
+
+**D1. vmodel-skill-dd-template**
+
+- [ ] Write SKILL.md: schema reference, Layer 1/2/3 model, heading structure, ID conventions, YAML frontmatter fields
+- [ ] Content is extracted from `docs/guide/artifacts/detailed-design.html` §5 (Framework Integration)
+- [ ] Lightweight validation: produce a design using the skill, check schema compliance
+
+Context to load:
+- `docs/guide/artifacts/detailed-design.html` §5 (Framework Integration, Schema sections)
+- `schemas/artifacts/detailed-design.schema.yaml`
+- `docs/guide/skills-architecture.html` §Framework Skills → vmodel-skill-dd-template
+
+**D2. vmodel-skill-traceability**
+
+- [ ] Write SKILL.md: trace file format, link types, content hash staleness, link rules per artifact type
+- [ ] Content extracted from traceability schema + architecture doc
+
+Context to load:
+- `schemas/traceability/` (trace schema files)
+- `docs/guide/skills-architecture.html` §Framework Skills → vmodel-skill-traceability
+- `docs/guide/index.html` §Traceability sections
+
+**D3. vmodel-skill-tool-checks**
+
+- [ ] Write SKILL.md: config file format, resolution order, check execution, result interpretation
+- [ ] Depends on `.vmodel/config.yaml` schema from Phase A2
+
+Context to load:
+- `.vmodel/config.yaml` schema from Phase A2
+- `docs/guide/skills-architecture.html` §Configuration, §Framework Skills → vmodel-skill-tool-checks
+
+---
+
+#### Phase E: Agents (integration)
+
+Agent `.md` files define subagent system prompts that compose skills. Testing is integration-level: does the composition work correctly?
+
+**E1. vmodel-agent-tdd-developer**
+
+- [ ] Write agent definition: system prompt loading develop-code + derive-test-cases + traceability + tool-checks
+- [ ] Define TDD process (red-green-refactor) in agent prompt
+- [ ] Integration test: give task contract + design, verify agent produces code + tests + traces + check results
+- [ ] Verify context window stays manageable for a single task
+
+Context to load:
+- `docs/guide/skills-architecture.html` §Agent Definitions → vmodel-agent-tdd-developer
+- All craft skills this agent composes (B1, B2 outputs)
+- All framework skills this agent loads (D1-D3 outputs)
+
+**E2. vmodel-agent-code-reviewer**
+
+- [ ] Write agent definition: system prompt loading review-code + traceability + tool-checks
+- [ ] Read-only tool access enforced
+- [ ] Integration test: give task contract + design + developer output, verify structured verdict
+
+Context to load:
+- `docs/guide/skills-architecture.html` §Agent Definitions → vmodel-agent-code-reviewer
+- C1 output (review-code skill)
+- D2, D3 outputs (framework skills)
+
+**E3. vmodel-agent-dd-developer**
+
+- [ ] Write agent definition: loads develop-dd OR retrofit-dd (mode selection), dd-template, traceability, tool-checks
+- [ ] Integration test: forward mode with requirements input, retrofit mode with code input
+
+Context to load:
+- `docs/guide/skills-architecture.html` §Agent Definitions → vmodel-agent-dd-developer
+- C2, C3 outputs (develop-dd, retrofit-dd skills)
+- D1, D2, D3 outputs
+
+**E4. vmodel-agent-dd-reviewer**
+
+- [ ] Write agent definition: loads review-dd + dd-template + traceability + tool-checks
+- [ ] Read-only tool access
+- [ ] Integration test: give design + requirements, verify verdict
+
+**E5. vmodel-agent-task-decomposer**
+
+- [ ] Write agent definition: reads implementation plan, produces task contracts
+- [ ] No craft skills loaded — architectural reasoning task
+- [ ] Tier 1 (Reasoning) model required
+- [ ] Test: give implementation plan, verify task contracts are correctly scoped
+
+Context to load:
+- `docs/guide/skills-architecture.html` §Agent Definitions → vmodel-agent-task-decomposer
+- Contract schemas from architecture doc (§Contract Schemas)
+
+---
+
+#### Phase F: Orchestration
+
+Wire everything together. This is the final phase for the lower V.
+
+**F1. Research/plan skill (interactive)**
+
+- [ ] Write skill for interactive research/plan phase
+- [ ] Output: `implementation-plan.yaml` per architecture doc schema
+- [ ] Test: simulate a planning session, verify plan artifact is complete
+
+Context to load:
+- `docs/guide/skills-architecture.html` §Pipeline → Phase 1
+- `research/pillar3/02_humanlayer_repo.md` (interactive planning patterns)
+- `research/pillar3/03_hitl_and_composition.md` (HITL patterns)
+
+**F2. Pipeline controller skill**
+
+- [ ] Write lean orchestration skill: reads state, spawns agents, manages feedback loops
+- [ ] Implements state machine from architecture doc
+- [ ] Human gates: after decomposition, after all tasks
+- [ ] Retry discipline: 3 attempts, different approach each time, root-cause before attempt 3
+- [ ] Test: end-to-end with mock task contracts
+
+Context to load:
+- `docs/guide/skills-architecture.html` §Pipeline, §Contract Schemas
+- `research/pillar3/03_hitl_and_composition.md` (orchestration patterns)
+- `research/pillar3/04_state_eval_versioning.md` (state machine, artifact-as-state)
+- Existing wf-skill-orchestrate for pattern reference (user's `~/.claude/skills/`)
+
+---
+
+### Higher V-Model Layer Skills (later — same pattern)
+
+### 4.4 SW Architecture Skills
 
 **Craft skills:**
-- [x] derive-test-cases (shared with 4.1)
-- [ ] test-review craft skill — best practices for reviewing test quality
+- [ ] vmodel-skill-develop-arch
+- [ ] vmodel-skill-review-arch
 
 **Framework skills:**
-- [ ] test-validation framework skill — verify tests trace to detailed design, check coverage criteria
+- [ ] vmodel-skill-arch-template
 
-### 4.3 Detailed Design Skills (next — one layer up)
+**Agents:**
+- [ ] vmodel-agent-arch-developer
+- [ ] vmodel-agent-arch-reviewer
+
+> Requires: Documentation 3.4 (SW Architecture) first.
+
+### 4.5 SW Requirements Skills
 
 **Craft skills:**
-- [ ] write-detailed-design — best practices for detailed design (derived from documentation 3.3)
-- [ ] review-detailed-design — quality checklist for detailed design review
+- [ ] vmodel-skill-write-req (EARS approach)
+- [ ] vmodel-skill-review-req
+- [ ] vmodel-skill-decompose-req
 
 **Framework skills:**
-- [ ] detailed-design research/plan skill — context gathering, impact analysis, back-and-forth with human, produces implementation contract
-- [ ] detailed-design orchestration — implement → self-check → review loop
-- [ ] detailed-design review framework skill
+- [ ] vmodel-skill-req-template
 
-### 4.4 SW Architecture Skills (later)
+**Agents:**
+- [ ] vmodel-agent-req-developer
+- [ ] vmodel-agent-req-reviewer
 
-**Craft skills:**
-- [ ] write-architecture
-- [ ] review-architecture
+> Requires: Documentation 3.5 (SW Requirements) first.
 
-**Framework skills:**
-- [ ] architecture research/plan skill
-- [ ] architecture orchestration
-- [ ] architecture review framework skill
+### 4.6-4.7 System Level Skills (later)
 
-### 4.5 SW Requirements Skills (later)
-
-**Craft skills:**
-- [ ] write-requirement (EARS approach)
-- [ ] review-requirement
-- [ ] decompose-requirement
-
-**Framework skills:**
-- [ ] requirements research/plan skill
-- [ ] requirements orchestration
-- [ ] requirements review framework skill
-
-### 4.6 System Requirements Skills (later)
-
-**Craft skills:**
-- [ ] write-system-requirement
-- [ ] review-system-requirement
-
-**Framework skills:**
-- [ ] system requirements research/plan skill
-- [ ] system requirements orchestration
-
-### 4.7 System Test Skills (later)
-
-- [ ] Craft and framework skills for system test case writing and review
+- [ ] System requirements craft + framework skills
+- [ ] System test craft + framework skills
+- [ ] Corresponding agents
 
 ### 4.8 Legacy Retrofit Skills (use case — combines other skills)
 
-Specialized analysis/inference skills for reverse-engineering V-model artifacts from existing code:
+Specialized analysis/inference craft skills for reverse-engineering. `vmodel-skill-retrofit-dd` (Phase C3) is the first of these.
 
 - [ ] Code structure analysis skill
 - [ ] Behavior characterization skill
-- [ ] Requirement inference skill (extract implicit requirements from code)
-- [ ] Design inference skill (extract implicit architecture/design from code)
-- [ ] Gap analysis skill (what's missing, what needs formalization)
-- [ ] Improvement suggestion skill (based on best practices documentation)
+- [ ] Requirement inference skill
+- [ ] Design inference skill
+- [ ] Gap analysis skill
 - [ ] Cross-session handoff documents for large analysis work
 
 ### 4.9 Integration Skills (after craft + framework skills proven)
@@ -329,7 +580,7 @@ Specialized analysis/inference skills for reverse-engineering V-model artifacts 
 - [ ] Trace validation skill (temporary engine — see 2A-temp)
 - [ ] Schema compliance checking
 
-### 4.10 Orchestration (deferred)
+### 4.10 Orchestration Pipelines (after per-layer orchestration proven)
 
 - [ ] DRTDD pipeline (phase sequencing, handoffs, gates)
 - [ ] Legacy scan pipeline (module-by-module analysis)
@@ -341,29 +592,33 @@ Specialized analysis/inference skills for reverse-engineering V-model artifacts 
 
 Bottom-up, one V-model layer at a time. For each layer: documentation first, then template, then craft skills, then framework skills.
 
-### Phase 1: Lowest V-Level (Code + Unit Tests) — DONE (documentation)
+### Phase 1+2: Lowest V-Level Documentation — DONE
 
 ```
 1. [DONE] Documentation for code implementation (3.1)
-   └── docs/guide/artifacts/source-code.html — comprehensive, 6 sections
+   └── docs/guide/artifacts/source-code.html — 1314 lines, 6 sections
 2. [DONE] Documentation for unit testing (3.2)
-   └── docs/guide/artifacts/unit-test.html — comprehensive, 6 sections
-3. [NEXT] Skills for the lower V (code + unit tests + detailed design)
-   └── Craft skills, framework skills, orchestration
-4. Traceability: link type rules for code ↔ detailed design (2A partial)
-```
-
-### Phase 2: Detailed Design Layer — DONE (documentation)
-
-```
-1. [DONE] Documentation for detailed design (3.3)
+   └── docs/guide/artifacts/unit-test.html — 1211 lines, 7 knowledge-domain subsections
+3. [DONE] Documentation for detailed design (3.3)
    └── docs/guide/artifacts/detailed-design.html — 1096 lines, 8 knowledge domains
-   └── 7 research docs in research/detailed-design/ + Category A doc
    └── Schema v2.0 with Layer 1/2/3 model, two worked examples
-2. [NEXT] Craft skills: write-detailed-design, review-detailed-design (4.3 craft)
-3. Framework skills: research/plan, orchestration, review (4.3 framework)
-4. Traceability: link type rules for detailed design ↔ code, detailed design ↔ SW architecture (2A partial)
-5. Wire full V-pair: detailed design → code + unit tests (end-to-end)
+4. [DONE] Skills architecture designed
+   └── docs/guide/skills-architecture.html — three-layer model, all contracts defined
+```
+
+### Phase 1+2 continued: Skills for Lower V — NEXT
+
+```
+See Component 4 "Lower V Skill Build Plan" for the detailed phased plan (A→F).
+Summary:
+  A. [NEXT] Foundation: reference files, config schema, eval scenarios
+  B. Revise existing craft skills (develop-code, derive-test-cases)
+  C. New craft skills (review-code, develop-dd, retrofit-dd, review-dd)
+  D. Framework skills (dd-template, traceability, tool-checks)
+  E. Agents (tdd-developer, code-reviewer, dd-developer, dd-reviewer, task-decomposer)
+  F. Orchestration (research/plan skill, pipeline controller)
+  G. Traceability: link type rules for code ↔ detailed design (2A partial)
+  H. Wire full V-pair: detailed design → code + unit tests (end-to-end)
 ```
 
 ### Phase 3: SW Architecture Layer
@@ -419,7 +674,7 @@ Bottom-up, one V-model layer at a time. For each layer: documentation first, the
 6. **Deterministic where possible.** Validation is a tool concern, not an agent concern.
 7. **EARS is a skill preference, not a framework requirement.**
 8. **Discuss before writing.** Explain approach, show visually, motivate, get approval.
-9. **Model-tier aware.** Skills must work on Haiku. Test with baseline comparison.
+9. **Model-tier aware.** Skills must work on cheapest viable tier (Tier 3 Fast). Test with baseline comparison. Vendor-neutral tiers: Tier 1 Reasoning / Tier 2 Workhorse / Tier 3 Fast.
 10. **Incremental always.** Module-by-module. Layer-by-layer.
 11. **Follow agentskills.io spec.** SKILL.md format, progressive disclosure, scripts for determinism.
 12. **Use `/skill-creator` for development.** Draft, test, evaluate, iterate.
