@@ -124,3 +124,22 @@ This documentation is the source of truth. AI craft skills are distilled from it
 - Assurance level: optional property on artifacts, not universal. Default behavior is high-rigor.
 - All framework outputs must include verification checklists
 - EARS is used by our craft skills but not enforced by schemas
+
+
+## Engineering Codex (shared knowledge bank)
+
+A persistent knowledge bank lives at `/home/stefanus/repos/engineering-codex/`. It contains synthesized, cited research on software engineering standards, code quality, system design, and AI-augmented development — material that informs decisions in this project.
+
+**Before doing fresh research on a topic, check the codex first:**
+
+1. Read `/home/stefanus/repos/engineering-codex/CLAUDE.md` to understand the schema (one-time per session).
+2. Read `/home/stefanus/repos/engineering-codex/index.md` to see what pages exist.
+3. Read the relevant wiki pages. Load-bearing claims should be verified against the cited source pages.
+
+**After doing research that produced reusable findings, offer to file them back:**
+
+Tell the human: "I found X while researching Y. This looks like a candidate for the engineering-codex. Want me to ingest the source and update relevant pages?"
+
+**Do not duplicate codex content here.** Link to it instead.
+
+**The codex is read-only from this project unless the human explicitly asks you to ingest something into it.** Treat writes to `engineering-codex/` as a deliberate cross-repo action requiring confirmation.
