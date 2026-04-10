@@ -5,25 +5,193 @@
       "id": 1,
       "prompt": "Derive test cases for the FuelRateLimiter unit. The detailed design is in evals/files/fuel-rate-limiter-design.md. Use Python with pytest.",
       "expected_output": "A comprehensive pytest test file covering all behavior rules, error handling, boundary values, and equivalence classes from the design. Should include a coverage matrix.",
-      "files": ["evals/files/fuel-rate-limiter-design.md"]
+      "files": ["evals/files/fuel-rate-limiter-design.md"],
+      "assertions": [
+        {
+          "id": "coverage-matrix",
+          "text": "Output includes a coverage matrix mapping design elements to test cases and derivation strategy",
+          "grading": "Check for a table or structured list mapping design elements (behavior rules, error conditions, inputs) to specific test function names with strategy labels (req-based, equivalence, boundary, error)"
+        },
+        {
+          "id": "behavior-rules",
+          "text": "Every behavior rule (startup clamping, cruise rate-of-change, emergency shutdown, was_clamped flag) has at least one test",
+          "grading": "Check test names and bodies for coverage of each behavior rule from the design"
+        },
+        {
+          "id": "error-handling",
+          "text": "Every error_handling entry (negative rate, negative elapsed_time, unrecognized mode) has a dedicated test",
+          "grading": "Each error condition in the design's error handling section must have its own test"
+        },
+        {
+          "id": "boundary-values",
+          "text": "Boundary values tested for requested_rate (0.0, at STARTUP_MIN, at STARTUP_MAX, at CRUISE_MAX, above max)",
+          "grading": "Look for tests at constraint boundaries, not just mid-range values"
+        },
+        {
+          "id": "assertion-specificity",
+          "text": "Every test asserts a specific expected value — no assertNotNull, assertTrue(x), or 'does not raise' as sole assertion",
+          "grading": "Read each test's assertions. Fail if any test's only assertion is assertNotNull, assertTrue without a meaningful condition, or just checking no exception is thrown"
+        },
+        {
+          "id": "test-naming",
+          "text": "Test names describe the scenario being tested (input condition + expected outcome), not just the method name",
+          "grading": "Test names should read like 'startup_mode_limits_rate_to_minimum' not 'test_calculate' or 'test1'"
+        },
+        {
+          "id": "stateful-tests",
+          "text": "Stateful behavior tested: rate-of-change limiting requires multiple sequential calls",
+          "grading": "At least one test makes multiple calls to verify state-dependent behavior (rate-of-change needs previous_rate)"
+        },
+        {
+          "id": "config-variants",
+          "text": "Configuration variants tested: at least one test with non-default config values",
+          "grading": "Check if any test constructs the unit with non-default configuration parameters"
+        }
+      ]
     },
     {
       "id": 2,
       "prompt": "I need tests for the MessageParser. Design artifact is at evals/files/message-parser-design.md. Use Java with JUnit 5.",
       "expected_output": "JUnit 5 test class covering the sequential parsing steps, each error path, boundary values for raw_data length, and the union return type. Should include coverage matrix.",
-      "files": ["evals/files/message-parser-design.md"]
+      "files": ["evals/files/message-parser-design.md"],
+      "assertions": [
+        {
+          "id": "coverage-matrix",
+          "text": "Output includes a coverage matrix mapping design elements to test cases and derivation strategy",
+          "grading": "Check for a table or structured list mapping design elements to specific test method names with strategy labels"
+        },
+        {
+          "id": "sequential-steps",
+          "text": "Each sequential parsing step (B1-B10) has at least one happy-path test and its on_failure test",
+          "grading": "The design lists 10 parsing steps each with an on_failure. Check that both paths are covered for key steps"
+        },
+        {
+          "id": "union-return-type",
+          "text": "Tests assert on the specific Success or Error variant fields, not just the top-level type",
+          "grading": "Assertions should check variant-specific fields (e.g., Success.payload_length, Error.error_code) not just 'instanceof Success'"
+        },
+        {
+          "id": "boundary-raw-data",
+          "text": "Boundary values for raw_data length tested: at minimum (4 bytes), below minimum, at maximum (1024), above maximum",
+          "grading": "Look for tests with data at exact constraint boundaries"
+        },
+        {
+          "id": "assertion-specificity",
+          "text": "Every test asserts a specific expected value — no assertNotNull, assertTrue(x), or 'does not raise' as sole assertion",
+          "grading": "Read each test's assertions. Fail if any test's only assertion is assertNotNull or assertTrue without a meaningful condition"
+        },
+        {
+          "id": "test-naming",
+          "text": "Test names describe the scenario being tested (input condition + expected outcome), not just the method name",
+          "grading": "Test names should read like 'rejects_data_shorter_than_header_size' not 'testParse' or 'test1'"
+        },
+        {
+          "id": "error-paths",
+          "text": "Error handling entries (null/empty data, too-short data) have dedicated tests separate from parsing step failures",
+          "grading": "E1 and E2 from design should have their own tests, not mixed into parsing step tests"
+        },
+        {
+          "id": "checksum-verification",
+          "text": "Checksum verification step has both valid and invalid checksum test cases",
+          "grading": "At least one test with correct checksum (passes) and one with incorrect checksum (fails with appropriate error)"
+        }
+      ]
     },
     {
       "id": 3,
       "prompt": "Write tests for the temperature controller described in evals/files/temperature-controller-design.md. Use Go with the standard testing package.",
       "expected_output": "Go test file with table-driven tests covering hysteresis/deadband behavior, state transitions, error cases (out-of-range inputs, clamping), and boundary values. Should include coverage matrix.",
-      "files": ["evals/files/temperature-controller-design.md"]
+      "files": ["evals/files/temperature-controller-design.md"],
+      "assertions": [
+        {
+          "id": "coverage-matrix",
+          "text": "Output includes a coverage matrix mapping design elements to test cases and derivation strategy",
+          "grading": "Check for a table or structured list mapping design elements to specific test names with strategy labels"
+        },
+        {
+          "id": "state-transitions",
+          "text": "All state transitions tested: IDLE->HEAT, IDLE->COOL, HEAT->IDLE, COOL->IDLE, and no-change cases",
+          "grading": "Check for tests covering each transition direction and steady-state (remain in current state)"
+        },
+        {
+          "id": "deadband-boundaries",
+          "text": "Deadband boundary values tested: exactly at target±deadband/2 threshold and just inside/outside",
+          "grading": "Tests should probe the exact hysteresis thresholds, not just clearly-hot and clearly-cold values"
+        },
+        {
+          "id": "error-clamping",
+          "text": "Out-of-range input handling tested: temperature outside sensor range, target outside valid range, zero/negative deadband",
+          "grading": "Each error case from the design should have a test verifying the clamping or error behavior"
+        },
+        {
+          "id": "assertion-specificity",
+          "text": "Every test asserts specific expected values for both action (HEAT/COOL/IDLE) and stateChanged flag",
+          "grading": "Assertions must check both output fields with exact expected values, not just one of them"
+        },
+        {
+          "id": "test-naming",
+          "text": "Test names describe the scenario being tested, not just the method name",
+          "grading": "For Go: t.Run names should be descriptive like 'below_lower_threshold_triggers_heat' not 'case1'"
+        },
+        {
+          "id": "first-call",
+          "text": "First-call behavior tested: initial state with no prior history",
+          "grading": "At least one test verifies behavior on the very first call (no previous state)"
+        },
+        {
+          "id": "config-defaults",
+          "text": "Tests verify behavior with both default configuration and non-default values",
+          "grading": "At least one test uses non-default target, deadband, or sensor range values"
+        }
+      ]
     },
     {
       "id": 4,
-      "prompt": "Here's a Layer 1 component design for a session manager: evals/files/session-manager-design-L1.md. There are no detailed unit contracts — just the component overview with external interfaces, unit inventory, shared patterns, and constraints. Derive what test cases you can from this level of information. Use Python with pytest.",
-      "expected_output": "Test cases derived from component-level information: external interface contracts, constraint validation (10k sessions, timing, TTL), error strategy (result types), threading safety. Should clearly note what can and cannot be tested at this design level. Coverage matrix should map to component-level elements.",
-      "files": ["evals/files/session-manager-design-L1.md"]
+      "prompt": "Here's a Layer 1 component design for a session manager: evals/files/session-manager-design-L1.md. It has explicit dependencies (Clock, TokenGenerator, SessionRepository). Derive test cases that exercise the component's contracts, constraints, and error handling. Use Python with pytest.",
+      "expected_output": "Test cases covering external interface contracts, dependency injection with appropriate test doubles, constraint validation (10k sessions, timing, TTL), error strategy (result types), and threading considerations. Coverage matrix mapping to component-level elements.",
+      "files": ["evals/files/session-manager-design-L1.md"],
+      "assertions": [
+        {
+          "id": "coverage-matrix",
+          "text": "Output includes a coverage matrix mapping component-level design elements to test cases and derivation strategy",
+          "grading": "Check for a table or structured list mapping design elements (interfaces, constraints, error variants, dependencies) to test names with strategy labels"
+        },
+        {
+          "id": "clock-injected",
+          "text": "Clock dependency is injected and controlled in tests — not using real system time",
+          "grading": "Tests should inject a fake/stub clock to control time for expiry testing. Fail if tests use time.sleep() or real system clock for TTL checks"
+        },
+        {
+          "id": "token-generator-controlled",
+          "text": "TokenGenerator is injected with a deterministic substitute for predictable test assertions",
+          "grading": "Tests should use a fake or stub TokenGenerator that returns known values, enabling specific assertions on token values"
+        },
+        {
+          "id": "repository-real",
+          "text": "SessionRepository uses a real in-memory implementation, not a mock",
+          "grading": "The default in-memory implementation should be used directly (it's a simple data structure, not infrastructure). Fail if SessionRepository is mocked with unittest.mock or similar"
+        },
+        {
+          "id": "result-type-assertions",
+          "text": "Tests assert on specific SessionResult variants (Success with SessionInfo fields, or Error with specific SessionError enum value)",
+          "grading": "Assertions should check the variant type AND its contents (e.g., error == SessionError.expired, not just 'is error')"
+        },
+        {
+          "id": "assertion-specificity",
+          "text": "Every test asserts a specific expected value — no assertNotNull, assertTrue(x), or 'does not raise' as sole assertion",
+          "grading": "Read each test's assertions. Fail if any test's only assertion is asserting not-None or just checking no exception"
+        },
+        {
+          "id": "capacity-boundary",
+          "text": "Capacity constraint tested: behavior at 10,000 sessions (at limit) and 10,001 (over limit, should get store_full error)",
+          "grading": "Look for boundary tests at the max concurrent sessions limit"
+        },
+        {
+          "id": "ttl-expiry",
+          "text": "TTL expiry tested by advancing the fake clock past 30 minutes, then validating the session returns 'expired'",
+          "grading": "At least one test creates a session, advances clock past TTL, and verifies validation returns expired error"
+        }
+      ]
     }
   ]
 }

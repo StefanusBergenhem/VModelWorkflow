@@ -498,9 +498,14 @@
           <td>Tautological tests, assertion-free, happy-path bias, over-mocking, mirror tests</td>
         </tr>
         <tr>
+          <td class="field-name">ai-testing-failures.md</td>
+          <td>derive-test-cases, review-code</td>
+          <td>AI-specific test failure modes: tautological, assertion-free, happy-path bias, over-mocking, hallucinated assertions, code-to-test trap</td>
+        </tr>
+        <tr>
           <td class="field-name">derivation-strategies.md</td>
           <td>derive-test-cases</td>
-          <td>Requirement-based, equivalence class, boundary value, fault injection</td>
+          <td>Requirement-based, equivalence class, boundary value, fault injection, coverage matrix format, parameterized test patterns</td>
         </tr>
         <tr>
           <td class="field-name">design-quality-criteria.md</td>
@@ -582,13 +587,13 @@
       <h4>vmodel-skill-derive-test-cases</h4>
       <p>Derive comprehensive test cases from a design document using four systematic strategies. Tests verify <em>design</em>, not code.</p>
       <dl class="ref-grid">
-        <dt>Status</dt><dd>Exists (iteration 3, +67% combined with develop-code)</dd>
+        <dt>Status</dt><dd>Exists (iteration 4 &mdash; added principles, coverage matrix mandate, test double guidance)</dd>
         <dt>Derived from</dt><dd><a href="artifacts/unit-test.html">Unit Test documentation</a></dd>
         <dt>Input</dt><dd>Design document (any format)</dd>
-        <dt>Output</dt><dd>Test source code files</dd>
-        <dt>Key delta</dt><dd>Four derivation strategies (requirement-based, equivalence class, boundary value, fault injection) applied systematically. Forces spec-to-test instead of code-to-test. Anti-pattern guard against tautological and assertion-free tests.</dd>
-        <dt>References</dt><dd><code>derivation-strategies.md</code>, <code>testing-anti-patterns.md</code></dd>
-        <dt>HALT conditions</dt><dd>Vague design, ambiguous behavior rules, unknown test framework</dd>
+        <dt>Output</dt><dd>Test source code files + coverage matrix (design element &rarr; test case &rarr; strategy)</dd>
+        <dt>Key delta</dt><dd>Four derivation strategies (requirement-based, equivalence class, boundary value, fault injection) applied systematically. Forces spec-to-test instead of code-to-test. Anti-pattern guard against tautological and assertion-free tests. Mandatory coverage matrix as traceability artifact. Test double decision rules (mock only infrastructure; real &gt; fake &gt; stub &gt; mock). Assertion specificity enforcement.</dd>
+        <dt>References</dt><dd><code>derivation-strategies.md</code>, <code>testing-anti-patterns.md</code>, <code>ai-testing-failures.md</code></dd>
+        <dt>HALT conditions</dt><dd>Vague design, ambiguous behavior rules, unknown test framework, &gt;2 mocked dependencies</dd>
       </dl>
     </div>
 
@@ -1186,6 +1191,7 @@ escalated: []</code>
       references/
         derivation-strategies.md
         testing-anti-patterns.md
+        ai-testing-failures.md
     vmodel-skill-review-code/
       SKILL.md
       references/

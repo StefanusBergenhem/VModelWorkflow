@@ -309,34 +309,30 @@ Non-discriminating assertions: architecture boundaries and naming pass without s
 
 > Done: `.claude/skills/develop-code/SKILL.md`, `evals/evals.json`, `develop-code-workspace/iteration-2/benchmark.json`
 
-**B2. vmodel-skill-derive-test-cases** (rename from `derive-test-cases`)
+**B2. vmodel-skill-derive-test-cases** (DONE — 2026-04-10)
 
-*Plan:*
-- [ ] Audit SKILL.md body against `docs/guide/artifacts/unit-test.html` — identify gaps
-- [ ] Rename skill directory: `derive-test-cases` → `vmodel-skill-derive-test-cases`
-- [ ] Update SKILL.md frontmatter
+Audited SKILL.md against `docs/guide/artifacts/unit-test.html` and engineering-codex (7 relevant pages). Added Principles section (8 concise rules: spec-to-test, behavior-not-implementation, assertion specificity, test double preference hierarchy, state-over-behavior verification, AAA structure, parameterization, FIRST). Mandated coverage matrix as output with defined format. Expanded self-check from 4 to 6 points. Added HALT for >2 mocked dependencies. Updated `derivation-strategies.md` (coverage matrix format, parameterized test patterns). Updated `skills-architecture.html` (output spec, references, HALT conditions). Reworked eval 4 (SessionManager) with explicit injectable dependencies to test mocking decisions. Directory rename deferred — mechanical, do when convenient.
 
-*Test (eval design):*
-- [ ] Review existing evals — do they still test the right deltas after A1 reference updates?
-- [ ] Add/update eval scenarios if gaps found
-- [ ] Run evals against current skill as baseline (red — before changes)
+Eval results (Haiku, iteration 4):
+| Eval | with_skill (revised) | old_skill | without_skill |
+|---|---|---|---|
+| FuelRateLimiter (pytest, L2) | 8/8 | 8/8 | 8/8 |
+| MessageParser (JUnit5, L2) | 8/8 | 7/8 | 7/8 |
+| TempController (Go, L2) | 8/8 | 8/8 | 8/8 |
+| SessionManager (pytest, L1) | 8/8 | 8/8 | 8/8 |
+| **Overall** | **100%** | **97%** | **97%** |
 
-*Build:*
-- [ ] Replace `references/testing-anti-patterns.md` with updated version from Phase A1 (significant gap — 8 smells + AI failures missing)
-- [ ] Replace `references/derivation-strategies.md` with updated version from Phase A1
-- [ ] Revise SKILL.md body based on audit findings
+Revised skill is strictly better: higher score (+3%), fewer tokens (56k vs 65k avg), no regressions.
 
-*Verify:*
-- [ ] Re-run evals with updated skill, compare to baseline
-- [ ] Iterate if regression detected
+Discriminating assertion: assertion-specificity on eval 2 — both old_skill and without_skill produced `assertNotNull` as sole assertion in JUnit5 tests. Revised skill's explicit principle eliminated this.
 
-Context to load:
-- `.claude/skills/derive-test-cases/SKILL.md` (current skill)
-- `.claude/skills/derive-test-cases/references/` (both files)
-- Updated reference files from Phase A1
-- `docs/guide/artifacts/unit-test.html` (§3 for gap check)
-- `.claude/skills/derive-test-cases/evals/evals.json`
-- Previous eval results in `.claude/skills/derive-test-cases-workspace/`
+Non-discriminating on Haiku: coverage matrix, behavior rules, error handling, boundary values, test naming, mocking decisions. Well-structured designs make it easy for Haiku to do the right thing without guidance.
+
+Known improvement opportunities:
+- Add a "dirty" eval scenario (vague design, implicit dependencies) to test HALT conditions and principle value on ambiguous inputs
+- Run 3x per config on evals 2 and 4 for statistical confidence on the assertion-specificity delta
+
+> Done: `.claude/skills/derive-test-cases/SKILL.md`, `references/derivation-strategies.md`, `evals/evals.json`, `evals/files/session-manager-design-L1.md`, `docs/guide/skills-architecture.html`
 
 ---
 
@@ -611,8 +607,8 @@ Bottom-up, one V-model layer at a time. For each layer: documentation first, the
 See Component 4 "Lower V Skill Build Plan" for the detailed phased plan (A→F).
 Summary:
   A. [DONE] Foundation: reference files, config schema
-  B. [NEXT] Revise existing craft skills — DRTDD per skill (develop-code, derive-test-cases)
-  C. New craft skills — DRTDD per skill (review-code, develop-dd, retrofit-dd, review-dd)
+  B. [DONE] Revise existing craft skills — DRTDD per skill (develop-code, derive-test-cases)
+  C. [NEXT] New craft skills — DRTDD per skill (review-code, develop-dd, retrofit-dd, review-dd)
   D. Framework skills (dd-template, traceability, tool-checks)
   E. Agents (tdd-developer, code-reviewer, dd-developer, dd-reviewer, task-decomposer)
   F. Orchestration (research/plan skill, pipeline controller)

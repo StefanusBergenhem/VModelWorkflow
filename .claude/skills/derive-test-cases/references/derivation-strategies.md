@@ -72,3 +72,35 @@ have listed:
 | Concurrent access | If the design mentions thread-safety, test concurrent calls |
 | State corruption | If internal state exists, call methods in unexpected order |
 
+---
+
+## Combining Strategies: The Coverage Matrix
+
+After applying all four strategies, build a coverage matrix mapping every design element to its
+test case(s). This is a mandatory output — it proves completeness and provides traceability.
+
+| Design Element            | Test Case(s)                     | Strategy    |
+|---------------------------|----------------------------------|-------------|
+| behavior: startup limit   | test_startup_limits_rate_to_min  | req-based   |
+| error: negative rate      | test_negative_rate_raises        | error       |
+| input: rate [0, MAX]      | test_rate_at_zero, _at_max       | boundary    |
+| input: rate [0, MAX]      | test_rate_mid_range              | equivalence |
+
+Walk the matrix after writing all tests: every behavior rule tested? Every error condition?
+Every input covered by at least equivalence class + boundary tests? Stateful transitions?
+Configuration variants? Any row without a test is a gap.
+
+---
+
+## Parameterized Tests
+
+When multiple tests differ only in input and expected output — common for equivalence classes
+and boundary values — use parameterized tests to eliminate duplication:
+
+- **Python pytest:** `@pytest.mark.parametrize("input,expected", [...])`
+- **Java JUnit 5:** `@ParameterizedTest` with `@CsvSource` or `@MethodSource`
+- **Go testing:** table-driven tests with `for _, tc := range cases { t.Run(tc.name, ...) }`
+
+Use parameterized tests for data variations. Use separate named tests when the assertion logic
+differs between cases.
+
