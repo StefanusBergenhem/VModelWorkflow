@@ -164,7 +164,7 @@ Codex ingestion pending from Research 2-4: Alexander 2005, Shull/Basili 2000 PBR
 
 ---
 
-### 3.4 Stakeholder Identification & Needs Documentation — NEXT
+### 3.4 Stakeholder Identification & Needs Documentation — IN PROGRESS
 
 The true entry point to any project. Before requirements exist, you need to know who the stakeholders are, what they need, and how to validate that understanding. This is where every V-model project starts — or should start.
 
@@ -172,16 +172,26 @@ The true entry point to any project. Before requirements exist, you need to know
 
 **Depends on:** Research 2 (02a, 02b, 02d) — done.
 
-- [ ] Complete artifact page: `docs/guide/artifacts/stakeholder-needs.html`
-  - [ ] Section 1: What are stakeholder needs (stakeholders, their concerns, the gap between needs and requirements)
-  - [ ] Section 2: V-model context (precedes all requirements; inputs from project initiation, outputs to ConOps and system requirements)
-  - [ ] Section 3: Producing quality stakeholder analysis (the bulk — stakeholder identification techniques, elicitation methods (interviews, observation, document analysis, workshops, assumptions analysis), silent stakeholder discovery, conflict resolution (AHP), concurrence gates, validation via PBR and operational scenarios)
-  - [ ] Section 4: V-model specific considerations (traceability from every requirement back to stakeholder source, concurrence as formal gate, stakeholder turnover as program risk, regulatory stakeholders)
-  - [ ] Section 5: Framework integration (stub — stakeholder register template, stakeholder need template, trace links)
-  - [ ] Section 6: AI skills integration (stub)
+- [~] Artifact page: `docs/guide/artifacts/stakeholder-needs.html` (sections 1–4 done; sections 5–6 stubbed pending templates/skills)
+  - [x] Section 1: What are stakeholder needs — framed from messy semi-structured starting input; "user is dangerous" discipline
+  - [x] Section 2: V-model context — position, inputs/outputs, feedback loops, standards perspective, scaling by assurance level
+  - [x] Section 3: Producing quality stakeholder analysis
+    - [x] 3.1 Identification (Onion Model, Sharp recursive method, surrogacy, "empty slots are warnings")
+    - [x] 3.2 Classification (Power/Interest, Salience, RACI; "classification is never an exclusion filter")
+    - [x] 3.3 Elicitation (match technique to knowledge type; six techniques; indirect methods for Dependent/Dangerous)
+    - [x] 3.4 Needs-to-requirements distinction (language discipline, four-operation transformation, failure modes of conflation)
+    - [x] 3.5 Conflict and prioritization (three conflict types, MoSCoW/Kano/AHP, trade-off matrix, concurrence gates)
+    - [x] 3.6 Validation (five methods, assumptions discipline, completeness, PBR, Validation Matrix)
+  - [x] Section 4: V-model specific considerations (bidirectional traceability, derived-requirement feedback loop, recurring concurrence, living stakeholder register, regulatory stakeholders as first-class, independence scaling by assurance level)
+  - [ ] Section 5: Framework integration (stub — stakeholder register template, stakeholder need template, trace links) — pending templates
+  - [ ] Section 6: AI skills integration (stub) — pending skill development
+- [x] Added running worked example: railway signalling upgrade (used across 3.1–3.6 for continuity)
+- [x] Documentation style established: value-first craft teaching; standards cited as backing, never as subject or directive authority
 
 **Handoff down:** Validated stakeholder needs with source attribution, priority, and concurrence status → feeds ConOps and system requirements.
 **Feedback up:** Derived requirements discovered downstream that may require stakeholder re-concurrence.
+
+**Next up (new session):** Review and polish if needed, then begin 3.5 (ConOps Documentation) using the same value-first template.
 
 ### 3.5 Concept of Operations (ConOps) Documentation
 

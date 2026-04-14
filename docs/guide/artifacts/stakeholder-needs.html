@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stakeholder Needs — VModelWorkflow Guide</title>
+  <link rel="stylesheet" href="../css/main.css">
+</head>
+<body>
+
+<!-- ============================================================
+     SIDEBAR
+     ============================================================ -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <h1>VModelWorkflow</h1>
+    <div class="subtitle">V-Model Development Guide</div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-group">
+      <span class="nav-group-label">Navigation</span>
+      <a class="nav-link" href="../index.html">Back to Main Guide</a>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-group-label">Stakeholder Needs</span>
+      <a class="nav-link" href="#sn-intro">What Are Stakeholder Needs?</a>
+      <a class="nav-link" href="#sn-vmodel">V-Model Context</a>
+      <a class="nav-link" href="#sn-quality">Producing Quality Analysis</a>
+      <a class="nav-link" href="#sn-identification">Stakeholder Identification</a>
+      <a class="nav-link" href="#sn-classification">Classification</a>
+      <a class="nav-link" href="#sn-elicitation">Elicitation Techniques</a>
+      <a class="nav-link" href="#sn-needs-vs-reqs">Needs vs. Requirements</a>
+      <a class="nav-link" href="#sn-conflict">Conflict &amp; Prioritization</a>
+      <a class="nav-link" href="#sn-validation">Needs Validation</a>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-group-label">V-Model &amp; Framework</span>
+      <a class="nav-link" href="#sn-vmodel-considerations">V-Model Considerations</a>
+      <a class="nav-link" href="#sn-framework">Framework Integration <span class="status-badge stub">stub</span></a>
+      <a class="nav-link" href="#sn-skills">AI Skills <span class="status-badge stub">stub</span></a>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-group-label">Related Artifacts</span>
+      <a class="nav-link" href="#sn-references">References</a>
+    </div>
+  </nav>
+
+  <div class="domain-switcher">
+    <label for="domain-select">Domain Vocabulary</label>
+    <select id="domain-select">
+      <option value="generic">Generic V-Model</option>
+      <option value="do178c">DO-178C (Aviation)</option>
+      <option value="aspice">ASPICE / ISO 26262 (Automotive)</option>
+    </select>
+  </div>
+</aside>
+
+<!-- ============================================================
+     MAIN CONTENT
+     ============================================================ -->
+<main class="main-content" style="margin-left: var(--sidebar-width); padding: var(--space-3xl) var(--space-2xl); max-width: calc(var(--content-max) + var(--space-2xl) * 2 + var(--sidebar-width));">
+
+  <!-- ===================== SECTION 1: INTRO ===================== -->
+  <section id="sn-intro">
+    <div class="level-indicator left">Pre-Requirements &mdash; Project Entry Point</div>
+    <h2>What Are Stakeholder Needs?</h2>
+    <p class="lead">Stakeholder needs are what the people with a stake in a system require it to accomplish, expressed in their own language and from their own perspective &mdash; <em>before</em> any engineering transformation has taken place. They are the starting point of every V-model project, and the layer against which every downstream requirement must ultimately be justified.</p>
+
+    <h3>The Realistic Starting State</h3>
+    <p>In practice, a project rarely begins with a clean list of needs. It begins with <strong>messy, semi-structured input</strong>: an email from a purchaser, a few paragraphs in a contract, a slide deck pitched at management, or a conversation with the person who commissioned the work. That input typically contains a mix of:</p>
+    <ul>
+      <li><strong>Actual needs</strong> &mdash; problems the stakeholder wants solved, often stated indirectly</li>
+      <li><strong>Proposed solutions</strong> disguised as needs (&ldquo;we need a database&rdquo; instead of &ldquo;data must survive power loss&rdquo;)</li>
+      <li><strong>Constraints</strong> from the stakeholder&rsquo;s environment that are stated as if optional</li>
+      <li><strong>Unstated assumptions</strong> about context, existing systems, or future users</li>
+      <li><strong>Contributions from the wrong stakeholders</strong> &mdash; the people who happened to be in the room, not necessarily the ones whose needs matter most</li>
+    </ul>
+    <p>The job of stakeholder needs engineering is not to record this input verbatim. It is to take that mess and turn it into <strong>a validated, attributed, and testable description of what the system must accomplish</strong> &mdash; something downstream engineering can actually be built from.</p>
+
+    <div class="card">
+      <h3>The Fundamental Principle</h3>
+      <p>Stakeholder needs are not requirements. They are the <em>justification</em> for requirements. If a system requirement cannot be traced back to a stakeholder need (or to a derived need surfaced by completeness analysis), its existence is not justified. If a stakeholder need has no corresponding requirement, either it is being silently ignored or it is out of scope &mdash; and the reason must be documented either way.</p>
+    </div>
+
+    <h3>What This Layer Delivers</h3>
+    <p>A completed stakeholder needs analysis produces three artifacts that together make the project specifiable:</p>
+    <ol>
+      <li><strong>A stakeholder register</strong> &mdash; everyone who has a legitimate stake in the system, classified by role, power, legitimacy, and engagement level</li>
+      <li><strong>Captured needs</strong> &mdash; each need recorded with its source stakeholder, priority, validation status, and any surrogate attribution</li>
+      <li><strong>An explicit agreement record</strong> &mdash; evidence that affected parties concur with the captured set, not just that they failed to object</li>
+    </ol>
+
+    <div class="card">
+      <h3>Why &ldquo;User&rdquo; Is a Dangerous Word</h3>
+      <p>Ian Alexander argued that the word <em>user</em> is &ldquo;dangerously overloaded&rdquo; &mdash; depending on context it can mean all stakeholders, all non-developers, anyone gaining benefit, operators specifically, or a hybrid. Collapsing distinct roles into a single word is the structural reason that non-obvious stakeholders get missed: if &ldquo;the user&rdquo; means Normal Operator, then maintenance needs, regulatory needs, negative stakeholder impacts, and operational support needs all disappear from view.</p>
+      <p>Throughout this page we use specific roles (Normal Operator, Maintenance Operator, Regulator, Negative Stakeholder, etc.) rather than the unqualified word &ldquo;user.&rdquo; This is not pedantry &mdash; it is a structural safeguard against missing requirements. <cite>&mdash; Alexander, <a href="https://scenarioplus.org.uk/papers/stakeholders/A%20Better%20Fit%20Characterising%20the%20Stakeholders.pdf">&ldquo;A Better Fit &mdash; Characterising the Stakeholders,&rdquo; REBPS/CAiSE&rsquo;04</a></cite></p>
+    </div>
+
+    <h3>Scope of This Page</h3>
+    <p>This page covers the craft of stakeholder needs engineering: identification, classification, elicitation, the transformation from needs to requirements, conflict resolution, and validation. It covers <em>what</em> needs to happen and <em>why</em>, organized by knowledge domain rather than by procedure.</p>
+    <p>Two adjacent topics are documented separately: the <strong>Concept of Operations (ConOps)</strong> is the operational picture built on top of validated needs, and <strong>completeness analysis</strong> (FTA, FMEA, STPA, PBR) is the family of techniques that surface needs stakeholders cannot articulate. Both draw on the foundation laid here.</p>
+  </section>
+
+  <!-- ===================== SECTION 2: V-MODEL CONTEXT ===================== -->
+  <section id="sn-vmodel">
+    <h2><span data-term="stakeholder-needs">Stakeholder Needs</span> in the V-Model</h2>
+    <p class="lead">Stakeholder needs sit <em>above</em> the top of the V &mdash; they are the input that makes the V meaningful. Before there can be system requirements to verify, there must be needs that justify those requirements existing at all. This is the true project entry point.</p>
+
+    <h3>Position in the Flow</h3>
+    <div class="trace-flow">
+      <span class="artifact-ref">Project Initiation</span>
+      <span class="arrow">&rarr;</span>
+      <span class="artifact-ref" data-term="stakeholder-needs">Stakeholder Needs</span>
+      <span class="arrow">&rarr;</span>
+      <span class="artifact-ref" data-term="conops">ConOps</span>
+      <span class="arrow">&rarr;</span>
+      <span class="artifact-ref" data-term="system-requirements">System Requirements</span>
+    </div>
+    <p>Stakeholder needs are fed by project initiation (contracts, business case, prior system documents, regulatory context) and feed forward into two parallel artifacts: the <span data-term="conops">Concept of Operations</span>, which builds the operational picture, and the first formal requirements layer, <span data-term="system-requirements">system requirements</span>. Completeness analysis runs in parallel and feeds back needs that no stakeholder articulated directly.</p>
+
+    <h3>Inputs and Outputs</h3>
+    <table class="field-table">
+      <thead>
+        <tr><th>Direction</th><th>Artifact / Source</th><th>What It Provides</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Input</td><td>Project initiation (contract, business case, proposal)</td><td>The ordering stakeholder, initial scope, budget context, commercial constraints</td></tr>
+        <tr><td>Input</td><td>Regulatory and standards corpus</td><td>Constraints from stakeholders who will never attend a meeting (regulators, society)</td></tr>
+        <tr><td>Input</td><td>Prior system documentation (legacy retrofit)</td><td>Existing behavior, current stakeholder workarounds, incident history</td></tr>
+        <tr><td>Output</td><td>Stakeholder register</td><td>Every legitimate stakeholder, with role, power, legitimacy, and engagement plan</td></tr>
+        <tr><td>Output</td><td>Captured and agreed needs</td><td>Attributed, prioritized, validation-status-tracked needs ready for transformation</td></tr>
+        <tr><td>Output</td><td>Concurrence record</td><td>Explicit agreement from affected parties &mdash; the formal handoff gate</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Feedback Loops</h3>
+    <p>Stakeholder needs are not a one-time activity that finishes before requirements begin. Three feedback loops run continuously:</p>
+    <ul>
+      <li><strong>Derived requirements feedback</strong> &mdash; when downstream engineering discovers a requirement that cannot be traced to a stakeholder need, the need set may be incomplete. Safety-relevant derived requirements must be fed back for stakeholder re-concurrence (formalized in ARP 4754A as the derived-requirement feedback loop).</li>
+      <li><strong>Stakeholder evolution</strong> &mdash; stakeholders change roles, leave organizations, or shift priorities during development. ASPICE SYS.1.BP3 treats this explicitly: changes to needs must be analyzed for impact and fed back through change control.</li>
+      <li><strong>Completeness analysis discoveries</strong> &mdash; FTA, FMEA, STPA, and similar techniques generate negative, implicit, and interaction needs that no stakeholder articulated. These enter the need set through the back door and require the same validation and concurrence treatment as stated needs.</li>
+    </ul>
+
+    <h3>Standards Perspective</h3>
+    <table class="field-table">
+      <thead>
+        <tr><th>Standard</th><th>Section</th><th>Key Requirement</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>ASPICE v4.0</td><td>SYS.1</td><td>Gather, analyze, and track evolving stakeholder needs to establish a set of <em>agreed</em> requirements. Four base practices: obtain expectations, agree on requirements (explicit agreement required), analyze changes, communicate status. Stakeholder source must be documented (BP1 Note 1) to support agreement and change management.</td></tr>
+        <tr><td>ARP 4754A</td><td>Integral process: Requirements Validation</td><td>&ldquo;Ensure the correctness and completeness of the set of captured requirements.&rdquo; Five validation methods: traceability, analysis/modeling, test, similarity, inspection. Assumptions are validation items in their own right &mdash; must be stated, disseminated, and justified.</td></tr>
+        <tr><td>ISO 26262</td><td>Part 3, Cl. 5&ndash;6</td><td>Item Definition captures the functional description, operational and environmental constraints, and operating scenarios before any design. HARA derives safety goals from hazardous events &mdash; an implicit stakeholder needs capture for society and road users who will never be interviewed.</td></tr>
+        <tr><td>ISO/IEC/IEEE 29148</td><td>2018</td><td>Defines stakeholder requirements as &ldquo;transformed from the stakeholder needs to objectively adequate, structured and more formal statements.&rdquo; Distinguishes needs (stakeholder language) from requirements (engineering language, modal &ldquo;shall&rdquo;). Includes both stated and implied needs.</td></tr>
+        <tr><td>INCOSE GtWR / NRM</td><td>2022</td><td>Generating a requirement statement &ldquo;is more than changing the subject of the need statement; it is an analysis of what the system must do to achieve what is needed.&rdquo; Lists &ldquo;able to be validated&rdquo; as an essential set-level characteristic.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Why This Layer Exists as a Distinct Artifact</h3>
+    <div class="card">
+      <p>Without an upstream layer of validated needs, requirements cannot themselves be validated &mdash; there is nothing to validate them against. You can verify a requirement (&ldquo;does the system satisfy it?&rdquo;), but you cannot answer the prior question (&ldquo;is this the right requirement?&rdquo;) in the absence of a prior artifact the requirement is accountable to. Collapsing needs into requirements removes that prior artifact and makes the question unanswerable.</p>
+      <p>The needs layer exists so that the question &ldquo;why does this requirement exist?&rdquo; always has an answer that is not &ldquo;because someone wrote it down.&rdquo; <em>Codified across ASPICE SYS.1, ARP 4754A requirements validation, and ISO/IEC/IEEE 29148.</em></p>
+    </div>
+
+    <h3>Scaling by Project Size and Assurance Level</h3>
+    <p>The <em>principles</em> of this layer (identify stakeholders systematically, distinguish needs from requirements, obtain explicit agreement) apply at every scale. The <em>formality</em> scales with project size and assurance level:</p>
+    <ul>
+      <li><strong>Small, low-risk project:</strong> a 30-minute Onion Model walkthrough, two semi-structured interviews, a short need list reviewed over email, explicit sign-off in a meeting minute.</li>
+      <li><strong>Large safety-critical project:</strong> formal stakeholder register under change control, facilitated workshops with multiple organizations, PBR-validated need set, signed concurrence gates, full five-method validation matrix, traceability to regulatory clauses.</li>
+    </ul>
+    <p>The cost of the minimal version is small enough that there is no project where skipping it is justified. What changes is the ceremony around it. Specific technique applicability is discussed inline in <a href="#sn-elicitation">Section 3.3</a>; formality scaling by assurance level is discussed in <a href="#sn-vmodel-considerations">Section 4</a>.</p>
+  </section>
+
+  <!-- ===================== SECTION 3: QUALITY ===================== -->
+  <section id="sn-quality">
+    <h2>Producing Quality Stakeholder Analysis</h2>
+    <p class="lead">This section covers the craft of moving from messy initial input to a validated, attributed, testable set of stakeholder needs. It is organized by knowledge domain: identification, classification, elicitation, the needs-to-requirements distinction, conflict resolution, and validation. Each principle includes concrete examples and notes on how the technique scales with project size.</p>
+  </section>
+
+  <!-- ===================== 3.1: IDENTIFICATION ===================== -->
+  <section id="sn-identification">
+    <h3>3.1 Stakeholder Identification</h3>
+    <p>Identification is the first and highest-leverage step. A stakeholder you fail to identify produces needs you fail to capture, which produces requirements you fail to write, which produces failure modes you do not plan for. No amount of downstream rigor fixes a missed stakeholder.</p>
+
+    <h4>The Core Problem: Stakeholders You Don&rsquo;t Know About</h4>
+    <p>The common mistake is to start with the people who show up in the kickoff meeting and stop there. Whoever schedules the kickoff has power, and power is not evenly distributed. The operator who will use the system daily, the maintenance engineer who will repair it at 2am, the regulator who must approve it, and the resident who will be harmed if it fails &mdash; none of these people are likely to be in that first meeting.</p>
+    <p>Alexander puts it precisely: the tendency is to &ldquo;capture needs from limited viewpoints while neglecting diverse stakeholder perspectives.&rdquo; The result is that non-obvious roles are systematically missed, and in safety-critical systems the missing stakeholders are frequently the ones whose concerns <em>are</em> safety-related. <cite>&mdash; Alexander, <a href="https://scenarioplus.org.uk/papers/stakeholders/A%20Better%20Fit%20Characterising%20the%20Stakeholders.pdf">REBPS/CAiSE&rsquo;04</a></cite></p>
+
+    <div class="card">
+      <h4>Identification Is Not a One-Shot Activity</h4>
+      <p>New stakeholders surface throughout a project &mdash; during elicitation (&ldquo;you should talk to&hellip;&rdquo;), during architecture work (new interfacing systems), during safety analysis (affected parties not previously considered), and during verification (regulators, certification authorities). The stakeholder register must be revisited at each V-model transition, not locked down at the start.</p>
+    </div>
+
+    <h4>The Onion Model</h4>
+    <p>The most practical published tool for systematic stakeholder identification is the <strong>Onion Model</strong>, developed by Ian Alexander in collaboration with Suzanne and James Robertson. The model uses four concentric rings centered on the system under development and serves as both a description of who exists and, more importantly, a <em>checklist for gaps</em>. <cite>&mdash; Alexander, <a href="https://scenarioplus.org.uk/papers/taxonomy/stakeholder_taxonomy.pdf">&ldquo;A Taxonomy of Stakeholders,&rdquo; IJTHI 1(1), 2005</a></cite></p>
+
+    <div class="code-block"><code>+--------------------------------------------------+
+|  Wider Environment                               |
+|  +--------------------------------------------+  |
+|  |  Containing System                         |  |
+|  |  +--------------------------------------+  |  |
+|  |  |  Our System                          |  |  |
+|  |  |  +------------------------------+    |  |  |
+|  |  |  |  The Kit                     |    |  |  |
+|  |  |  |  (hardware + software)       |    |  |  |
+|  |  |  +------------------------------+    |  |  |
+|  |  +--------------------------------------+  |  |
+|  +--------------------------------------------+  |
++--------------------------------------------------+</code></div>
+
+    <p><strong>The Kit</strong> is the hardware and software being built &mdash; the object of design, not a stakeholder. The three outer rings contain the people.</p>
+
+    <h5>Our System (The Kit + its Operators)</h5>
+    <table class="field-table">
+      <thead>
+        <tr><th>Role</th><th>Who They Are</th><th>Typical Failure If Missed</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Normal Operator</td><td>Executes routine commands, monitors outputs. The person pressing buttons.</td><td>Often the <em>only</em> stakeholder captured &mdash; everything else is missed.</td></tr>
+        <tr><td>Maintenance Operator</td><td>Maintains hardware, diagnoses faults, restores operation.</td><td>&ldquo;Whole-life costs depend heavily on maintenance&rdquo; &mdash; serviceability needs missing drives the cost up later.</td></tr>
+        <tr><td>Operational Support</td><td>Help desk, trainers, advisors who keep humans effective.</td><td>Training requirements and support interfaces missing at launch.</td></tr>
+      </tbody>
+    </table>
+
+    <h5>Containing System (Our System Embedded in Its Organization)</h5>
+    <table class="field-table">
+      <thead>
+        <tr><th>Role</th><th>Who They Are</th><th>Typical Failure If Missed</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Functional Beneficiary</td><td>Receives value from outputs but does not operate the system (e.g., astronomers using telescope data).</td><td>Functional requirements are written for the operator, not the consumer of the output &mdash; the system does the wrong thing correctly.</td></tr>
+        <tr><td>Interfacing System</td><td>Neighboring systems with protocol-level connections.</td><td>Interface definition drift creates serious downstream risk during integration.</td></tr>
+        <tr><td>Purchaser</td><td>Pays for development (product manager, procurement officer).</td><td>Commercial constraints not surfaced &mdash; project de-scoped or cancelled mid-flight.</td></tr>
+        <tr><td>Product Champion / Sponsor</td><td>Initiated development; protects it from political pressure.</td><td>Project loses air cover at the first internal challenge.</td></tr>
+      </tbody>
+    </table>
+
+    <h5>Wider Environment (Everyone Else &mdash; The Most-Missed Ring)</h5>
+    <table class="field-table">
+      <thead>
+        <tr><th>Role</th><th>Who They Are</th><th>Typical Failure If Missed</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Negative Stakeholder</td><td>Harmed physically or financially by the system (residents near a railway, conservation bodies, displaced workers).</td><td>Requirements to mitigate harm not captured; project blocked late by legal or political action.</td></tr>
+        <tr><td>Hostile Agent</td><td>Actively seeks to harm the system (attackers, competitors, industrial spies). A subtype of Negative Stakeholder.</td><td>Security requirements not elicited &mdash; threat model missing entirely.</td></tr>
+        <tr><td>Political Beneficiary</td><td>Gains power or influence from system success.</td><td>Political pressures on scope and timeline not anticipated.</td></tr>
+        <tr><td>Financial Beneficiary</td><td>Shareholders, investors, directors who profit financially.</td><td>ROI and reporting needs surface late, disrupting architecture.</td></tr>
+        <tr><td>Regulator</td><td>Certifies quality, safety, cost compliance; surrogate for the public interest. &ldquo;Crucial for safety-related products.&rdquo;</td><td>Certification evidence requirements not fed back into the development process &mdash; project unable to certify at the end.</td></tr>
+        <tr><td>Developer</td><td>Requirements engineers, designers, programmers, testers, safety specialists.</td><td>Tooling, environment, and process needs missing &mdash; team cannot produce required evidence.</td></tr>
+        <tr><td>Consultant</td><td>External experts (marketing, business analysis, safety, security).</td><td>Specialist perspectives not injected at the right time.</td></tr>
+        <tr><td>Supplier</td><td>Manufacturers of components and sub-assemblies.</td><td>Long lead-time items not ordered; component constraints not known during design.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="card">
+      <h4>Empty Slots Are Warnings, Not Confirmations</h4>
+      <p>Alexander&rsquo;s central point about the Onion Model is that <strong>&ldquo;unpopulated slots signal dangerous gaps.&rdquo;</strong> A practical use of the model is to walk through each slot and ask: &ldquo;Are we <em>certain</em> no one fills this role?&rdquo; An empty Regulator slot on a safety-critical project is not evidence that no regulator exists &mdash; it is evidence that you have not looked hard enough. The same is true for Negative Stakeholder, Maintenance Operator, and Interfacing System, which are the most common silent omissions.</p>
+      <p>The discipline: for every empty slot, write <em>why</em> it is empty. &ldquo;No Negative Stakeholders identified &mdash; system operates in a sealed industrial environment with no external impact&rdquo; is a defensible entry. Leaving the slot simply blank is not.</p>
+    </div>
+
+    <h4>Recursive Identification: The Sharp Method</h4>
+    <p>The Onion Model tells you <em>what</em> roles to look for. The Sharp method tells you <em>how to find the people who fill them</em>. Attributed to Sharp, Finkelstein, and Galal (1999) and cited in Alexander&rsquo;s taxonomy paper:</p>
+    <ol>
+      <li>Start from the initial contact (whoever commissioned the work).</li>
+      <li>Ask each interviewee: &ldquo;Who else should I talk to about this system?&rdquo;</li>
+      <li>Follow each new name to a new interview.</li>
+      <li>Terminate when no new names emerge or when new names have been confirmed irrelevant.</li>
+    </ol>
+    <p>Alexander&rsquo;s assessment of this method alone: it &ldquo;reveals only well-known stakeholders&rdquo; and misses non-obvious roles. It is necessary but not sufficient. <strong>The recommended practice is to combine recursive social traversal with template-based gap checking:</strong> use Sharp to find the people who are obvious, then use the Onion Model to check for the roles that nobody thought to mention. <cite>&mdash; Alexander, <a href="https://scenarioplus.org.uk/papers/taxonomy/stakeholder_taxonomy.pdf">IJTHI 1(1), 2005</a></cite></p>
+
+    <div class="example-block good">
+      <div class="example-label">Combined identification pass &mdash; railway signalling upgrade</div>
+      <div class="code-block"><code>Sharp pass (who did people mention?)
+  Initial contact: procurement lead at rail operator
+    -> named: signalling team, train drivers, control centre, existing vendor
+      -> named: track maintenance, regional managers, safety case author
+        -> no new names after 3 hops
+
+Onion gap-check (what roles are still empty?)
+  Normal Operator:     signallers, drivers           [ok]
+  Maintenance:         track maintenance             [ok]
+  Op. Support:         signaller trainers            MISSING -> find
+  Funct. Beneficiary:  passengers                    MISSING -> surrogate needed
+  Interfacing System:  adjacent rail networks,
+                       national rail authority       MISSING -> find
+  Regulator:           national rail safety body     MISSING -> find
+  Negative Stake:      residents near route,
+                       emergency services            MISSING -> assess impact
+  Hostile Agent:       cyber threat actors           MISSING -> threat modelling
+  Supplier:            rolling-stock OEM             MISSING -> needed early
+  ...</code></div>
+    </div>
+    <p>The Sharp pass alone would have produced a stakeholder list of six roles. The Onion gap-check surfaces seven more, each of which has an obvious claim on the system once named. This is the pattern in practice: social traversal produces the obvious half, template checking produces the dangerous half.</p>
+
+    <h4>Surrogacy: A Fundamental Limitation</h4>
+    <p>Surrogacy is one of the most important and underexplored concepts in stakeholder engineering. It occurs when one person speaks on behalf of another who cannot participate directly. Alexander identifies it as &ldquo;one of the fundamental limitations on the engineering of requirements, systems, and software.&rdquo; <cite>&mdash; Alexander, IJTHI 1(1), 2005</cite></p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Surrogate Type</th><th>Example</th><th>Risk</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Typical Consumer</td><td>Focus-group participants representing a consumer market</td><td>Statistical sampling bias; the vocal minority dominates the captured need.</td></tr>
+        <tr><td>Operator of Current Product</td><td>A present operator standing in for future operators of a system that does not yet exist</td><td>Current-process assumptions baked into the future system; misses genuine innovation opportunities.</td></tr>
+        <tr><td>Project Intermediary</td><td>A requirements engineer or product manager who has interpreted stakeholder needs and now presents them as primary input</td><td>Interpretation layer invisible; downstream sees &ldquo;the customer said&rdquo; when really &ldquo;the PM thought the customer meant.&rdquo;</td></tr>
+        <tr><td>Salaried Authority</td><td>An official voice (regulator, safety authority) speaking on behalf of public interest</td><td>Public interest filtered through institutional interpretation; specific affected parties still unheard.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="card">
+      <h4>Surrogate Input Is Hearsay</h4>
+      <p>Alexander calls surrogate requirements &ldquo;hearsay evidence&rdquo; &mdash; legally inadmissible because the person presenting them did not experience them. The risk is not that surrogates are dishonest; it is that <em>surrogates have incomplete knowledge, filter unconsciously, and cannot be challenged by the original stakeholder</em>.</p>
+      <p>Surrogacy is often unavoidable. Future users of a system in development cannot be interviewed. Members of the public affected by a safety-critical system cannot be individually consulted. Distant, contractually restricted, or culturally inaccessible stakeholders must be represented by someone. The discipline is not to avoid surrogacy but to <strong>record it</strong>: every need carries an attribution to its source, and the source record distinguishes direct stakeholder input from surrogate-reported input. Downstream validation treats them differently.</p>
+    </div>
+
+    <h4>Scaling by Project Size</h4>
+    <p>Identification is the cheapest part of this layer and the one where skipping has the sharpest asymmetric downside. Scaling affects <em>effort</em>, not <em>whether it is done</em>.</p>
+    <ul>
+      <li><strong>Small internal tool, handful of stakeholders:</strong> a 30-minute whiteboard walkthrough of the Onion Model with the product champion. Sharp recursion often terminates after two or three hops. Surrogacy is usually limited to future users of a not-yet-built feature.</li>
+      <li><strong>Mid-size product, single organization:</strong> a half-day workshop, written stakeholder register, explicit Sharp-then-gap-check pass, surrogate sources recorded on each captured need.</li>
+      <li><strong>Large safety-critical system, multiple organizations:</strong> stakeholder register under change control, dedicated stakeholder-analysis workstream, regulatory stakeholder list built from the applicable standards corpus, explicit surrogate-management plan (e.g., advisory panels for communities that cannot be individually interviewed).</li>
+    </ul>
+    <p>On every scale, the Onion slot walkthrough and the &ldquo;why is this slot empty?&rdquo; discipline apply. The cost of doing it on a small project is measured in minutes; the cost of getting it wrong on any project is measured in missed requirements.</p>
+  </section>
+
+  <!-- ===================== 3.2 CLASSIFICATION ===================== -->
+  <section id="sn-classification">
+    <h3>3.2 Stakeholder Classification</h3>
+    <p>Once stakeholders are identified, classification helps you decide how to engage each one: who must be consulted on every decision, who needs only status updates, who must formally approve, who has latent power that will surface late. Classification is an <em>engagement and process</em> tool. It is not a filter for deciding whose needs count &mdash; in safety-critical systems, that distinction is especially important.</p>
+
+    <div class="card">
+      <h4>Classification Is Never an Exclusion Filter</h4>
+      <p>The most dangerous misuse of classification schemes is to treat low-power or low-salience stakeholders as safe to ignore. A Regulator may appear as a medium-power stakeholder in day-to-day project terms, but their power to block certification or require late design changes is effectively absolute. A community affected by a failure event may have no apparent power during development and overwhelming legal power afterwards. A junior safety engineer may lack organizational standing yet be the only person who has noticed a hazard.</p>
+      <p>Classification tells you <em>how to interact</em> with each stakeholder. It does not tell you whose needs are optional. Needs-capture is inclusive by default; classification adjusts the mechanism, not the inclusion.</p>
+    </div>
+
+    <h4>Power/Interest Grid (Mendelow; Eden &amp; Ackermann)</h4>
+    <p>The most widely used classification scheme in project and systems management is the <strong>power/interest grid</strong>. Stakeholders are placed on two dimensions:</p>
+    <ul>
+      <li><strong>Power</strong> &mdash; ability to influence the system, its development, or its outcomes.</li>
+      <li><strong>Interest</strong> &mdash; degree of concern about the system&rsquo;s outcomes.</li>
+    </ul>
+
+    <div class="code-block"><code>  HIGH POWER  ^
+              |
+              |   Keep Satisfied       |   Manage Closely
+              |   (high power,         |   (high power,
+              |    low interest)       |    high interest)
+              |------------------------+------------------------
+              |   Monitor              |   Keep Informed
+              |   (low power,          |   (low power,
+              |    low interest)       |    high interest)
+  LOW POWER   |
+              +----------------------------------------------->
+                  LOW INTEREST                  HIGH INTEREST</code></div>
+
+    <p>The four quadrants translate into four engagement strategies: keep high-power/high-interest stakeholders close (involve in decisions), keep high-power/low-interest stakeholders satisfied (update them but do not burden them), keep low-power/high-interest stakeholders informed, and monitor the rest.</p>
+
+    <p><strong>Safety-critical limitation:</strong> the grid is primarily a <em>communication</em> tool, not a requirements prioritization tool. It is most dangerous when &ldquo;power&rdquo; is measured purely as organizational or commercial power. A regulator sitting at medium-power during development has veto power at certification. A Negative Stakeholder sitting at low-power during development has full legal and political power after a failure event. If the grid is the only classification used, these stakeholders get under-engaged until it is too late.</p>
+
+    <h4>The Salience Model (Mitchell, Agle &amp; Wood, 1997)</h4>
+    <p>Mitchell, Agle, and Wood proposed a more sophisticated classification scheme based on three attributes rather than two. It is the scheme that most cleanly captures why regulators and affected communities matter more than a power-only view suggests. <cite>&mdash; Mitchell, Agle &amp; Wood, <a href="https://www.ronaldmitchell.org/publications/Mitchell%20Agle%20Wood%20AMR%201997.pdf">AMR 22(4), 1997</a></cite></p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Attribute</th><th>Meaning</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Power</td><td>Ability to impose will, coerce, or influence outcomes.</td></tr>
+        <tr><td>Legitimacy</td><td>Moral, legal, or contractual basis for involvement &mdash; whether their claim on the system is recognized as appropriate.</td></tr>
+        <tr><td>Urgency</td><td>Time-sensitivity and criticality of the claim.</td></tr>
+      </tbody>
+    </table>
+
+    <p>The three attributes combine into seven stakeholder types (a Venn diagram of three overlapping sets):</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Type</th><th>Attributes</th><th>Practical Meaning</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Dormant</td><td>Power only</td><td>Can act but has no current claim or urgency. Ignore at your peril if circumstances change.</td></tr>
+        <tr><td>Discretionary</td><td>Legitimacy only</td><td>Moral claim but no power or urgency to press it. Easy to overlook.</td></tr>
+        <tr><td>Demanding</td><td>Urgency only</td><td>Pressing claims but no power or legitimacy. The loudest voices without substance.</td></tr>
+        <tr><td>Dominant</td><td>Power + Legitimacy</td><td>Recognized authority, actively engaged. Classic &ldquo;key stakeholder.&rdquo;</td></tr>
+        <tr><td>Dependent</td><td>Legitimacy + Urgency</td><td>Real, urgent claim but relies on others to press it. <strong>Affected communities, end users of safety-critical systems.</strong></td></tr>
+        <tr><td>Dangerous</td><td>Power + Urgency</td><td>Willing and able to act without legitimate basis. <strong>Hostile agents, attackers, disgruntled insiders.</strong></td></tr>
+        <tr><td>Definitive</td><td>Power + Legitimacy + Urgency</td><td>All three. Require management attention. The people whose input cannot be deferred.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="card">
+      <h4>Why the Salience Model Matters for Safety-Critical Systems</h4>
+      <p>The Power/Interest grid collapses the Dependent and Dangerous categories into &ldquo;low power, low interest&rdquo; and &ldquo;low power, high interest.&rdquo; The Salience model separates them, which is exactly what safety-critical analysis needs:</p>
+      <ul>
+        <li><strong>Dependent stakeholders</strong> (affected residents, future operators, public users) have high urgency and legitimate claims but no direct power. They require <em>advocacy</em> &mdash; someone with power must press their claim. Regulators often play this role; when they do not, the project must create the advocacy channel explicitly.</li>
+        <li><strong>Dangerous stakeholders</strong> (hostile agents, attackers) have power and urgency without legitimacy. Identifying them as <em>dangerous</em> rather than &ldquo;low-interest&rdquo; is the precondition for security requirements elicitation and threat modelling.</li>
+      </ul>
+    </div>
+
+    <h4>RACI: Classification for Process Accountability</h4>
+    <p>RACI (Responsible, Accountable, Consulted, Informed) is a <strong>responsibility assignment model</strong>, not a stakeholder prioritization scheme. It answers a different question: for each artifact or decision in the development process, who does what?</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Role</th><th>Meaning</th><th>Cardinality</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Responsible</td><td>Executes the work</td><td>One or more</td></tr>
+        <tr><td>Accountable</td><td>Owns the outcome; the final approving authority</td><td><strong>Exactly one per task</strong></td></tr>
+        <tr><td>Consulted</td><td>Provides input before decisions are made; two-way communication</td><td>One or more</td></tr>
+        <tr><td>Informed</td><td>Kept updated on decisions and progress; one-way communication</td><td>One or more</td></tr>
+      </tbody>
+    </table>
+
+    <p>RACI is applied per artifact or per decision, not per stakeholder. An example applied to this layer:</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Artifact / Decision</th><th>R</th><th>A</th><th>C</th><th>I</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Stakeholder register</td><td>RE team</td><td>Project lead</td><td>Identified stakeholders</td><td>Management</td></tr>
+        <tr><td>Need capture (per stakeholder)</td><td>RE team</td><td>Source stakeholder</td><td>Safety specialist, domain expert</td><td>Project</td></tr>
+        <tr><td>Concurrence record</td><td>RE team</td><td>Project lead</td><td>All affected parties</td><td>Regulator (where applicable)</td></tr>
+        <tr><td>Derived-requirement callback</td><td>Requirements lead</td><td>Safety lead</td><td>Original source stakeholder</td><td>Project</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>Safety-critical adaptation:</strong> many standards require that the Accountable role be independent from the Responsible role &mdash; the approver cannot be the author. RACI matrices in safety-critical contexts should reflect this independence requirement explicitly (sometimes written as RACI-I, with the final I meaning &ldquo;Independent&rdquo;). The salience of this independence rises with assurance level: for high-DAL/high-ASIL work, independence is a formal compliance requirement, not a best-practice preference.</p>
+
+    <p>RACI is a <em>complement</em> to the Onion Model, not a substitute. The Onion tells you <strong>who exists</strong>; RACI tells you <strong>what each person does in the process</strong>.</p>
+
+    <h4>Which Scheme to Use</h4>
+    <p>No single scheme is sufficient. The recommended combination:</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Scheme</th><th>Answers</th><th>Use For</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Onion Model (Section 3.1)</td><td>Who exists?</td><td>Comprehensive identification; gap-finding.</td></tr>
+        <tr><td>Salience Model</td><td>Whose needs are urgent AND legitimate?</td><td>Prioritizing limited elicitation bandwidth; surfacing Dependent and Dangerous stakeholders.</td></tr>
+        <tr><td>Power/Interest Grid</td><td>How should we communicate?</td><td>Engagement planning; status cadence.</td></tr>
+        <tr><td>RACI</td><td>Who participates in each process step?</td><td>Assigning responsibility for artifacts, reviews, and concurrence gates.</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Worked Example: Classifying the Railway Signalling Stakeholders</h4>
+    <p>Continuing the identification pass from Section 3.1, the combined stakeholder set includes signallers, drivers, track maintenance, signaller trainers, passengers (surrogate), adjacent rail networks, national rail authority, national rail safety body, residents near the route, emergency services, cyber threat actors, and the rolling-stock OEM. Running the three classification passes:</p>
+
+    <div class="example-block good">
+      <div class="example-label">Salience &mdash; surfaces who the Power/Interest grid would mis-classify</div>
+      <div class="code-block"><code>Definitive (P+L+U):  national rail safety body, rail operator leadership
+Dominant (P+L):      adjacent rail networks, rolling-stock OEM
+Dependent (L+U):     passengers (via surrogate), residents near route,
+                     emergency services
+Dangerous (P+U):     cyber threat actors
+Discretionary (L):   signaller trainers
+Demanding (U):       (none identified)
+Dormant (P):         national rail authority (latent regulatory power
+                     beyond the safety body's remit)</code></div>
+    </div>
+
+    <div class="example-block good">
+      <div class="example-label">Power/Interest &mdash; drives communication cadence</div>
+      <div class="code-block"><code>Manage Closely:      safety body, signallers, drivers, operator leadership
+Keep Satisfied:      national rail authority, rolling-stock OEM
+Keep Informed:       track maintenance, trainers, adjacent networks,
+                     emergency services
+Monitor:             residents (via community liaison), passengers
+                     (via surrogate)
+NB: cyber threat actors are not engaged, they are defended against
+    -- classification is "Dangerous" (salience), not a quadrant.</code></div>
+    </div>
+
+    <div class="example-block good">
+      <div class="example-label">RACI &mdash; example row for a single artifact</div>
+      <div class="code-block"><code>Artifact:  Captured need "Signallers shall be alerted to track-circuit
+           failure within 3 seconds"
+  Source:  Signaller interview (direct) -- not surrogate
+  R:       Requirements engineer (capture), signaller (validation)
+  A:       Rail operator signalling lead (independent from RE team)
+  C:       Safety body (hazard classification), track maintenance
+           (failure-mode context), rolling-stock OEM (interface impact)
+  I:       Project management, adjacent network operators</code></div>
+    </div>
+
+    <p>The three passes answer different questions and produce non-overlapping information. The Salience view tells the project that residents and emergency services are Dependent &mdash; their urgent and legitimate needs will not be pressed by themselves, so the project must create an advocacy channel. The Power/Interest view tells the project that the national rail authority needs a satisfaction-level engagement even though it has no direct claim on any individual requirement. RACI tells the project who signs off on each captured need. Using only one scheme would leave two of these insights invisible.</p>
+
+    <h4>Scaling by Project Size</h4>
+    <ul>
+      <li><strong>Small project:</strong> a single page with stakeholders listed by Onion role and a short note per stakeholder (&ldquo;keep informed&rdquo;, &ldquo;consulted on X&rdquo;). Salience rarely justifies a formal pass when the stakeholder set fits on one page.</li>
+      <li><strong>Mid-size project:</strong> Onion register plus a Power/Interest sketch plus a per-artifact RACI. Salience pass only if there is a meaningful community of Dependent or Dangerous stakeholders.</li>
+      <li><strong>Large safety-critical project:</strong> all four schemes, maintained under change control, revisited at each V-model transition. Independence of the Accountable role is a compliance artifact, not a preference. Advocacy channels for Dependent stakeholders are an explicit deliverable of the stakeholder-analysis workstream.</li>
+    </ul>
+    <p>As with identification, what changes across scales is the formality of the artifact, not whether the analysis happens. Even on a small project, asking &ldquo;is any stakeholder Dependent or Dangerous?&rdquo; takes minutes and surfaces the security-requirements and advocacy questions that are otherwise silently skipped.</p>
+  </section>
+
+  <!-- ===================== 3.3 ELICITATION ===================== -->
+  <section id="sn-elicitation">
+    <h3>3.3 Needs Elicitation Techniques</h3>
+    <p>Elicitation is the act of extracting needs from a stakeholder so they can be captured, analyzed, and eventually transformed into requirements. It is harder than it looks, because stakeholders do not have fully formed needs waiting to be written down &mdash; they have work to do, constraints to navigate, tacit expectations they have never verbalized, and political reasons to understate or overstate what they want.</p>
+
+    <p>Elicitation must handle five structural challenges that no single technique resolves:</p>
+    <ul>
+      <li>Stakeholders know their work; engineers know system constraints. Neither knows the other&rsquo;s domain.</li>
+      <li>What stakeholders <em>say</em> they need and what they <em>actually</em> need are often different.</li>
+      <li>Tacit knowledge (&ldquo;I know it when I see it&rdquo;) resists verbal articulation.</li>
+      <li>Organizational politics cause important needs to be understated or hidden.</li>
+      <li>Future stakeholders cannot be interviewed at all &mdash; they must be surrogated.</li>
+    </ul>
+    <p>Each of these calls for a different elicitation technique. Matching technique to challenge is the core skill of this step. <cite>&mdash; framed in Nuseibeh &amp; Easterbrook, <a href="https://www.cs.toronto.edu/~sme/papers/2000/ICSE2000.pdf">ICSE 2000 FoSE</a></cite></p>
+
+    <h4>Match the Technique to the Type of Knowledge</h4>
+    <p>The single most useful heuristic is to match the elicitation technique to the <em>kind of knowledge</em> you are trying to extract. Every technique has a sweet spot and a failure mode; using one technique for everything is the most common cause of a stakeholder needs effort that feels thorough but delivers shallow results.</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Type of Knowledge</th><th>Primary Technique</th><th>Why</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Unknown unknowns (you don&rsquo;t know what you don&rsquo;t know)</td><td>Observation, Contextual Inquiry, workshops</td><td>You cannot ask a question about a thing you haven&rsquo;t noticed exists.</td></tr>
+        <tr><td>Known but unarticulated (stakeholder feels it but hasn&rsquo;t said it)</td><td>Interviews, scenarios, prototyping</td><td>Concrete stimulus triggers recognition and articulation.</td></tr>
+        <tr><td>Documented but unreviewed (exists on paper, nobody has checked)</td><td>Document analysis, structured walkthroughs</td><td>Starts from the artifact, not from memory.</td></tr>
+        <tr><td>Conflicting needs across stakeholders</td><td>Facilitated workshops, structured trade-off analysis</td><td>Needs to be worked out in the same room, not by round-robin.</td></tr>
+        <tr><td>Future-system needs (no current operator exists)</td><td>Prototyping, scenarios with surrogates</td><td>The only way to elicit reactions to something that hasn&rsquo;t been built.</td></tr>
+        <tr><td>Safety, security, misuse needs</td><td>Misuse-case workshops, threat modelling, off-nominal scenarios</td><td>Nobody volunteers &ldquo;what could go wrong&rdquo; &mdash; it must be actively sought.</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>No single technique is sufficient.</strong> Comprehensive elicitation programs use at least three complementary techniques on the same problem space. The specific combination depends on which knowledge types dominate the project.</p>
+
+    <h4>Interviews</h4>
+    <p><strong>When to use:</strong> for exploring complex, open-ended domains; when individual perspective is important; when sensitive concerns need a private forum; for structured follow-up after initial discovery.</p>
+    <p>Three structure types are useful at different points in the process:</p>
+    <ul>
+      <li><strong>Unstructured</strong> &mdash; open conversation guided by broad questions. High discovery potential but low comparability across sessions. Best early in elicitation, when the domain is still being explored.</li>
+      <li><strong>Semi-structured</strong> &mdash; prepared questions with room for divergence. Balances consistency with depth. The most common form in practice.</li>
+      <li><strong>Structured</strong> &mdash; fixed questionnaire-style. High comparability, low discovery. Appropriate for <em>verification</em> of previously identified needs, not for discovery.</li>
+    </ul>
+    <p>Wiegers and Beatty note that after each interview it is critical to document the items discussed and ask interviewees to review for accuracy, because &ldquo;only those people who supplied the requirements can judge whether they were captured accurately.&rdquo; <cite>&mdash; Wiegers &amp; Beatty, <em>Software Requirements</em> 3rd ed., Microsoft Press, 2013</cite></p>
+
+    <div class="card">
+      <h4>Interview Notes Are Not Requirements</h4>
+      <p>The gap between what the interviewee said and what the interviewer understood is a systematic source of requirements defects. The discipline: interview notes must not be sanitized or summarized without the interviewee&rsquo;s review. Send the notes back. Ask &ldquo;did I get this right?&rdquo; Treat the reviewed version, not the raw transcript, as the captured need. This is also how the surrogacy risk from Section 3.1 is managed in practice &mdash; the reviewed record distinguishes &ldquo;the interviewee said X&rdquo; from &ldquo;the interviewer interpreted X as meaning Y.&rdquo;</p>
+    </div>
+
+    <h4>Facilitated Workshops and JAD</h4>
+    <p><strong>When to use:</strong> when multiple stakeholders need to reach agreement; when requirements involve trade-offs between groups; when individual interviews have produced conflicting needs; when speed matters.</p>
+    <p>The facilitator&rsquo;s role includes planning the workshop, selecting participants, managing group dynamics, and guiding toward outputs &mdash; <em>not</em> participating as a requirements contributor. A facilitator who tries to also supply content compromises both roles.</p>
+
+    <p><strong>Joint Application Design (JAD)</strong> is the most formalized requirements workshop technique, developed at IBM and documented by Wood and Silver. Key characteristics:</p>
+    <ul>
+      <li>Structured agenda with defined deliverable outputs</li>
+      <li>Dedicated facilitator trained in group dynamics</li>
+      <li>Executive sponsor to break deadlocks</li>
+      <li>Scribe to capture decisions in real time</li>
+      <li>May include brainstorming, process mapping, data-flow modelling in-session</li>
+    </ul>
+    <p>The documented claim was that quality systems could be designed in &ldquo;40% less time&rdquo; using JAD. <cite>&mdash; Wood &amp; Silver, <em>Joint Application Development</em> 2nd ed., Wiley, 1995</cite></p>
+
+    <p><strong>Workshop failure modes:</strong> dominant voices suppressing minority views, groupthink, anchoring on the first solution proposed. In safety-critical contexts, the engineer who says &ldquo;this function could kill someone&rdquo; needs to be heard even if they are junior. Facilitation must actively create safe space for dissent &mdash; for example, by using silent-round techniques (everyone writes first, then discussion) to prevent the first voice from anchoring the conversation.</p>
+
+    <h4>Observation and Contextual Inquiry</h4>
+    <p><strong>When to use:</strong> when work practices are tacit and difficult to articulate verbally; when &ldquo;what people say they do&rdquo; and &ldquo;what people actually do&rdquo; differ; when the work context (environment, tools, interruptions, constraints) is essential to understanding.</p>
+    <p>Beyer and Holtzblatt developed <strong>Contextual Inquiry (CI)</strong> as an adaptation of ethnographic research methods to engineering resource constraints. The method has four principles: <cite><a href="https://dl.acm.org/doi/book/10.5555/550783">Beyer &amp; Holtzblatt, <em>Contextual Design</em>, Morgan Kaufmann, 1997</a></cite></p>
+    <ol>
+      <li><strong>Context</strong> &mdash; observe people in their actual work environment, not a conference room.</li>
+      <li><strong>Partnership</strong> &mdash; work with the person as a collaborative partner, not a subject being studied.</li>
+      <li><strong>Interpretation</strong> &mdash; co-construct understanding; share interpretations and invite correction.</li>
+      <li><strong>Focus</strong> &mdash; have a specific research focus, not just &ldquo;watch everything.&rdquo;</li>
+    </ol>
+    <p>The technique&rsquo;s unique value is that it reveals <em>hidden work structure</em> &mdash; the workarounds, exception handling, informal practices, and coordination mechanisms that formal process descriptions never capture but that the system must support.</p>
+
+    <div class="card">
+      <h4>The Gap Between Procedure and Practice</h4>
+      <p>Observation is the technique most likely to reveal the gap between how procedures are written and how they are actually executed. This gap is a major source of safety requirements defects: requirements derived from the written procedure may miss the actual operational context entirely. The question &ldquo;does anyone ever deviate from the written procedure, and why?&rdquo; cannot be answered from a desk.</p>
+    </div>
+
+    <h4>Prototyping</h4>
+    <p><strong>When to use:</strong> when stakeholders cannot articulate requirements abstractly but can react to concrete examples; when the design space is novel; when interface or interaction details are critical.</p>
+    <p>Two prototype types matter for elicitation:</p>
+    <ul>
+      <li><strong>Throwaway prototypes</strong> (exploratory, horizontal) &mdash; quickly built to test understanding, then discarded. Goal is to provoke reactions and articulate implicit needs. Not intended to evolve into the delivered system.</li>
+      <li><strong>Evolutionary prototypes</strong> &mdash; built incrementally and refined through feedback loops. Appropriate when the domain is complex and requirements discovery must be interleaved with implementation feedback.</li>
+    </ul>
+    <p>Hands-on experience with even a crude prototype helps stakeholders articulate their needs more precisely and surface tacit expectations as &ldquo;this is wrong&rdquo; reactions that would never have been expressed in an interview.</p>
+
+    <p><strong>Safety-critical limitation:</strong> prototypes can anchor stakeholders on a specific solution before the problem has been fully understood. If a prototype embeds an architectural assumption, elicitation may inadvertently fix that assumption before it has been evaluated. Prototypes should be used to validate <em>problem</em> understanding, not to pre-select <em>solutions</em>.</p>
+
+    <h4>Document Analysis</h4>
+    <p><strong>When to use:</strong> when prior systems exist (legacy retrofit context); when regulatory or contractual constraints are documented; when domain standards must be reviewed; when existing specifications, procedures, or incident reports exist.</p>
+    <p>In legacy retrofit contexts, document analysis is often the <em>first</em> elicitation activity &mdash; the existing artifacts are the cheapest and most structured input available before any stakeholder interview is scheduled. Primary document types in safety-critical contexts:</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Document Type</th><th>What It Reveals</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Existing specifications and design documents</td><td>What the current system is supposed to do (and therefore what the replacement must consider)</td></tr>
+        <tr><td>Operational procedures and manuals</td><td>The formal work model &mdash; contrast with observation to find the gap between written and executed process</td></tr>
+        <tr><td>Hazard analyses and safety assessment reports</td><td>Known hazards, assumed mitigations, residual risks carried into the new system</td></tr>
+        <tr><td>Incident and near-miss reports</td><td>Actual failure modes and their drivers &mdash; requirements that should exist but may not</td></tr>
+        <tr><td>Regulatory guidance and certification standards</td><td>Constraints from stakeholders who will not attend any meeting</td></tr>
+        <tr><td>Maintenance logs</td><td>Actual operational conditions vs. assumed conditions; failure rates in the wild</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>Critical limitation:</strong> documents represent the <em>intended</em> system or the <em>formal</em> process &mdash; not necessarily what stakeholders actually need or what the system actually does. Document analysis must be supplemented by interviews or observation to close this gap. A specification that has been faithfully implemented for ten years may still not match what the operators actually do, and the mismatch is usually invisible from the document alone.</p>
+
+    <h4>Scenarios and Day-in-the-Life Analysis</h4>
+    <p><strong>When to use:</strong> for bridging abstract needs to concrete operational reality; for revealing interaction sequences, preconditions, and exception cases; for communicating system behavior to non-technical stakeholders.</p>
+    <p>A <strong>day-in-the-life scenario</strong> (also called an operational scenario or use scenario) narrates how a specific stakeholder role interacts with the system over a realistic work period. A complete scenario includes:</p>
+    <ul>
+      <li>Who the actor is (specific Onion role, not generic &ldquo;user&rdquo;)</li>
+      <li>What they are trying to achieve (goal)</li>
+      <li>The normal sequence of steps</li>
+      <li>What can go wrong (alternative paths, exceptions)</li>
+      <li>What adjacent systems or people they interact with</li>
+      <li>The environment and its constraints (noise, fatigue, time pressure)</li>
+    </ul>
+    <p>Scenarios are readable by non-engineers, reviewable by stakeholders for accuracy, and make implicit assumptions explicit. A need that &ldquo;makes sense&rdquo; in isolation may become obviously inadequate when placed in the context of a realistic scenario.</p>
+
+    <p><strong>Off-nominal scenarios</strong> (what happens when something goes wrong) are particularly important in safety-critical systems because they drive the safety needs that normal-mode scenarios do not capture. INCOSE guidance notes that elicitation should &ldquo;obtain input on expected and off-nominal use cases, scenarios, misuse cases, and loss scenarios.&rdquo; Explicitly asking &ldquo;what could go wrong here, and how would you know?&rdquo; at each scenario step is often the single highest-yield elicitation question in safety-critical work.</p>
+
+    <p><strong>Relationship to ConOps:</strong> day-in-the-life scenarios are the building blocks of a ConOps document. Where a full ConOps covers all mission phases and operational modes, individual scenarios cover specific stakeholder-system interactions. Scenarios produced during elicitation feed forward into the ConOps artifact rather than being replaced by it.</p>
+
+    <h4>Worked Example: Matching Techniques to Stakeholders</h4>
+    <p>Continuing the railway signalling upgrade, each stakeholder category calls for a different elicitation approach based on the type of knowledge it holds:</p>
+
+    <div class="example-block good">
+      <div class="example-label">Elicitation plan &mdash; by stakeholder category</div>
+      <div class="code-block"><code>Signallers (Normal Operator, Definitive)
+  -> Contextual Inquiry in the control centre (8-hour shift)
+     to capture the gap between the written signalling procedure
+     and the actual workflow under load.
+  -> Semi-structured interviews to follow up on specific incidents
+     surfaced during the observation.
+
+Drivers (Normal Operator, Dominant)
+  -> Day-in-the-life scenarios with off-nominal branches
+     (track-circuit failure, loss of radio, adjacent-train conflict).
+  -> Semi-structured interviews; drivers typically cannot
+     leave operations for a workshop.
+
+Track maintenance (Maintenance Operator, Dominant)
+  -> Document analysis of maintenance logs and incident reports.
+  -> Field observation during a scheduled maintenance window.
+
+Signalling standards + national rail safety body
+  (Regulator, Definitive)
+  -> Document analysis of applicable standards (CENELEC EN 50128/
+     50129, national signalling principles).
+  -> Formal consultation meeting for clarification of ambiguities.
+
+Passengers (Functional Beneficiary, Dependent, surrogate)
+  -> No direct elicitation possible. Surrogate input from the
+     operator's customer experience team + historical complaint data
+     (document analysis). Every captured need tagged as surrogate.
+
+Residents near the route (Negative Stakeholder, Dependent)
+  -> Community liaison workshop (facilitated, with silent-round
+     technique to prevent anchoring).
+  -> Document analysis of prior planning-consultation responses.
+
+Cyber threat actors (Hostile Agent, Dangerous)
+  -> Not elicited -- there is no cooperative elicitation of
+     hostile intent. Instead: threat modelling workshop with
+     internal security specialists using misuse-case scenarios.
+
+Adjacent rail networks (Interfacing System, Dominant)
+  -> Interface-focused workshops with counterpart signalling teams.
+  -> Document analysis of existing interface control documents.
+
+Rolling-stock OEM (Supplier, Dominant)
+  -> Interviews + joint workshops on interface constraints
+     (long lead times require early engagement).</code></div>
+    </div>
+
+    <p>Two patterns are visible in the plan. First, no two stakeholder categories use the same combination &mdash; the knowledge type drives the technique, not the stakeholder&rsquo;s importance. Second, the Dependent and Dangerous categories (passengers, residents, threat actors) use <em>indirect</em> elicitation methods: surrogates, community liaisons, threat modelling. Treating them the same way as Definitive stakeholders would either produce no input (threat actors) or produce structurally biased input (a single resident at a workshop is not representative of a community).</p>
+
+    <h4>Scaling by Project Size</h4>
+    <ul>
+      <li><strong>Small project:</strong> semi-structured interviews are usually enough. Add a half-day observation if operators are available. A single off-nominal scenario covers the &ldquo;what could go wrong&rdquo; question. Document analysis only if legacy artifacts exist.</li>
+      <li><strong>Mid-size project:</strong> interviews plus one facilitated workshop for cross-stakeholder alignment, plus document analysis of any existing specifications. Scenarios for the main stakeholder roles, with explicit off-nominal branches.</li>
+      <li><strong>Large safety-critical project:</strong> every technique discussed above, with specialist facilitators for high-stakes workshops. Misuse-case workshops and threat modelling as first-class elicitation activities alongside functional interviews. Contextual Inquiry is often required for regulatory confidence that the work domain has been properly understood.</li>
+    </ul>
+    <p>On every scale, the match-the-technique-to-knowledge-type principle holds. Interviews cannot surface tacit practice, cannot resolve cross-stakeholder conflict, and cannot elicit hostile intent. Recognising where a different technique is required is the judgment that separates an elicitation effort that feels thorough from one that actually is.</p>
+  </section>
+
+  <!-- ===================== 3.4 NEEDS VS REQS ===================== -->
+  <section id="sn-needs-vs-reqs">
+    <h3>3.4 The Needs-to-Requirements Distinction</h3>
+    <p>A captured need is not a requirement. The transformation from one to the other is the single most consequential step in this layer &mdash; and the single most commonly skipped. Conflating needs with requirements breaks traceability, makes validation impossible, and in regulated domains creates compliance findings that cannot be argued away.</p>
+
+    <h4>Two Failure Modes</h4>
+    <p>Confusing needs with requirements produces two distinct failures, each with its own downstream consequences:</p>
+    <ol>
+      <li><strong>Recording solution-framed input as a need.</strong> A stakeholder says &ldquo;we need a database.&rdquo; This is not a need &mdash; it is a proposed solution. The underlying need might be &ldquo;data must survive power loss&rdquo; or &ldquo;historical records must be searchable within three seconds.&rdquo; Writing the solution down forecloses design options without capturing what actually matters. When the technology of choice changes ten years from now, the stated &ldquo;need&rdquo; appears to be invalidated when in fact the real need was never written down.</li>
+      <li><strong>Writing requirements before understanding needs.</strong> Requirements written without a clear understanding of the underlying stakeholder need are brittle. They capture the first engineering interpretation, not the validated intent. When the need changes (as it will), nobody can tell which requirements should change with it, and the whole specification drifts out of alignment with the actual stakeholder world.</li>
+    </ol>
+    <p>The second failure mode is particularly dangerous in safety-critical contexts. If a safety-critical function is derived from a misunderstood need, verifying that the function meets its requirement is meaningless &mdash; the requirement was wrong to begin with.</p>
+
+    <h4>Language Discipline: Needs vs. Requirements</h4>
+    <p>ISO/IEC/IEEE 29148:2018 and the INCOSE Needs and Requirements Manual draw an explicit distinction between needs and requirements at the language level. The distinction is visible in the grammar of the statement.</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th></th><th>Need Statement</th><th>Requirement Statement</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Voice</td><td>Stakeholder&rsquo;s perspective</td><td>System&rsquo;s perspective</td></tr>
+        <tr><td>Modal verb</td><td>&ldquo;needs to&rdquo;, &ldquo;must be able to&rdquo;</td><td>&ldquo;shall&rdquo; (mandatory), &ldquo;should&rdquo; (recommended)</td></tr>
+        <tr><td>Subject</td><td>The stakeholder or the task</td><td>The system or a named subsystem</td></tr>
+        <tr><td>Verifiability</td><td>Not required to be testable in isolation</td><td>Must be testable against the system</td></tr>
+        <tr><td>Solution content</td><td>Solution-free (describes the need, not the how)</td><td>Still solution-free, but bounded and specific</td></tr>
+        <tr><td>Example</td><td>&ldquo;The operator needs to recover from a sensor failure within 30 seconds.&rdquo;</td><td>&ldquo;On detection of sensor failure, the system shall make the backup reading available to the operator within 30 seconds.&rdquo;</td></tr>
+      </tbody>
+    </table>
+
+    <div class="card">
+      <h4>The Modal Verb Is Not the Point</h4>
+      <p>A common misconception is that the difference between a need and a requirement is &ldquo;change &lsquo;needs to&rsquo; to &lsquo;shall&rsquo;.&rdquo; It is not. Needs live in the stakeholder&rsquo;s world and describe what they are trying to accomplish; requirements live in the system&rsquo;s world and describe what the system must do to support that accomplishment. The INCOSE guidance is explicit: generating a requirement statement &ldquo;is more than changing the subject of the need statement; it is an analysis of what the system must do to achieve what is needed.&rdquo; <cite>&mdash; INCOSE <em>Needs and Requirements Manual</em>, 2022</cite></p>
+    </div>
+
+    <h4>The Transformation: Four Operations</h4>
+    <p>Moving from a captured need to a well-formed requirement is an analytical activity with four distinguishable operations. In practice they are interleaved, but each must occur.</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Operation</th><th>What It Does</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Decomposition</td><td>Breaking a broad need into granular, individually specifiable statements. One need typically yields multiple requirements.</td></tr>
+        <tr><td>Derivation</td><td>Surfacing implicit requirements that are necessary for the need to be met but that the stakeholder did not state (timing, environmental, interaction with adjacent systems).</td></tr>
+        <tr><td>Formalization</td><td>Expressing each resulting requirement as a testable, bounded statement using standard modal language. Assigning a verification method.</td></tr>
+        <tr><td>Constraint application</td><td>Incorporating technology, safety, regulatory, and environmental constraints that the stakeholder may be unaware of but that the resulting system must satisfy.</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Worked Example: One Need, Many Requirements</h4>
+    <p>Take one captured need from the railway signalling case:</p>
+
+    <div class="example-block neutral">
+      <div class="example-label">Captured need</div>
+      <div class="code-block"><code>Source: Signaller interview (direct, not surrogate)
+Need:   "Signallers need to be alerted to track-circuit failure
+         quickly enough to hold approaching trains before they
+         enter the affected section."</code></div>
+    </div>
+
+    <p>This is a well-formed need: it names the actor (signaller), describes what they are trying to accomplish (hold trains before entry), and is expressed in stakeholder language. It is <em>not</em> a requirement. Applying the four operations:</p>
+
+    <div class="example-block good">
+      <div class="example-label">Decomposition &mdash; one need becomes several aspects</div>
+      <div class="code-block"><code>Aspects implicit in the need:
+  - Detection: the system must notice the failure
+  - Alerting: the signaller must be informed
+  - Timing: before the train enters the affected section
+  - Confidence: the alert must be trustworthy (not a false alarm the
+    signaller learns to ignore)
+  - Fallback: what happens if the alert path itself fails?</code></div>
+    </div>
+
+    <div class="example-block good">
+      <div class="example-label">Derivation &mdash; needs the stakeholder did not state</div>
+      <div class="code-block"><code>Implicit needs surfaced by analysis:
+  - The approach-speed profile of trains on this line determines
+    how much warning time is required (derived from timetabling
+    and line-speed data, not stated by the signaller)
+  - The signaller is not always at the desk (derived from
+    observation / CI, not stated in the interview)
+  - Adjacent signal boxes may need the same alert (derived from
+    interface analysis, not stated by this signaller)</code></div>
+    </div>
+
+    <div class="example-block good">
+      <div class="example-label">Formalization + constraint application &mdash; resulting requirements</div>
+      <div class="code-block"><code>REQ-SIG-017 (functional, derived from: NEED-SIG-004)
+  "On loss of track-circuit continuity in section S, the signalling
+  system shall present a HIGH-priority alert at the responsible
+  signaller's workstation within 3.0 seconds of the loss event."
+  Verification: test, on simulator + integration rig.
+
+REQ-SIG-018 (functional, derived from: NEED-SIG-004, NEED-SIG-004-D1)
+  "On loss of track-circuit continuity in section S, the signalling
+  system shall also present the alert at the adjacent signal box
+  responsible for the approach to section S."
+  Verification: test, on integration rig with adjacent-box simulator.
+
+REQ-SIG-019 (performance, derived from: NEED-SIG-004-D1)
+  "The alert-path availability shall be >= 0.9999 over any 30-day
+  operating window, measured as (seconds alert path operational) /
+  (seconds system operational)."
+  Verification: analysis + field measurement.
+
+REQ-SIG-020 (safety, derived from: NEED-SIG-004, HAZARD-SIG-003)
+  "If the primary alert path is unavailable, the signalling system
+  shall present the alert via the secondary path within 5.0 seconds
+  of the loss event, and shall indicate degraded-alert-path status
+  to the signaller."
+  Verification: test + fault-injection on integration rig.
+  Constraint source: EN 50129 SIL-4 single-point-failure rule.
+
+REQ-SIG-021 (human factors, derived from: NEED-SIG-004-D2)
+  "The alert shall include an audible component that is detectable
+  at the signaller's normal working positions throughout the control
+  centre, with sound pressure >= 65 dB(A) at 1 m from any working
+  position, and shall continue until acknowledged."
+  Verification: test, in the deployed control centre.</code></div>
+    </div>
+
+    <p>One captured need yielded five requirements spanning functional, performance, safety, and human-factors categories. Three of them (REQ-SIG-019, REQ-SIG-020, REQ-SIG-021) originated in <em>derived</em> needs that the signaller never mentioned in the interview; two of those came from observation and interface analysis, and one came from applying a regulatory constraint (EN 50129) that the signaller had no reason to be aware of.</p>
+
+    <div class="card">
+      <h4>Two Traceability Obligations</h4>
+      <p>Each resulting requirement carries two links upward: to the captured need (&ldquo;why does this requirement exist?&rdquo;) and, where applicable, to the constraint source that caused it to be derived (hazard, regulation, interface). A requirement with no link to either is an <em>unjustified</em> requirement and must be challenged &mdash; it is either a hidden assumption or scope creep.</p>
+      <p>The reverse direction also matters: each captured need must have at least one requirement tracing back to it, or must carry an explicit note explaining why it does not (out of scope, process need rather than system need, addressed by a different system). Silent omission of a stakeholder need is the most common completeness failure in this layer.</p>
+    </div>
+
+    <h4>A Three-Level Hierarchy: Business Need, Stakeholder Need, Requirement</h4>
+    <p>The Volere framework (Robertson and Robertson) makes a useful hierarchical distinction that is worth preserving independent of Volere itself:</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Level</th><th>Expresses</th><th>Example</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Business (project) need</td><td>Why the project exists &mdash; the business problem or opportunity driving development. Not a requirement; a justification.</td><td>&ldquo;The operator must reduce unplanned track closures by 40% over the next decade to meet regulatory availability targets.&rdquo;</td></tr>
+        <tr><td>Stakeholder need</td><td>What a specific stakeholder needs to accomplish. Still not a requirement &mdash; describes intended outcomes from the stakeholder&rsquo;s perspective.</td><td>&ldquo;Signallers need to be alerted to track-circuit failure quickly enough to hold approaching trains&hellip;&rdquo;</td></tr>
+        <tr><td>Product (system) requirement</td><td>What the system must do or be. Testable, bounded, solution-free.</td><td>&ldquo;On loss of track-circuit continuity&hellip; the signalling system shall present a HIGH-priority alert&hellip; within 3.0 seconds&hellip;&rdquo;</td></tr>
+      </tbody>
+    </table>
+
+    <p>The value of maintaining all three levels is that the chain of justification becomes visible. A requirement can be traced to a stakeholder need, which can be traced to a business need. If a requirement cannot be traced to a stakeholder need, it lacks user-facing justification and is probably a derived requirement (which is fine &mdash; but must be explicitly recorded as such). If a stakeholder need cannot be traced to a business need, the feature may be out of scope.</p>
+
+    <h4>Failure Modes When Needs and Requirements Are Conflated</h4>
+    <p>Mixing needs and requirements in a single layer produces four distinct failure modes. Each one is independent of the others; a project can suffer any combination of them.</p>
+    <ul>
+      <li><strong>Traceability collapse.</strong> When the two layers are one, there is no link to maintain between them &mdash; which means there is no way to ask &ldquo;which requirements implement which needs?&rdquo; or &ldquo;if this need changes, which requirements follow?&rdquo;. Change impact analysis becomes guesswork, and bidirectional traceability becomes structurally impossible. <em>Codified in ASPICE SYS.2.BP5 and ARP 4754A traceability objectives.</em></li>
+      <li><strong>Silent skip of validation.</strong> Validation asks &ldquo;is this the right need?&rdquo;; verification asks &ldquo;does the system satisfy the requirement?&rdquo;. When needs and requirements are the same artifact, every check collapses into verification, and the prior question is never asked. The system is built correctly against needs that were never challenged. See Section 3.6.</li>
+      <li><strong>Lost grounding of safety requirements.</strong> Safety requirements derive their correctness from the hazard analysis chain (FTA, FMEA, HAZOP, STPA). When safety needs are written directly as requirements with no separate needs layer, the grounding link disappears: the requirement appears satisfied by its own statement rather than by the analysis that should justify it. A stakeholder need &ldquo;the system must be safe&rdquo; is a goal; a safety requirement states a bounded behaviour derived from an identified hazard. The two belong in different layers.</li>
+      <li><strong>Broken audit chain.</strong> An auditor, certifier, or later change-control board asks &ldquo;why does this requirement exist?&rdquo;. The answer must terminate at a validated stakeholder need or a documented derivation source (hazard, regulation, interface). A conflated artifact cannot produce that termination &mdash; the chain loops back on itself. <em>Relevant to DO-178C traceability objectives and ISO 26262 safety case evidence.</em></li>
+    </ul>
+    <p>These failure modes are what make the two-layer discipline worth its cost. Each is silent at project start and visible only late &mdash; typically at integration, audit, or after a field incident &mdash; which is exactly the pattern that makes them dangerous.</p>
+
+    <h4>Scaling by Project Size</h4>
+    <ul>
+      <li><strong>Small project:</strong> the need and the requirement may live in the same spreadsheet, but in separate columns, with an explicit note if a requirement has no corresponding need (derived) or a need has no corresponding requirement (out of scope, process-only). The language discipline still applies &mdash; needs are written in stakeholder voice, requirements in system voice.</li>
+      <li><strong>Mid-size project:</strong> separate documents (or separate sections) for needs and requirements, with an explicit trace table. The four-operation transformation is applied deliberately at least once per major stakeholder.</li>
+      <li><strong>Large safety-critical project:</strong> formal stakeholder-requirements specification (StRS) and system-requirements specification (SyRS) as distinct baselined artifacts, with bidirectional traceability enforced as a tool-checkable invariant. Derived requirements and their constraint sources tracked as first-class artifacts.</li>
+    </ul>
+    <p>Even on the smallest project, mixing the two languages produces specifications that cannot be audited, validated, or cleanly changed later. The cost of the discipline is an extra column; the cost of skipping it shows up every time a stakeholder changes their mind and nobody can tell which requirements follow.</p>
+  </section>
+
+  <!-- ===================== 3.5 CONFLICT ===================== -->
+  <section id="sn-conflict">
+    <h3>3.5 Conflict Resolution and Prioritization</h3>
+    <p>Different stakeholders have different goals, different constraints, and different tolerances for risk and cost. When their needs are captured honestly, conflicts surface &mdash; they do not always surface politely. The job of this step is not to produce a conflict-free need set (often impossible) but to <strong>make the conflicts visible, work through them deliberately, and record the resolution so downstream engineering knows what was decided and why</strong>.</p>
+
+    <div class="card">
+      <h4>Silent Conflicts Are the Dangerous Ones</h4>
+      <p>The worst outcome is not a visible conflict &mdash; it is a hidden one. Two stakeholders each believe their needs have been accepted; neither realizes the other&rsquo;s need contradicts theirs; downstream engineering discovers the contradiction during architecture or test and has no guidance on how to resolve it. Every captured need set should be reviewed explicitly for conflicts before concurrence. The question to ask is not &ldquo;are there any conflicts?&rdquo; but &ldquo;where would you expect conflicts, and have we found them?&rdquo;</p>
+    </div>
+
+    <h4>Three Kinds of Conflict</h4>
+    <p>Not all conflicts are the same and they do not respond to the same resolution techniques. Distinguishing them up front avoids mis-applying a heavy technique to a light problem.</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Conflict Type</th><th>Example</th><th>Typical Resolution</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Scope conflict</td><td>Operator wants feature X; purchaser considers X out of scope.</td><td>Escalate to the Accountable role (usually the project lead or sponsor). Record the decision and its authority.</td></tr>
+        <tr><td>Priority conflict</td><td>Two needs are both in scope; there is not enough time or budget for both in the next release.</td><td>Prioritization technique (MoSCoW, Kano, AHP). Record the prioritization method and its inputs.</td></tr>
+        <tr><td>Solution/value conflict</td><td>Two stakeholders agree the need exists but disagree on what &ldquo;good&rdquo; looks like (e.g., safety vs. usability trade-off).</td><td>Facilitated trade-off workshop. Record the trade-off matrix and the rationale for the chosen point.</td></tr>
+      </tbody>
+    </table>
+
+    <p>A common failure is treating a scope conflict as a priority conflict (&ldquo;let&rsquo;s just say it&rsquo;s low priority&rdquo;) or a trade-off conflict as a scope conflict (&ldquo;one of these has to go&rdquo; when in fact both are required at a negotiated level). Naming the conflict type explicitly keeps the right resolution machinery in view.</p>
+
+    <h4>Prioritization Techniques</h4>
+    <p>Three techniques cover almost all practical prioritization needs. They differ in cost and in the kind of information they produce.</p>
+
+    <h5>MoSCoW</h5>
+    <p>A lightweight categorization that sorts needs into four buckets:</p>
+    <ul>
+      <li><strong>Must have</strong> &mdash; without this the system fails its purpose or violates a constraint.</li>
+      <li><strong>Should have</strong> &mdash; important but not critical; the system is viable without it.</li>
+      <li><strong>Could have</strong> &mdash; desirable if time and budget permit.</li>
+      <li><strong>Won&rsquo;t have</strong> (this release) &mdash; explicitly deferred or out of scope.</li>
+    </ul>
+    <p>MoSCoW&rsquo;s strength is speed: a stakeholder group can prioritize a list of a hundred needs in an hour. Its weakness is that it does not reveal <em>why</em> one need is a Must and another is a Should, and the categorization is often anchored by the loudest voice in the room.</p>
+
+    <p><strong>Safety-critical caveat:</strong> MoSCoW cannot be used alone for safety-critical needs. A safety need is a Must-have by definition &mdash; the hazard analysis, not the stakeholder&rsquo;s opinion, determines its priority. MoSCoW is appropriate for functional and convenience needs sitting above the safety floor, not for the safety floor itself.</p>
+
+    <h5>Kano Analysis</h5>
+    <p>Classifies needs by how their presence or absence affects stakeholder satisfaction, along two dimensions (&ldquo;how well is this need met?&rdquo; and &ldquo;how satisfied is the stakeholder?&rdquo;):</p>
+    <ul>
+      <li><strong>Must-be</strong> &mdash; absence causes strong dissatisfaction; presence produces no positive satisfaction (stakeholders expect it). Often corresponds to safety, regulatory, and baseline-hygiene needs.</li>
+      <li><strong>Performance</strong> &mdash; satisfaction rises linearly with how well the need is met. Classic &ldquo;more is better&rdquo; needs (throughput, accuracy).</li>
+      <li><strong>Delighter</strong> &mdash; absence causes no dissatisfaction; presence produces disproportionate satisfaction. Differentiating features.</li>
+      <li><strong>Indifferent</strong> &mdash; stakeholder does not care either way.</li>
+      <li><strong>Reverse</strong> &mdash; presence <em>causes</em> dissatisfaction. Rare but useful to surface (e.g., &ldquo;please don&rsquo;t add telemetry to my offline tool&rdquo;).</li>
+    </ul>
+    <p>Kano is particularly useful for distinguishing needs stakeholders <em>expect</em> silently (Must-be &mdash; often under-elicited because stakeholders do not articulate them) from needs they actively ask for (Performance and Delighter &mdash; over-represented in interviews). Applying Kano is a standard way to correct interview bias toward what was said over what was assumed.</p>
+
+    <h5>AHP (Analytic Hierarchy Process)</h5>
+    <p>A structured pairwise-comparison method that produces a numerical ranking from subjective judgments. The basic procedure:</p>
+    <ol>
+      <li>Structure the decision as a hierarchy (goal &rarr; criteria &rarr; alternatives).</li>
+      <li>For each pair of items at the same level, ask the stakeholder to compare their relative importance on a standard scale (usually 1&ndash;9).</li>
+      <li>Combine the pairwise judgments into a weight vector via the matrix&rsquo;s principal eigenvector.</li>
+      <li>Check the consistency of the judgments &mdash; inconsistent rankings produce a consistency ratio above a threshold, which flags that the stakeholder&rsquo;s judgments do not cohere and need to be revisited.</li>
+    </ol>
+    <p>AHP&rsquo;s strength is that it extracts a defensible numerical prioritization from qualitative judgments and surfaces inconsistencies the stakeholder would not otherwise notice. Its weakness is cost: a pairwise comparison matrix over <em>n</em> needs has <em>n(n-1)/2</em> comparisons, which becomes impractical beyond about 10&ndash;15 items. In practice, AHP is applied to categories or groups of needs, not to flat lists.</p>
+
+    <p><strong>When AHP is worth it:</strong> high-stakes prioritization decisions where multiple stakeholders have legitimately different rankings and where the output needs to be defensible to a regulator, an auditor, or a later change-control board. For day-to-day backlog prioritization, MoSCoW or Kano is usually enough.</p>
+
+    <h4>Trade-off Analysis for Value Conflicts</h4>
+    <p>When two needs are in genuine tension &mdash; safety vs. cost, security vs. usability, latency vs. throughput &mdash; no prioritization scheme resolves the underlying conflict. What is needed instead is a <strong>trade-off matrix</strong> that makes the conflict concrete and forces a decision at a defined operating point.</p>
+
+    <div class="example-block good">
+      <div class="example-label">Trade-off matrix &mdash; alert dwell-time vs. false-alarm rate</div>
+      <div class="code-block"><code>Conflict: Signaller wants low false-alarm rate (don't cry wolf).
+          Safety body wants short time-to-alert (catch real failures).
+          Both are legitimate. Both cannot be maximized.
+
+Candidate operating points:
+
+  Option A: 0.5 s dwell, high sensitivity
+    time-to-alert:     ~0.5 s   (excellent)
+    false-alarm rate:  ~1 / day (unacceptable to signaller)
+
+  Option B: 3.0 s dwell, medium sensitivity
+    time-to-alert:     ~3.0 s   (meets safety target, marginal)
+    false-alarm rate:  ~1 / month (acceptable to signaller)
+
+  Option C: 5.0 s dwell, medium sensitivity
+    time-to-alert:     ~5.0 s   (FAILS safety target)
+    false-alarm rate:  ~1 / quarter (preferred by signaller)
+
+Decision: Option B. Safety floor is not negotiable (EN 50129
+SIL-4 analysis requires <= 3.0 s). Above that floor, false-alarm
+rate is minimized to the extent the floor allows.
+Recorded by: safety lead + signalling lead, joint sign-off.</code></div>
+    </div>
+
+    <p>The trade-off matrix format does three things that an unstructured discussion does not: it names the axes explicitly, it lists multiple candidate operating points so the decision is not binary, and it records the rationale for the chosen point along with the authority that signed off. Later, when someone asks &ldquo;why did we pick 3 seconds?&rdquo;, the answer is in the trace record, not in somebody&rsquo;s memory.</p>
+
+    <h4>Concurrence Gates: Explicit Agreement</h4>
+    <p>Silent consent is not agreement. When stakeholders are assumed to concur because they did not object, downstream engineering is built on a phantom baseline nobody actually committed to &mdash; and when the baseline is challenged later, no one can produce evidence that it was ever agreed. The concurrence gate exists to make agreement a positive act, and the record of that act the handoff artifact to the next layer.</p>
+
+    <p>Two properties must hold for a concurrence record to be real:</p>
+    <ul>
+      <li><strong>Explicit.</strong> Agreement is a positive action &mdash; a signed acknowledgement, a recorded meeting decision, an approval in a change-control system. Non-response to an email is not agreement. &ldquo;We sent it to them and nobody objected&rdquo; is not agreement. The record must show <em>who</em> agreed to <em>what</em> on <em>what date</em>.</li>
+      <li><strong>All affected parties, not just the primary customer.</strong> The scope is every stakeholder whose need appears in the captured set, plus those whose need has been deferred or excluded (they must be represented so that the exclusion is an agreed decision, not a silent one). In practice this extends to suppliers, design partners, regulators, and surrogates for dependent stakeholders.</li>
+    </ul>
+
+    <p>The concurrence record is the handoff artifact from this layer to the next. Downstream engineering begins on the basis of an agreed set of needs; any later change to that set triggers the change-management loop, not a silent baseline edit. <em>Codified in ASPICE SYS.1.BP2 (explicit agreement) and SYS.1.BP3 (change management on the agreed set); ARP 4754A handles the same concern through the requirements-validation integral process.</em></p>
+
+    <h4>Recording Unresolved Conflicts</h4>
+    <p>Not every conflict resolves. Two stakeholders may hold positions that cannot both be fully accommodated in the current release, or a decision may be deliberately deferred until more information is available. The discipline in this case is to record the conflict as an <em>open issue</em>, not to pretend it has been resolved.</p>
+
+    <p>An open-issue entry names the conflict, the affected needs, the stakeholders holding the competing positions, the current decision (often &ldquo;defer to release N+1&rdquo; or &ldquo;address in next architecture review&rdquo;), and the trigger for revisiting. Open issues are part of the handoff &mdash; downstream engineering must know which parts of the need set are agreed and which are still live.</p>
+
+    <h4>Worked Example: Three Resolution Paths in the Railway Case</h4>
+    <p>Three conflicts surfaced during concurrence review of the railway signalling need set. Each required a different resolution path:</p>
+
+    <div class="example-block good">
+      <div class="example-label">Conflict 1 &mdash; scope conflict</div>
+      <div class="code-block"><code>Situation: Signaller trainers asked for an integrated training mode
+           that mirrors live operations. Purchaser considers this
+           out of scope for the signalling upgrade.
+Type:      Scope conflict.
+Path:      Escalated to project sponsor. Decision: out of scope
+           for this project; to be handled by the separate training-
+           systems procurement. Trainer need recorded as "deferred,
+           external scope", with trace to the training-systems
+           project reference.
+Signed:    Project sponsor, trainer representative, purchaser.</code></div>
+    </div>
+
+    <div class="example-block good">
+      <div class="example-label">Conflict 2 &mdash; priority conflict</div>
+      <div class="code-block"><code>Situation: Thirty-seven non-safety-critical needs competed for
+           Phase-1 inclusion; Phase-1 capacity held seven.
+Type:      Priority conflict (scope already agreed; all in scope).
+Path:      MoSCoW pass in a facilitated workshop with signalling
+           lead, operator UX lead, and maintenance lead. Safety
+           needs excluded from the pass (all Must by definition).
+           Result: 9 Must, 6 Should, 14 Could, 8 Won't-this-release.
+           Phase-1 takes the 9 Musts plus the top 2 Shoulds.
+Signed:    Workshop participants; counter-signed by project lead.</code></div>
+    </div>
+
+    <div class="example-block good">
+      <div class="example-label">Conflict 3 &mdash; value conflict (trade-off)</div>
+      <div class="code-block"><code>Situation: Signallers want low alert false-alarm rate;
+           safety body requires short time-to-alert. (See trade-off
+           matrix example earlier in this section.)
+Type:      Value conflict / trade-off.
+Path:      Joint review with safety lead and signalling lead.
+           Trade-off matrix produced with three candidate operating
+           points. Option B selected; rationale recorded.
+Signed:    Safety lead, signalling lead, operator leadership.</code></div>
+    </div>
+
+    <p>Three conflicts, three different techniques, three different authority sets signing the resolution. Mis-applying the technique &mdash; for instance, trying to MoSCoW the signaller/safety-body trade-off &mdash; would have produced an apparent decision without engaging the actual conflict. The trade-off matrix forced both parties to articulate what they were willing to accept, and that was the precondition for durable concurrence.</p>
+
+    <h4>Scaling by Project Size</h4>
+    <ul>
+      <li><strong>Small project:</strong> informal discussion for most conflicts; MoSCoW for prioritization if the need list is long; explicit sign-off in a meeting minute. The discipline that cannot be skipped even here is the written record of <em>what was agreed and by whom</em> &mdash; this is what makes the concurrence real.</li>
+      <li><strong>Mid-size project:</strong> MoSCoW or Kano routinely; trade-off matrices for significant value conflicts; facilitated workshops for cross-group disputes. A formal concurrence artifact (signed need-set baseline).</li>
+      <li><strong>Large safety-critical project:</strong> AHP where defensibility matters; structured trade-off analysis with regulatory visibility; concurrence gates as formal development-lifecycle milestones with named signatories; explicit open-issue list carried into change control. Re-concurrence required whenever the need-set baseline is changed, including when completeness analysis surfaces new derived needs.</li>
+    </ul>
+    <p>What is invariant across scales is the principle: conflicts must be named, resolved by an appropriate technique, and recorded with authority. The ceremony around the record scales; the requirement that the record exists does not.</p>
+  </section>
+
+  <!-- ===================== 3.6 VALIDATION ===================== -->
+  <section id="sn-validation">
+    <h3>3.6 Needs Validation</h3>
+    <p>Validation is the activity of establishing that captured needs correctly describe what the system actually has to do. It asks &ldquo;are these the right needs?&rdquo; and is distinct from verification, which asks &ldquo;does the built system satisfy its requirements?&rdquo;. A system can pass every verification test and still be wrong &mdash; because it was built correctly against an incorrectly captured need. Validation is the independent check that prevents that outcome.</p>
+
+    <h4>Validation vs. Verification</h4>
+    <table class="field-table">
+      <thead>
+        <tr><th></th><th>Validation</th><th>Verification</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Question</td><td>&ldquo;Are these the right needs?&rdquo;</td><td>&ldquo;Does the implementation satisfy the requirements?&rdquo;</td></tr>
+        <tr><td>Object</td><td>The needs and requirements themselves</td><td>The system being built</td></tr>
+        <tr><td>Evidence</td><td>Justification that the needs correctly describe reality</td><td>Evidence that the build matches the spec</td></tr>
+        <tr><td>Timing</td><td>During and after needs capture</td><td>During and after implementation</td></tr>
+        <tr><td>Performed by</td><td>Experienced engineers with domain knowledge</td><td>Test engineers, auditors</td></tr>
+      </tbody>
+    </table>
+    <p>The distinction is codified in ARP 4754A as an integral process and in ISO/IEC/IEEE 29148 as a set-level characteristic (&ldquo;able to be validated&rdquo;). <cite>&mdash; Peterson, <a href="https://ntrs.nasa.gov/citations/20160001767">NASA/CR-2015-218982</a>, pp. 67&ndash;71; ISO/IEC/IEEE 29148:2018</cite></p>
+
+    <h4>The Five Validation Methods</h4>
+    <p>Validation is performed by combining methods, each of which establishes a different kind of correctness. No single method is sufficient. The five methods below cover the practical validation space; the Validation Matrix (later in this section) records which methods were applied to each need.</p>
+
+    <h5>Traceability</h5>
+    <p><strong>What it establishes:</strong> that the need&rsquo;s existence is justified &mdash; it traces to a higher-level source (business need, operational scenario, hazard, regulation, interface constraint).</p>
+    <p><strong>What it prevents:</strong> orphan needs that cannot be defended when challenged, and scope creep disguised as requirement.</p>
+    <p><strong>Procedure:</strong> for every captured need, record at least one upward link to a legitimate source. A need with no upward link is either an unjustified invention (remove it) or a derived need whose derivation source has not been recorded (surface and record the derivation).</p>
+    <p><strong>Limitation:</strong> traceability establishes justification, not correctness. A need can be traceable and still wrong. Traceability is necessary but never sufficient.</p>
+    <p><em>Backing: ARP 4754A validation methods table; also reinforced in ASPICE SYS.2.BP5.</em></p>
+
+    <h5>Analysis</h5>
+    <p><strong>What it establishes:</strong> that the need set is internally consistent and technically feasible.</p>
+    <p><strong>What it prevents:</strong> contradictions and infeasibilities that would otherwise surface during architecture or integration, when the cost of change is multiples higher.</p>
+    <p><strong>Procedure:</strong> interdependency analysis (does need A contradict need B? does need A depend on an unstated property of need C?); feasibility check (can this be built with available technology, budget, and time?); modelling where the complexity demands it (timing budgets, resource budgets, failure-rate budgets).</p>
+    <p><em>Backing: ARP 4754A; ASPICE SYS.2.BP3 (&ldquo;analyze the specified system requirements including their interdependencies to ensure correctness, technical feasibility&rdquo;).</em></p>
+
+    <h5>Test</h5>
+    <p><strong>What it establishes:</strong> that the stakeholder&rsquo;s stated need matches their actual reaction when confronted with a concrete instantiation of it.</p>
+    <p><strong>What it prevents:</strong> abstract agreement that does not survive contact with reality &mdash; the stakeholder nodded at the text but rejects the actual behaviour when they see it.</p>
+    <p><strong>Procedure:</strong> exercise the need against a prototype, simulator, or scripted scenario with the source stakeholder in the room. Ask them to perform the task the need describes and to react to failure injections. Log agreement and dissent explicitly.</p>
+    <p><strong>When to use it:</strong> for needs the stakeholder cannot judge in the abstract &mdash; typically operability, human-factors, performance-envelope, and interaction needs.</p>
+
+    <h5>Similarity</h5>
+    <p><strong>What it establishes:</strong> that a new need is close enough to a previously validated need that the earlier validation evidence applies, with an explicit delta argument covering what has changed.</p>
+    <p><strong>What it prevents:</strong> wasted effort re-validating material that has already been validated; and, its opposite, the &ldquo;same as last time&rdquo; fallacy that silently carries forward obsolete validation evidence.</p>
+    <p><strong>Procedure:</strong> state the baseline need being referenced; state the delta between the new need and the baseline; argue explicitly why the delta does not invalidate the original validation evidence. If the delta does invalidate it, validate the changed portion by other methods.</p>
+    <p><strong>Common failure mode:</strong> treating similarity as an assertion (&ldquo;similar to last project&rdquo;) rather than as an argument (baseline + delta + justification). The assertion form is not validation; it is an unexamined assumption.</p>
+    <p><em>Backing: ARP 4754A explicitly lists similarity as one of the five methods; Peterson&rsquo;s case studies note similarity dominates for derivative and legacy systems.</em></p>
+
+    <h5>Inspection (including Perspective-Based Reading)</h5>
+    <p><strong>What it establishes:</strong> that the need reads correctly when examined by reviewers with the relevant professional perspectives.</p>
+    <p><strong>What it prevents:</strong> defects that are invisible from any single perspective &mdash; a need can be implementable (designer passes it), verifiable (tester passes it), and still miss a hazard (safety specialist would catch it) or mis-describe operator reality (operator would catch it).</p>
+    <p><strong>Procedure (PBR):</strong> multiple reviewers read the same need set from different defined perspectives, each with a perspective-specific checklist. Typical perspectives: designer (&ldquo;can I implement this?&rdquo;), tester (&ldquo;can I derive a test from this?&rdquo;), safety specialist (&ldquo;what hazards does this touch?&rdquo;), operator or operator-surrogate (&ldquo;does this match what I actually do?&rdquo;), regulator-oriented reviewer (&ldquo;is this defensible?&rdquo;). Defect profiles surfaced by each perspective are largely non-overlapping, so multi-perspective coverage finds more defects than the same person-hours of unstructured review.</p>
+    <p><strong>When to use it:</strong> always, for any need that matters. Inspection is the most reliable single validation technique when no executable artifact exists to test against. PBR is discussed in more depth as a completeness method in the Completeness Analysis artifact.</p>
+
+    <h4>The Assumptions Discipline</h4>
+    <p>Every captured need rests on assumptions about the rest of the world &mdash; properties of adjacent systems, of the operating environment, of human behaviour, of regulation. When those assumptions are not surfaced, the need set looks complete but contains structural gaps that only reveal themselves when the assumption is violated.</p>
+
+    <p><strong>What it establishes:</strong> that the assumptions underlying each need are known, shared, and defensible.</p>
+    <p><strong>What it prevents:</strong> completeness gaps caused by unstated context &mdash; the need looks right, but relies on something nobody has required elsewhere.</p>
+
+    <p>The discipline has three parts:</p>
+    <ul>
+      <li><strong>Surface the assumption.</strong> For each need, ask: &ldquo;what would have to be true of the rest of the world for this need to make sense?&rdquo; Each answer is a candidate assumption.</li>
+      <li><strong>Disseminate it.</strong> Assumptions must be visible to everyone affected &mdash; not stored in the head of the person who captured the need. Record them alongside the need, with a shared artifact (not buried in an email thread).</li>
+      <li><strong>Justify it.</strong> Each assumption gets its own treatment: trace it to another need (&ldquo;covered by NEED-X&rdquo;), to an interface, or to a regulation; or flag it as unresolved and track it as an open item. Assumptions without justification are not assumptions &mdash; they are risks.</li>
+    </ul>
+
+    <p>Example: a need &ldquo;the signaller workstation shall display the alert&rdquo; silently assumes that workstation power is provided. If that assumption is never surfaced, the need set passes individual review but has no requirement covering power availability. When workstation power fails, the alert fails with it &mdash; and the need set has no record that anyone ever considered the case.</p>
+
+    <p><em>Backing: the &ldquo;stated, disseminated, justified&rdquo; framing for assumptions is drawn from Peterson, NASA/CR-2015-218982, p. 67, &sect;5.2.</em></p>
+
+    <h4>Completeness: Validating the Set</h4>
+    <p>Validating individual needs is easier than validating the set. Individual validation answers &ldquo;is this need correct?&rdquo;; set-level validation answers &ldquo;are there needs we have failed to capture?&rdquo; &mdash; a question about absence, which cannot be proved directly but can be approached through systematic coverage.</p>
+
+    <p>Three complementary techniques contribute to set-level validation at the needs layer. Deeper techniques &mdash; FTA, FMEA, STPA &mdash; belong to the separate Completeness Analysis artifact.</p>
+
+    <h5>Negative Needs (Bounded Prohibitions)</h5>
+    <p><strong>What they establish:</strong> that specific forbidden states or behaviours have been explicitly prohibited, not just implicitly not-required.</p>
+    <p>A negative need states what the system must <em>not</em> allow or produce. The useful form is a <em>bounded</em> prohibition tied to a specific hazard or threat: &ldquo;the system shall not allow a signaller to clear a route into a section whose track circuits are unavailable.&rdquo; This is validatable because it is tied to a specific scenario. Contrast with the unbounded form &ldquo;the system shall not crash,&rdquo; which is not validatable &mdash; there is no way to enumerate all crash modes.</p>
+
+    <h5>Implicit Needs</h5>
+    <p><strong>What they establish:</strong> that needs stakeholders did not articulate, but which must be true for the stated needs to work, have been surfaced and validated.</p>
+    <p>Implicit needs are discovered through three lenses:</p>
+    <ul>
+      <li><strong>Environmental</strong> &mdash; what does the operating environment impose that stakeholders take for granted? (power, temperature, EMI, network availability, physical access)</li>
+      <li><strong>Interface</strong> &mdash; what do adjacent systems assume about this one that has not been stated as a need?</li>
+      <li><strong>Regulatory</strong> &mdash; what do applicable standards require that no stakeholder explicitly asked for?</li>
+    </ul>
+
+    <h5>Interaction Needs</h5>
+    <p><strong>What they establish:</strong> that properties of the system arising from combinations of components or modes have been captured.</p>
+    <p>Interaction needs are systematically missed because they do not belong to any single stakeholder&rsquo;s view. Examples: &ldquo;alerts on the primary workstation and the adjacent signal box shall not diverge by more than 2 seconds,&rdquo; or &ldquo;during mode transition X, spurious alerts shall be suppressed.&rdquo; The primary technique for surfacing interaction needs is multi-perspective inspection (PBR), because the interaction becomes visible when two reviewers with different views compare notes.</p>
+
+    <h4>The Validation Matrix</h4>
+    <p>The Validation Matrix is the artifact that records validation evidence. One row per need; columns for each validation method, for the source type, for the evidence reference, and for the overall result. Its purpose is to make set-level validation auditable &mdash; any reviewer can ask &ldquo;how do we know this need is right?&rdquo; and see the answer without hunting.</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Need ID</th><th>Text</th><th>Source type</th><th>Inspect</th><th>Analysis</th><th>Similarity</th><th>Test</th><th>Trace</th><th>Evidence ref</th><th>Valid?</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>NEED-SIG-004</td><td>Signaller alerted to track-circuit failure before train enters&hellip;</td><td>Direct (signaller)</td><td>Y</td><td>Y</td><td>Y</td><td>Y</td><td>Y</td><td>VAL-SIG-004</td><td>Y</td></tr>
+        <tr><td>NEED-SIG-004-D1</td><td>[derived] Alert path availability &ge; 0.9999&hellip;</td><td>Derived (interface)</td><td>Y</td><td>Y</td><td>&mdash;</td><td>&mdash;</td><td>Y</td><td>VAL-SIG-004-D1</td><td>Y</td></tr>
+        <tr><td>ASSUMP-SIG-001</td><td>[assumption] Workstation power is separately required&hellip;</td><td>Assumption</td><td>Y</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>Y</td><td>MEMO-SIG-017</td><td>Y</td></tr>
+      </tbody>
+    </table>
+
+    <p>Three properties make the matrix useful. The <strong>source type</strong> (direct, derived, or assumption) determines which methods apply &mdash; an assumption cannot be tested in the same way as a direct need, but it can and must be inspected and traced. Every need has at least one positive validation method; a row with no ticks is an open item, not a passed one. The <strong>evidence reference</strong> points to the actual supporting artifact (review record, analysis report, prototype test result, engineering memo), so validation results are not claims but links to the underlying evidence.</p>
+
+    <p><em>Backing: Validation Matrix structure corresponds to ARP 4754A Table 18 as documented in Peterson 2015, pp. 69.</em></p>
+
+    <h4>Worked Example: Validating One Need Across Methods</h4>
+    <p>Taking NEED-SIG-004 (&ldquo;signaller alerted to track-circuit failure quickly enough to hold approaching trains&hellip;&rdquo;), each method contributes different evidence. This is what multi-method validation looks like in practice:</p>
+
+    <div class="example-block good">
+      <div class="example-label">NEED-SIG-004 &mdash; multi-method validation record</div>
+      <div class="code-block"><code>Traceability:
+  Up:    Hazard HAZARD-SIG-003 (train entry into failed section),
+         Stakeholder need NEED-SIG-001 (signaller situational awareness),
+         EN 50129 SIL-4 clause on failure-to-safety alerts.
+  Down:  Five system requirements (REQ-SIG-017..021).
+  Result: All three upward traces present and current.
+
+Analysis:
+  Method: Interdependency analysis against other signalling needs.
+  Finding: No contradictory need. One interaction surfaced (simultaneous
+           alerts from adjacent sections) -> derived need NEED-SIG-004-I1.
+  Result: Passes; one derived need created.
+
+Similarity:
+  Baseline: Legacy signalling system NEED-LEG-112 ("alert within 5s").
+  Delta: Timing tightened to 3s (SIL-4 re-analysis); multi-path
+         availability added.
+  Delta argument: the tightening does not invalidate the original
+         inspection evidence for the behavioural core (alert-on-failure
+         logic is unchanged); the new multi-path requirement is outside
+         the similarity scope and is validated by other methods below.
+  Result: Similarity applies to the behavioural core only.
+
+Test:
+  Method: Signaller walkthrough on a simulator during elicitation
+          workshop, with scripted failure injection.
+  Finding: Signallers confirmed the 3s threshold matches their
+           cognitive and procedural budget. Option A (0.5s, high
+           false-alarm rate) was rejected by signallers in the
+           walkthrough.
+  Result: Passes; signaller confirmation logged.
+
+Inspection (PBR):
+  Perspectives: designer, tester, safety specialist, signaller (via
+                surrogate), regulator-oriented reviewer.
+  Findings: Designer surfaced an assumption about clock sync between
+            workstation and track-circuit processor (now tracked as
+            ASSUMP-SIG-001). Tester surfaced ambiguity in "before
+            train enters" (clarified as distance-to-section at time
+            of alert). No safety defects.
+  Result: Passes after two revisions.
+
+Assumptions discipline:
+  Surfaced: ASSUMP-SIG-001 (clock sync) via PBR; traced to
+            interface definition ICD-SIG-PROC-02.
+  Surfaced: assumption that workstation power is separately required;
+            traced to NEED-PLAT-009.
+  Result: All assumptions recorded, disseminated, and justified.
+
+Overall: VALID. Evidence bundle: VAL-SIG-004.</code></div>
+    </div>
+
+    <p>Each method surfaced something the others missed: traceability established justification; analysis found an interaction; similarity saved effort on the behavioural core while isolating what needed fresh validation; test grounded the timing threshold in stakeholder cognitive reality; PBR surfaced both an assumption and an ambiguity. A single-method validation &mdash; traceability alone, or inspection alone &mdash; would have passed NEED-SIG-004 and left two defects in the baseline.</p>
+
+    <h4>Scaling by Project Size</h4>
+    <ul>
+      <li><strong>Small project:</strong> traceability for every need plus an inspection pass by a non-author reviewer. Assumptions noted inline with the need. No separate Validation Matrix artifact &mdash; columns in the need spreadsheet suffice.</li>
+      <li><strong>Mid-size project:</strong> add interdependency analysis and a light PBR pass (2&ndash;3 perspectives). Validation Matrix as a standalone artifact, reviewed at the concurrence gate. Assumptions tracked as their own items.</li>
+      <li><strong>Large safety-critical project:</strong> all five methods applied per need, with explicit justification where a method is not applied. PBR with 4&ndash;5 perspectives. Validation Matrix baselined and change-controlled alongside the needs. Similarity arguments formal, with explicit delta analysis and evidence bundle references.</li>
+    </ul>
+    <p>Validation is judgment-intensive work, and the experienced engineers best qualified to do it are typically the scarcest resource on the project. At every scale, plan the resourcing &mdash; not as a process checkbox, but as a deliberate allocation of expert time. Without that, validation becomes paperwork, and paperwork does not catch wrong needs.</p>
+
+    <p>What is invariant across scales is the question: the project must be able to answer &ldquo;how do we know this need is right?&rdquo; for every need, and the answer cannot be &ldquo;because the stakeholder said so.&rdquo; The stakeholder said what they said; validation is the independent check that what they said correctly captures what the system actually needs to do.</p>
+  </section>
+
+  <!-- ===================== SECTION 4: V-MODEL CONSIDERATIONS ===================== -->
+  <section id="sn-vmodel-considerations">
+    <h2>V-Model Specific Considerations</h2>
+    <p class="lead">Stakeholder needs engineering exists outside the V-model &mdash; many projects practise it without reference to any lifecycle model. The V-model adds specific obligations on top of the craft, because downstream V-model layers consume the need set expecting certain properties (traceability, agreement, stability under change) to hold. This section covers what the V-model specifically demands beyond the general craft taught in Section 3.</p>
+
+    <h3>Bidirectional Traceability</h3>
+    <p><strong>What it establishes:</strong> that every need flows down into identified requirements, and every requirement flows back up to a justified source. The V-model&rsquo;s layered structure only holds together if the links between layers are explicit and complete in both directions.</p>
+    <p><strong>What it prevents:</strong></p>
+    <ul>
+      <li><strong>Downward direction (need &rarr; requirement):</strong> needs that are silently dropped during transformation. Without the downward link, a stakeholder need can appear in the agreed set and disappear from the implemented system without anyone noticing until verification or field use.</li>
+      <li><strong>Upward direction (requirement &rarr; need or derivation source):</strong> requirements that enter the baseline with no justification. Without the upward link, the question &ldquo;why does this requirement exist?&rdquo; has no answer, and scope creep is indistinguishable from legitimate derivation.</li>
+    </ul>
+    <p><strong>Procedure:</strong> every captured need has zero-or-more downward links to the requirements that implement it (zero is allowed only if the need is explicitly out of scope or process-only, recorded with justification). Every requirement has one-or-more upward links to a captured need or a documented derivation source (hazard, regulation, interface, engineering constraint). Broken or missing links are tool-checkable invariants at each V-model transition.</p>
+    <p><em>Backing: ASPICE SYS.2.BP5 (bidirectional traceability between system and stakeholder requirements); ARP 4754A traceability objectives; DO-178C traceability between high-level requirements and their sources.</em></p>
+
+    <h3>The Derived-Requirement Feedback Loop</h3>
+    <p><strong>What it establishes:</strong> that requirements created during downstream engineering, which do not trace to any captured need, are surfaced back to the stakeholder layer for classification and concurrence rather than absorbed silently into the baseline.</p>
+    <p><strong>What it prevents:</strong> engineering-authored needs entering the baseline without stakeholder authorization. When a design activity generates a requirement to handle a condition no stakeholder ever asked about, two things may be true &mdash; the requirement may be a legitimate derivation from a constraint (in which case the constraint source must be recorded), or it may be a new need the stakeholder community has never seen (in which case it requires concurrence). Both paths are valid; silent absorption is not.</p>
+    <p><strong>Procedure:</strong> at each V-model transition, scan the requirement set for entries with no upward trace. For each, classify:</p>
+    <ul>
+      <li><em>Derived from a documented constraint</em> &mdash; link to the constraint source (hazard analysis, regulation, interface specification). No stakeholder re-concurrence needed, but the link must be explicit.</li>
+      <li><em>New need</em> &mdash; return to the stakeholder layer, capture as a derived need, elicit or surrogate concurrence from affected parties, and update the baseline.</li>
+    </ul>
+    <p><strong>Common failure mode:</strong> the feedback channel is bureaucratically expensive (it reopens concurrence), so engineering teams quietly classify new needs as &ldquo;derived from internal design decisions&rdquo; and skip the return trip. The resulting baseline drifts away from stakeholder intent without anyone making a visible decision. The feedback loop exists to force this decision to be visible.</p>
+    <p><em>Backing: ARP 4754A derived-requirement feedback loop (integral to the requirements-validation process); Peterson 2015 documents this loop as frequently broken in practice and identifies it as a cause of misaligned safety cases.</em></p>
+
+    <h3>Concurrence as a Recurring Gate</h3>
+    <p><strong>What it establishes:</strong> that the stakeholder-needs baseline stays current through the full lifecycle, not just at its first signing. The V-model expects the need set to evolve &mdash; through stakeholder turnover, through derived-requirement feedback, through completeness analysis discoveries &mdash; and to be re-agreed whenever it does.</p>
+    <p><strong>What it prevents:</strong> a stale baseline that is trusted by downstream layers because it was signed once, without anyone noticing that the needs have drifted or that new needs have been added unilaterally.</p>
+    <p><strong>Procedure:</strong> concurrence is revisited at each V-model transition (needs &rarr; system requirements &rarr; SW requirements &rarr; architecture &rarr; design &rarr; code &rarr; verification). Changes to the agreed set &mdash; additions, deletions, modifications, priority shifts &mdash; pass through the same change-management discipline as any other baselined artifact. Re-concurrence is not a ceremonial re-sign of everything; it is an agreed record of the delta since the last concurrence and its acceptance by affected parties.</p>
+
+    <h3>Stakeholder-Set Evolution</h3>
+    <p><strong>What it establishes:</strong> that the stakeholder register itself is a living artifact, maintained across the lifecycle rather than locked down at kickoff.</p>
+    <p><strong>What it prevents:</strong> completeness gaps caused by stakeholders who surface after the initial identification pass and whose needs are therefore missing from the baseline. New stakeholders typically emerge during architecture (new interfacing systems become visible), during safety analysis (affected parties not previously considered), during verification (certification authorities engaging for the first time), and during field trials (operator populations not represented in the original elicitation).</p>
+    <p><strong>Procedure:</strong> at each V-model transition, run a targeted Onion Model gap-check against the current register &mdash; has any new role surfaced in the intervening work? New stakeholders are added to the register as baselined events, their needs elicited and validated with the same discipline as the original set, and the concurrence record updated. The register carries a change history, not just a current snapshot.</p>
+
+    <h3>Regulatory Stakeholders Are First-Class</h3>
+    <p><strong>What it establishes:</strong> that regulators, certification authorities, and standards bodies are handled as a distinct stakeholder class with their own elicitation and concurrence discipline, rather than folded into &ldquo;all stakeholders&rdquo;.</p>
+    <p><strong>What it prevents:</strong> the late-certification failure mode &mdash; a project discovers at the end of the lifecycle that its needs and requirements do not match the regulatory corpus, because the regulator never attended a meeting and their needs were never actively elicited.</p>
+    <p><strong>Procedure:</strong></p>
+    <ul>
+      <li>Build the regulatory stakeholder list from the applicable standards corpus, not from recollection. The list is a direct enumeration of the standards, certification schemes, and guidance documents that apply to the system.</li>
+      <li>Capture their needs through document analysis (Section 3.3), not interview. The standards text is the primary source; interpretation guidance and certification memos are secondary.</li>
+      <li>Where possible, establish a certification liaison channel to confirm that captured needs correctly reflect the standards. The liaison substitutes for direct regulator concurrence at the project level.</li>
+      <li>Revisit the regulatory need subset whenever applicable standards are revised &mdash; the regulator&rsquo;s needs change when the corpus changes, without any project-level event to signal it.</li>
+    </ul>
+
+    <h3>Independence Scaling with Assurance Level</h3>
+    <p><strong>What it establishes:</strong> that at higher assurance levels, the engineer who captures a need is separated from the engineer who validates and approves it. Independence forces a second perspective on correctness and prevents author-blind-spots from becoming baseline defects.</p>
+    <p><strong>What it prevents:</strong> single-point-of-judgment failures. The engineer who captured the need has already formed an interpretation of what the stakeholder meant. When they are also the validator, that interpretation goes unchallenged.</p>
+    <p><strong>Procedure by assurance level:</strong></p>
+    <table class="field-table">
+      <thead>
+        <tr><th>Level</th><th>Independence required</th><th>Typical realisation</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Low assurance (QM, DAL E, ASIL QM, IEC 62304 Class A)</td><td>Non-author reviewer</td><td>A different person in the same team performs inspection.</td></tr>
+        <tr><td>Medium assurance (DAL C/D, ASIL A/B, IEC 62304 Class B)</td><td>Independent reviewer</td><td>PBR with at least one reviewer from a different discipline (safety, test).</td></tr>
+        <tr><td>High assurance (DAL A/B, ASIL C/D, IEC 62304 Class C)</td><td>Organisationally independent validator</td><td>Validation performed by a separate team or an independent safety assessor. RACI shows Accountable role separated from Responsible role at the organisational level.</td></tr>
+      </tbody>
+    </table>
+    <p><em>Backing: ARP 4754A independence objectives scale with Development Assurance Level; ISO 26262 Part 2 management of safety; DO-178C DAL A/B independence requirements for verification activities.</em></p>
+
+    <h3>Summary: What the V-Model Adds to the Craft</h3>
+    <div class="card">
+      <p>The craft taught in Section 3 produces captured, validated, agreed stakeholder needs. The V-model adds six obligations on top of that output:</p>
+      <ul>
+        <li><strong>Bidirectional traceability</strong> &mdash; every need traces down, every requirement traces up.</li>
+        <li><strong>Derived-requirement feedback loop</strong> &mdash; engineering-created needs surface back for classification and concurrence.</li>
+        <li><strong>Recurring concurrence</strong> &mdash; the baseline is re-agreed at each V-model transition, not signed once and filed.</li>
+        <li><strong>Living stakeholder register</strong> &mdash; the register evolves through the lifecycle and its change history is itself baselined.</li>
+        <li><strong>First-class regulatory handling</strong> &mdash; regulators are elicited through the standards corpus, not the meeting room.</li>
+        <li><strong>Independence of validation at higher assurance levels</strong> &mdash; author and validator are separated, with the separation distance scaling with assurance.</li>
+      </ul>
+      <p>Each of these is an obligation on this layer that exists because downstream V-model layers consume needs expecting these properties to hold. A project can do excellent stakeholder-needs craft and still fail the V-model if these obligations are not met.</p>
+    </div>
+  </section>
+
+  <!-- ===================== SECTION 5: FRAMEWORK (stub) ===================== -->
+  <section id="sn-framework">
+    <h2>Framework Integration <span class="status-badge stub">stub</span></h2>
+    <p><em>[To be written after templates exist.]</em></p>
+  </section>
+
+  <!-- ===================== SECTION 6: AI SKILLS (stub) ===================== -->
+  <section id="sn-skills">
+    <h2>AI Skills Integration <span class="status-badge stub">stub</span></h2>
+    <p><em>[To be written after corresponding skills are built.]</em></p>
+  </section>
+
+  <!-- ===================== REFERENCES (stub) ===================== -->
+  <section id="sn-references">
+    <h2>References</h2>
+    <p><em>[Full reference list to be compiled when page is complete.]</em></p>
+  </section>
+
+</main>
+
+</body>
+</html>
