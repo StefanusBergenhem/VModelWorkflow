@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Concept of Operations (ConOps) &mdash; VModelWorkflow Guide</title>
+  <link rel="stylesheet" href="../css/main.css">
+</head>
+<body>
+
+<!-- ============================================================
+     SIDEBAR
+     ============================================================ -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <h1>VModelWorkflow</h1>
+    <div class="subtitle">V-Model Development Guide</div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-group">
+      <span class="nav-group-label">Navigation</span>
+      <a class="nav-link" href="../index.html">Back to Main Guide</a>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-group-label">Concept of Operations</span>
+      <a class="nav-link" href="#co-intro">What Is a ConOps?</a>
+      <a class="nav-link" href="#co-vmodel">V-Model Context</a>
+      <a class="nav-link" href="#co-quality">Producing a Quality ConOps</a>
+      <a class="nav-link" href="#co-mission">Mission &amp; Objectives</a>
+      <a class="nav-link" href="#co-environment">Operational Environment</a>
+      <a class="nav-link" href="#co-scenarios">Operational Scenarios</a>
+      <a class="nav-link" href="#co-modes">Mode State Machine</a>
+      <a class="nav-link" href="#co-users">Users, Roles &amp; Workload</a>
+      <a class="nav-link" href="#co-support">Support Concept</a>
+      <a class="nav-link" href="#co-performance">Performance Criteria</a>
+      <a class="nav-link" href="#co-validation">ConOps Validation</a>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-group-label">V-Model &amp; Framework</span>
+      <a class="nav-link" href="#co-vmodel-considerations">V-Model Considerations</a>
+      <a class="nav-link" href="#co-framework">Framework Integration <span class="status-badge stub">stub</span></a>
+      <a class="nav-link" href="#co-skills">AI Skills <span class="status-badge stub">stub</span></a>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-group-label">Related Artifacts</span>
+      <a class="nav-link" href="#co-references">References</a>
+    </div>
+  </nav>
+
+  <div class="domain-switcher">
+    <label for="domain-select">Domain Vocabulary</label>
+    <select id="domain-select">
+      <option value="generic">Generic V-Model</option>
+      <option value="do178c">DO-178C (Aviation)</option>
+      <option value="aspice">ASPICE / ISO 26262 (Automotive)</option>
+    </select>
+  </div>
+</aside>
+
+<!-- ============================================================
+     MAIN CONTENT
+     ============================================================ -->
+<main class="main-content" style="margin-left: var(--sidebar-width); padding: var(--space-3xl) var(--space-2xl); max-width: calc(var(--content-max) + var(--space-2xl) * 2 + var(--sidebar-width));">
+
+  <!-- ===================== SECTION 1: INTRO ===================== -->
+  <section id="co-intro">
+    <div class="level-indicator left">Pre-Requirements &mdash; Operational Picture</div>
+    <h2>What Is a Concept of Operations?</h2>
+    <p class="lead">A Concept of Operations (ConOps) is the operational picture of a system &mdash; what it does in its environment, who uses it, under what conditions, and in what modes &mdash; written in the language of operations rather than the language of engineering. It bridges validated stakeholder needs and formal system requirements. It is the artifact that lets downstream requirements be <em>derived</em> rather than <em>invented</em>.</p>
+
+    <div class="card">
+      <h3>Requirements Without a ConOps Are Solution-Space Guesses</h3>
+      <p>Every requirement describes system behaviour in some context. If the context has not been written down first, engineers invent it to fill the gap &mdash; silently, individually, inconsistently. Those invented contexts diverge from the operational world the stakeholders actually live in, and the requirements derived from them solve problems that do not exist while missing ones that do. A ConOps is the discipline of writing the context down <em>before</em> the requirements, so that every requirement has an operational situation it is accountable to.</p>
+      <p>This is not a documentation formality. It is the structural precondition for requirements to be validatable at all. Without an operational picture to check a requirement against, the question &ldquo;is this the right requirement?&rdquo; has no ground truth &mdash; only peer review of other people&rsquo;s guesses.</p>
+    </div>
+
+    <h3>What the ConOps Answers</h3>
+    <p>A completed ConOps answers seven questions about the operational world, in terms an operator would recognize rather than terms an engineer would:</p>
+    <ol>
+      <li><strong>What is the mission?</strong> What purpose does the system exist to serve, and what does &ldquo;mission success&rdquo; look like from the operator&rsquo;s perspective?</li>
+      <li><strong>Where and when does it operate?</strong> Physical, regulatory, electromagnetic, and organizational environments that the system is embedded in.</li>
+      <li><strong>What does a day of operation look like?</strong> Concrete, end-to-end scenarios &mdash; including off-nominal ones &mdash; that walk through actual use.</li>
+      <li><strong>What states and modes does the system have?</strong> Startup, normal, degraded, emergency, maintenance, shutdown &mdash; and the transitions between them.</li>
+      <li><strong>Who operates it, and under what conditions?</strong> Roles, training levels, cognitive and physical workload, error tendencies.</li>
+      <li><strong>How is it supported?</strong> Maintenance, training, logistics, software update, field support &mdash; the parts of the lifecycle that are not the mission itself.</li>
+      <li><strong>What does &ldquo;good enough&rdquo; look like operationally?</strong> Performance envelopes and acceptance criteria expressed in mission terms, not engineering terms.</li>
+    </ol>
+
+    <h3>What the ConOps Is Not</h3>
+    <p>Three adjacent artifacts are routinely confused with the ConOps, and the confusions produce different kinds of damage:</p>
+    <ul>
+      <li><strong>It is not a stakeholder needs document.</strong> Stakeholder needs capture <em>what people want</em>. The ConOps captures <em>how the system operates in order to meet those wants in its real environment</em>. Needs are the justification; ConOps is the operational model that makes the needs concrete enough to derive requirements from. See the separate <a href="stakeholder-needs.html">Stakeholder Needs</a> page for the upstream layer.</li>
+      <li><strong>It is not a system requirement specification.</strong> Requirements are solution-constraining <em>shall</em> statements in system language (&ldquo;the system shall&hellip;&rdquo;). The ConOps is declarative operational description (&ldquo;during approach, the crew&hellip;&rdquo;). Collapsing ConOps into requirements leaks solution assumptions in; collapsing requirements into ConOps leaves downstream engineering with nothing testable.</li>
+      <li><strong>It is not a design document.</strong> The ConOps must not describe how the system works internally. As soon as internal decomposition appears, the document has left the operational world and entered the solution world, and its value as a requirements-validation anchor collapses.</li>
+    </ul>
+
+    <div class="card">
+      <h3>The &ldquo;Use Case&rdquo; Question</h3>
+      <p>Agile practice often uses <em>use cases</em> or <em>user stories</em> as the principal operational artifact. In safety-critical and V-model contexts the more rigorous concept is the <strong>operational scenario</strong>: it is end-to-end, includes the operating environment and adjacent systems explicitly, includes exception paths, and is written for system-level reasoning rather than as a development backlog unit. This page uses &ldquo;scenario&rdquo; throughout. Use cases and user stories remain valid elicitation tools, but the ConOps scenario is the artifact that downstream requirements derivation and system test design are anchored to. <cite>&mdash; Cockburn, <em>Writing Effective Use Cases</em>, Addison-Wesley, 2000</cite></p>
+    </div>
+
+    <h3>Scope of This Page</h3>
+    <p>This page covers the craft of writing a quality ConOps: mission framing, operational-environment characterization, scenarios, mode state machines, user and workload analysis, the support concept, performance criteria, and ConOps validation. It organises the material by knowledge domain, not procedure, and treats the V-model obligations on the ConOps (handoff to system requirements, feedback from downstream derivation, living-document discipline) as a separate section.</p>
+    <p>Two adjacent topics are documented separately: <a href="stakeholder-needs.html">Stakeholder Needs</a> are the upstream layer the ConOps builds on, and <a href="completeness-analysis.html">completeness analysis</a> (FTA, FMEA, STPA, PBR) is the family of techniques that discovers needs the ConOps alone does not surface. Both are drawn on inline and pointed to by forward reference.</p>
+  </section>
+
+  <!-- ===================== SECTION 2: V-MODEL CONTEXT ===================== -->
+  <section id="co-vmodel">
+    <h2><span data-term="conops">ConOps</span> in the V-Model</h2>
+    <p class="lead">The ConOps sits between validated stakeholder needs and the first formal requirements layer. It is not in the verification chain of the V itself &mdash; it is the <em>operational model the left side of the V is accountable to</em>. Without it, the V-model has no ground truth against which to check that the requirements at the top of the V are the right ones.</p>
+
+    <h3>Position in the Flow</h3>
+    <div class="trace-flow">
+      <span class="artifact-ref" data-term="stakeholder-needs">Stakeholder Needs</span>
+      <span class="arrow">&rarr;</span>
+      <span class="artifact-ref" data-term="conops">ConOps</span>
+      <span class="arrow">&rarr;</span>
+      <span class="artifact-ref">Completeness Analysis</span>
+      <span class="arrow">&rarr;</span>
+      <span class="artifact-ref" data-term="system-requirements">System Requirements</span>
+    </div>
+    <p>The ConOps is fed by the validated stakeholder needs baseline and by domain-knowledge inputs (standards, regulations, environmental data, predecessor-system experience) that stakeholders do not articulate because they assume the engineering team already knows them. It feeds forward into two parallel artifacts: completeness analysis (which uses the mode model, scenarios, and environment to discover needs stakeholders could not articulate) and <span data-term="system-requirements">system requirements</span>. It also feeds forward, indirectly, into system test &mdash; the scenarios defined here become the backbone of system-level acceptance testing at the right side of the V.</p>
+
+    <h3>Inputs and Outputs</h3>
+    <table class="field-table">
+      <thead>
+        <tr><th>Direction</th><th>Artifact / Source</th><th>What It Provides</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Input</td><td>Validated stakeholder needs</td><td>Authorized expression of what the system must accomplish and for whom</td></tr>
+        <tr><td>Input</td><td>Regulatory and standards corpus</td><td>Non-negotiable constraints on operation (airworthiness rules, road vehicle type approval, medical device regulation, etc.)</td></tr>
+        <tr><td>Input</td><td>Operational-environment data</td><td>Physical, electromagnetic, thermal, vibration, interoperability, and organizational context</td></tr>
+        <tr><td>Input</td><td>Predecessor-system experience</td><td>Known failure modes, operator workarounds, incident history from similar systems</td></tr>
+        <tr><td>Output</td><td>Mission and objectives</td><td>Mission success definition, objective hierarchy, operational scope</td></tr>
+        <tr><td>Output</td><td>Operational environment description</td><td>Characterized conditions of use, including adjacent systems and regulatory envelope</td></tr>
+        <tr><td>Output</td><td>Operational scenarios</td><td>Testable narrative accounts of system use &mdash; nominal and off-nominal</td></tr>
+        <tr><td>Output</td><td>Mode state machine</td><td>Enumerated modes, entry/exit conditions, transition rules, transition-timing envelope</td></tr>
+        <tr><td>Output</td><td>Operator and support concept</td><td>Role definitions, workload analysis, maintenance/training/logistics concept</td></tr>
+        <tr><td>Output</td><td>Operational performance criteria</td><td>What &ldquo;good enough&rdquo; looks like in mission terms</td></tr>
+      </tbody>
+    </table>
+
+    <h3>What Moves From ConOps to System Requirements</h3>
+    <p>The handoff from ConOps to system requirements is a <em>transformation</em>, not a copy. Every system requirement traces to something in the ConOps (directly or via a completeness-analysis derivation); conversely, nothing in the ConOps leaves the left side of the V without showing up either as a requirement or as an explicitly-documented out-of-scope item. The mapping is many-to-many and requires engineering judgment.</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>ConOps Element</th><th>Becomes In System Requirements</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Operational scenario step (&ldquo;crew checks energy state before top of descent&rdquo;)</td><td>Information-display requirement + timing requirement + crew-alert requirement + failure-handling requirement</td></tr>
+        <tr><td>Mode definition (e.g., &ldquo;Degraded: one of two sensor paths unavailable&rdquo;)</td><td>Detection requirement (entry condition), behavior requirement (what the system does in the mode), annunciation requirement (how the operator knows), exit-condition requirement</td></tr>
+        <tr><td>Mode transition (e.g., Normal &rarr; Emergency)</td><td>Trigger-condition requirement + transition-timing requirement + annunciation requirement + safe-state requirement</td></tr>
+        <tr><td>Operational environment (&ldquo;operates between -40&deg;C and +85&deg;C&rdquo;)</td><td>Environmental performance requirement + environmental qualification requirement + diagnostic coverage under environmental stress</td></tr>
+        <tr><td>User profile (&ldquo;single operator, 12-hour shift, 40 dB ambient noise&rdquo;)</td><td>Human-factors requirements, alert loudness/contrast requirements, interaction-timing budgets</td></tr>
+        <tr><td>Performance criterion (&ldquo;mission success &ge; 99.5% of sorties&rdquo;)</td><td>Availability requirement, reliability requirement, mission-abort rate bounds</td></tr>
+        <tr><td>Support concept (&ldquo;line-replaceable units, 90-minute turnaround&rdquo;)</td><td>Fault-detection-and-isolation requirements, BIT coverage requirements, maintenance-mode interface requirements</td></tr>
+      </tbody>
+    </table>
+
+    <p>This table is the concrete form of the seam. The left column is operational language written with or by stakeholders and operators; the right column is system language written by engineers. Every row represents an engineering act of transformation that must be traceable and defensible. <cite>&mdash; consistent with ASPICE SYS.2 BP1&ndash;BP5 treatment of system-requirement derivation; ARP 4754A needs-to-requirements cascade</cite></p>
+
+    <h3>Feedback Loops</h3>
+    <p>The ConOps is not finished at first signing. Three feedback loops run across the lifecycle:</p>
+    <ul>
+      <li><strong>Derived-requirement feedback.</strong> When downstream engineering discovers a requirement that does not trace to any scenario, mode, environment assumption, or user concern in the ConOps, one of two things is true: the ConOps is incomplete (add the scenario or mode that motivates the requirement) or the requirement is unjustified (remove it or tie it to a documented external constraint). The decision must be visible.</li>
+      <li><strong>Completeness-analysis feedback.</strong> FTA, FMEA, and STPA run against the ConOps regularly surface failure modes and mode-interaction cases that the initial ConOps did not contain. These are folded back into the ConOps (as new scenarios, new modes, or new environment assumptions) rather than quietly added only to the requirements baseline, so the operational picture stays coherent.</li>
+      <li><strong>Verification feedback.</strong> System tests derived from scenarios sometimes expose ambiguities or gaps in the ConOps itself &mdash; the scenario did not say what should happen in a particular branch. These belong upstream, not in a test-plan clarification memo.</li>
+    </ul>
+
+    <h3>Standards Perspective</h3>
+    <table class="field-table">
+      <thead>
+        <tr><th>Standard</th><th>Section</th><th>Key Requirement</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>IEEE 1362-1998</td><td>ConOps guide (full)</td><td>Defines the ConOps as a &ldquo;user-oriented document that describes system characteristics from the user&rsquo;s viewpoint.&rdquo; Prescribes sections for current situation, justification for change, operational policies, modes of operation, user classes, support environment, scenarios, and impacts. The structural emphasis on modes, user classes, and scenarios is deliberate &mdash; these are exactly the inputs that top-down functional decomposition misses.</td></tr>
+        <tr><td>ASPICE v4.0</td><td>SYS.1 / SYS.2</td><td>Does not name &ldquo;ConOps&rdquo; as a formal artifact, but SYS.1.BP1 requires consideration of &ldquo;the target operating and hardware environment&rdquo; alongside stakeholder input; SYS.2.BP4 requires analysis of requirement impact on &ldquo;elements in the relevant system context&rdquo;; SYS.3.BP2 requires specification of system behavior &ldquo;in different system modes.&rdquo; The substance of the ConOps is required even where the artifact name is not.</td></tr>
+        <tr><td>ARP 4754A</td><td>Aircraft Function Development</td><td>Aircraft-level functions are defined in operational terms and their failure conditions are assessed by flight phase (take off, approach, landing, go around). The phase model is an operational-mode model in all but name; the FHA cannot be conducted without it. The Development Assurance Level of every software component is derived from this operational analysis.</td></tr>
+        <tr><td>ISO 26262</td><td>Part 3, Cl. 5&ndash;6</td><td>The Item Definition captures functional description, operational and environmental constraints, and operating scenarios before any design. Hazard Analysis and Risk Assessment (HARA) derives safety goals from operational scenarios &mdash; an operational-world analysis by construction.</td></tr>
+        <tr><td>ISO/IEC/IEEE 29148</td><td>2018</td><td>Treats operational-concept description as a life-cycle-process input to stakeholder-requirements definition. Positions the operational concept upstream of formal requirements.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Why This Layer Exists as a Distinct Artifact</h3>
+    <div class="card">
+      <p>Stakeholder needs tell you <em>what the system must accomplish</em>; system requirements tell you <em>what the system shall do</em>. The ConOps fills the gap: <em>how the system operates in its actual environment in order to accomplish the needs</em>. Collapsing the three into two layers &mdash; needs directly to requirements &mdash; removes the operational model that requirements are supposed to be derived from. The resulting requirements are not wrong because the engineers were careless; they are wrong because there is no shared picture of the operational world for them to be right about.</p>
+      <p>The ConOps exists so that when a requirement is questioned &mdash; during review, during derived-requirement feedback, during test design, during certification &mdash; the answer to &ldquo;why is the system doing this?&rdquo; is not &ldquo;because the requirement says so&rdquo; but &ldquo;because during <em>this scenario</em> in <em>this mode</em>, <em>this operator</em> needs <em>this outcome</em>.&rdquo; That is the difference between requirements that survive review and requirements that do not.</p>
+    </div>
+
+    <h3>Scaling by Project Size and Assurance Level</h3>
+    <p>The <em>principles</em> of the ConOps (operational language, explicit modes, end-to-end scenarios, user-context analysis) apply at every scale. The <em>formality</em> scales with project size and assurance level:</p>
+    <ul>
+      <li><strong>Small, low-risk project:</strong> a two-page operational description covering mission, three to five representative scenarios, a simple mode list (on/off/degraded), and a paragraph on the operator. Reviewed with the product champion and one operator.</li>
+      <li><strong>Large safety-critical project:</strong> a formal ConOps document under change control, developed with operational stakeholders, covering all IEEE 1362 sections, with mode state machines, failure-path scenarios for every hazardous operational event, user-workload analysis, operational performance models, signed concurrence from operator organizations.</li>
+    </ul>
+    <p>The minimal version takes hours; the full version takes months. What does not scale is the set of questions &mdash; every ConOps, at every scale, must answer the seven questions from Section 1. On a small project the answers are short. On a large project the answers are load-bearing certification evidence. In neither case is the question optional.</p>
+  </section>
+
+  <!-- ===================== SECTION 3: QUALITY ===================== -->
+  <section id="co-quality">
+    <h2>Producing a Quality ConOps</h2>
+    <p class="lead">This section covers the craft of writing a ConOps that can carry the weight placed on it by downstream engineering: mission framing, operational-environment characterization, scenarios as testable narratives, the mode state machine, user and workload analysis, the support concept, operational performance criteria, and validation of the ConOps itself. Each topic includes concrete examples and notes on how the technique scales with project size.</p>
+  </section>
+
+  <!-- ===================== 3.1 MISSION ===================== -->
+  <section id="co-mission">
+    <h3>3.1 Mission &amp; Objectives</h3>
+    <p>The mission statement is the anchor of the entire ConOps. Every scenario, mode, environmental assumption, and performance criterion eventually justifies itself by reference to the mission. A fuzzy mission statement produces a fuzzy ConOps, which produces fuzzy requirements, which produces a system that works correctly against a specification no one can defend.</p>
+
+    <h4>What a Quality Mission Statement Contains</h4>
+    <p>A useful mission statement has five properties. Missing any of them tends to produce a specific downstream defect class.</p>
+    <table class="field-table">
+      <thead>
+        <tr><th>Property</th><th>What it fixes</th><th>Typical defect if missing</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Operational language (not engineering)</td><td>Anchors the system to the real world operators live in</td><td>Mission written in component terms; ConOps leaks into design</td></tr>
+        <tr><td>Explicit beneficiary</td><td>Names who the system exists for</td><td>&ldquo;Improves efficiency&rdquo; with no-one identified; requirements optimise for whoever shows up loudest</td></tr>
+        <tr><td>Measurable success criterion</td><td>Allows mission success to be assessed</td><td>&ldquo;Safe and reliable&rdquo; mission with no test &mdash; unfalsifiable</td></tr>
+        <tr><td>Scope statement (in/out)</td><td>Draws the boundary around what the mission is and is not</td><td>Scope creep disguised as requirements growth</td></tr>
+        <tr><td>Relation to predecessor (if any)</td><td>Makes the rationale for a new system explicit</td><td>Derivative systems miss the legacy-incompatibility cases</td></tr>
+      </tbody>
+    </table>
+
+    <div class="example-block good">
+      <div class="example-label">Mission statement &mdash; railway signalling upgrade</div>
+      <div class="code-block"><code>Mission:
+  Replace the existing regional signalling installation with a
+  system that allows signallers, drivers, and control-centre staff
+  to run regional rail traffic under current operational doctrine
+  while increasing line capacity by 20% and preserving current
+  safety levels (SIL-4 headline).
+
+Primary beneficiary:
+  Train operating companies using the region; indirectly,
+  passengers in the form of schedule reliability and journey time.
+
+Mission success:
+  -- Scheduled services operable during rollout window
+     (mission-critical throughout)
+  -- Post-rollout capacity KPI reached within 12 months of cutover
+  -- No degradation of headline hazard rate
+  -- Legacy-system decommissioning complete within 18 months
+
+In scope:
+  Regional signalling on lines A/B/C between stations X and Y,
+  including interfaces to control centre, trackside equipment,
+  and adjacent region at handoff points.
+
+Out of scope:
+  On-train equipment (contracted separately), control-centre HMI
+  beyond signalling panel, long-term timetabling tools.
+
+Relation to predecessor:
+  Replaces installation Sig-Mk4 (1997). Interfaces to adjacent
+  systems retain Mk4 protocol for 36 months post-cutover; new
+  protocol enabled thereafter. Migration windows are operational
+  scenarios SCN-MIG-001..007.</code></div>
+    </div>
+
+    <p>The example shows the difference between a mission statement and a mission <em>slogan</em>. A slogan (&ldquo;modernize regional rail&rdquo;) tests to nothing and licenses any decision. The statement above is testable: after cutover, capacity is either up 20% or not, and the question &ldquo;has the mission been fulfilled?&rdquo; has a defensible answer.</p>
+
+    <h4>Objective Hierarchy</h4>
+    <p>Beneath the mission, objectives decompose it without committing to solution. The right number of levels is usually two or three; deeper hierarchies are a warning sign that design has leaked in.</p>
+
+    <div class="code-block"><code>Mission
+  |
+  +-- Operational objective: run scheduled services
+  |     +-- Capability: route setting by signaller
+  |     +-- Capability: train detection along line
+  |     +-- Capability: control-centre situational awareness
+  |
+  +-- Commercial objective: increase line capacity by 20%
+  |     +-- Capability: shorter block sections
+  |     +-- Capability: moving-block operation on designated segments
+  |
+  +-- Safety objective: preserve SIL-4 headline hazard rate
+  |     +-- Capability: fail-safe route locking
+  |     +-- Capability: overspeed protection
+  |     +-- Capability: operational-mode annunciation to crew</code></div>
+
+    <p>Each leaf is a <em>capability</em> (&ldquo;the system can do X&rdquo;), not an implementation (&ldquo;the system uses Y to do X&rdquo;). Capabilities become the organising spine for scenarios and for the mode state machine.</p>
+
+    <h4>The &ldquo;Whose Problem Is This?&rdquo; Discipline</h4>
+    <p>Gause and Weinberg&rsquo;s central caution &mdash; that the first stated problem is almost never the real problem &mdash; applies with particular force to the mission statement. The person who commissions the work has a reason for framing the mission the way they do, and that reason is sometimes a larger problem they are not willing to state directly. Asking &ldquo;what question does this mission answer?&rdquo; and &ldquo;whose problem is this?&rdquo; systematically surfaces the deeper framing. In the railway example, the commercial objective (capacity) was the prime mover; the signalling replacement was the solution the commissioner had already chosen. Making that visible in the mission statement &mdash; rather than pretending the signalling upgrade is an end in itself &mdash; keeps downstream engineering honest about which trade-offs are actually live. <cite>&mdash; Gause &amp; Weinberg, <em>Are Your Lights On?</em>, Dorset House, 1990</cite></p>
+
+    <h4>Scaling by Project Size</h4>
+    <ul>
+      <li><strong>Small project:</strong> mission in a paragraph, objective hierarchy on one page, scope statement in bullets. Review with the product champion and one operator.</li>
+      <li><strong>Mid-size project:</strong> mission statement, objective hierarchy, explicit in/out scope table, relation to predecessor, performance-criterion sketch. Reviewed at a cross-functional workshop.</li>
+      <li><strong>Large safety-critical project:</strong> formal mission section referencing contract and regulatory context, objective hierarchy cross-linked to a capability breakdown, scope statement under change control, explicit &ldquo;mission success&rdquo; KPI set with measurement plan. Signed by commissioning authority and operating-organization leadership.</li>
+    </ul>
+  </section>
+
+  <!-- ===================== 3.2 ENVIRONMENT ===================== -->
+  <section id="co-environment">
+    <h3>3.2 Operational Environment</h3>
+    <p>The operational environment is everything outside the system that the system must interact with, survive, or conform to. It is the category of requirements stakeholders most systematically under-articulate &mdash; not because they do not know, but because they assume the engineering team knows. Environmental characterization is the discipline of writing down the assumptions anyway, so downstream requirements can be derived from explicit facts rather than tacit beliefs.</p>
+
+    <h4>The Four Environments</h4>
+    <p>A complete environmental characterization addresses four overlapping environments. Each contributes a different category of derived requirements, and each has its own canonical defect pattern when left implicit.</p>
+    <table class="field-table">
+      <thead>
+        <tr><th>Environment</th><th>What it covers</th><th>Defect if left implicit</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Physical</td><td>Temperature, vibration, shock, humidity, altitude, pressure, EMI/HIRF, lightning, radiation, ingress (dust/water)</td><td>System passes functional test in lab, fails in field on first summer day or rough road</td></tr>
+        <tr><td>Regulatory</td><td>Applicable standards, certification schemes, airworthiness / road-vehicle-type-approval / medical / rail safety regulations</td><td>Project delivers a working system that cannot be certified, approved, or legally operated</td></tr>
+        <tr><td>Interoperability</td><td>Adjacent systems at the boundary, their protocols, versioning, timing envelopes, authority relationships</td><td>Integration phase discovers protocol mismatches, timing gaps, authority ambiguities; multiple re-specifications ensue</td></tr>
+        <tr><td>Organizational</td><td>Operator organization, maintenance organization, regulator relationship, training pipeline, doctrine</td><td>System is operable but unusable: doctrine does not match system behaviour; operators are not trained; authority gradients are wrong</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Physical Environment</h4>
+    <p>The physical environment is characterized by envelope (the range of conditions the system must tolerate) and profile (how those conditions vary over time and operational phase). Both matter.</p>
+
+    <div class="example-block good">
+      <div class="example-label">Physical-environment envelope &mdash; excerpt</div>
+      <div class="code-block"><code>Temperature:
+  Operating:  -40 C to +70 C (cabin-mounted equipment)
+              -55 C to +85 C (trackside equipment)
+  Storage:    -55 C to +85 C
+  Shock:      Thermal cycling per standard-X Category B
+
+Vibration:
+  Random:     per standard-X profile 2 (trackside, rail bed)
+  Sine:       per standard-X profile 1 (cabin-mounted)
+  Shock:      30g / 11ms half-sine (operator console)
+
+EMI:
+  Radiated:   per standard-Y Category 4 (rail environment)
+  Conducted:  per standard-Y Category 4
+  Transients: per standard-Z surge profile
+
+Ingress:
+  Trackside:  IP67 (dust-tight, temporary submersion)
+  Cabin:      IP54
+
+Power:
+  Supply:     24 V nominal, 19 V to 33 V range
+  Interrupt:  must ride through 200 ms brownout without reset
+  Transient:  per standard-Z automotive-adjacent profile</code></div>
+    </div>
+
+    <p>The envelope is anchored to named standards rather than to invented numbers. The key discipline is to cite the standard and category explicitly; an envelope value with no citation is an engineering guess that no-one can audit. In domains with formal environmental standards (DO-160 for aviation, ISO 16750 for automotive, EN 50155 for rail), the standard <em>is</em> the envelope; the ConOps job is to name the applicable category, not to re-specify the numbers. <cite>&mdash; RTCA DO-160G (Aviation); ISO 16750 (Automotive); EN 50155 (Rail Rolling Stock)</cite></p>
+
+    <h4>Regulatory Environment</h4>
+    <p>The regulatory environment is a set of non-negotiable constraints imposed by stakeholders &mdash; regulators, certification authorities, legislatures &mdash; who will never attend a project meeting. The discipline is to enumerate them from the standards corpus, not from recollection:</p>
+    <ul>
+      <li><strong>Applicable standards and regulations:</strong> cite by identifier and version (e.g., 14 CFR Part 25, DO-178C, DO-254, DO-160G, ISO 26262:2018, ASPICE v4.0, EN 50129, IEC 62304:2015, MDR 2017/745).</li>
+      <li><strong>Certification/approval scheme:</strong> which authority approves the system, under what scheme, with what required evidence.</li>
+      <li><strong>Applicable assurance level:</strong> Design Assurance Level (DO-178C), ASIL (ISO 26262), SIL (IEC 61508/EN 50129), Class (IEC 62304) &mdash; derived from operational hazard analysis, not chosen by preference.</li>
+      <li><strong>Type certification basis:</strong> the set of regulations, special conditions, equivalent levels of safety, and means of compliance that the system will be certified against.</li>
+    </ul>
+
+    <div class="card">
+      <h4>Regulators Are ConOps Stakeholders</h4>
+      <p>Regulators do not usually appear in the room, but their needs shape the operational envelope as much as any operator&rsquo;s. The <a href="stakeholder-needs.html">Stakeholder Needs</a> layer treats them as first-class stakeholders elicited through document analysis; the ConOps reflects that by enumerating the regulatory envelope explicitly and cross-linking to the standards corpus. Projects that discover the regulatory envelope late pay for the discovery in re-specification, re-analysis, and sometimes re-certification.</p>
+    </div>
+
+    <h4>Interoperability Environment</h4>
+    <p>Every system of interest operates inside a containing system &mdash; a larger technical and organizational context into which it must fit. The interoperability environment characterizes that fit at the <em>system boundary</em>. The primary tool is a <strong>context diagram</strong>: the system as a single block, with every external actor and adjacent system shown as a neighbour, and every boundary-crossing interaction labelled.</p>
+
+    <div class="code-block"><code>                 +------------------+
+                 |   Control Centre  |
+                 |   (TMS)           |
+                 +---------+--------+
+                           | operational commands,
+                           | status feedback
++--------------+    +------+-------+    +------------------+
+|  Adjacent    |----|  This System |----|  Trackside      |
+|  Region      |    |   (regional  |    |  Equipment       |
+|  Signalling  |    |   signalling)|    |  (points,        |
++--------------+    +--^--------+-+    |   circuits)      |
+                       |        |      +------------------+
+     handoff protocol  |        |
+     (legacy Mk4 v2.1, |        | cab-signal feed
+      boundary         |        |
+      locking)         |        |
+                       |        |
+                +------+---+ +--+------------+
+                |  Signaller | |  On-Train    |
+                |  Console   | |  Equipment   |
+                +------------+ +--------------+</code></div>
+
+    <p>Every arrow in the context diagram is an <strong>interface</strong> that the ConOps must characterize (not specify &mdash; that is the system requirement&rsquo;s job). Minimum content per interface:</p>
+    <ul>
+      <li>Adjacent system identifier and version</li>
+      <li>Nature of interaction (command, status, data, physical connection)</li>
+      <li>Authority relationship (does this system command the neighbour, or vice versa, or neither?)</li>
+      <li>Timing envelope (if operationally relevant)</li>
+      <li>Failure-propagation expectation (what happens at this interface if the neighbour fails?)</li>
+    </ul>
+
+    <h4>Organizational Environment</h4>
+    <p>The organizational environment is frequently the most-missed of the four. It covers the human and procedural structures around the system: operating organization, maintenance organization, training pipeline, regulatory liaison, operational doctrine. The characteristic failure mode is a system that is technically correct and <em>operationally wrong</em> &mdash; the controls assume a two-person crew when the organization runs single-person shifts; the fault annunciation assumes dedicated maintenance staff when the operator is expected to self-diagnose; the emergency procedure assumes radio contact when the environment routinely drops radio.</p>
+
+    <p>Minimum content for the organizational environment:</p>
+    <ul>
+      <li>Operating organization: crewing model, shift pattern, authority gradient</li>
+      <li>Maintenance organization: on-site vs. depot, skill level, parts availability</li>
+      <li>Training organization: who trains operators and maintainers, to what standard</li>
+      <li>Operational doctrine: the written and unwritten rules by which operators actually run the system</li>
+      <li>Regulatory liaison: who talks to the regulator and on what cadence</li>
+    </ul>
+    <p>The critical move is to <em>write these down as characteristics of the operational world</em>, not as requirements on the future organization. The ConOps describes what the organization <em>is</em>; requirements on the system are derived from that description.</p>
+
+    <h4>Scaling by Project Size</h4>
+    <ul>
+      <li><strong>Small project:</strong> one-paragraph environment description per environment category, anchored to named standards where applicable. Context diagram in a whiteboard photo.</li>
+      <li><strong>Mid-size project:</strong> structured physical-envelope table (temperature / vibration / power / EMI), regulatory-envelope table with citations, context diagram with interface list. Organizational environment captured in a short narrative.</li>
+      <li><strong>Large safety-critical project:</strong> environmental-qualification plan referencing formal standards; regulatory basis document (type certification basis / compliance plan); full interface control document outline; organizational-environment section developed with operating and maintenance organizations and reviewed by regulatory liaison.</li>
+    </ul>
+  </section>
+
+  <!-- ===================== 3.3 SCENARIOS ===================== -->
+  <section id="co-scenarios">
+    <h3>3.3 Operational Scenarios</h3>
+    <p>Scenarios are the concrete content of the ConOps. They are end-to-end narratives of the system being used to accomplish a mission step, written in operational language, walking through the sequence of interactions between operators, the system, and its environment. They are the artifact downstream requirements derivation, system test design, and safety analysis are all anchored to.</p>
+
+    <h4>Why Scenarios and Not Just Functional Lists</h4>
+    <p>A functional decomposition (&ldquo;the system provides route setting, train detection, status display&hellip;&rdquo;) is an engineering artifact. It is useful, but it produces a predictable class of defects: timing requirements that emerge only in sequence, transition requirements that emerge only when modes meet, information requirements that emerge only when an operator is making a decision under time pressure, and exception-handling requirements that emerge only when something goes wrong. Scenarios reveal all four classes because they are forced to be end-to-end.</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Requirement category</th><th>How scenarios surface it</th><th>Why functional lists miss it</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Timing</td><td>Scenario step has a time budget derived from operator cognition or adjacent-system deadline</td><td>Static function definition has no clock</td></tr>
+        <tr><td>Transition</td><td>Scenario crosses a mode boundary and the conditions/sequences become explicit</td><td>Function lists describe steady states, not transitions</td></tr>
+        <tr><td>Information completeness</td><td>Scenario shows an operator deciding; the information needed for the decision is enumerated</td><td>&ldquo;Display system status&rdquo; does not say which status</td></tr>
+        <tr><td>Negative / inhibition</td><td>Scenario explicitly names what must not happen in a context</td><td>Functional decomposition tends to list positive capabilities</td></tr>
+        <tr><td>Exception handling</td><td>Off-nominal branch forces the author to specify the failure response</td><td>&ldquo;Handle errors appropriately&rdquo; is not a specification</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Scenario Anatomy</h4>
+    <p>Every scenario has the same structural skeleton. Missing any of its elements is a reliable warning that the scenario will not carry its downstream weight.</p>
+
+    <div class="example-block good">
+      <div class="example-label">Scenario skeleton</div>
+      <div class="code-block"><code>Scenario ID:       SCN-xxx-NNN
+Title:             [human-readable title]
+Mission linkage:   [which mission objective / capability]
+Primary actor:     [the human or system that drives the scenario]
+Participating:     [other actors and adjacent systems involved]
+Mode:              [the mode(s) the system is in during the scenario]
+Environment:       [relevant environment conditions]
+Preconditions:     [what is already true when the scenario starts]
+Trigger:           [the event that begins the scenario]
+
+Main path (nominal):
+  1. [actor] [action]
+  2. [system] [response]
+  3. ...
+  N. [outcome reached]
+
+Exception paths:
+  E1 (at step k): [off-nominal condition]
+    .1 [system response]
+    .2 [actor response]
+    .3 [outcome: either continue at step k+1, abort to safe state, or branch to another scenario]
+  E2 (at step m): ...
+
+Minimum guarantee:  [what is true after the scenario even if it fails]
+Success outcome:    [what is true after a successful scenario]
+
+Performance envelope:
+  - Step 3 must complete within [time]
+  - End-to-end scenario must complete within [time]
+
+Open issues:
+  - [items the scenario raised that are not yet resolved]</code></div>
+    </div>
+
+    <p>The <strong>minimum guarantee</strong> field is a discipline imported from safety-critical use-case practice (Cockburn). It is the operational equivalent of a safe state: the weakest condition the system must ensure regardless of what goes wrong during the scenario. Writing it forces engineers to reason about failure coverage before any safety analysis exists, and it becomes a testable property at system level. <cite>&mdash; Cockburn, <em>Writing Effective Use Cases</em>, Addison-Wesley, 2000</cite></p>
+
+    <h4>Scenario Coverage</h4>
+    <p>The set of scenarios is as important as the individual scenarios. A well-covered ConOps has scenarios spanning five dimensions. Completeness on any single dimension is insufficient; gaps are surfaced by checking against all five.</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Dimension</th><th>Coverage question</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Mission capabilities</td><td>Does every leaf capability in the objective hierarchy appear in at least one scenario?</td></tr>
+        <tr><td>Modes and transitions</td><td>Does every mode appear in a scenario? Does every transition between modes appear?</td></tr>
+        <tr><td>Actors and user classes</td><td>Does every user class in Section 3.5 appear as a primary actor in at least one scenario?</td></tr>
+        <tr><td>Environments</td><td>Do the boundary conditions of the environmental envelope appear somewhere (cold start, EMI event, power transient, interface-partner failure)?</td></tr>
+        <tr><td>Off-nominal</td><td>Does every nominal scenario have at least one exception path? Is there a failure-path scenario for every named hazard from preliminary safety analysis?</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Worked Example: An Off-Nominal Scenario</h4>
+    <p>Nominal scenarios tend to be easy to write and easy to agree. The off-nominal scenarios carry the weight of safety, diagnostic, and emergency requirements. The following example shows a degraded-mode scenario for the railway example introduced in Section 3.1.</p>
+
+    <div class="example-block good">
+      <div class="example-label">SCN-SIG-014 &mdash; track-circuit intermittent failure during shift</div>
+      <div class="code-block"><code>Scenario ID:    SCN-SIG-014
+Title:          Track-circuit intermittent failure during active shift
+Mission:        Safety objective -- preserve SIL-4 hazard rate under
+                single-point trackside failure
+Primary actor:  Signaller on console
+Participating:  Trackside track-circuit unit, control centre TMS,
+                driver of approaching train
+Mode:           Normal -> Degraded (one track circuit intermittent)
+Environment:    -10 C, normal EMI, daylight, 40 dB cab noise
+Preconditions:  Route A1 is set; train T-147 is approaching section
+                S-12; all trackside equipment is last-reported
+                healthy 2 min ago.
+Trigger:        Track-circuit unit for section S-12 begins reporting
+                intermittent occupancy (valid -> unknown -> valid
+                cycle at ~0.5 Hz).
+
+Main path:
+  1. System detects intermittent pattern in 3 consecutive cycles
+     (within 6 s of trigger).
+  2. System transitions section S-12 to Degraded mode and locks
+     the route against further clearing.
+  3. System annunciates "SECTION S-12 INTERMITTENT -- ROUTE HELD"
+     on signaller console and on TMS.
+  4. System commands on-approach train T-147 to reduce to
+     restricted speed via cab-signal feed; driver acknowledges.
+  5. Signaller confirms annunciation and dispatches trackside
+     maintenance per standing procedure STD-OP-17.
+  6. Signaller manually clears T-147 through section under
+     restricted authority after visual confirmation from driver
+     of passing a physical marker.
+  7. When track-circuit reports 60 s of stable occupancy state,
+     system returns section to Normal mode and annunciates.
+
+Exception paths:
+  E1 (step 4): Cab-signal acknowledgement not received within 3 s
+    .1 System escalates to emergency stop via track-side signal
+    .2 Signaller annunciated "T-147 NO ACK -- EMERGENCY STOP"
+    .3 Branch to SCN-SIG-021 (driver non-response procedure)
+
+  E2 (step 6): Driver reports obstruction during restricted pass
+    .1 Signaller holds T-147 at current position
+    .2 System inhibits route clearance for adjacent sections
+    .3 Branch to SCN-SIG-009 (obstruction response)
+
+  E3 (step 7): Fault does not clear within 20 min
+    .1 Section remains in Degraded mode
+    .2 Signaller coordinates bi-directional single-line working
+       per STD-OP-22
+    .3 Branch to SCN-SIG-016 (single-line working)
+
+Minimum guarantee:
+  No train is cleared into section S-12 with unknown occupancy.
+  Headline hazard rate is not exceeded.
+
+Success outcome:
+  T-147 passes section under restricted authority; section
+  returns to Normal mode; no injuries; dispatcher informed.
+
+Performance envelope:
+  - Detection-to-annunciation: <= 6 s
+  - Cab-signal command after detection: <= 2 s
+  - Route re-enable after stable state: <= 60 s after clear
+
+Open issues:
+  - Definition of "intermittent" pattern threshold: pending
+    decision from safety board (SIG-OI-04)
+  - Authority relationship with adjacent region in single-line
+    working case (E3 branch): pending joint agreement</code></div>
+    </div>
+
+    <p>Nothing in this scenario is a requirement. Every sentence is an operational statement about what is supposed to happen. But reading it carefully, a requirements engineer can derive at minimum a dozen system requirements &mdash; detection timing, annunciation content, cab-signal command timing, route-locking logic, authority-transfer behaviour under the restricted-authority branch, mode-return criteria, and the minimum-guarantee property as a system-level safety requirement. The scenario is the operational ground truth each of those requirements is accountable to.</p>
+
+    <h4>Scenarios as Requirement-Discovery Tools</h4>
+    <p>A common failure mode is to write scenarios <em>after</em> the requirements, as illustrative examples of already-specified behavior. This is backwards. Scenarios are most valuable <em>before</em> requirements exist, when the author cannot yet know whether their step-by-step account is consistent with any particular specification. Writing a scenario forces the author to surface tacit assumptions; those surfaced assumptions then become the inputs to requirements.</p>
+
+    <p>The useful sequence is: draft the scenario &rarr; walk through it with the operator community &rarr; revise based on &ldquo;that&rsquo;s not how it actually works&rdquo; corrections &rarr; derive requirements from the revised scenario &rarr; cross-check that every step is addressed by a requirement and every requirement traces to a scenario step (or to a documented derivation source). Running this sequence in the other direction produces scenarios that are merely corroborative and miss the defects scenario-writing was supposed to catch.</p>
+
+    <h4>Scaling by Project Size</h4>
+    <ul>
+      <li><strong>Small project:</strong> three to seven scenarios covering the main mission thread plus the two or three most important failure paths. Scenario skeleton simplified (preconditions, main path, one or two exceptions, success outcome).</li>
+      <li><strong>Mid-size project:</strong> scenario set covering every capability leaf and every named mode transition, with at least one exception path per nominal scenario. Scenarios reviewed with the operator community before requirements are derived.</li>
+      <li><strong>Large safety-critical project:</strong> scenario set covering all five coverage dimensions; dedicated failure-path scenarios for every hazardous operational event identified in preliminary hazard analysis; scenarios under change control; scenario walkthroughs conducted with operator organization, safety body, and regulator liaison.</li>
+    </ul>
+  </section>
+
+  <!-- ===================== 3.4 MODES ===================== -->
+  <section id="co-modes">
+    <h3>3.4 Mode State Machine</h3>
+    <p>Modes are the operational states the system can be in: startup, normal, degraded, emergency, maintenance, shutdown, and their project-specific variants. The mode state machine is the formal model of those modes, the conditions under which the system enters and exits each, the transitions between them, and the behaviour that is valid in each. It is the single most productive completeness technique in the ConOps &mdash; most requirements defects are mode defects, either from a mode that was not named or a transition that was not specified.</p>
+
+    <div class="card">
+      <h4>Modes Are Born in the ConOps</h4>
+      <p>Mode analysis is also a completeness-analysis technique (see the separate Completeness Analysis artifact when it exists). It appears here because modes are <em>first defined</em> in the ConOps, from operational reasoning, before any safety analysis is conducted. The ConOps produces a mode state machine; completeness analysis then runs on that machine to surface requirements no stakeholder articulated. The two activities feed each other across the lifecycle, but the original mode set comes from operational reasoning, not from failure analysis.</p>
+    </div>
+
+    <h4>The Canonical Mode Vocabulary</h4>
+    <p>A reasonable starting mode vocabulary, refined per domain:</p>
+    <table class="field-table">
+      <thead>
+        <tr><th>Mode</th><th>Meaning</th><th>Typical requirement implications</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Off / Dormant</td><td>Power absent or system deliberately non-operating; in storage</td><td>Storage conditions; re-activation behaviour; absence of uncommanded outputs</td></tr>
+        <tr><td>Startup / Initialization</td><td>Power-on transitional state; self-test and configuration</td><td>Power-on BIT content; safe-initialization sequence; operator-inhibit while starting; timing envelope for readiness</td></tr>
+        <tr><td>Normal</td><td>All functions available, intended operational conditions</td><td>Functional performance; nominal timing envelopes; normal-mode annunciation</td></tr>
+        <tr><td>Degraded</td><td>One or more functions unavailable; system still safely operational, typically with reduced capability</td><td>Graceful degradation logic; mode annunciation to operator; reduced-performance envelope; mode-recovery logic</td></tr>
+        <tr><td>Emergency</td><td>Immediate safety threat; system may operate outside normal limits to preserve safe state</td><td>Emergency procedures; operator alerting (attention-getters); safe-shutdown behaviour; inhibit of non-safety functions</td></tr>
+        <tr><td>Maintenance</td><td>System partially disassembled or being tested; operational outputs inhibited</td><td>Maintenance-only interfaces; diagnostic access; inhibit of operational actuation; re-certification-of-service procedure</td></tr>
+        <tr><td>Shutdown</td><td>Transition from operational to off; orderly state capture</td><td>State-save behaviour; power-loss protection; safe-state latch; orderly-disconnect timing</td></tr>
+      </tbody>
+    </table>
+
+    <p>Most projects need refinements: multiple Degraded sub-modes (one per failed capability), a separate Test mode distinct from Maintenance, explicit Handover modes for multi-organization systems, etc. The taxonomy above is the floor, not the ceiling.</p>
+
+    <h4>Anatomy of the Mode State Machine</h4>
+    <p>A mode state machine is a state diagram plus a tabular specification. The diagram communicates the topology; the table is the contract. Both are needed.</p>
+
+    <div class="code-block"><code>                     +--------------+
+                     |    Off       |
+                     +------+-------+
+                            | power on
+                            v
+                     +--------------+
+                     |   Startup    |
+                     +------+-------+
+                            | BIT pass       | BIT fail
+                            |                +------------------+
+                            v                                   v
+                     +--------------+                   +----------------+
+  mode recovery  <---|   Normal    |<-----             |  Maintenance   |
+                     +------+-------+      \           +----------------+
+                            |                \
+         functional         |                 \
+         failure            v                  \   hazard event
+                     +--------------+           \
+                     |   Degraded  |-------------+
+                     +------+-------+                \
+                            |                        \
+                            v                        v
+                     +----------------+       +-----------------+
+                     |   Emergency   |------>|    Shutdown      |
+                     +----------------+       +-----------------+</code></div>
+
+    <p>The tabular specification carries the load. One row per transition, answering five questions about each:</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Field</th><th>Content</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>From mode</td><td>Current mode before transition</td></tr>
+        <tr><td>To mode</td><td>Mode entered</td></tr>
+        <tr><td>Trigger condition</td><td>The event or combination that causes the transition</td></tr>
+        <tr><td>Guard condition</td><td>Any precondition that must also hold for the transition to occur</td></tr>
+        <tr><td>Transition timing</td><td>Maximum allowed time from trigger detection to mode change</td></tr>
+        <tr><td>Annunciation</td><td>How the operator is informed of the transition</td></tr>
+        <tr><td>Safe-state action</td><td>The system state(s) that must be established during or immediately after the transition</td></tr>
+      </tbody>
+    </table>
+
+    <div class="example-block good">
+      <div class="example-label">Mode transition table &mdash; excerpt</div>
+      <div class="code-block"><code>From     | To         | Trigger                       | Guard            | Timing  | Annunciation         | Safe-state action
+---------+------------+-------------------------------+------------------+---------+----------------------+-----------------------------
+Normal   | Degraded   | Single-channel sensor fail    | Other channel OK | <= 100ms| "DEGRADED: channel X"| Fail-over to surviving channel;
+         |            |                               |                  |         |                      | lock out affected function
+---------+------------+-------------------------------+------------------+---------+----------------------+-----------------------------
+Normal   | Emergency  | Loss of control authority     | (none)           | <= 50ms | Aural alert + visual | Inhibit all automatic outputs;
+         |            |                               |                  |         |                      | reversion to manual control
+---------+------------+-------------------------------+------------------+---------+----------------------+-----------------------------
+Degraded | Normal     | All channels healthy AND      | Operator ack     | <= 2s   | "NORMAL" notification| Release lockouts; restore
+         |            | stable for >= 60s             | received         |         |                      | nominal performance envelope
+---------+------------+-------------------------------+------------------+---------+----------------------+-----------------------------
+Startup  | Maintenance| BIT fail AND maintenance-key  | Maintenance mode | <= 500ms| "MAINTENANCE" visual | Inhibit operational outputs;
+         |            | inserted                      | authorised       |         |                      | enable diagnostic interfaces
+---------+------------+-------------------------------+------------------+---------+----------------------+-----------------------------</code></div>
+    </div>
+
+    <h4>Mode-Completeness Checks</h4>
+    <p>The power of the mode state machine is that it is <em>enumerable</em> &mdash; a finite number of modes, a finite number of transitions. That enumerability enables four completeness checks that are structurally difficult against prose requirements:</p>
+
+    <ol>
+      <li><strong>Every mode has an explicit entry condition and an explicit exit condition.</strong> A mode with no defined exit is a trap; a mode with no defined entry is unreachable. Both are defects.</li>
+      <li><strong>Every transition has a trigger and a timing envelope.</strong> A transition without a trigger is a mystery; a transition without a timing bound is not testable.</li>
+      <li><strong>The mode graph is reachable and non-trapping.</strong> Every mode must be reachable from startup; every mode except Shutdown must have a path back to Normal or to a recovery state. Checking this surfaces both &ldquo;stuck&rdquo; modes and &ldquo;orphan&rdquo; modes.</li>
+      <li><strong>Hazardous transitions are annunciated.</strong> Any transition that enters a mode with reduced capability or increased risk must be annunciated to the operator within a timing envelope defined by the operator workload budget. Silent mode changes are a recurrent root cause of serious incidents.</li>
+    </ol>
+
+    <div class="card">
+      <h4>Mode Analysis Feeds Safety Analysis</h4>
+      <p>In aviation, ARP 4754A&rsquo;s Functional Hazard Assessment is organised by flight phase: take off, climb, cruise, approach, landing, go around. Flight phases are operational modes; the FHA is a mode-completeness check by construction. Every failure condition is assessed per phase because the same function failure has different safety consequences in different modes. The same pattern applies in automotive HARA (driving scenarios) and medical device analysis (use-environment phases). Doing mode analysis in the ConOps is not just a completeness technique &mdash; it is the data structure downstream safety analysis needs to run.</p>
+    </div>
+
+    <h4>Forward Pointer</h4>
+    <p>The mode state machine produced here is consumed by the Completeness Analysis artifact to generate <em>derived</em> requirements: transition-handling requirements, mode-interaction requirements, failure-propagation inhibit requirements, and safe-state-entry requirements. That treatment belongs to the completeness-analysis documentation; here the discipline is to produce a mode machine <em>complete and testable enough</em> that completeness analysis has something to run on.</p>
+
+    <h4>Scaling by Project Size</h4>
+    <ul>
+      <li><strong>Small project:</strong> three to five modes, a single-page state diagram, a transition table with 8&ndash;15 rows. Mode-completeness checks done informally.</li>
+      <li><strong>Mid-size project:</strong> canonical modes plus project-specific sub-modes; formal state diagram; transition table under configuration management; mode-completeness checks as part of ConOps review.</li>
+      <li><strong>Large safety-critical project:</strong> mode state machine as a formal artifact, often modelled in a state-machine tool (Stateflow, SCADE, or equivalent); transitions specified to the level of a behavioural model; mode-completeness checks as formal verification obligations; mode state machine linked to system-requirements, safety analysis, and system-test artifacts.</li>
+    </ul>
+  </section>
+
+  <!-- ===================== 3.5 USERS ===================== -->
+  <section id="co-users">
+    <h3>3.5 User Organization, Roles &amp; Workload</h3>
+    <p>A system is only as good as the people operating it can make it. Requirements that ignore operator reality &mdash; their training, cognitive load, physical environment, error tendencies, authority constraints &mdash; produce systems that pass verification and fail in field. User analysis in the ConOps captures operator reality as a fact about the world, so downstream human-factors and alerting requirements are derived from that fact rather than invented against an imagined user.</p>
+
+    <h4>Why &ldquo;User&rdquo; Is Not a Primitive</h4>
+    <p>As the <a href="stakeholder-needs.html">Stakeholder Needs</a> layer notes, the word &ldquo;user&rdquo; collapses distinct roles into a single word and is structurally responsible for missing requirements. In the ConOps the discipline is stronger: every operational scenario names a specific role, and every role has a profile that is explicit enough to derive requirements from.</p>
+
+    <h4>User Profile Content</h4>
+    <p>A user profile is not a persona. Personas are marketing tools. User profiles are operational fact sheets, covering six dimensions:</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Dimension</th><th>What to capture</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Role &amp; authority</td><td>What the operator is empowered to do; what they are prohibited from doing; where their authority ends and another&rsquo;s begins</td></tr>
+        <tr><td>Training &amp; expertise</td><td>Required training qualification; typical tenure; recurrence / revalidation cadence</td></tr>
+        <tr><td>Cognitive load</td><td>Task complexity; concurrency (how many things the operator tracks at once); decision tempo</td></tr>
+        <tr><td>Physical environment</td><td>Noise, lighting, vibration, temperature, protective equipment, posture, shift length</td></tr>
+        <tr><td>Frequency of use</td><td>Continuous, intermittent, or rare; with associated skill-decay risk for rare actions</td></tr>
+        <tr><td>Known error tendencies</td><td>Documented human-error modes for this role; legacy-system incident history</td></tr>
+      </tbody>
+    </table>
+
+    <div class="example-block good">
+      <div class="example-label">User profile &mdash; Signaller (railway signalling example)</div>
+      <div class="code-block"><code>Role:           Regional signaller
+Authority:      Routes within assigned panel; authority to issue
+                restricted-authority passes; no authority to modify
+                timetabling or inhibit trackside equipment.
+Training:       National signalling licence (minimum 12 months),
+                panel-specific conversion (2 weeks), biannual
+                recertification, annual scenario assessment.
+Tenure:         Typical 5-15 years in role; skills mature at
+                ~3 years.
+
+Cognitive load:
+  Normal mode:  Track 2-4 concurrent routes; scan panel at
+                10-20 s intervals; respond to console prompts
+                within 5-10 s.
+  Degraded:     Concurrent degraded-section management plus
+                normal panel; load increases 30-50%.
+  Emergency:    Single-incident focus; all other routes held;
+                time-critical decisions at ~2 s tempo.
+
+Physical env.:  40 dB ambient noise; fluorescent lighting
+                overhead plus panel backlighting; 12-hour shift
+                pattern with 2x 30 min breaks; standing or
+                seated; wrist-worn radio.
+
+Frequency:      Continuous during shift; route-setting
+                approximately 4-12 times per hour depending on
+                line traffic.
+
+Known error tendencies (from legacy incident history):
+  - Expectancy error: confirming an already-assumed route state
+    rather than reading the panel.
+  - Mode-confusion error: applying normal-mode procedure in
+    degraded mode when annunciation is subtle.
+  - Slip: acknowledging alert without full read under high load.
+  - Handover errors at shift change: incomplete state transfer.</code></div>
+    </div>
+
+    <h4>Operator Workload Analysis</h4>
+    <p>Operator workload is both a constraint (what the operator can actually do) and a design target (what the system must avoid demanding). Workload analysis in the ConOps answers three specific questions for each user class:</p>
+
+    <ol>
+      <li><strong>What is the peak sustainable load</strong> &mdash; the upper bound on cognitive, perceptual, and physical demand the operator can sustain without error-rate growth?</li>
+      <li><strong>Where are the saturation cliffs</strong> &mdash; the operational events that predictably push workload past sustainable levels (simultaneous alarms, mode change under time pressure, extended-shift fatigue)?</li>
+      <li><strong>What is the graceful-degradation envelope</strong> &mdash; the sequence in which the system should shed non-critical operator demands when workload peaks (suppress non-safety annunciations, queue non-urgent prompts, auto-acknowledge informational alerts)?</li>
+    </ol>
+
+    <p>The answers drive a named class of system requirements: alert prioritization, alarm filtering, auto-acknowledge logic, attention-getter selection, concurrent-task limits, time-budget enforcement for mode changes requiring operator acknowledgment. None of these can be specified correctly without a written workload analysis; all of them tend to be invented from engineering intuition when the analysis is absent.</p>
+
+    <h4>Special Role Classes to Explicitly Include</h4>
+    <p>Three role classes are routinely under-represented in ConOps documents. The discipline is to address each explicitly even if the answer is &ldquo;not applicable&rdquo;, so the absence is visible:</p>
+    <ul>
+      <li><strong>Maintenance operators.</strong> Often absent from operational scenario sessions because they are not &ldquo;users.&rdquo; Their profile drives diagnostic interface requirements, inhibit-and-override requirements, fault-isolation detail requirements, and the maintenance-mode safety logic.</li>
+      <li><strong>Installers and commissioners.</strong> A different user class that operates the system only at well-defined points in its lifecycle. Their profile drives commissioning-mode requirements, first-power-on BIT scope, and the parameter-configuration interface.</li>
+      <li><strong>Supervisors and authority-holders.</strong> People who do not operate the system directly but whose decisions (authorise a pass, accept a handover, approve a cutover) are part of its operational flow. Their profile drives the chain-of-custody and the authorised-action logs.</li>
+    </ul>
+
+    <h4>Scaling by Project Size</h4>
+    <ul>
+      <li><strong>Small project:</strong> a short profile per distinct role; workload section may be qualitative (&ldquo;typical office environment, single role, low concurrent demand&rdquo;).</li>
+      <li><strong>Mid-size project:</strong> structured profile per role; workload analysis for each role&rsquo;s peak modes; error-tendency list grounded in incident history of legacy system or comparable systems.</li>
+      <li><strong>Large safety-critical project:</strong> formal user-profile document; workload analysis using a named method (e.g., task-load analysis); operator-in-the-loop evaluation at key milestones; error-tendency analysis drawing on incident databases and regulatory advisories.</li>
+    </ul>
+  </section>
+
+  <!-- ===================== 3.6 SUPPORT ===================== -->
+  <section id="co-support">
+    <h3>3.6 Support Concept</h3>
+    <p>The support concept describes how the system is kept operable across its lifecycle. It covers maintenance, training, logistics, software update, field support, obsolescence management, and disposal. These lifecycle activities are routinely under-specified because stakeholders treat them as assumed; the result is a system that is operable on day one and unsupportable by year three.</p>
+
+    <h4>What the Support Concept Must Address</h4>
+    <table class="field-table">
+      <thead>
+        <tr><th>Topic</th><th>Key questions</th><th>Typical derived requirements</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Maintenance model</td><td>Line / depot / return-to-factory? What is the repair unit (LRU)? Turnaround target?</td><td>Fault-isolation-to-LRU requirements, BIT coverage, maintenance-mode interfaces</td></tr>
+        <tr><td>Diagnostic concept</td><td>How does the maintainer find the fault? What tools and data are available to them?</td><td>Fault-code emission, event-log content, diagnostic-port interface</td></tr>
+        <tr><td>Training pipeline</td><td>Who trains operators and maintainers? Initial and recurrent cadence?</td><td>Training-mode interface (simulate without affecting operation), scenario playback, training-data retention</td></tr>
+        <tr><td>Software update</td><td>How is new software loaded? By whom? Under what integrity controls?</td><td>Data-load integrity checks, rollback capability, update-mode authorisation, post-load verification</td></tr>
+        <tr><td>Field support</td><td>Who responds to field issues? What data do they have? What authority?</td><td>Remote-support interface (if allowed), field-diagnostic bundle, support-only credentials</td></tr>
+        <tr><td>Obsolescence</td><td>Component-availability horizon? Mitigation strategy?</td><td>Supplier-dependent interfaces isolated behind abstraction; parts-availability contract requirements</td></tr>
+        <tr><td>Disposal</td><td>How is the system decommissioned? Any data-destruction or recycling obligation?</td><td>Secure-erase capability, regulated-material declaration</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Data-Load Integrity as a Running Example</h4>
+    <p>One row in the table above deserves a paragraph. Erroneous data loaded into a safety-critical system without detection is a classic catastrophic failure mode: the software is correct, the operator acted according to procedure, and the resulting system behavior is wrong because the data it was acting on was wrong. Addressing it requires explicit ConOps treatment: what data gets loaded, when, by whom, through which interface, with what authorisation, and what the detection/rollback concept is. Writing this down in the ConOps produces a set of derived requirements (integrity-check, authorisation, rollback, post-load verification) that would otherwise not exist at all. <cite>&mdash; the Peterson / SAAB-EII case study treats &ldquo;incorrect data loaded into avionics platform without detection&rdquo; as a Catastrophic failure condition (FC# 45.01) precisely because this ConOps-level work was done; Peterson, NASA/CR-2015-218982, Table 2 p.28</cite></p>
+
+    <div class="card">
+      <h4>&ldquo;Design for Support&rdquo; Is a ConOps-Level Decision</h4>
+      <p>Whether the system is <em>designed to be supported</em> is a decision made at the ConOps level. Maintainability, diagnostic coverage, fault-isolation granularity, and update safety all emerge from support-concept requirements that must be present early enough in the lifecycle to constrain architecture. Waiting until integration to discover that the system cannot be repaired without shipping it back to the factory is a decision that was actually made &mdash; by default &mdash; in the ConOps phase that did not address it.</p>
+    </div>
+
+    <h4>Scaling by Project Size</h4>
+    <ul>
+      <li><strong>Small project:</strong> a paragraph each on maintenance model, training, and update process; no formal LRU breakdown.</li>
+      <li><strong>Mid-size project:</strong> structured support-concept section per topic above; LRU breakdown aligned with architecture; update-integrity strategy documented.</li>
+      <li><strong>Large safety-critical project:</strong> integrated logistics support plan as a formal deliverable; maintenance concept feeding reliability/availability analysis; data-load integrity and secure-update strategy as safety-case inputs; obsolescence management plan aligned with contract lifecycle.</li>
+    </ul>
+  </section>
+
+  <!-- ===================== 3.7 PERFORMANCE ===================== -->
+  <section id="co-performance">
+    <h3>3.7 Operational Performance Criteria</h3>
+    <p>Performance criteria in the ConOps express what &ldquo;good enough&rdquo; looks like in mission terms &mdash; availability, reliability, mission-success rate, responsiveness, accuracy &mdash; so system requirements can quantify them. Left implicit, performance becomes a late-project argument between engineering and operations with no contractually grounded answer.</p>
+
+    <h4>Mission-Level vs. System-Level Performance</h4>
+    <p>A critical distinction: the ConOps expresses performance at the <em>mission level</em>, in the operator&rsquo;s language. System requirements then allocate that mission-level performance down to system-level budgets. Mixing the two levels in the ConOps is a form of solution framing.</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>ConOps (mission-level)</th><th>System requirement (allocated)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>&ldquo;The system shall support at least 99.5% of scheduled services reaching destination within 5 minutes of timetable.&rdquo;</td><td>Availability &ge; 99.98% under-computed from operational-model allocation; headline MTBF &ge; N hours; fail-over time &lt; T seconds.</td></tr>
+        <tr><td>&ldquo;Routine route-setting operations shall not require more than 10 seconds of signaller time per route.&rdquo;</td><td>Console response-time requirements per interaction step; concurrent-operation limits.</td></tr>
+        <tr><td>&ldquo;The system shall permit recovery to normal operations within 30 minutes of a single-point trackside failure, barring physical damage.&rdquo;</td><td>Fault-detection time requirements; mode-transition time budgets; recovery-sequence step limits.</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Performance Envelope Per Mode</h4>
+    <p>Because mode behaviour differs from mode to mode, performance criteria must be stated per mode. A single global performance statement is always either too loose for Normal mode or too tight for Degraded mode. The mode-by-mode breakdown is cheap in the ConOps and expensive to retrofit later.</p>
+
+    <div class="example-block good">
+      <div class="example-label">Mode-indexed performance envelope &mdash; railway example</div>
+      <div class="code-block"><code>Mode      | Availability | Console       | Recovery     | Headline hazard
+          |              | response      | time         | rate
+----------+--------------+---------------+--------------+-----------------
+Startup   | n/a          | n/a           | <= 60 s full | -- (outputs inhibited)
+          |              |               | readiness    |
+Normal    | >= 99.98%    | <= 1 s/action | n/a          | <= 1e-9 / hr
+Degraded  | >= 99.90%    | <= 2 s/action | 30 min to    | <= 1e-8 / hr
+          | per section  | on degraded   | Normal if    | per section
+          |              | section       | fault clears |
+Emergency | n/a          | aural <= 0.5s | until safe   | -- (safe-state
+          |              |               | state        | convergence
+          |              |               | reached      | required)
+Maint.    | n/a          | n/a (mode not | n/a          | -- (ops
+          |              | for ops)      |              | outputs inhibited)</code></div>
+    </div>
+
+    <h4>Acceptance Criteria</h4>
+    <p>Performance criteria in the ConOps must be stated so that they can be <em>accepted</em> &mdash; measured, against an agreed method, to an agreed confidence level. Stating &ldquo;the system shall be highly available&rdquo; is not an acceptance criterion; it is an aspiration. The useful form has four parts: the property, the quantified bound, the measurement method, and the evidence form.</p>
+
+    <div class="code-block"><code>Property:         Regional-service availability
+Quantified bound: >= 99.5% of scheduled services arriving within
+                  5 minutes of timetable, averaged over rolling
+                  90-day windows, during first 12 months after cutover.
+Measurement:      Automated timetable-adherence metric, validated
+                  by operator timekeeper spot-checks per OP-STD-31.
+Evidence form:    Monthly availability report sampled from TMS,
+                  joint signoff by operator and system supplier.</code></div>
+
+    <p>All four parts are needed. Property without bound is unfalsifiable. Bound without measurement method allows arguments about what was actually measured. Measurement without evidence form allows disputes over the measurement.</p>
+
+    <h4>Scaling by Project Size</h4>
+    <ul>
+      <li><strong>Small project:</strong> a short performance-criterion list with indicative targets; measurement method stated in a sentence.</li>
+      <li><strong>Mid-size project:</strong> mode-indexed performance envelope; acceptance-criterion structure applied to each criterion; measurement method referenced to an operational standard.</li>
+      <li><strong>Large safety-critical project:</strong> formal performance model under configuration management; allocation-budget sketch fed to system-requirements phase; acceptance criteria forming part of the contract baseline and, where relevant, the certification evidence set.</li>
+    </ul>
+  </section>
+
+  <!-- ===================== 3.8 VALIDATION ===================== -->
+  <section id="co-validation">
+    <h3>3.8 ConOps Validation</h3>
+    <p>Validating the ConOps is asking &ldquo;does this correctly describe how the system will actually be operated?&rdquo; It is distinct from validation of the system against the ConOps (that happens at system test) and from verification of requirements against the ConOps (that happens as requirements are derived). ConOps validation asks the prior question: the ConOps is the ground truth for everything downstream, so it must be validated against the real operational world <em>before</em> it is used as ground truth.</p>
+
+    <h4>Validation Methods for a ConOps</h4>
+    <p>The five needs-validation methods from the <a href="stakeholder-needs.html">Stakeholder Needs</a> layer apply here, adjusted for the ConOps artifact form:</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Method</th><th>Applied to ConOps</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Traceability</td><td>Every scenario, mode, environmental assumption, user-profile element, and performance criterion traces to a stakeholder need, a regulatory clause, or an explicit derivation source.</td></tr>
+        <tr><td>Analysis</td><td>Mode-completeness checks (Section 3.4); scenario-coverage matrix against capabilities/modes/users/environments/off-nominal; internal consistency (no scenario requires a mode that is not defined; no mode is unreachable; no two scenarios contradict).</td></tr>
+        <tr><td>Test (walkthrough)</td><td>Operational stakeholders walk through scenarios against the proposed ConOps, either narratively or on a simulator, injecting failures and checking the ConOps description against their actual work practice.</td></tr>
+        <tr><td>Similarity</td><td>Delta argument from a predecessor system ConOps, where applicable, with explicit treatment of what has changed. Useful for derivative systems; dangerous when treated as assertion rather than argument.</td></tr>
+        <tr><td>Inspection (PBR)</td><td>Multi-perspective review: operator (&ldquo;does this match my work?&rdquo;), maintainer (&ldquo;is my world represented?&rdquo;), safety specialist (&ldquo;what hazards does this touch?&rdquo;), regulator-oriented reviewer (&ldquo;is the operational basis defensible?&rdquo;), requirements engineer (&ldquo;can I derive requirements from this?&rdquo;).</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Scenario Walkthrough as the Characteristic Technique</h4>
+    <p>The single most productive ConOps-validation technique is the <strong>scenario walkthrough with the operator community</strong>. The ConOps author walks through each scenario step-by-step in a room with real operators, real maintainers, and (if feasible) the regulator liaison. At every step the facilitator asks &ldquo;is this what actually happens?&rdquo; &mdash; and the operators correct the description when it does not match their world. The corrections feed back into the ConOps.</p>
+
+    <p>This is where most ConOps defects surface. The scenarios that the engineering team wrote in isolation tend to describe operations as they <em>should</em> happen; the scenarios operators live through describe operations as they <em>do</em> happen. The gap between the two is where unwritten procedures, informal workarounds, and hidden coordination mechanisms live. Those are exactly the operational facts downstream requirements must account for.</p>
+
+    <div class="card">
+      <h4>ConOps Written by Engineers for Engineers Is a Red Flag</h4>
+      <p>A ConOps written entirely by the development team, without operational stakeholders co-authoring or at minimum reviewing, is an engineering projection of the operational world onto the system, not a description of the operational world itself. The language drifts into system terms (&ldquo;the system&rdquo; does things, instead of &ldquo;the signaller clears the route&rdquo;); scenarios describe intended behavior rather than actual operator work; modes are chosen for architectural convenience rather than operational meaning. A ConOps that does not survive contact with real operators is a worse-than-useless artifact &mdash; it carries the authority of a formal document without the validity of one.</p>
+    </div>
+
+    <h4>Assumption Discipline</h4>
+    <p>Every scenario rests on operational assumptions (training level, staffing, adjacent-system availability, doctrine, authority relationships). The discipline from the stakeholder-needs layer applies unchanged: surface the assumption, disseminate it, justify it. In the ConOps the assumptions are typically organizational rather than technical, and that makes them easier to miss:</p>
+    <ul>
+      <li>&ldquo;The signaller will dispatch trackside maintenance per STD-OP-17&rdquo; assumes STD-OP-17 exists, is current, and is enforceable.</li>
+      <li>&ldquo;The driver will acknowledge the cab-signal command&rdquo; assumes training, attention state, and radio availability.</li>
+      <li>&ldquo;Maintenance will respond within 30 minutes&rdquo; assumes shift staffing, contract coverage, and access rights.</li>
+    </ul>
+    <p>Each such assumption becomes either a traceable link (to a contract clause, a standing procedure, an interface specification) or an open issue the ConOps must track. Leaving them unarticulated is the mechanism by which mature organizations silently build systems that only work in the specific context they were written for.</p>
+
+    <h4>ConOps-Completeness Gate</h4>
+    <p>Before the ConOps is released to drive system-requirements derivation, it should pass a minimum completeness gate. The gate is not a quality ceiling; it is a floor below which downstream work is known-unsafe:</p>
+
+    <div class="code-block"><code>[ ] Mission statement has all five properties (Section 3.1).
+[ ] Operational environment characterised across all four
+    environments (Section 3.2).
+[ ] Context diagram and interface list complete for system
+    boundary.
+[ ] Every mission capability appears in at least one scenario.
+[ ] Every mode appears in at least one scenario; every named
+    transition appears in at least one scenario.
+[ ] Every nominal scenario has at least one exception path.
+[ ] Mode state machine transition table complete; mode-
+    completeness checks (reachability, non-trapping,
+    annunciation of hazardous transitions) passed.
+[ ] Every named user class has a profile including the six
+    dimensions of Section 3.5.
+[ ] Support concept addresses all seven topics of Section 3.6.
+[ ] Performance criteria stated per mode with acceptance
+    structure (property/bound/measurement/evidence).
+[ ] Validation evidence: walkthrough completed with each named
+    user class; PBR completed with designer, tester, safety,
+    and regulator-oriented perspectives; findings resolved
+    or tracked as open issues.
+[ ] Assumptions log complete; each assumption either traced or
+    tracked as an open issue.
+[ ] Open-issues list explicit and carried forward to the
+    system-requirements phase.</code></div>
+
+    <p>A ConOps that cannot pass this gate is either incomplete (the missing items belong upstream) or describes a system whose operational picture is not yet well-enough understood to specify. In either case, proceeding to derive requirements is a decision to build on unverified assumptions, and that should be a visible project decision rather than an accidental drift.</p>
+
+    <h4>Scaling by Project Size</h4>
+    <ul>
+      <li><strong>Small project:</strong> a single walkthrough session with the operator community; inspection by one or two non-author reviewers; completeness gate as a checklist at ConOps review.</li>
+      <li><strong>Mid-size project:</strong> scenario walkthroughs per role; PBR with three to four perspectives; completeness gate as a formal review milestone; assumptions log maintained under configuration management.</li>
+      <li><strong>Large safety-critical project:</strong> walkthroughs conducted across all operational roles and organizational interfaces; operator-in-the-loop evaluation at a simulator for complex scenarios; PBR with full perspective coverage including regulatory liaison; completeness gate as a formal contract milestone feeding the certification plan.</li>
+    </ul>
+  </section>
+
+  <!-- ===================== SECTION 4: V-MODEL CONSIDERATIONS ===================== -->
+  <section id="co-vmodel-considerations">
+    <h2>V-Model Specific Considerations</h2>
+    <p class="lead">The ConOps, like stakeholder needs, exists outside the V-model &mdash; many projects produce operational-concept documents without reference to any lifecycle model. The V-model adds specific obligations on top of the craft, because downstream V-model layers consume the ConOps expecting certain properties (traceability, stability, completeness against the mode state machine) to hold. This section covers what the V-model specifically demands beyond the general craft in Section 3.</p>
+
+    <h3>ConOps as the Source for System Test Scenarios</h3>
+    <p><strong>What it establishes:</strong> the scenarios in the ConOps become the backbone of system-level acceptance testing at the right side of the V. A scenario in Section 3.3 is a system test case in draft form &mdash; the test-case derivation is a transformation from operational narrative to test procedure, analogous to the needs-to-requirements transformation at the top of the V.</p>
+    <p><strong>What it prevents:</strong> system test cases invented by test engineers working from requirements alone. Without the ConOps scenarios as the test backbone, system test tends to verify that the system satisfies its requirements without validating that the system operates correctly in its actual operational context. The two activities ask different questions, and the ConOps is the artifact that makes the second one answerable.</p>
+    <p><strong>Procedure:</strong> every ConOps scenario, including its exception paths, traces forward to at least one system test case. The trace is bidirectional: every system test case traces back to one or more ConOps elements (scenario, mode transition, performance envelope, user-profile constraint). Test cases that trace to no ConOps element are either verifying something not in the operational concept (which is suspicious) or evidencing a gap in the ConOps (which must be closed).</p>
+
+    <h3>Mode Completeness as a Requirements-Completeness Technique</h3>
+    <p><strong>What it establishes:</strong> the enumerated mode state machine is a finite structure against which requirements completeness can be checked. Every mode, transition, and mode-interaction case should have a corresponding requirement set; gaps are detectable.</p>
+    <p><strong>What it prevents:</strong> the prototypical requirement-completeness defect &mdash; all mode behavior is specified for Normal mode, with Degraded, Emergency, and Maintenance treated as afterthoughts or handled in prose. Mode-indexed requirements organization turns this from an inspection-dependent problem into a structural check.</p>
+    <p><strong>Procedure:</strong> for each mode, require entry-condition requirements, behavior-in-mode requirements, annunciation requirements, and exit-condition requirements. For each transition, require trigger, guard, timing, and annunciation requirements. The check is a matrix: modes &times; requirement-classes. Empty cells are either gaps (to be filled) or documented non-applicabilities (to be justified). Leaving cells neither filled nor justified is the mode-completeness failure mode.</p>
+
+    <h3>Environmental Constraints as Derived-Requirement Sources</h3>
+    <p><strong>What it establishes:</strong> the operational-environment description (Section 3.2) is a source for derived requirements that no stakeholder articulated. Environmental qualification, interface protocol conformance, regulatory compliance, and organizational-fit requirements all derive directly from the ConOps environmental description, not from stakeholder elicitation.</p>
+    <p><strong>What it prevents:</strong> the classic late-integration or late-certification failure &mdash; discovering that environmental, regulatory, or interoperability requirements were missing because they were &ldquo;assumed&rdquo; and no stakeholder ever stated them. The ConOps makes the assumptions explicit; the V-model requires that each environmental assumption be traced to a derived requirement (or to an explicit out-of-scope decision) before the requirements baseline closes.</p>
+    <p><strong>Procedure:</strong> at the ConOps-to-system-requirements transition, produce a trace from each environmental characterisation to the derived requirements it motivates. An environmental assumption with no derived requirement is either accepted risk (document and track) or a gap (close).</p>
+
+    <h3>The ConOps as a Living Document</h3>
+    <p><strong>What it establishes:</strong> the ConOps evolves through the lifecycle. Scenarios, modes, environmental assumptions, and user profiles are updated as downstream work reveals that the operational picture was incomplete or shifted.</p>
+    <p><strong>What it prevents:</strong> a frozen ConOps that is trusted because it was signed once, while the operational reality has moved on. A stale ConOps is worse than no ConOps &mdash; it carries authority without validity.</p>
+    <p><strong>Re-concurrence triggers:</strong> the ConOps is revisited and, where changed, re-validated when any of the following occurs:</p>
+    <ul>
+      <li>Stakeholder needs change (re-concurrence at the layer above propagates down).</li>
+      <li>Completeness analysis surfaces new scenarios, modes, or environmental cases.</li>
+      <li>Downstream engineering surfaces a derived requirement whose motivating operational context is not in the ConOps.</li>
+      <li>Applicable regulatory standards are revised.</li>
+      <li>Adjacent systems at the boundary change interface or authority.</li>
+      <li>Operator organization, doctrine, or training pipeline changes materially.</li>
+      <li>Incident history from deployment reveals unmodelled operational cases.</li>
+    </ul>
+    <p>Re-concurrence is not a ceremonial re-sign of everything; it is an agreed record of the delta since the last concurrence and its acceptance by affected parties.</p>
+
+    <h3>ConOps-Stakeholder-Needs Bidirectional Link</h3>
+    <p><strong>What it establishes:</strong> the ConOps does not float free of the stakeholder-needs baseline. Every scenario element traces up to one or more validated needs; every validated need appears somewhere in the ConOps (as mission element, scenario, mode, user concern, or performance criterion) or is explicitly documented as out-of-scope-at-this-layer.</p>
+    <p><strong>What it prevents:</strong> the silent drift in which operational modeling work moves the picture away from what stakeholders actually concurred with, without anyone noticing until requirements review or verification.</p>
+    <p><strong>Procedure:</strong> the ConOps includes an explicit trace table from stakeholder needs to ConOps elements. Needs with no ConOps trace are either out of scope (documented with justification) or gaps (the ConOps is incomplete). ConOps elements with no need trace are either derived (from environmental, regulatory, domain-knowledge sources &mdash; cite the source) or gold-plating (remove).</p>
+
+    <h3>Independence Scaling with Assurance Level</h3>
+    <p><strong>What it establishes:</strong> at higher assurance levels, the engineer who authors the ConOps is separated from the engineer who validates it, for the same reason this independence applies at the stakeholder-needs layer &mdash; author interpretation bias becomes baseline defect when author is also validator.</p>
+    <table class="field-table">
+      <thead>
+        <tr><th>Level</th><th>Independence required</th><th>Typical realisation</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Low assurance</td><td>Non-author reviewer</td><td>A different person in the same team performs inspection.</td></tr>
+        <tr><td>Medium assurance</td><td>Independent reviewer</td><td>PBR with at least one reviewer from a different discipline (safety, test, operations).</td></tr>
+        <tr><td>High assurance</td><td>Organisationally independent validator</td><td>ConOps validation performed by a separate team or independent safety assessor; operator-organization signoff as a contractual gate.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Summary: What the V-Model Adds to the Craft</h3>
+    <div class="card">
+      <p>The craft taught in Section 3 produces a ConOps that describes the operational world. The V-model adds six obligations on top of that output:</p>
+      <ul>
+        <li><strong>ConOps as the backbone of system test</strong> &mdash; scenarios and mode-transition cases trace forward to system-level acceptance tests.</li>
+        <li><strong>Mode-completeness as a requirements-completeness check</strong> &mdash; the mode state machine is a finite structure against which requirement gaps are detectable.</li>
+        <li><strong>Environmental constraints drive derived requirements</strong> &mdash; every environmental, regulatory, and interoperability characterisation becomes a traceable derivation source.</li>
+        <li><strong>Living-document discipline</strong> &mdash; the ConOps is re-validated when stakeholder needs, completeness analysis, standards, or operational reality change.</li>
+        <li><strong>Bidirectional link to stakeholder needs</strong> &mdash; every need traces to the ConOps or is documented out-of-scope; every ConOps element traces to a need or to a documented derivation source.</li>
+        <li><strong>Independence of validation at higher assurance levels</strong> &mdash; author and validator separated, with separation distance scaling with assurance.</li>
+      </ul>
+      <p>Each of these is an obligation that exists because downstream V-model layers consume the ConOps expecting these properties. A project can do excellent operational-concept craft and still fail the V-model if these obligations are not met.</p>
+    </div>
+  </section>
+
+  <!-- ===================== SECTION 5: FRAMEWORK (stub) ===================== -->
+  <section id="co-framework">
+    <h2>Framework Integration <span class="status-badge stub">stub</span></h2>
+    <p><em>[To be written after templates exist. Will cover: ConOps artifact template, scenario template, mode-state-machine template, user-profile template, trace links up to stakeholder-needs baseline and down to system-requirement and system-test artifacts, envelope metadata requirements.]</em></p>
+  </section>
+
+  <!-- ===================== SECTION 6: AI SKILLS (stub) ===================== -->
+  <section id="co-skills">
+    <h2>AI Skills Integration <span class="status-badge stub">stub</span></h2>
+    <p><em>[To be written after corresponding skills are built. Candidate skills from the backlog: vmodel-skill-develop-conops (advisory &mdash; structure scenarios, check mode completeness, flag gaps), vmodel-skill-review-conops (scenario coverage, mode-state-machine completeness, environmental characterisation). AI is advisory here: operational ground truth belongs to operators, not to trained models.]</em></p>
+  </section>
+
+  <!-- ===================== REFERENCES (stub) ===================== -->
+  <section id="co-references">
+    <h2>References</h2>
+    <p><em>[Full reference list to be compiled when page is complete. Principal sources drawn on for this page include: IEEE Std 1362-1998 (ConOps guide); ISO/IEC/IEEE 29148:2018 (Requirements Engineering); ASPICE PAM v4.0 SYS.1&ndash;SYS.3; ARP 4754A (Aircraft Function Development and FHA by flight phase); ISO 26262 Part 3 (Item Definition and HARA); Jackson, Problem Frames (Addison-Wesley, 2001); Gause &amp; Weinberg, Are Your Lights On? (Dorset House, 1990); Cockburn, Writing Effective Use Cases (Addison-Wesley, 2000); Peterson, NASA CR-2015-218982 (ARP 4754A industry study). Primary research document: research/system-level/02c-problem-framing-conops.md.]</em></p>
+  </section>
+
+</main>
+
+</body>
+</html>

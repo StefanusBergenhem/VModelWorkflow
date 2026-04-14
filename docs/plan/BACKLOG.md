@@ -193,7 +193,7 @@ The true entry point to any project. Before requirements exist, you need to know
 
 **Next up (new session):** Review and polish if needed, then begin 3.5 (ConOps Documentation) using the same value-first template.
 
-### 3.5 Concept of Operations (ConOps) Documentation
+### 3.5 Concept of Operations (ConOps) Documentation — DONE (sections 1–4; 5–6 stubbed pending templates/skills)
 
 The operational picture before requirements exist. Translates stakeholder needs into an operational context that system requirements can be derived from. Defines what the system does in its environment, not how it does it internally.
 
@@ -201,40 +201,45 @@ The operational picture before requirements exist. Translates stakeholder needs 
 
 **Depends on:** Research 2 (02c), Research 5 (05a for modes) — done.
 
-- [ ] Complete artifact page: `docs/guide/artifacts/conops.html`
-  - [ ] Section 1: What is a ConOps (the bridge between stakeholder needs and system requirements)
-  - [ ] Section 2: V-model context (receives stakeholder needs, outputs to system requirements and completeness analysis; CONOPS-to-requirements traceability mandatory)
-  - [ ] Section 3: Producing a quality ConOps (the bulk — mission/objective definition, operational environment characterization (physical, regulatory, interoperability), operational scenarios as testable conditions, mode state machine (startup/normal/degraded/emergency/shutdown/maintenance), mode transition timing, user organization and roles, support concept, performance criteria, operator workload analysis)
-  - [ ] Section 4: V-model specific considerations (ConOps as source for system test scenarios, mode completeness as requirements completeness technique, environmental constraints driving derived requirements)
-  - [ ] Section 5: Framework integration (stub — ConOps template, trace links to stakeholder needs above and system requirements below)
-  - [ ] Section 6: AI skills integration (stub)
+- [x] Artifact page: `docs/guide/artifacts/conops.html` (sections 1–4 approved; sections 5–6 stubbed pending templates/skills)
+  - [x] Section 1: What is a ConOps — "requirements without a ConOps are solution-space guesses" framing; scenario-vs-use-case note; scope delineation vs. stakeholder needs and system requirements
+  - [x] Section 2: V-model context — inputs/outputs; ConOps-to-system-requirements transformation table; three feedback loops; standards perspective (IEEE 1362, ASPICE, ARP 4754A, ISO 26262, 29148)
+  - [x] Section 3: Producing a quality ConOps — 3.1 Mission & objectives; 3.2 Operational environment (four-environment model); 3.3 Operational scenarios (anatomy, coverage matrix, worked off-nominal example); 3.4 Mode state machine (full treatment with transition table and completeness checks); 3.5 Users, roles & workload; 3.6 Support concept; 3.7 Performance criteria (mode-indexed envelope); 3.8 ConOps validation (five methods, walkthrough discipline, completeness gate)
+  - [x] Section 4: V-model specific considerations (ConOps as test backbone, mode completeness, environmental constraints driving derived requirements, living document, bidirectional link to stakeholder needs, independence scaling)
+  - [ ] Section 5: Framework integration (stub — pending templates)
+  - [ ] Section 6: AI skills integration (stub — pending skills)
+- [x] Linked into main guide sidebar (docs/guide/index.html Artifacts nav group)
+- [x] Cross-linked from stakeholder-needs.html forward reference
 
 **Handoff down:** Operational scenarios, mode state machine, environmental constraints, performance criteria → feeds system requirements derivation and completeness analysis.
 **Feedback up:** Design constraints discovered during architecture that invalidate operational assumptions.
 
-### 3.6 Completeness Analysis Documentation
+### 3.6 Completeness Analysis Documentation — DONE (sections 1–4; 5–6 stubbed pending templates/skills)
 
 Techniques that discover requirements stakeholders cannot articulate. Generalized from safety analysis — the goal is completeness discovery, applicable to any system quality goal. Safety is the highest-rigor application, but the techniques (asking "what could go wrong" and "what's implicit") have value at any rigor level.
 
-**Scope:** FTA, FMEA, STPA as requirement-generating methods (not just risk assessment). Three requirement classes: negative (prohibited states), implicit assumptions (timing, environmental, dependencies), interaction (cross-component). Mode analysis. PBR (Perspective-Based Reading) as validation technique. Scaling by rigor level — full safety analysis at high assurance, lightweight completeness checks at lower levels.
+**Scope:** FTA, FMEA, STPA as requirement-generating methods (not just risk assessment). Three requirement classes: negative (prohibited states), implicit assumptions (timing, environmental, dependencies), interaction (cross-component). Mode analysis. PBR (Perspective-Based Reading) as validation technique. Lightweight/full rigor taught per method (scaling folded into each method rather than separate subsection).
 
 **Depends on:** Research 4 (04a, 04b, 04c), Research 2 (02b for validation), Research 6 (06a for PBR, 06b for AI safety analysis limits) — done.
 
-- [ ] Complete artifact page: `docs/guide/artifacts/completeness-analysis.html`
-  - [ ] Section 1: What is completeness analysis (the gap between what stakeholders ask for and what the system actually needs)
-  - [ ] Section 2: V-model context (runs in parallel with requirements capture, not after; feeds requirements at every level; outputs to system requirements, SW requirements, architecture)
-  - [ ] Section 3: Producing quality completeness analysis (the bulk):
-    - [ ] 3.1 Deductive methods (FTA): top-down from undesired event, minimal cut sets, single-point-failure identification, failure rate budgets
-    - [ ] 3.2 Inductive methods (FMEA): bottom-up from components, five-step process, S/O/D scoring, Action Priority over RPN
-    - [ ] 3.3 Systems-theoretic methods (STPA): control-based, UCAs, loss scenarios, finds unsafe interactions between correctly-functioning components — addresses software blind spot
-    - [ ] 3.4 Perspective-Based Reading (PBR): multi-perspective validation (designer, tester, customer), systematic defect detection
-    - [ ] 3.5 Three requirement classes discovered by analysis (negative, implicit, interaction) with examples
-    - [ ] 3.6 Mode analysis as completeness technique (startup, degraded, emergency requirements)
-    - [ ] 3.7 Scaling by rigor level (full safety analysis → lightweight "what could go wrong" checklist)
-    - [ ] 3.8 FTTI timing decomposition as example of derived requirements chain
-  - [ ] Section 4: V-model specific considerations (safety analysis as source not just verification, derived requirements feedback loop, FDAL/IDAL allocation, independence of analysis, CMA requirements)
-  - [ ] Section 5: Framework integration (stub — completeness analysis record template, trace links to requirements)
-  - [ ] Section 6: AI skills integration (stub — honest about AI limits: brainstorming strong, completeness certification not viable)
+- [x] Artifact page: `docs/guide/artifacts/completeness-analysis.html`
+  - [x] Section 1: What is completeness analysis — the gap (asked-for vs actually-needed), three requirement classes (negative/implicit/interaction), safety analysis as completeness at highest rigor, what it is not
+  - [x] Section 2: V-model context — parallel stream not a layer; two input streams (elicitation + analysis); finding→derived-requirement transformation; feedback loops (ConOps, design, verification); standards (ARP 4761A, ISO 26262 3/4/9, IEC 61508, DO-178C, STPA Handbook, IEEE 1012, ASPICE)
+  - [x] Section 3: Producing quality completeness analysis
+    - [x] 3.1 Deductive (FTA) — core move, worked railway example (train-enters-occupied-block top event, cut sets), lightweight/full-rigor card
+    - [x] 3.2 Inductive (FMEA) — core move, worked example (R-12 relay stuck-closed vs stuck-open), Action Priority over RPN, lightweight/full-rigor card
+    - [x] 3.3 Systems-theoretic (STPA) — core move, worked example (route-set UCAs and loss scenarios linking to FMEA findings), lightweight/full-rigor card
+    - [x] 3.4 Perspective-Based Reading (PBR) — core move, perspective procedures table, worked example (PBR findings on SR-042), lightweight/full-rigor card
+    - [x] 3.5 Three requirement classes — class-to-method mapping table, coverage as audit question
+    - [x] 3.6 Mode analysis — mode matrix (mode × requirement classes), worked DEGRADED-DETECT-1 example, lightweight/full card
+    - [x] 3.7 FTTI timing decomposition — hazard→budget allocation→derived requirements cascade (System→SW→SWA) with explicit feedback case
+  - [x] Section 4: V-model considerations — six obligations (analysis as source, derived-req feedback, integrity allocation DAL/ASIL/SIL, independence scaling table, CMA/CCA, living artifact with re-analysis triggers) + summary card
+  - [ ] Section 5: Framework integration (stub — pending templates)
+  - [ ] Section 6: AI skills integration (stub — pending skills; already telegraphed in §1 as honest about limits)
+- [x] Linked into main guide sidebar (docs/guide/index.html Artifacts nav group)
+- [x] Cross-linked from stakeholder-needs.html and conops.html forward references
+
+**Note on scope change:** Original 3.7 "Scaling by rigor level" (separate cross-method summary subsection) was removed during drafting as redundant with the per-method lightweight/full-rigor cards in 3.1–3.4 and 3.6. Former 3.8 FTTI renumbered to 3.7.
 
 **Handoff down:** Derived requirements (negative, implicit, interaction) with method traceability → feeds into system requirements and SW requirements.
 **Feedback up:** Design decisions that create new failure modes requiring re-analysis.

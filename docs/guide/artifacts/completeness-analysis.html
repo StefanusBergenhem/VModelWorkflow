@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Completeness Analysis &mdash; VModelWorkflow Guide</title>
+  <link rel="stylesheet" href="../css/main.css">
+</head>
+<body>
+
+<!-- ============================================================
+     SIDEBAR
+     ============================================================ -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <h1>VModelWorkflow</h1>
+    <div class="subtitle">V-Model Development Guide</div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-group">
+      <span class="nav-group-label">Navigation</span>
+      <a class="nav-link" href="../index.html">Back to Main Guide</a>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-group-label">Completeness Analysis</span>
+      <a class="nav-link" href="#ca-intro">What Is Completeness Analysis?</a>
+      <a class="nav-link" href="#ca-vmodel">V-Model Context</a>
+      <a class="nav-link" href="#ca-quality">Producing Quality Analysis</a>
+      <a class="nav-link" href="#ca-fta">Deductive (FTA)</a>
+      <a class="nav-link" href="#ca-fmea">Inductive (FMEA)</a>
+      <a class="nav-link" href="#ca-stpa">Systems-Theoretic (STPA)</a>
+      <a class="nav-link" href="#ca-pbr">Perspective-Based Reading</a>
+      <a class="nav-link" href="#ca-classes">Three Requirement Classes</a>
+      <a class="nav-link" href="#ca-modes">Mode Analysis</a>
+      <a class="nav-link" href="#ca-ftti">FTTI Timing Decomposition</a>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-group-label">V-Model &amp; Framework</span>
+      <a class="nav-link" href="#ca-vmodel-considerations">V-Model Considerations</a>
+      <a class="nav-link" href="#ca-framework">Framework Integration <span class="status-badge stub">stub</span></a>
+      <a class="nav-link" href="#ca-skills">AI Skills <span class="status-badge stub">stub</span></a>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-group-label">Related Artifacts</span>
+      <a class="nav-link" href="#ca-references">References</a>
+    </div>
+  </nav>
+
+  <div class="domain-switcher">
+    <label for="domain-select">Domain Vocabulary</label>
+    <select id="domain-select">
+      <option value="generic">Generic V-Model</option>
+      <option value="do178c">DO-178C (Aviation)</option>
+      <option value="aspice">ASPICE / ISO 26262 (Automotive)</option>
+    </select>
+  </div>
+</aside>
+
+<!-- ============================================================
+     MAIN CONTENT
+     ============================================================ -->
+<main class="main-content" style="margin-left: var(--sidebar-width); padding: var(--space-3xl) var(--space-2xl); max-width: calc(var(--content-max) + var(--space-2xl) * 2 + var(--sidebar-width));">
+
+  <!-- ===================== SECTION 1: INTRO ===================== -->
+  <section id="ca-intro">
+    <div class="level-indicator left">Pre-Requirements &mdash; Completeness Discovery</div>
+    <h2>What Is Completeness Analysis?</h2>
+    <p class="lead">Completeness analysis is the family of techniques that discovers requirements stakeholders cannot articulate &mdash; the negative ones, the implicit ones, the interaction ones. It is the reason the requirements baseline covers what the system actually needs to do, rather than only what someone remembered to ask for. In high-assurance projects it takes the form of safety analysis (FTA, FMEA, STPA); in any project it takes the form of &ldquo;what could go wrong&rdquo; and &ldquo;what are we assuming&rdquo; asked with discipline.</p>
+
+    <div class="card">
+      <h3>The Gap Between Asked-For and Actually-Needed</h3>
+      <p>Stakeholder elicitation returns what stakeholders know they want. It does not return the requirements that everyone assumed would obviously be satisfied, the requirements that only appear when two subsystems interact, or the requirements that exist to prevent behaviours nobody thought to describe because nobody wanted them. Those requirements do not originate with stakeholders. They originate with an engineering team that went looking for them.</p>
+      <p>This gap is the structural reason the traditional elicit-then-specify pipeline is insufficient. If the only input to the requirements layer is what stakeholders articulated, the baseline will be missing the classes of requirements that are systemically unarticulatable. Completeness analysis is not a verification step applied to requirements after they are written &mdash; it is a parallel generator that runs alongside elicitation and produces requirements of its own.</p>
+    </div>
+
+    <h3>Three Classes of Requirements That Stakeholders Don't Articulate</h3>
+    <p>The requirements that completeness analysis produces fall into three recognisable classes. Keeping them distinct matters because each class is discovered by different techniques and is easy to miss in different ways.</p>
+    <ul>
+      <li><strong>Negative requirements</strong> &mdash; statements about what the system <em>shall not</em> do. &ldquo;The system shall not command brake release while a train is occupying the protected section.&rdquo; Stakeholders rarely state these because they are states no reasonable person would want; the system can nonetheless reach them through design error, component failure, or unforeseen interaction. Negative requirements are the primary output of deductive analysis (Section 3.1).</li>
+      <li><strong>Implicit requirements</strong> &mdash; assumptions the design depends on that were never written down because &ldquo;of course&rdquo; they hold. Timing budgets, environmental ranges, power-up order, interface framing, assumed state of adjacent systems, assumed operator response latency. Stakeholders do not articulate these because they are not aware the system has degrees of freedom in those dimensions. Implicit requirements are surfaced by inductive analysis (Section 3.2), by mode analysis (Section 3.6), and by perspective-based reading (Section 3.4).</li>
+      <li><strong>Interaction requirements</strong> &mdash; requirements on how correctly-functioning subsystems combine. A signaller console working correctly and a train-detection subsystem working correctly can still combine into a hazardous state if the timing, protocol, or authority model between them is not specified. Stakeholders do not articulate these because from the operational vantage point each subsystem works; the defect is in the seam. Interaction requirements are the distinctive output of systems-theoretic analysis (Section 3.3).</li>
+    </ul>
+
+    <div class="card">
+      <h3>Safety Analysis Is Completeness Analysis at Highest Rigor</h3>
+      <p>Three techniques &mdash; Fault Tree Analysis (FTA), Failure Modes and Effects Analysis (FMEA), and Systems-Theoretic Process Analysis (STPA) &mdash; originate in the safety engineering tradition and are mandated at high assurance levels under DO-178C / ARP&nbsp;4761, ISO&nbsp;26262, and IEC&nbsp;61508. Their history leads many teams to treat them as exclusively safety-critical concerns. That framing understates what the techniques do.</p>
+      <p>The techniques are completeness-discovery methods. They ask structured questions &mdash; &ldquo;what combinations of events cause this outcome,&rdquo; &ldquo;what happens when this component fails,&rdquo; &ldquo;what control action, issued correctly in the wrong context, is unsafe&rdquo; &mdash; whose answers are requirements the elicitation phase did not surface. Used at full rigor with quantitative budgets, independence, and tool qualification, they produce certification evidence. Used at lightweight rigor with team-level inspection, they still produce requirements the baseline would otherwise lack. A non-safety project that runs a structured &ldquo;what could go wrong&rdquo; session using the FMEA worksheet and the STPA control-action table will catch defects that a review of the stakeholder-derived requirements alone will not.</p>
+      <p>This page teaches the techniques at a rigor level sufficient to use them on a project today. Scaling to full certification rigor is treated as an additive layer per method rather than as a precondition for doing them at all.</p>
+    </div>
+
+    <h3>What Completeness Analysis Is Not</h3>
+    <ul>
+      <li><strong>It is not verification of requirements.</strong> Verification asks &ldquo;does the system satisfy its requirements.&rdquo; Completeness analysis asks &ldquo;are the requirements the right and complete set in the first place.&rdquo; The two activities live on opposite sides of the V.</li>
+      <li><strong>It is not risk assessment.</strong> Risk assessment prioritises known hazards. Completeness analysis discovers hazards (and their preconditions) that were not previously enumerated. A project that does only risk assessment has a ranked list of what it already knew; a project that does completeness analysis has an expanded list of what it needs to specify.</li>
+      <li><strong>It is not a late-lifecycle check.</strong> Running completeness analysis only after requirements are &ldquo;done&rdquo; converts it from a generator of requirements into a critic of them, which is strictly worse: defects that could have been designed out become defects that must be retrofitted. Completeness analysis runs in parallel with elicitation and at every layer at which new requirements are derived.</li>
+      <li><strong>It is not something AI can certify.</strong> Language models are strong at brainstorming hazards and populating worksheet rows; they cannot provide the independence, judgement, or grounded knowledge that a completeness claim depends on. Section 6 treats this honestly.</li>
+    </ul>
+
+  </section>
+
+  <!-- ===================== SECTION 2: V-MODEL CONTEXT ===================== -->
+  <section id="ca-vmodel">
+    <h2>Completeness Analysis in the V-Model</h2>
+    <p class="lead">Completeness analysis is not a layer of the V &mdash; it is a transverse activity that runs alongside every left-side layer and feeds derived requirements into it. Treating it as a layer produces the common failure mode of running it once, after requirements are &ldquo;done,&rdquo; where it becomes a critic rather than a generator. Treating it as a parallel activity keeps it producing requirements the elicitation stream cannot produce.</p>
+
+    <h3>Position in the Flow</h3>
+    <div class="trace-flow">
+      <span class="artifact-ref" data-term="stakeholder-needs">Stakeholder Needs</span>
+      <span class="arrow">&rarr;</span>
+      <span class="artifact-ref" data-term="conops">ConOps</span>
+      <span class="arrow">&rarr;</span>
+      <span class="artifact-ref" data-term="system-requirements">System Requirements</span>
+      <span class="arrow">&rarr;</span>
+      <span class="artifact-ref" data-term="sw-requirements">SW Requirements</span>
+      <span class="arrow">&rarr;</span>
+      <span class="artifact-ref" data-term="sw-architecture">SW Architecture</span>
+    </div>
+    <div class="trace-flow" style="margin-top: var(--space-md);">
+      <span class="artifact-ref">Completeness Analysis</span>
+      <span style="color: var(--color-text-subtle);">&nbsp;runs in parallel and feeds derived requirements into each layer above</span>
+    </div>
+    <p>The most useful mental picture is that the left side of the V has two input streams at each layer: an <em>elicitation stream</em> (what stakeholders said, what the previous layer handed down) and an <em>analysis stream</em> (what completeness analysis discovered). Both streams produce requirements; both must be traced; neither is complete without the other. A baseline that is built only from the elicitation stream will be missing the negative, implicit, and interaction requirements (Section&nbsp;1); a baseline that is built only from the analysis stream will be technically sound and operationally irrelevant. The V-model assumes both.</p>
+
+    <h3>Inputs and Outputs</h3>
+    <table class="field-table">
+      <thead>
+        <tr><th>Direction</th><th>Artifact / Source</th><th>What It Provides</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Input</td><td>Validated stakeholder needs</td><td>The &ldquo;what people want&rdquo; baseline against which negative, implicit, and interaction gaps are identified</td></tr>
+        <tr><td>Input</td><td>ConOps scenarios and modes</td><td>The operational events, state-transitions, and environmental conditions that deductive and systems-theoretic analysis walk through</td></tr>
+        <tr><td>Input</td><td>Emerging design (at each layer)</td><td>Decomposition, interfaces, and components that inductive analysis (FMEA) and control-action analysis (STPA) operate on as they become available</td></tr>
+        <tr><td>Input</td><td>Domain failure-mode and incident data</td><td>Historical failures of similar systems, regulator incident databases, predecessor-system field data &mdash; the substrate that makes &ldquo;what could go wrong&rdquo; answerable</td></tr>
+        <tr><td>Input</td><td>Applicable standards and regulatory corpus</td><td>Mandated hazard classes, required analysis depth, independence rules, target failure rates</td></tr>
+        <tr><td>Output</td><td>Derived requirements (negative, implicit, interaction)</td><td>Requirements added to the appropriate layer's baseline, each tagged with the analysis method and finding that motivated it</td></tr>
+        <tr><td>Output</td><td>Hazard / UCA / failure-mode register</td><td>The enumerated set of hazards, unsafe control actions, and failure modes considered &mdash; including those mitigated by design rather than by requirement</td></tr>
+        <tr><td>Output</td><td>Open-issues list</td><td>Findings that cannot be closed at the current layer and must be tracked into lower layers or accepted as residual risk with documented justification</td></tr>
+        <tr><td>Output</td><td>Re-analysis triggers</td><td>The set of design or requirement changes that invalidate prior analysis and require re-running it (see Section&nbsp;4)</td></tr>
+      </tbody>
+    </table>
+
+    <h3>What Moves From an Analysis Finding to a Derived Requirement</h3>
+    <p>A finding is not yet a requirement. It is a statement about the system under analysis: &ldquo;combinations of events&nbsp;X and&nbsp;Y lead to undesired state&nbsp;Z,&rdquo; or &ldquo;the system assumes input&nbsp;A arrives within time&nbsp;t,&rdquo; or &ldquo;control action&nbsp;C issued while in mode&nbsp;M is hazardous.&rdquo; Every finding must be resolved into one or more of three outcomes &mdash; a derived requirement, a design mitigation, or an explicitly-accepted residual risk &mdash; and the resolution must be traceable. Without the transformation step, findings pile up in an analysis report that nobody acts on.</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Analysis Finding</th><th>Becomes In the Baseline</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>FTA minimal cut set identifies single-point failure (brake-release command proceeds on single sensor agreement)</td><td>Negative requirement (&ldquo;the system shall not release brake on single-sensor input&rdquo;) + detection requirement (sensor-disagreement annunciation) + mitigation requirement (two-of-three voting)</td></tr>
+        <tr><td>FMEA identifies component failure with undetected propagation (train-detection relay stuck-closed fails to drop occupancy)</td><td>Detection requirement (continuity check on relay state) + annunciation requirement (operator alert) + fallback-behaviour requirement (assume occupied on detection failure)</td></tr>
+        <tr><td>STPA identifies unsafe control action (route-set command issued while adjacent section unoccupied but transiting)</td><td>Interaction requirement (interlock condition on adjacent-section transit state) + timing requirement (interlock evaluation before command authorization)</td></tr>
+        <tr><td>PBR surfaces unstated assumption (requirement assumes 10&nbsp;ms input arrival; no requirement bounds it)</td><td>Implicit requirement made explicit (input timing budget) + contract requirement on interfacing subsystem + diagnostic requirement for timing violation</td></tr>
+        <tr><td>Mode analysis surfaces uncovered mode transition (what happens on loss of external time reference during Degraded)</td><td>Mode-transition requirement (behaviour on time-reference loss per mode) + annunciation requirement + exit-to-safe-state requirement</td></tr>
+      </tbody>
+    </table>
+
+    <p>The left column is the analysis output. The right column is the requirements baseline. The row is a defensible engineering act: method, finding, derivation, allocated requirement. The trace is what makes the derived requirement legitimate under V-model discipline rather than an untraceable addition to the baseline. <cite>&mdash; consistent with ISO&nbsp;26262 Part&nbsp;3 Cl.&nbsp;7 (safety goals from HARA), Part&nbsp;4 Cl.&nbsp;6 (technical safety requirements from safety goals); ARP&nbsp;4761A (FHA &rarr; derived safety requirements)</cite></p>
+
+    <h3>Feedback Loops</h3>
+    <p>Completeness analysis sits in three bidirectional relationships:</p>
+    <ul>
+      <li><strong>Analysis &harr; ConOps.</strong> Analysis regularly surfaces operational cases &mdash; modes, scenarios, environmental assumptions &mdash; that were missing from the ConOps. These are folded back into the ConOps (as new scenarios, new modes, or new environment characterisations) rather than added only to the requirements baseline. Otherwise the ConOps becomes stale with respect to the requirements derived from it, which breaks the operational validation trail.</li>
+      <li><strong>Analysis &harr; design.</strong> Analysis at layer&nbsp;N produces requirements that constrain the design at layer&nbsp;N+1. The design at layer&nbsp;N+1 produces new failure modes, new control paths, and new interaction surfaces that the layer-N analysis could not have anticipated. These feed a second round of analysis at layer&nbsp;N+1, whose findings are either closed there or escalated back up as derived requirements on layer&nbsp;N. The Peterson study on ARP&nbsp;4754A implementation documented this loop as present in principle but frequently broken in practice &mdash; derived requirements from lower layers are recorded but never fed back to re-validate the parent layer. Section&nbsp;4 treats this as a V-model obligation to enforce explicitly. <cite>&mdash; Peterson, NASA CR-2015-218982</cite></li>
+      <li><strong>Analysis &harr; verification.</strong> Test execution, integration, and field incidents surface failure modes that the original analysis missed. These are not test-plan issues &mdash; they are re-analysis triggers. A completeness analysis artifact that is never updated after first-signing is either unusually good or more likely unusually stale. Living-document discipline applies at every layer the analysis runs at.</li>
+    </ul>
+
+    <h3>Standards Perspective</h3>
+    <table class="field-table">
+      <thead>
+        <tr><th>Standard</th><th>Section</th><th>Key Requirement</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>ARP 4761A</td><td>FHA, PSSA, SSA</td><td>Prescribes Functional Hazard Assessment at aircraft and system level, Preliminary System Safety Assessment, and System Safety Assessment as the analytical chain that generates safety requirements and allocates Development Assurance Levels. Explicitly positions the analysis stream as a source of derived requirements, not a verification of existing ones.</td></tr>
+        <tr><td>ISO 26262</td><td>Part 3 (HARA); Part 4 Cl. 6 (TSR); Part 9 Cl. 5 (ASIL decomposition)</td><td>Hazard Analysis and Risk Assessment derives Safety Goals from operational situations; Technical Safety Requirements are derived from Safety Goals; ASIL decomposition allocates integrity budgets to redundant elements. The entire chain is completeness analysis generating requirements that elicitation cannot produce.</td></tr>
+        <tr><td>IEC 61508</td><td>Parts 1&ndash;3 (SIL derivation, safety-function specification)</td><td>Hazard and risk analysis yields Safety Integrity Levels and safety functions; both are direct inputs to the requirements baseline and to verification-activity scoping. Completeness analysis is mandated, not optional.</td></tr>
+        <tr><td>DO-178C / DO-331</td><td>Software safety integration</td><td>Software-level safety requirements trace to system-level safety requirements derived from ARP&nbsp;4761A analysis. DO-178C itself does not prescribe safety-analysis methods but requires their output to be present as input to software requirements.</td></tr>
+        <tr><td>STPA Handbook (Leveson &amp; Thomas)</td><td>MIT, 2018</td><td>Formalises systems-theoretic analysis: losses &rarr; hazards &rarr; system-level constraints &rarr; unsafe control actions &rarr; loss scenarios &rarr; safety requirements. Distinctive in addressing interaction failures in software-intensive systems where components function as specified but combine hazardously.</td></tr>
+        <tr><td>IEEE Std 1012</td><td>V&amp;V processes; IEEE 1028 Review classes</td><td>Positions analysis and inspection as independent activities producing requirement-level findings. PBR (Perspective-Based Reading) is the inspection technique whose multi-perspective structure discovers gaps a single reader misses. <cite>&mdash; Basili et&nbsp;al., IEEE TSE 1996</cite></td></tr>
+        <tr><td>ASPICE v4.0</td><td>SUP.10 (Change Request Management); SYS.2 (System Requirements Analysis)</td><td>Requires analysis of requirement impact on adjacent elements and modes; change management explicitly triggers re-analysis. The substance of completeness analysis is required at the process level even where a single named artifact is not.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Why This Activity Exists as a Distinct Stream</h3>
+    <div class="card">
+      <p>Elicitation produces what stakeholders know they want. Verification checks the system against what was specified. Neither stream is structurally capable of producing the requirements that exist to prevent unwanted states, enforce unstated assumptions, or constrain cross-subsystem interactions. Those requirements have no natural origin point in the elicit-specify-verify pipeline; if no separate activity is responsible for generating them, they are generated accidentally, late, and inconsistently &mdash; usually by individual engineers noticing something during design and either raising it or not.</p>
+      <p>Completeness analysis exists as a distinct stream so that these requirements have an owner, a method, and a traceable origin. A baseline with an analysis-stream origin column is a baseline that can answer &ldquo;why is this requirement here?&rdquo; with &ldquo;because FMEA finding F-047 showed that without it the system fails silent on relay-stuck-closed&rdquo; &mdash; rather than with &ldquo;someone added it during review.&rdquo; That difference is what turns the requirements baseline into something downstream layers can defensibly build on.</p>
+    </div>
+
+    <h3>Scaling by Project Size and Assurance Level</h3>
+    <p>The <em>structure</em> of completeness analysis &mdash; parallel stream, finding-to-requirement transformation, feedback loops, living artifact &mdash; applies at every scale. The <em>rigor</em> scales:</p>
+    <ul>
+      <li><strong>Small, low-risk project:</strong> a half-day &ldquo;what could go wrong&rdquo; session using a lightweight FMEA worksheet on the top-level scenarios and a single-pass PBR review with two reviewers. Findings logged in the requirements tracker with a &ldquo;derived&rdquo; tag. No quantitative budgets. Runs once per release.</li>
+      <li><strong>Mid-size project:</strong> FMEA on principal components and FTA on two or three top-level undesired events; STPA on inter-subsystem control actions; PBR at each requirements review with three to four perspectives. Findings tracked under change control; re-analysis triggered on interface change.</li>
+      <li><strong>Large safety-critical project:</strong> FHA &rarr; PSSA &rarr; SSA chain (or equivalent HARA &rarr; FSR &rarr; TSR); quantitative failure-rate budgets with independence claims; ASIL / DAL decomposition; tool-qualified FTA where cut-set analysis is credit for certification; STPA across all control loops; full PBR coverage with organisationally-independent reviewers; analysis under configuration management with re-analysis as a formal change-impact activity.</li>
+    </ul>
+    <p>What does not scale is the obligation. At every level, the project must decide which findings become requirements, which become design mitigations, and which become accepted residual risk &mdash; and must make that decision visible. Skipping the decision is the failure mode that scales across all sizes.</p>
+  </section>
+
+  <!-- ===================== SECTION 3: PRODUCING QUALITY ANALYSIS ===================== -->
+  <section id="ca-quality">
+    <h2>Producing Quality Completeness Analysis</h2>
+    <p class="lead">This section covers the craft of running the analysis stream: four methods (deductive, inductive, systems-theoretic, perspective-based) taught at rigor sufficient to use on a project today, the three requirement classes they generate, mode analysis as a completeness technique, and a worked timing-decomposition chain. Each method section includes a worked example on the railway signalling scenario and a note on what lightweight rigor drops and what full rigor adds.</p>
+    <p>The four methods are complementary, not alternatives. FTA asks &ldquo;what causes <em>this</em> undesired event,&rdquo; FMEA asks &ldquo;what happens when <em>this</em> component fails,&rdquo; STPA asks &ldquo;when is <em>this</em> correctly-issued control action unsafe,&rdquo; PBR asks &ldquo;what is missing or ambiguous in <em>this</em> artifact under <em>this</em> reader&rsquo;s perspective.&rdquo; Each catches defects the others miss. A small project may do only two; a safety-critical project does all four; no project should reduce to one and claim coverage.</p>
+  </section>
+
+  <!-- ===================== 3.1 FTA ===================== -->
+  <section id="ca-fta">
+    <h3>3.1 Deductive Analysis (Fault Tree Analysis)</h3>
+    <p>FTA starts from an undesired event and works backwards: what combinations of lower-level events would cause it? The answer is a tree of AND and OR gates terminating in basic events (component failures, environmental conditions, operator errors, external inputs) whose probabilities and independence properties are tractable. The tree's <strong>minimal cut sets</strong> &mdash; the smallest combinations of basic events whose co-occurrence causes the top event &mdash; are the structural defect list. Single-element cut sets are single-point failures and the most important output of an FTA at any rigor level.</p>
+
+    <h4>The Core Move</h4>
+    <ol>
+      <li><strong>Pick a top event.</strong> An operationally-meaningful undesired outcome, derived from the ConOps (hazardous scenarios), from stakeholder needs (&ldquo;never&rdquo; statements), or from regulatory hazard lists. &ldquo;Train enters occupied block.&rdquo; &ldquo;Brake command not executed within 300&nbsp;ms of driver action.&rdquo; Not &ldquo;system fails&rdquo; &mdash; too broad to be tractable.</li>
+      <li><strong>Ask: what combinations cause this?</strong> Each immediate cause is a child node. If <em>any one</em> of several causes is sufficient, use an OR gate. If <em>all of several</em> must co-occur, use an AND gate. Distinguishing the two is the central analytical act &mdash; an OR where an AND belongs inflates the cut-set list; an AND where an OR belongs misses single-point failures.</li>
+      <li><strong>Recurse until basic events.</strong> A basic event is one whose probability and independence you are willing to argue about directly &mdash; a component failure mode, an environmental threshold, an operator slip. Recursion depth of three to five is typical; deeper is possible but hits diminishing returns without tool support.</li>
+      <li><strong>Extract minimal cut sets.</strong> For each combination of basic events that causes the top event, write it down. The single-element cut sets are the priority output: they mean the top event can occur from a single cause and the design has no tolerance to that cause.</li>
+      <li><strong>Resolve each cut set.</strong> Each minimal cut set becomes either a derived requirement (detection, prevention, mitigation), a design change (add redundancy, add interlock, add diagnostic), or an explicitly accepted residual risk with justification.</li>
+    </ol>
+
+    <h4>Worked Example &mdash; Railway Signalling</h4>
+    <div class="example example-good">
+      <div class="example-label">Top event: train enters occupied block</div>
+<pre><code>TOP:  Train enters occupied block on line A/B/C
+  |
+  +-- OR --+
+  |        |
+  |        +-- A: Route set incorrectly (allowed into occupied section)
+  |        |     |
+  |        |     +-- AND --+
+  |        |     |         |
+  |        |     |         +-- A1: Interlocking authorizes route
+  |        |     |         +-- A2: Section actually occupied
+  |        |     |
+  |        |     +-- A1 caused by: {interlock logic defect}
+  |        |                    OR {occupancy input false-clear}
+  |        |                    OR {signaller override without justification}
+  |        |
+  |        +-- B: Driver overruns signal at danger
+  |              |
+  |              +-- AND --+
+  |                        |
+  |                        +-- B1: Signal shows danger
+  |                        +-- B2: Driver fails to stop
+  |                        +-- B3: Train-protection fails to intervene
+  |                              (cab-signal feed absent OR ATP disabled
+  |                               OR ATP commanded release)
+
+Minimal cut sets (sample):
+  CS1 = {occupancy input false-clear}                  [SINGLE-POINT]
+  CS2 = {interlock logic defect}                       [SINGLE-POINT]
+  CS3 = {signal-at-danger, driver-fails-to-stop,
+         cab-signal-feed-absent}                       [triple]
+  CS4 = {signal-at-danger, driver-fails-to-stop,
+         ATP-commanded-release}                        [double + precondition]</code></pre>
+    </div>
+    <p>CS1 and CS2 are single-point failures &mdash; one event is sufficient to reach the top event. These generate non-negotiable derived requirements: redundant occupancy detection with disagreement annunciation (for CS1), independent verification of interlock logic and/or diverse monitoring (for CS2). CS3 and CS4 have multiple independent events and argue about whether the probability of co-occurrence is acceptably low given the target failure rate &mdash; at lightweight rigor this is a judgement call; at full rigor it is a quantitative budget with documented independence claims.</p>
+
+    <div class="card">
+      <h4>Lightweight Version (What to Drop)</h4>
+      <ul>
+        <li><strong>No quantitative probabilities.</strong> Stop at cut-set enumeration by inspection; do not attempt to aggregate cut-set probabilities or compare against a target failure rate. Single-point failures are actionable without numbers.</li>
+        <li><strong>No tool.</strong> A plain-text or whiteboard tree at depth three is the product. Two hours of analysis for a top event is typical.</li>
+        <li><strong>One or two top events.</strong> Cover the dominant hazards from the ConOps. A comprehensive FHA-style enumeration is not required at this rigor.</li>
+        <li><strong>Inspection-based cut-set extraction.</strong> Walk the tree by hand; list the small cut sets; stop when diminishing returns set in.</li>
+      </ul>
+      <h4>Full Rigor (What to Add Back)</h4>
+      <ul>
+        <li><strong>Quantitative basic-event probabilities</strong> with documented sources (manufacturer data, historical field data, standard failure-rate handbooks).</li>
+        <li><strong>Cut-set probability aggregation</strong> compared against target failure rate per top event (e.g., 10<sup>-9</sup>/hr for catastrophic in DAL A; 10<sup>-7</sup>/hr for critical; ASIL-indexed targets in ISO&nbsp;26262).</li>
+        <li><strong>Independence claims</strong> on basic events &mdash; common-cause failure analysis on apparent multiple-event cut sets.</li>
+        <li><strong>Qualified FTA tool</strong> (CAFTA, FaultTree+, or equivalent) where cut-set analysis is certification credit; tool qualification per DO-330 or ISO&nbsp;26262 Part&nbsp;8 Cl.&nbsp;11.</li>
+        <li><strong>Full FHA-to-SSA chain</strong> (ARP 4761A): Functional Hazard Assessment enumerates top events per flight phase, PSSA develops the tree, SSA confirms the implementation achieves the budget.</li>
+      </ul>
+    </div>
+    <p style="color: var(--fg-muted); font-size: 0.9em; font-style: italic;">Source depth: <code>research/system-level/04a-safety-analysis-methods.md</code>, §FTA; Vesely et al., <em>Fault Tree Handbook with Aerospace Applications</em> (NASA, 2002).</p>
+  </section>
+
+  <!-- ===================== 3.2 FMEA ===================== -->
+  <section id="ca-fmea">
+    <h3>3.2 Inductive Analysis (Failure Modes and Effects Analysis)</h3>
+    <p>FMEA is the bottom-up counterpart to FTA. Instead of starting from an undesired event and asking what causes it, FMEA starts from a component and asks what happens when it fails. Enumerating components exhaustively and walking each failure mode through local, subsystem, and system effects produces a different defect population than FTA &mdash; failure modes that nobody thought to include as basic events in a fault tree frequently surface here, and vice versa. Used together, the two methods cover more of the failure space than either alone.</p>
+
+    <h4>The Core Move</h4>
+    <ol>
+      <li><strong>Enumerate components</strong> at the current decomposition level. At the system layer, &ldquo;component&rdquo; means subsystem or major item; at the SW-architecture layer, it means module or interface; at the HW layer, it means part. FMEA is scale-invariant &mdash; the method is the same; the granularity changes.</li>
+      <li><strong>For each component, enumerate failure modes.</strong> Standard taxonomies apply: for electronic parts, open / short / parametric drift; for sensors, stuck / noisy / biased / late; for software, wrong value / missing value / late value / stuck value; for interfaces, protocol violation / framing error / stale. The enumeration must be exhaustive for the component's failure classes, not selective.</li>
+      <li><strong>For each failure mode, fill a row.</strong> Local effect (on the component), subsystem effect (on the immediately-containing subsystem), system effect (observable at the system boundary), cause (what produces this failure mode), detection (what mechanism, if any, detects it), current mitigation, and a criticality classification.</li>
+      <li><strong>Prioritise with Action Priority, not RPN.</strong> The historical RPN (Risk Priority Number = Severity &times; Occurrence &times; Detection) has well-documented defects: ties are common, arithmetic produces misleading orderings, and projects optimise the number rather than the underlying risk. AIAG-VDA 2019 introduced the Action Priority matrix, which classifies each row as High / Medium / Low using S-O-D threshold logic directly rather than multiplication. Use Action Priority; treat RPN as legacy.</li>
+      <li><strong>Resolve each row.</strong> High-priority rows become derived requirements (detection, containment, graceful-degradation) or design mitigations (redundancy, interlock, diagnostic); medium rows become review items; low rows are acknowledged and accepted.</li>
+    </ol>
+
+    <h4>Worked Example &mdash; Railway Signalling</h4>
+    <div class="example example-good">
+      <div class="example-label">FMEA row &mdash; track-circuit relay R-12 (train detection)</div>
+<pre><code>Component:       Track-circuit relay R-12 (section K-3-B)
+Function:        Drop when section occupied; hold when clear
+
+Failure mode:    Stuck closed (continues to indicate "clear" when occupied)
+  Local effect:    Relay output reads "clear" regardless of track state
+  Subsystem:       Occupancy map shows K-3-B clear even when occupied
+  System effect:   Interlocking may authorise route into occupied section
+                   -> hazard "train enters occupied block" (see FTA top event)
+  Cause:           Mechanical weld; contamination; supply-voltage bias;
+                   EMI from adjacent traction line
+  Detection:       Periodic test-current injection (if installed);
+                   shunt-test by inspection train;
+                   cross-check with axle counter (if installed)
+  Mitigation:      Diverse detection (axle counter in parallel);
+                   "fail-safe drop" design where loss of excitation
+                   forces "occupied" indication
+  Severity:        S=High (hazardous)
+  Occurrence:      O=Low (quality-controlled relay)
+  Detection score: D=Low (no active in-service detection without aux)
+  Action Priority: HIGH  -> derived requirements:
+                            (a) diverse detection per section
+                            (b) disagreement annunciation
+                            (c) default-to-occupied on detection loss
+
+Failure mode:    Stuck open (continues to indicate "occupied" when clear)
+  Local effect:    Relay output reads "occupied" regardless of track state
+  Subsystem:       Occupancy map shows K-3-B occupied when actually clear
+  System effect:   Route not authorised -> operational disruption; no
+                   safety hazard because fail-to-occupied is safe direction
+  Action Priority: MEDIUM -> operational availability concern, not safety
+                            derived requirement: detection and diagnosis
+                            procedure for sustained occupancy indication</code></pre>
+    </div>
+    <p>Two failure modes of the same component produce very different outcomes: stuck-closed is safety-critical and drives three derived requirements; stuck-open is a fail-safe direction and drives an operational diagnostic requirement. The discipline is enumerating <em>all</em> failure modes, not jumping directly to the interesting one. The stuck-open row is what makes the system engineerable &mdash; without it, the team discovers in the field that sustained false occupancy indications disrupt operations and the diagnostic requirement gets added reactively.</p>
+
+    <div class="card">
+      <h4>Lightweight Version (What to Drop)</h4>
+      <ul>
+        <li><strong>Qualitative criticality</strong> (High / Medium / Low) instead of numeric S/O/D scoring. Action Priority reasoning is kept; the numbers are dropped.</li>
+        <li><strong>FMEA at subsystem granularity only</strong> &mdash; don't descend to every resistor. Cover the principal components and interfaces at the current layer.</li>
+        <li><strong>Inspection-mode mitigation decisions</strong> &mdash; a working session decides which rows demand mitigations, rather than a formal cross-functional review board.</li>
+        <li><strong>Worksheet as an artifact</strong>, not a tool-managed database. Three columns dropped: supplier data, detection probabilities, change history.</li>
+      </ul>
+      <h4>Full Rigor (What to Add Back)</h4>
+      <ul>
+        <li><strong>AIAG-VDA 2019 Action Priority</strong> with full S/O/D scoring and documented rating criteria per industry.</li>
+        <li><strong>Design-FMEA and process-FMEA</strong> as separate analyses (design-FMEA on the product; process-FMEA on manufacturing and field-service processes).</li>
+        <li><strong>Piece-part FMEA</strong> where required by standard (e.g., ARP 4761A component-level for CCA), with field failure-rate data.</li>
+        <li><strong>Common-mode analysis</strong> on failure modes that affect multiple &ldquo;redundant&rdquo; components (shared power rail, shared EMI environment, shared software).</li>
+        <li><strong>Verification of each mitigation</strong> &mdash; each row's mitigation column traces to a test or analysis that confirms the mitigation works.</li>
+        <li><strong>FMEDA (Diagnostic variant)</strong> under IEC&nbsp;61508 / ISO&nbsp;26262 &mdash; adds diagnostic coverage and safe-failure-fraction quantification to the worksheet to argue hardware integrity.</li>
+      </ul>
+    </div>
+    <p style="color: var(--fg-muted); font-size: 0.9em; font-style: italic;">Source depth: <code>research/system-level/04a-safety-analysis-methods.md</code>, §FMEA; AIAG-VDA FMEA Handbook (2019); IEC&nbsp;60812:2018.</p>
+  </section>
+
+  <!-- ===================== 3.3 STPA ===================== -->
+  <section id="ca-stpa">
+    <h3>3.3 Systems-Theoretic Analysis (STPA)</h3>
+    <p>STPA addresses a defect class that FTA and FMEA struggle with: hazards that arise when every component works correctly but the <em>interactions</em> between them produce an unsafe state. Software-intensive systems are the natural home of this defect class &mdash; software does not fail randomly; it follows its specification, which may be wrong in its interactions with other specified-and-correctly-working components. FTA's basic events and FMEA's component failure modes cannot express this defect class, because no component has failed. STPA models the system as a set of control loops and asks when a correctly-issued control action is unsafe given its operating context.</p>
+
+    <h4>The Core Move</h4>
+    <ol>
+      <li><strong>Define losses.</strong> Operationally unacceptable outcomes in stakeholder language: &ldquo;passengers injured,&rdquo; &ldquo;train collision,&rdquo; &ldquo;service disruption beyond operator tolerance.&rdquo; Losses are the grounding of the analysis &mdash; everything downstream exists to prevent them.</li>
+      <li><strong>Define system-level hazards.</strong> System states that, combined with worst-case environmental conditions, can lead to a loss. &ldquo;Two trains occupy the same block.&rdquo; &ldquo;Train proceeds when the line ahead is not clear.&rdquo; Hazards are about system state, not about component failure.</li>
+      <li><strong>Define system-level safety constraints.</strong> The inverse statements: &ldquo;No two trains shall occupy the same block simultaneously.&rdquo; These are negative requirements at the system level and are candidates for the derived-requirements output of this analysis.</li>
+      <li><strong>Model the control structure.</strong> A diagram of controllers (human operators, software functions, subsystems) and controlled processes, with control actions going down and feedback going up. Each controller has a process model &mdash; its internal view of the state of the process it controls. Inconsistency between the process model and the actual process is a principal source of unsafe behaviour.</li>
+      <li><strong>Identify Unsafe Control Actions (UCAs).</strong> For each control action, systematically ask four questions: (a) hazardous if <em>not provided</em> when needed? (b) hazardous if <em>provided</em> when not needed or in the wrong context? (c) hazardous if provided <em>too early, too late, or out of sequence</em>? (d) hazardous if applied <em>too long or stopped too soon</em>? Each yes is a UCA.</li>
+      <li><strong>Derive loss scenarios.</strong> For each UCA, why would the controller issue it? Typical causes: process-model inconsistency (controller believes state is X when it is Y); delayed or missing feedback; incorrect control algorithm; conflicting commands from multiple controllers. Each scenario is a distinct derived-requirement source.</li>
+    </ol>
+
+    <h4>Worked Example &mdash; Railway Signalling</h4>
+    <div class="example example-good">
+      <div class="example-label">STPA fragment &mdash; route-set control action</div>
+<pre><code>Loss:          L1 - Train collision with injury or fatality
+Hazard:        H1 - Two trains authorised into the same block
+Constraint:    SC1 - System shall not authorise a route into a block
+                     currently occupied or committed to another movement
+
+Control structure (fragment):
+  [Signaller]  --route-set command-->  [Interlocking]  --signal aspect-->  [Driver]
+        ^                                  |                                  |
+        |--display state------             |--train detect feedback-----------
+                              \            v
+                           [Occupancy Map (process model)]
+
+Control action: "Authorise route R into block B"
+
+UCA analysis:
+  (a) Not provided   -> Operational disruption only; not a hazard. (No UCA)
+  (b) Provided       -> UCA-1: Route authorised while block B occupied.
+                        UCA-2: Route authorised while block B committed
+                               to another authorised movement (conflict).
+  (c) Too early/late -> UCA-3: Route authorised before adjacent-section
+                               transit-clearance confirmed (timing race).
+  (d) Duration       -> UCA-4: Authorisation held after train has passed
+                               and section should be re-committable.
+
+Loss scenarios for UCA-1:
+  LS-1.1: Occupancy-map process model shows block clear due to relay
+          stuck-closed (see FMEA row R-12 stuck-closed). Interlocking's
+          process model is inconsistent with actual track state.
+  LS-1.2: Signaller's display updates from occupancy-map state with latency
+          greater than signaller's decision cycle; signaller sees "clear"
+          momentarily and commits before update.
+  LS-1.3: Two controllers (signaller at main panel + emergency override
+          from dispatcher) both issue route-set commands for overlapping
+          routes with no conflict-resolution protocol.
+
+Derived requirements (from UCA-1 / LS-1.1 - 1.3):
+  R-UCA1-A: Interlocking shall not authorise route when occupancy map
+            indicates the target block as clear if occupancy confirmation
+            age exceeds 500 ms.
+  R-UCA1-B: Signaller's display shall visibly indicate occupancy-map
+            age; commit-actions shall be blocked when age >= threshold.
+  R-UCA1-C: Dispatcher override shall be serialised with main-panel
+            commands through a single conflict-resolution authority;
+            concurrent overlapping commands shall be rejected with
+            explicit annunciation to both originators.</code></pre>
+    </div>
+    <p>LS-1.1 overlaps with the FMEA finding &mdash; this is expected. STPA and FMEA reinforce each other; where their findings align, the derived requirement is over-determined and the confidence in it is high. LS-1.2 and LS-1.3 are distinctive STPA output: neither is a component failure, both are interaction-level hazards that would not appear in a component-oriented FMEA or in an FTA whose basic events are component failures. The derived requirements they produce (process-model age check, controller serialisation) are interaction requirements (Section&nbsp;3.5) and are the class of requirement that STPA is uniquely positioned to produce.</p>
+
+    <div class="card">
+      <h4>Lightweight Version (What to Drop)</h4>
+      <ul>
+        <li><strong>One or two control loops.</strong> Pick the dominant control actions &mdash; the ones the system is fundamentally about &mdash; and do STPA on them. Don't attempt full control-structure coverage at low rigor.</li>
+        <li><strong>UCA table by inspection.</strong> The four-case grid (not provided / provided / timing / duration) filled in a working session, without formal tracing back to hazards and losses.</li>
+        <li><strong>Loss scenarios by discussion.</strong> Walk through &ldquo;why would the controller issue this wrong?&rdquo; in a group; capture the scenarios that are plausible without attempting exhaustive flaw-type enumeration.</li>
+        <li><strong>Loose integration with FMEA.</strong> Point at overlapping findings without attempting formal cross-walk.</li>
+      </ul>
+      <h4>Full Rigor (What to Add Back)</h4>
+      <ul>
+        <li><strong>Full control-structure model</strong> covering every controller, actuator, controlled process, sensor, and information flow.</li>
+        <li><strong>Formal process-model capture</strong> for each controller; inconsistency analysis against the actual process state space.</li>
+        <li><strong>Exhaustive UCA enumeration</strong> using the four-type structure for every control action; UCAs traced to hazards and losses; safety constraints derived per UCA.</li>
+        <li><strong>Systematic loss-scenario generation</strong> using the 2018 STPA Handbook's scenario categories (controller flaw, feedback flaw, control-path flaw, process-model flaw) rather than ad-hoc discussion.</li>
+        <li><strong>Integration with HARA</strong> (ISO&nbsp;26262) or PSSA/SSA (ARP 4761A) &mdash; STPA findings feed the same derived-requirement set as FTA and FMEA, under a unified analysis register.</li>
+        <li><strong>Operator-workload analysis</strong> &mdash; human controllers analysed for cognitive loss scenarios (saturation, authority gradient, mode confusion).</li>
+      </ul>
+    </div>
+    <p style="color: var(--fg-muted); font-size: 0.9em; font-style: italic;">Source depth: <code>research/system-level/04a-safety-analysis-methods.md</code>, §STPA; Leveson &amp; Thomas, <em>STPA Handbook</em> (MIT, 2018); Leveson, <em>Engineering a Safer World</em> (MIT Press, 2011).</p>
+  </section>
+
+  <!-- ===================== 3.4 PBR ===================== -->
+  <section id="ca-pbr">
+    <h3>3.4 Perspective-Based Reading (PBR)</h3>
+    <p>PBR is an inspection technique rather than a hazard-analysis method, but its output is in the same population: implicit requirements surfaced, ambiguities made explicit, gaps documented. PBR is distinctive because it recognises that a single reader reviewing an artifact finds a systematically different defect population than a team of readers each approaching the artifact from a defined perspective. Multi-perspective inspection produces a wider defect net with almost no increase in per-reviewer effort.</p>
+
+    <h4>The Core Move</h4>
+    <ol>
+      <li><strong>Identify perspectives.</strong> Typical perspectives on a requirements artifact: <em>designer</em> (can I design an implementation from this?), <em>tester</em> (can I derive a test procedure from this?), <em>user/customer</em> (does this match what I asked for and what I will observe?), <em>safety/regulatory</em> (does this cover the required hazard classes and integrity claims?), <em>operator</em> (does this reflect how the system is actually used?). Three to five perspectives is typical.</li>
+      <li><strong>Assign one reviewer per perspective.</strong> Each reviewer reads the artifact once, from their perspective, using a perspective-specific procedure. The procedures are short &mdash; a designer's procedure says things like &ldquo;for each requirement, sketch how you would implement it; log every point where you need information the requirement does not provide.&rdquo;</li>
+      <li><strong>Collect findings by perspective.</strong> Each reviewer produces a list of defects found. Overlap between reviewers is common and informative; non-overlapping findings are the principal evidence that the multi-perspective structure is doing work.</li>
+      <li><strong>Aggregate and resolve.</strong> The author (or review leader) merges the findings, disposes of each as defect-to-fix, question-for-stakeholder, or accepted-as-is, and folds the accepted-defect resolutions back into the artifact.</li>
+    </ol>
+
+    <h4>Perspective Procedures (Summary)</h4>
+    <table class="field-table">
+      <thead>
+        <tr><th>Perspective</th><th>Core question</th><th>What it catches</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Designer</td><td>Can I design an implementation from this?</td><td>Under-specified requirements, missing information, hidden assumptions about implementation approach, implicit non-functional constraints</td></tr>
+        <tr><td>Tester</td><td>Can I derive a test procedure from this?</td><td>Unverifiable requirements, missing acceptance criteria, untestable qualifiers (&ldquo;efficient,&rdquo; &ldquo;appropriate&rdquo;), missing boundary conditions</td></tr>
+        <tr><td>User / customer</td><td>Does this match what I asked for, and what will I observe?</td><td>Requirements that have drifted from the underlying need, operational-context mismatches, requirements phrased in engineering terms that obscure user-observable behaviour</td></tr>
+        <tr><td>Safety / regulatory</td><td>Does this cover the mandated hazard classes and integrity claims?</td><td>Missing negative requirements, incomplete mode coverage, gaps against required regulatory hazards, missing integrity or assurance metadata</td></tr>
+        <tr><td>Operator</td><td>Does this reflect how the system is actually used?</td><td>Off-nominal operational cases not covered, unrealistic operator-response assumptions, role/authority conflicts with how the operator organisation actually works</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Worked Example &mdash; Railway Signalling</h4>
+    <div class="example example-good">
+      <div class="example-label">PBR findings on a draft system requirement</div>
+<pre><code>Requirement under review (draft):
+
+  SR-042: The system shall authorise a route only when the target
+          block is clear.
+
+Designer findings:
+  D1: "Clear" is not defined for this requirement. Does it mean "last
+      occupancy sample showed clear" or "occupancy-detection system
+      currently indicates clear with fresh data"? Implementations differ.
+  D2: No timing constraint. How fresh must the clearance indication be?
+  D3: "Authorise" is under-specified: is this the interlocking's internal
+      authorisation, or the signal-aspect command to the driver?
+
+Tester findings:
+  T1: Not testable as written. No boundary: at what occupancy-indication
+      freshness does a route authorisation fail?
+  T2: Failure-to-authorise when block is actually clear (false negative)
+      is not covered - the requirement speaks only to the clear-true case.
+
+User findings:
+  U1: Actual operations authorise routes through blocks that are
+      "committed to a known upcoming movement" as well as "currently
+      clear"; the requirement as written does not reflect this distinction.
+
+Safety findings:
+  S1: Missing negative requirement: "shall not authorise" when clearance
+      is not confirmed. The positive form leaves failure-to-falsify
+      open as a hazardous state.
+  S2: Missing mode qualification: applies in Normal mode; what about
+      Degraded (one detection path lost) or Emergency (manual override)?
+  S3: No integrity allocation. Under DAL / ASIL regime, this requirement
+      must carry an integrity level.
+
+Operator findings:
+  O1: Does not reflect dispatcher-override authority in emergency; the
+      requirement as written would forbid legitimate emergency operations.
+
+Aggregated resolution:
+  - Split SR-042 into four requirements: (a) positive authorisation
+    condition with freshness bound, (b) negative prohibition on
+    authorisation without confirmed clearance, (c) mode-qualified
+    variants for Normal / Degraded / Emergency, (d) dispatcher-override
+    carve-out with separate integrity requirements.
+  - Add freshness threshold to ConOps mode specifications.
+  - Escalate operator-authority matrix to stakeholder-needs review.</code></pre>
+    </div>
+    <p>No single perspective would have produced this coverage. The safety and user perspectives in particular produce findings that a designer-only or tester-only review routinely misses &mdash; a well-known result from PBR's empirical literature, confirmed across multiple replication studies.</p>
+
+    <div class="card">
+      <h4>Lightweight Version (What to Drop)</h4>
+      <ul>
+        <li><strong>Two perspectives</strong> &mdash; designer + tester is the minimum viable pair. Each is procedurally distinct enough to surface different defects.</li>
+        <li><strong>Checklist-based procedures</strong> rather than elaborated reading guides. One-page checklist per perspective.</li>
+        <li><strong>Single session.</strong> Reviewers read independently, then a half-hour merge meeting.</li>
+        <li><strong>No formal scribe or moderator role.</strong> The author aggregates.</li>
+      </ul>
+      <h4>Full Rigor (What to Add Back)</h4>
+      <ul>
+        <li><strong>Four to six perspectives</strong> including safety/regulatory and operator; use organisationally-independent reviewers at high assurance.</li>
+        <li><strong>Elaborated perspective procedures</strong> with worked examples, tuned to the project's artifact type (requirements, architecture, code, test plan).</li>
+        <li><strong>Formal inspection classification</strong> per IEEE&nbsp;1028 (management review, technical review, inspection, walk-through, audit) with defined entry/exit criteria, roles, and defect classification.</li>
+        <li><strong>Measurement</strong> &mdash; defect density, defect escape rate, perspective-specific find rates &mdash; used to tune the procedures over time.</li>
+        <li><strong>Independent certification liaison</strong> on the safety/regulatory perspective where required by the assurance regime.</li>
+      </ul>
+    </div>
+    <p style="color: var(--fg-muted); font-size: 0.9em; font-style: italic;">Source depth: <code>research/system-level/02b-stakeholder-needs-validation.md</code>, §PBR; Basili et&nbsp;al., &ldquo;The Empirical Investigation of Perspective-Based Reading,&rdquo; <em>IEEE Trans. Software Engineering</em>, 1996; IEEE Std 1028-2008.</p>
+  </section>
+
+  <!-- ===================== 3.5 THREE CLASSES ===================== -->
+  <section id="ca-classes">
+    <h3>3.5 Three Requirement Classes the Analysis Produces</h3>
+    <p>Section&nbsp;1 named the three requirement classes the elicitation stream does not produce. With the methods of Sections&nbsp;3.1&ndash;3.4 in hand, each class can be mapped to the methods that discover it and illustrated with concrete examples from the running scenario. The purpose of naming them as a set is to make baseline coverage <em>auditable</em>: a requirements baseline can be asked, for each class, &ldquo;where do the requirements in this class come from, and is the coverage complete?&rdquo; If the answer for any class is &ldquo;they were added during review,&rdquo; the analysis stream is effectively absent and the baseline is carrying undetected gaps of that class.</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Class</th><th>What It States</th><th>Principal Method(s)</th><th>Example (running scenario)</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Negative</strong></td>
+          <td>Prohibited behaviours and states (&ldquo;shall not&rdquo;)</td>
+          <td>FTA (top event &rarr; cut set &rarr; &ldquo;shall not allow cut set to obtain&rdquo;); STPA (UCA-provided case &rarr; &ldquo;shall not provide control action when context forbids&rdquo;); PBR (safety perspective)</td>
+          <td><em>&ldquo;The system shall not authorise a route into a block whose occupancy indication is older than 500&nbsp;ms.&rdquo;</em> From STPA UCA-1 LS-1.2. Not articulable from stakeholder elicitation because no operator thinks in terms of process-model freshness.</td>
+        </tr>
+        <tr>
+          <td><strong>Implicit</strong></td>
+          <td>Assumptions the design depends on that were unstated</td>
+          <td>FMEA (failure-mode causes reveal environmental/input assumptions); PBR (designer/tester perspective); mode analysis (&sect;3.6)</td>
+          <td><em>&ldquo;Track-circuit relays shall operate within specified supply-voltage range &plusmn;10% across the specified EMI environment,&rdquo;</em> made explicit from FMEA cause column on R-12 stuck-closed. Previously assumed but never stated; becomes a qualification requirement and an environmental-monitoring requirement.</td>
+        </tr>
+        <tr>
+          <td><strong>Interaction</strong></td>
+          <td>Behaviour on seams between correctly-functioning subsystems</td>
+          <td>STPA (distinctive method for this class); FTA where tree crosses subsystem boundaries; PBR (tester perspective on interface contracts)</td>
+          <td><em>&ldquo;Dispatcher override and main-panel commands shall be serialised through a single conflict-resolution authority; concurrent overlapping commands shall be rejected with explicit annunciation to both originators,&rdquo;</em> from STPA UCA-1 LS-1.3. Both controllers function correctly; the hazard is in their interaction.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4>Coverage as an Audit Question</h4>
+    <p>Each row in the derived-requirements column of the baseline should carry two pieces of metadata: the class (negative / implicit / interaction) and the method that produced it (FTA cut-set ID / FMEA row ID / STPA UCA ID / PBR finding ID). This allows the audit question to be answered concretely:</p>
+    <ul>
+      <li><strong>Negative-requirement coverage:</strong> do the project's top events and UCAs all have derived negative requirements? A top event with no prohibition in the baseline is an open defect.</li>
+      <li><strong>Implicit-requirement coverage:</strong> have the FMEA cause columns and PBR designer-perspective findings all been resolved into explicit requirements or documented environmental constraints? An unresolved cause column is an implicit assumption waiting to fail.</li>
+      <li><strong>Interaction-requirement coverage:</strong> does every cross-subsystem control action have STPA coverage, and has every loss scenario been resolved? An un-analysed inter-subsystem control path is the canonical software-intensive systems failure mode.</li>
+    </ul>
+    <p>At lightweight rigor, this audit is a spreadsheet filter and a half-hour review. At full rigor, it is a formal analysis-traceability gate preceding baseline closure. The audit is the same question at both rigor levels; what scales is the evidence behind each answer.</p>
+  </section>
+
+  <!-- ===================== 3.6 MODE ANALYSIS ===================== -->
+  <section id="ca-modes">
+    <h3>3.6 Mode Analysis as a Completeness Technique</h3>
+    <p>The mode state machine in the ConOps (see <a href="conops.html#co-modes">ConOps &sect;3.4</a>) is a finite structure. Every mode is a named state; every transition has a trigger, a guard, a timing envelope, and annunciation. Because the structure is finite and enumerable, it supports a distinctive completeness check: for each element of the mode model, is there a requirement? Empty cells in the mode &times; requirement-class matrix are either defects (gaps in the baseline) or explicit non-applicabilities (documented and justified). Leaving cells neither filled nor justified is the canonical mode-completeness failure mode.</p>
+
+    <h4>The Matrix</h4>
+    <p>For each mode in the state machine, the baseline should contain requirements in four classes; for each transition, four more. The matrix makes the check mechanical rather than inspection-dependent.</p>
+    <table class="field-table">
+      <thead>
+        <tr><th>Mode element</th><th>Required classes of requirement</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Each <strong>mode</strong></td><td>Entry condition; behaviour-in-mode; annunciation (how the operator knows the mode is active); exit condition</td></tr>
+        <tr><td>Each <strong>transition</strong></td><td>Trigger (what causes the transition); guard (what must be true for the transition to be allowed); timing envelope (how long the transition may take); annunciation (how the operator is informed)</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Why Mode Analysis Is a Completeness Technique</h4>
+    <p>Requirements derived from elicitation tend to describe Normal-mode behaviour. Stakeholders know what the system is supposed to do when things are fine; they are considerably less articulate about Degraded, Emergency, Startup, Shutdown, and Maintenance modes. The elicitation baseline is systematically biased toward Normal-mode coverage. The mode matrix forces the gap into visibility.</p>
+    <p>Three requirement populations are disproportionately produced by mode analysis:</p>
+    <ul>
+      <li><strong>Degraded-mode requirements.</strong> What the system does when some capability is lost but operation should continue. The stakeholder framing is usually &ldquo;keep going as much as possible&rdquo;; the engineering content is a concrete behaviour envelope that must be specified, not inferred. Mode analysis produces these by asking, for each mode, &ldquo;what capabilities can be lost and still leave the system in <em>this</em> mode?&rdquo;</li>
+      <li><strong>Emergency-mode requirements.</strong> What the system does when continuing is no longer acceptable. These are typically negative requirements (what the system must <em>not</em> do in emergency) combined with safe-state requirements. They rarely come from stakeholders because operators think of emergencies as out-of-scope rather than as a design concern.</li>
+      <li><strong>Transition-timing requirements.</strong> How long a transition may take is almost never articulated by stakeholders and is almost always load-bearing for safety &mdash; the FTTI chain in &sect;3.7 is an example.</li>
+    </ul>
+
+    <h4>Worked Example &mdash; Railway Signalling</h4>
+    <div class="example example-good">
+      <div class="example-label">Mode matrix fragment &mdash; Degraded mode (one detection path lost)</div>
+<pre><code>Mode: DEGRADED-DETECT-1 (one of two detection paths unavailable)
+
+  Entry condition requirement:
+    M-D1-E: System shall enter DEGRADED-DETECT-1 when any primary
+            detection path reports unavailability for >= 2 s.
+  Behaviour-in-mode requirements:
+    M-D1-B1: System shall authorise routes only with both remaining
+             detection paths agreeing on block state.
+    M-D1-B2: System shall reduce maximum authorised line speed to
+             40 km/h on any line with degraded detection.
+    M-D1-B3: System shall not authorise emergency-override routes
+             in DEGRADED-DETECT-1 without dispatcher concurrence.
+  Annunciation requirements:
+    M-D1-A1: Signaller console shall display DEGRADED-DETECT-1
+             indicator continuously while mode is active.
+    M-D1-A2: Dispatcher shall be notified on entry and exit.
+  Exit condition requirement:
+    M-D1-X: System shall exit DEGRADED-DETECT-1 only when both
+            detection paths report availability for >= 30 s
+            continuous and no open mismatch events remain.
+
+Transition: NORMAL -> DEGRADED-DETECT-1
+  Trigger:      primary detection unavailability >= 2 s
+  Guard:        at least one secondary path operational
+  Timing:       annunciation within 500 ms of trigger;
+                speed reduction effective within 3 s
+  Annunciation: visible alert on signaller and dispatcher consoles
+
+Transition: DEGRADED-DETECT-1 -> EMERGENCY-STOP
+  Trigger:      second detection path fails
+  Guard:        (none - mandatory transition)
+  Timing:       all trains on affected lines commanded to restricted
+                speed within 1 s; stop at next available safe point
+  Annunciation: emergency indication; all active trains; all operators</code></pre>
+    </div>
+    <p>Every row of this fragment was produced by asking the matrix question, not by stakeholder elicitation. The stakeholder-level input was &ldquo;the system should stay operational when one detection path fails if possible&rdquo;; the engineering content &mdash; two-of-two agreement, 40&nbsp;km/h cap, emergency-override restriction, 2&nbsp;s debounce, 30&nbsp;s recovery window, 500&nbsp;ms annunciation, 3&nbsp;s speed-reduction effectiveness &mdash; is the output of mode-analysis completeness. Removing the matrix discipline removes these requirements from the baseline; they are recovered, if at all, during integration test or field deployment.</p>
+
+    <div class="card">
+      <h4>Lightweight / Full Rigor</h4>
+      <ul>
+        <li><strong>Lightweight:</strong> mode matrix as a spreadsheet; four modes and a dozen transitions; inspection-based cell check at each requirements review. An hour of work per iteration.</li>
+        <li><strong>Full rigor:</strong> mode matrix under configuration management; every cell either filled or justified-non-applicable; integration with HARA operating situations (automotive) or flight-phase FHA (aerospace); formal review milestone on mode-completeness closure.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ===================== 3.7 FTTI ===================== -->
+  <section id="ca-ftti">
+    <h3>3.7 FTTI: A Worked Derived-Requirements Chain</h3>
+    <p>The Fault-Tolerant Time Interval (FTTI) is the budgeted time from fault occurrence to the onset of a hazardous event. It is the cleanest worked example of how safety analysis produces a <em>chain</em> of derived requirements across V-model layers, because its structure forces every intermediate layer to publish an explicit time budget. FTTI originates in ISO&nbsp;26262 but the decomposition pattern &mdash; hazard-level time constraint &rarr; allocated sub-budgets &rarr; component-level timing requirements &mdash; applies at every assurance regime that cares about time-to-hazard.</p>
+
+    <h4>The Chain</h4>
+    <ol>
+      <li><strong>Start from the hazard and its FTTI.</strong> The hazard is an output of HARA / FHA / equivalent analysis; the FTTI is the maximum time from fault occurrence to hazard onset that the system's safety argument can tolerate. Usually determined by the physics of the hazard and the operational tolerance envelope.</li>
+      <li><strong>Decompose into a fault-reaction sequence.</strong> Fault occurs &rarr; fault is detected &rarr; detection is reacted to &rarr; system transitions to a safe state. Each arrow has a time budget. The sum must be less than the FTTI with margin.</li>
+      <li><strong>Allocate budgets across the sequence.</strong> Detection budget, reaction-decision budget, safe-state-transition budget. Margin reserved for aggregation uncertainty and unmodelled latency.</li>
+      <li><strong>Each budget becomes a derived timing requirement</strong> on the layer responsible for that phase of the sequence &mdash; detection budget on the detection subsystem, reaction budget on the safety controller, transition budget on the actuator and controlled process.</li>
+      <li><strong>Lower-layer design validates that the budget is achievable,</strong> or feeds a derived-requirement challenge back up: &ldquo;budget is tighter than our detection path can meet; need revised allocation or different detection architecture.&rdquo; This is exactly the feedback loop from &sect;2 that Peterson documented as broken in practice; on FTTI, where the numbers are visible, it's harder for the loop to go unnoticed.</li>
+    </ol>
+
+    <h4>Worked Example &mdash; Railway Signalling</h4>
+    <div class="example example-good">
+      <div class="example-label">FTTI decomposition &mdash; occupancy false-clear &rarr; train enters occupied block</div>
+<pre><code>Hazard:       H1  Train enters occupied block
+Fault:        F1  Occupancy-detection path reports false-clear
+FTTI budget:  T_FTTI = 8.0 s  (derived from train approach dynamics:
+                              at authorised approach speed, worst-case
+                              time from route authorisation to block
+                              entry is 8.0 s; beyond this, a train is
+                              in the block)
+
+Budget allocation:
+
+  T_detect   = 2.0 s   Detection subsystem recognises false-clear
+                       (cross-check disagreement, timeout on liveness,
+                       or diverse-path contradiction)
+  T_decide   = 0.5 s   Interlocking reacts: withdraw authorisation,
+                       command protective aspect, issue cab-signal
+                       stop
+  T_actuate  = 3.0 s   On-train systems receive command; ATP applies
+                       brake; train decelerates to safe speed or stops
+                       short of conflict point
+  T_margin   = 2.5 s   Aggregation margin (covers modelling uncertainty,
+                       worst-case component aging, environmental)
+               -----
+  SUM        = 8.0 s = T_FTTI  [tight; any budget overrun must be
+                                absorbed against margin explicitly]
+
+Derived requirements (cascaded by V-model layer):
+
+  Layer: System Requirements
+    SR-DET-1: Detection subsystem shall recognise occupancy false-clear
+              (by diverse-path disagreement OR liveness timeout)
+              within 2.0 s of fault occurrence.
+    SR-DEC-1: Interlocking shall withdraw route authorisation and
+              command protective aspect within 500 ms of detection
+              output indicating false-clear.
+    SR-ACT-1: On-train protection shall bring train to safe speed
+              or stop within 3.0 s of protective-aspect command
+              reception.
+
+  Layer: SW Requirements (interlocking)
+    SWR-DEC-1a: Route-authorisation withdrawal function shall complete
+                within 100 ms of receiving detection-fault input.
+    SWR-DEC-1b: Protective-aspect command issuance shall complete
+                within 400 ms of receiving detection-fault input.
+
+  Layer: SW Architecture (interlocking)
+    SWA-DEC-1: Safety-critical withdrawal path shall execute without
+               lock contention on shared interlocking state; priority
+               inversion analysis required.
+
+  Feedback (actual):
+    During SW architecture design, the safety-critical withdrawal
+    path is measured to require 520 ms worst-case under loaded
+    conditions. Two options:
+      (a) Revise SWR-DEC-1b budget upward by absorbing from T_margin,
+          with explicit justification and re-approval at the FTTI
+          budget review. T_margin reduces to 2.38 s.
+      (b) Redesign withdrawal path for lower worst-case latency.
+    Decision visible in the analysis record; the chain is not
+    silently broken.</code></pre>
+    </div>
+    <p>Three properties of this chain are worth naming. First, every lower-layer requirement is <em>traceable</em> to the hazard and the FTTI budget above it &mdash; no timing requirement appears unmotivated. Second, the decomposition is <em>explicit</em> and sums correctly &mdash; the budget discipline prevents the common failure mode where each layer takes the full parent budget and overruns in aggregate. Third, the <em>feedback</em> case is handled visibly: when the SW architecture measurement comes back exceeding the budget, the system has a mechanism (review the budget and justify a change, or redesign) rather than an unrecognised broken constraint. The FTTI chain is a small worked example of the discipline the V-model expects at every layer that carries timing load.</p>
+
+    <p style="color: var(--fg-muted); font-size: 0.9em; font-style: italic;">Source depth: <code>research/system-level/04b-safety-requirements-derivation.md</code>, §FTTI; ISO 26262 Part 1 definitions; Part 4 Cl. 6.4.2.3 (TSR timing attributes); Peterson, NASA CR-2015-218982 (derived-requirements feedback).</p>
+  </section>
+
+  <!-- ===================== SECTION 4: V-MODEL CONSIDERATIONS ===================== -->
+  <section id="ca-vmodel-considerations">
+    <h2>V-Model Specific Considerations</h2>
+    <p class="lead">The craft of Section&nbsp;3 is not specific to the V-model &mdash; FTA, FMEA, STPA, and PBR predate the V and can be applied inside any lifecycle. The V-model adds specific obligations on top of the craft, because downstream V-model layers consume the analysis output expecting certain properties (traceability of every derived requirement, independence of analysis from design, re-analysis on change, integrity allocation) to hold. This section covers what the V-model specifically demands beyond the general craft in Section&nbsp;3.</p>
+
+    <h3>Analysis as a Requirements Source, Not a Verification Activity</h3>
+    <p><strong>What it establishes:</strong> FTA, FMEA, STPA, and mode analysis are <em>producers</em> of baseline requirements on the left side of the V. Their outputs &mdash; derived requirements in the three classes of &sect;3.5 &mdash; are first-class entries in the same baseline as elicited requirements, carrying the same obligations for traceability, verification, and change control.</p>
+    <p><strong>What it prevents:</strong> the common misconception that safety analysis is a right-side-of-V activity &mdash; a check against an existing baseline rather than a contributor to it. Under that misconception, analysis findings arrive too late to be designed against and end up retrofitted as reviews-found-defects rather than engineered-in requirements. The V-model treats analysis as a parallel stream on the left side (&sect;2) precisely so its findings arrive in time to shape the design.</p>
+    <p><strong>Procedure:</strong> derived requirements are tagged at entry with their method of origin (FTA cut-set ID, FMEA row ID, STPA UCA ID, PBR finding ID, mode-matrix cell reference). Review gates at each V-model layer check that the analysis stream has produced requirements proportionate to the layer's rigor level &mdash; a layer with no derived requirements from the analysis stream is a layer whose analysis was not run, not a layer where the analysis found nothing.</p>
+
+    <h3>Derived-Requirement Feedback Loop</h3>
+    <p><strong>What it establishes:</strong> analysis at layer&nbsp;N constrains the design at layer&nbsp;N+1, and design at layer&nbsp;N+1 surfaces new failure modes and control paths that the layer-N analysis could not have anticipated. The V-model obligation is that findings from the layer-N+1 re-analysis are either closed at that layer or fed back up as derived requirements on layer&nbsp;N &mdash; with the layer-N baseline actually updated, re-reviewed, and re-approved when changes propagate upward.</p>
+    <p><strong>What it prevents:</strong> the broken feedback loop Peterson documented in the ARP&nbsp;4754A industry study (NASA CR-2015-218982): projects record derived requirements from lower layers but never fold them back to re-validate the parent layer. The consequence is a baseline whose lower layers carry constraints invisible to the upper layers, and whose upper layers consequently cannot be defensibly traced against. The loop is broken silently; the symptoms show up at certification or in field incidents.</p>
+    <p><strong>Procedure:</strong> every derived requirement at layer&nbsp;N+1 is either marked <em>closed-at-this-layer</em> with justification or <em>escalate-to-layer-N</em>. Escalated items go into a tracked queue whose closure requires a parent-layer baseline update, re-review, and re-approval &mdash; not a note in a review minutes. The FTTI chain in &sect;3.7 is the worked small example; the obligation applies at every layer, not only to timing requirements.</p>
+
+    <h3>Integrity Allocation (FDAL / IDAL / ASIL)</h3>
+    <p><strong>What it establishes:</strong> the analysis stream is responsible for deriving the integrity level (Development Assurance Level under ARP&nbsp;4754A/ARP&nbsp;4761A, ASIL under ISO&nbsp;26262, SIL under IEC&nbsp;61508) for each function or safety requirement, and for allocating that level to implementing software and hardware elements. This is an analysis output, not a design output &mdash; the integrity level of a component is determined by what the analysis says the component contributes to, not by what the designer feels is appropriate.</p>
+    <p><strong>What it prevents:</strong> two symmetrical failure modes. The first is under-allocation &mdash; assigning a component to a lower integrity level than the analysis supports, producing verification evidence that does not meet the actual assurance obligation. The second is uniform over-allocation &mdash; assigning every component to the highest integrity level to &ldquo;be safe,&rdquo; inflating cost and reducing attention to the components that actually need it. Both failure modes make the integrity assignment arbitrary, which defeats its purpose.</p>
+    <p><strong>Procedure:</strong> each top-level function has an integrity level derived from hazard severity and classification in the applicable standard (DAL A&ndash;E, ASIL A&ndash;D, SIL 1&ndash;4). Decomposition rules (ARP 4754A Table&nbsp;3; ISO 26262 Part&nbsp;9 Cl.&nbsp;5) govern how the level distributes across redundant or independent implementing elements. Every implementing component carries its allocated level as metadata; verification activity, tool qualification, and review independence scale from the allocated level. Changes to the allocation require re-running the analysis and re-approving the allocation matrix.</p>
+
+    <h3>Independence of Analysis</h3>
+    <p><strong>What it establishes:</strong> at higher assurance levels, the engineer who performs the analysis is separated from the engineer who produces the design the analysis is applied to. This is the same independence principle that applies at stakeholder-needs validation and ConOps validation (&sect;ConOps&nbsp;&sect;4), applied here to the analysis stream: the author of a design cannot be the only analyst of its failure modes, because author interpretation bias and motivated reasoning systematically under-surface problems the author has already decided are manageable.</p>
+    <table class="field-table">
+      <thead>
+        <tr><th>Assurance level</th><th>Independence required</th><th>Typical realisation</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Low assurance</td><td>Non-author analyst</td><td>A different engineer on the same team performs the analysis; findings reviewed with the design author.</td></tr>
+        <tr><td>Medium assurance</td><td>Independent analyst</td><td>Analysis performed by a separate discipline (safety, test) not reporting to the design lead; formal disposition of findings.</td></tr>
+        <tr><td>High assurance</td><td>Organisationally independent analyst</td><td>Analysis performed by a separate team or certified independent safety assessor; DAL/ASIL-indexed analysis independence per standard; audit trail on disposition of findings.</td></tr>
+      </tbody>
+    </table>
+    <p><strong>What it prevents:</strong> the systemic under-surfacing of failure modes that the designer has already dismissed implicitly. The empirical literature on code inspection, requirements review, and safety analysis is consistent on this point: author-as-sole-reviewer finds a fraction of the defects that independent review finds, and the missing defects are non-randomly distributed (they cluster in exactly the places the author's mental model has already committed to).</p>
+
+    <h3>Common-Mode / Common-Cause Analysis</h3>
+    <p><strong>What it establishes:</strong> FTA cut sets of size greater than one imply that multiple basic events must co-occur for the top event to occur &mdash; a claim that depends on the basic events being <em>independent</em>. Common-Mode Analysis (CMA) and Common-Cause Analysis (CCA) examine whether apparent independence actually holds, by enumerating the shared resources, shared environments, and shared development histories that could defeat it. A multi-element cut set with a common cause collapses to a single-point failure, and the FTA's failure-rate arithmetic breaks silently.</p>
+    <p><strong>What it prevents:</strong> the classic redundancy failure &mdash; two &ldquo;independent&rdquo; channels that share a power rail, a common clock, a common environmental exposure, a common development team, or a common library. The FTA looks good on paper; the field failure shows both channels fail in the same storm or on the same software defect. CMA is the activity that validates the independence claim before it becomes certification evidence.</p>
+    <p><strong>Procedure:</strong> for every multi-element cut set whose acceptable probability depends on independence, enumerate the shared resources and environments (power, cooling, timing, EMI, software, team, toolchain, operational procedure). For each shared resource, argue whether a single failure in it can defeat the claimed independence &mdash; and if so, either redesign to remove the sharing, introduce mitigation that survives the common cause, or revise the cut-set probability to reflect the dependence. CMA is mandatory under ARP 4761A and is strongly implied by ISO 26262 Part&nbsp;9 Cl.&nbsp;7.</p>
+
+    <h3>Living Artifact &mdash; Re-Analysis Triggers</h3>
+    <p><strong>What it establishes:</strong> completeness analysis is not finished at first signing. The analysis record is revisited and, where affected, re-run on each of a defined set of triggers. An analysis that has not been revisited since the first release is either unusually good or &mdash; more commonly &mdash; stale.</p>
+    <p><strong>What it prevents:</strong> the certification-to-field gap where the analysis record continues to authorise the design while reality has moved on. Stale analysis is worse than absent analysis, because it carries the authority of a completed activity without the validity.</p>
+    <p><strong>Re-analysis triggers:</strong></p>
+    <ul>
+      <li>Any change to stakeholder needs or ConOps (propagates from the layers above).</li>
+      <li>Any change to the requirements baseline that the analysis operated against.</li>
+      <li>Any design change that introduces new components, new interfaces, new control paths, or new modes.</li>
+      <li>Any change to an identified shared resource relevant to CMA (power, clock, toolchain, library, team structure).</li>
+      <li>Any field incident, integration-test finding, or operational anomaly that reveals a failure mode not in the register.</li>
+      <li>Any revision of the applicable standards or regulatory corpus that changes required hazard classes, integrity levels, or analysis methods.</li>
+      <li>Calendar-based revalidation at a cadence set by the assurance regime (annual, per-release, or per-milestone).</li>
+    </ul>
+    <p>Re-analysis is scoped, not exhaustive: the trigger identifies which parts of the analysis record are potentially invalidated; those parts are re-run; unaffected parts carry forward with a visible currency-date stamp.</p>
+
+    <h3>Summary: What the V-Model Adds to the Craft</h3>
+    <div class="card">
+      <p>The craft in Section&nbsp;3 produces an analysis output that discovers requirements the elicitation stream cannot. The V-model adds six obligations on top of that output:</p>
+      <ul>
+        <li><strong>Analysis as a requirements source</strong> &mdash; outputs enter the baseline as first-class derived requirements, not as review-found defects.</li>
+        <li><strong>Derived-requirement feedback</strong> &mdash; findings from lower-layer re-analysis propagate back to the parent layer with baseline update, not with a review note.</li>
+        <li><strong>Integrity allocation</strong> &mdash; DAL / ASIL / SIL derived from analysis and allocated to implementing elements under standard-specific decomposition rules.</li>
+        <li><strong>Independence of analysis</strong> &mdash; author of a design is not the sole analyst of its failure modes; separation scales with assurance level.</li>
+        <li><strong>Common-mode analysis</strong> &mdash; independence claims on multi-element cut sets are validated against shared resources and environments before they become certification evidence.</li>
+        <li><strong>Living-artifact discipline</strong> &mdash; defined re-analysis triggers ensure the analysis record stays current with the design, the requirements, and the operational reality.</li>
+      </ul>
+      <p>Each obligation exists because downstream layers, certification authorities, or operational deployments consume the analysis expecting these properties to hold. A project can do excellent analysis craft and still fail the V-model if these obligations are not met; the obligations are the difference between an analysis that reads well and an analysis that carries weight.</p>
+    </div>
+  </section>
+
+  <!-- ===================== SECTION 5: FRAMEWORK (stub) ===================== -->
+  <section id="ca-framework">
+    <h2>Framework Integration <span class="status-badge stub">stub</span></h2>
+    <p><em>[To be written after templates exist. Will cover: completeness-analysis record template (method, scope, findings, derived requirements, open issues); trace links from analysis findings to derived requirements; re-analysis triggers on design change; envelope metadata for independence and review evidence.]</em></p>
+  </section>
+
+  <!-- ===================== SECTION 6: AI SKILLS (stub) ===================== -->
+  <section id="ca-skills">
+    <h2>AI Skills Integration <span class="status-badge stub">stub</span></h2>
+    <p><em>[To be written after corresponding skills are built. Candidate skills from the backlog: vmodel-skill-brainstorm-hazards (advisory hazard list from ConOps scenarios), vmodel-skill-review-analysis (worksheet consistency, trace coverage). AI is strictly advisory here: language models can populate FMEA rows and suggest UCAs, but completeness certification requires independence, domain judgement, and grounded physics/failure-mode knowledge that trained models cannot supply. Section 6 will treat these limits explicitly rather than optimistically.]</em></p>
+  </section>
+
+  <!-- ===================== REFERENCES (stub) ===================== -->
+  <section id="ca-references">
+    <h2>References</h2>
+    <p><em>[Full reference list to be compiled when page is complete. Principal sources expected: ARP 4761A (aerospace safety assessment); ISO 26262 Parts 3, 4, 9 (HARA, FSR/TSR derivation, ASIL decomposition); IEC 61508 Parts 1&ndash;3; Leveson, Engineering a Safer World (MIT Press, 2011); STPA Handbook (Leveson &amp; Thomas, MIT, 2018); Vesely et&nbsp;al., Fault Tree Handbook with Aerospace Applications (NASA, 2002); Basili et&nbsp;al., Perspective-Based Reading (IEEE TSE, 1996); IEEE Std 1012 (V&amp;V); Peterson, NASA CR-2015-218982 (ARP 4754A industry study on derived-requirements feedback). Primary research documents: research/system-level/04a, 04b, 04c, 02b, 06b.]</em></p>
+  </section>
+
+</main>
+
+</body>
+</html>
