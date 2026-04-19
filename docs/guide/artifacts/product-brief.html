@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Brief &mdash; VModelWorkflow Guide</title>
+  <link rel="stylesheet" href="../css/main.css">
+</head>
+<body>
+
+<!-- ============================================================
+     SIDEBAR
+     ============================================================ -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <h1>VModelWorkflow</h1>
+    <div class="subtitle">Spec-Driven Development Guide</div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-group">
+      <span class="nav-group-label">Navigation</span>
+      <a class="nav-link" href="../index.html">Back to Main Guide</a>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-group-label">Product Brief</span>
+      <a class="nav-link" href="#pb-context">1. V-Model Context</a>
+      <a class="nav-link" href="#pb-best-practices">2. Best Practices</a>
+      <a class="nav-link" href="#pb-anti-patterns">3. Anti-Patterns</a>
+      <a class="nav-link" href="#pb-examples">4. Examples</a>
+      <a class="nav-link" href="#pb-quality-bar">5. Quality Bar</a>
+      <a class="nav-link" href="#pb-references">References</a>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-group-label">Related Artifacts</span>
+      <a class="nav-link" href="system-requirements.html">Requirements</a>
+      <a class="nav-link" href="adr.html">ADR</a>
+      <a class="nav-link" href="detailed-design.html">Detailed Design</a>
+    </div>
+  </nav>
+</aside>
+
+<!-- ============================================================
+     MAIN CONTENT
+     ============================================================ -->
+<main class="main-content" style="margin-left: var(--sidebar-width); padding: var(--space-3xl) var(--space-2xl); max-width: calc(var(--content-max) + var(--space-2xl) * 2 + var(--sidebar-width));">
+
+  <!-- ===================== SECTION 1: V-MODEL CONTEXT ===================== -->
+  <section id="pb-context">
+    <div class="level-indicator left">Root-Scope Anchor Artifact</div>
+    <h2>1. V-Model Context</h2>
+    <p class="lead">A Product Brief is the single root-scope anchor for a system. It names who has the problem, what the problem is, what a better state looks like, how the system will be used in operation, what bounds it, what is explicitly not in scope, and how success will be recognised. One Product Brief per system. Everything downstream &mdash; Requirements, Architecture, ADRs, Detailed Designs, TestSpecs &mdash; derives from it directly or transitively.</p>
+
+    <h3>Position on the V</h3>
+    <p>The Product Brief sits at the top-left corner of the V. It is the only artifact at root scope that has no parent &mdash; it is the source the rest of the spec tree refers back to. Root-scope Requirements turn its outcomes and constraints into testable behaviour. Root-scope Architecture decomposes the system in response to its constraints and NFRs. Root-scope TestSpec verifies its outcomes end-to-end. Cross-cutting ADRs cite its constraints when justifying load-bearing decisions. Every child scope inherits from it through allocation chains.</p>
+
+    <h3>Why the framework treats it as the anchor</h3>
+    <p>Without a Product Brief, downstream specs are unmoored. Requirements can answer "what must the system do" but not "for whom, why, and at what cost is failure" &mdash; the rationale that makes a requirement defensible against pressure to drop or change it. Architecture can answer "how is the system structured" but not "what quality attributes is the structure being designed around" &mdash; and an architecture that did not see availability or latency as a driver tends to discover them as a rewrite. The Product Brief is the place those drivers are first named, in operational language, before any decomposition exists to record them in.</p>
+
+    <p>The argument is <em>upstream-driver capture</em>. Architecture-significant requirements are not always functional; the largest ones are usually NFRs, regulatory constraints, and operational realities that no requirement statement reveals on its own. A Product Brief that fails to surface those drivers produces a spec tree that can pass every downstream check while still building the wrong system.</p>
+
+    <div class="card">
+      <h3>The threshold for authoring a Product Brief</h3>
+      <p>Every system in scope of the framework has a Product Brief at its root. There is no project too small to skip it. The lean version is short &mdash; the page below is about how to make it lean without making it empty.</p>
+      <p>If the system has no identifiable stakeholders, no problem worth naming, and no observable success criterion, it is not a system the framework is the right tool for. Building it requires no Brief because building it requires no spec.</p>
+    </div>
+
+    <h3>What a Product Brief is not</h3>
+    <ul>
+      <li><strong>Not a Product Requirements Document (PRD).</strong> A PRD lists features. The Brief names the problem, the outcomes, and the bounds; features belong in Requirements at root scope or below.</li>
+      <li><strong>Not a market plan, business case, or pricing document.</strong> Those documents may inform the Brief and may quote it, but they live elsewhere; the Brief is a spec artifact, not a strategy artifact.</li>
+      <li><strong>Not a project plan.</strong> Milestones, schedules, staffing, and budget tracking are project management. A hard launch date can appear as a Constraint; a Gantt chart cannot.</li>
+      <li><strong>Not a design document.</strong> The Brief is silent on internal structure. Naming Postgres or Kafka in the Brief is a category error &mdash; those are ADR territory.</li>
+      <li><strong>Not a retrofit invention.</strong> When a system is being retrofitted from existing code, most of the Brief's content is not in the code. The framework records what is unrecoverable as <code>recovery_status: unknown</code>; it does not synthesise plausible-sounding stakeholders or outcomes.</li>
+    </ul>
+
+    <h3>Retrofit posture</h3>
+    <p>The Product Brief is the most human-only artifact in the set. Code can reveal what the system does; it cannot reveal who has the problem, why it was worth solving, what success was supposed to look like, or which constraints were chosen versus inherited. A retrofit Brief honestly reports what is observable from code (interfaces, integrations, deployment shape) and marks every other field <code>recovery_status: unknown</code> until a human can speak for it. Stakeholder follow-up is a deliverable of the retrofit, not a failure of it.</p>
+
+    <p>For systems where no original stakeholders are reachable and the problem space has shifted under the system, the Brief may stay largely unknown indefinitely &mdash; and the rest of the spec tree can still be built honestly below it. A Brief with many <code>unknown</code> fields is a correct retrofit outcome, not a partial one.</p>
+  </section>
+
+  <!-- ===================== SECTION 2: BEST PRACTICES ===================== -->
+  <section id="pb-best-practices">
+    <h2>2. Best Practices</h2>
+    <p class="lead">The Product Brief has seven sections, fixed by the framework. The treatment below covers each in the recommended authoring order &mdash; Stakeholders first because nearly everything else references them, Success Criteria last because it should anchor to outcomes already named.</p>
+
+    <h3>Frontmatter and shape</h3>
+    <p>A Product Brief is a single Markdown file at <code>/specs/product_brief.md</code> with YAML front-matter and a body. Canonical front-matter:</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Field</th><th>Purpose</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>Always <code>PB</code>. Root scope is implicit.</td></tr>
+        <tr><td><code>title</code></td><td>The product name.</td></tr>
+        <tr><td><code>summary</code></td><td>One sentence: <em>{Product} is a {category} for {audience} that {does what}, so that {outcome}.</em></td></tr>
+        <tr><td><code>status</code></td><td><code>draft</code> &rarr; <code>accepted</code>. Re-enters <code>draft</code> when materially edited.</td></tr>
+        <tr><td><code>date</code></td><td>Date of last acceptance.</td></tr>
+        <tr><td><code>recovery_status</code></td><td>Per-section map; only used for retrofit. States: <code>verified</code> | <code>unknown</code>. (No <code>reconstructed</code> on this artifact &mdash; it is human-only throughout.)</td></tr>
+      </tbody>
+    </table>
+
+    <p>The one-sentence <code>summary</code> is a forcing function. If it cannot be written cleanly &mdash; if "audience" is fuzzy or "what it does" needs three clauses &mdash; the Brief itself is not yet ready to write.</p>
+
+    <h3>A. Stakeholders</h3>
+    <p>The first section because nearly every other one references it. The goal is to identify everyone whose input shapes the Brief and everyone whose problem the system addresses, with enough specificity that the Outcomes section can speak per-stakeholder rather than to "the user."</p>
+
+    <h4>The Onion Model</h4>
+    <p>Three concentric rings around the system, used as both a description of who exists and a checklist for gaps. Empty slots are follow-up tasks, not absences.</p>
+
+    <div class="mermaid">
+flowchart TB
+    subgraph wider["Wider environment"]
+      direction TB
+      reg["Regulators"]
+      neg["Negative stakeholders<br/>(harmed by the system)"]
+      part["Partners / suppliers"]
+      pur["Purchasers / sponsors"]
+      subgraph containing["Containing system (org / market)"]
+        direction TB
+        iface["Interfacing systems<br/>(other software it talks to)"]
+        bene["Functional beneficiaries<br/>(get value without operating it)"]
+        champ["Product champions"]
+        subgraph oursys["Our system (operators)"]
+          direction TB
+          norm["Normal users / operators"]
+          maint["Maintainers / on-call"]
+          supp["Support / training"]
+          prod["the product itself"]
+        end
+      end
+    end
+    classDef product fill:#eef,stroke:#557,stroke-width:1px
+    class prod product
+    </div>
+
+    <p><strong>Lean walkthrough &mdash; 30 minutes.</strong> Walk every slot once, in order, asking: <em>who fills this for our system?</em> Answers go in the Brief by name and role. If a slot is genuinely empty, write "n/a &mdash; reason: &hellip;". Never silently leave a slot blank; an unwritten slot is indistinguishable from a slot the author did not consider.</p>
+
+    <p>The slots that are most often missed:</p>
+    <ul>
+      <li><strong>Maintainers / on-call.</strong> Who is paged at 03:00 when this system fails? Their concerns surface availability and observability NFRs that no normal user will ever raise.</li>
+      <li><strong>Negative stakeholders.</strong> People the system disadvantages or harms &mdash; the displaced incumbent, the user whose data is now collected, the bystander whose access changes. Naming them is not optional. Brief authors that skip the slot ship systems whose anti-stakeholders are discovered after launch.</li>
+      <li><strong>Interfacing systems.</strong> Other software that consumes or produces the system's data. Their owners are stakeholders; their availability and contract become NFRs.</li>
+      <li><strong>Regulators.</strong> Even non-regulated products usually have at least one (data-protection authority, app-store review, internal compliance). Empty here triggers the privacy/compliance NFR check.</li>
+    </ul>
+
+    <h4>Surrogacy discipline</h4>
+    <p>Most stakeholder input does not come from the stakeholder. It comes from a product manager speaking for users, an engineer speaking for ops, a sales lead speaking for prospects. These are <em>surrogates</em>, and surrogate input is hearsay &mdash; useful, but distorted in proportion to the number of intermediaries. The Brief records the source of each input:</p>
+
+    <pre><code>stakeholders:
+  - role: Maintainer / on-call
+    representative: "@ops-lead (interview, 2026-04-12)"
+    source_chain: direct
+    primary_concerns: [availability, runbook quality, alert noise]
+
+  - role: Functional beneficiary (finance team)
+    representative: "Jane (head of FP&amp;A), via @sponsor-pm"
+    source_chain: surrogate (1 hop)
+    primary_concerns: [reconciliation accuracy, audit trail]
+    distortion_risk: medium &mdash; PM filters by what they think is feasible</code></pre>
+
+    <p>Source chains of two or more hops should trigger a direct interview before any outcome or constraint is treated as load-bearing. Multi-hop surrogacy is where the most expensive misunderstandings hide.</p>
+
+    <h4>Solo and small-team systems</h4>
+    <p>For internal tools, side projects, and one-engineer products, the same author may legitimately occupy several stakeholder roles. State that explicitly &mdash; "Normal user, maintainer, and purchaser: the author" &mdash; rather than inventing fictional representatives. The Onion is still walked; most slots may be "n/a &mdash; internal tool, single user". The discipline is in walking the slots, not in populating them.</p>
+
+    <h3>B. Problem</h3>
+    <p>Names the actual problem the system addresses, distinct from any solution. The Brief gets this section wrong more often than any other, almost always in the same way: stating a solution and calling it a problem.</p>
+
+    <h4>Don't take the first problem statement seriously</h4>
+    <p>The first thing anyone says when asked "what's the problem?" is usually their preferred solution dressed as one. <em>"We need a database"</em> is a solution; the underlying problem might be <em>"we lose customer data when the worker process crashes mid-write."</em> <em>"We need a dashboard"</em> is a solution; the underlying problem might be <em>"finance closes the books five days late because the data they need is split across four systems."</em></p>
+
+    <p>Drive past the first statement with five whys, or the equivalent. The problem is the layer at which alternative solutions are still plausible. If only one solution remains imaginable, the problem has not been stated &mdash; only described from the chosen solution's vantage point.</p>
+
+    <h4>World, not machine</h4>
+    <p>The problem lives in the world. The system being built is a machine that addresses it. Conflating the two is the source of most upstream defects: requirements that describe what the machine does internally without ever stating what changes for the world. A Brief that says <em>"the system will compute the daily reconciliation report in under 60 seconds"</em> describes a machine property; the world-facing problem is <em>"the finance team waits multiple days for reconciliation results, delaying month-end close."</em> Both can be true; only one belongs in the Brief.</p>
+
+    <h4>Evidence over opinion</h4>
+    <p>Real artifacts, real data, real quotes. <em>"Stakeholders said it would be useful"</em> is opinion. <em>"Three of the last four monthly closes ran more than five days late; the FP&amp;A team logged 47 hours of overtime in March attributed to manual reconciliation"</em> is evidence. The Brief cites the source. Where evidence is honestly weak (a new product, a hypothesised problem), say so &mdash; do not pad with adjectives.</p>
+
+    <h3>C. Desired Outcomes</h3>
+    <p>Per-stakeholder narrative of what the world looks like after the system works. Qualitative, observable, anchored to the stakeholders named in &sect; A. Outcomes are not features. <em>"Search-as-you-type"</em> is a feature; the outcome is <em>"a casual user finds the page they want in under 30 seconds without scrolling past page 1 of results."</em> Many features can produce one outcome; many outcomes need no new features at all (a process change, a default value, a cleaner error message).</p>
+
+    <p>One outcome paragraph per stakeholder group. Each describes the post-system state, not the system that produces it. Avoid aspirational adjectives ("better", "easier", "more efficient") that do not commit to anything observable. If a reviewer cannot picture how to tell whether the outcome happened, the Outcome is not yet specific enough.</p>
+
+    <div class="card">
+      <h4>Working-backwards as a forcing function</h4>
+      <p>Adapted from Amazon's PR/FAQ practice: before authoring Outcomes, draft the launch announcement as if the system already shipped. <em>"As of {date}, {audience} can {do what they could not before} so that {outcome}."</em> If the announcement is unwritable &mdash; the audience is fuzzy, the change is invisible, the outcome generic &mdash; the Outcomes section is not yet ready to commit. The exercise belongs in the conversation; the announcement itself does not need to live in the Brief.</p>
+    </div>
+
+    <h3>D. Operational Concept</h3>
+    <p>How the system is used in the real world: scenarios, environments, integrations, modes. The section that most directly drives the Architecture &mdash; an architecture that did not see the operational concept tends to discover it as a rewrite.</p>
+
+    <h4>Seven-question compact form</h4>
+    <p>The whole section can be authored against seven questions. Each gets a paragraph or a short list; brevity is virtue.</p>
+
+    <ol>
+      <li><strong>Mission.</strong> What is the system for, said in operational terms (not architectural ones)? "The system reconciles bank-statement entries against internal ledger entries every business day, surfacing exceptions for the FP&amp;A team to resolve."</li>
+      <li><strong>Environment.</strong> Where it runs, what it depends on, what surrounds it. Cloud / on-prem / hybrid; trusted network / public internet; integration points by name; data sources and sinks.</li>
+      <li><strong>Scenarios.</strong> Three to five end-to-end stories of normal use. Each names a stakeholder, a triggering event, and the result. Concrete scenarios surface interface needs, timing constraints, and exception paths that top-down decomposition misses.</li>
+      <li><strong>Modes.</strong> Operating states the system has. <em>Normal, degraded, emergency, maintenance, startup, shutdown.</em> Most Briefs cover only the normal mode; the rest are where operability and security requirements hide.</li>
+      <li><strong>Users / roles.</strong> Who interacts with the system in which scenarios. References the Stakeholders section by role.</li>
+      <li><strong>Support.</strong> Who runs it, who responds when it breaks, what their on-call expectations are. Surfaces operability NFRs that nobody else will raise.</li>
+      <li><strong>Performance in operation.</strong> What "fast enough", "reliable enough", "scalable enough" means under real load. Often the only place these targets are first named, before they harden into NFRs in &sect; E.</li>
+    </ol>
+
+    <h4>Mode coverage is the silent gap</h4>
+    <p>A system whose Brief only describes the normal mode systematically misses the requirements that surface in degraded operation, in emergency response, and during maintenance. The Brief should at minimum walk the standard mode list and either describe the system's behaviour in each or explicitly say "out of scope &mdash; system halts entirely on dependency failure" (which itself is a load-bearing statement that drives Architecture).</p>
+
+    <h4>No architecture decisions here</h4>
+    <p>If the Operational Concept names a particular technology &mdash; <em>"the reconciliation worker pulls jobs from a Postgres queue"</em> &mdash; that decision belongs in an ADR, not in the Brief. The Brief describes <em>what happens in operation</em>; how it happens is a downstream choice. Naming technologies in the Brief locks the option space before any tradeoff is made and bypasses ADR rationale capture.</p>
+
+    <h3>E. Constraints, NFRs, and Assumptions</h3>
+    <p>The load-bearing section &mdash; the one whose omission silently shapes a wrong architecture. Three kinds of bounds belong here:</p>
+
+    <ol>
+      <li><strong>Hard constraints</strong> &mdash; bounds imposed from outside that the system has no choice but to honour. Regulatory regime, data-residency requirement, mandated tech stack, hard launch date, infrastructure budget ceiling, organisational policy.</li>
+      <li><strong>Architecture-driving NFRs</strong> &mdash; quality attributes the system must meet to be usable. The most often missed at Brief level, with the highest blast radius when missed.</li>
+      <li><strong>Assumptions</strong> &mdash; beliefs about the world the Brief rests on. Not facts; beliefs that, if wrong, invalidate the Brief.</li>
+    </ol>
+
+    <h4>NFR Discovery Checklist</h4>
+    <p>Walked at Brief authoring time. For each dimension: ask what target the Operational Concept implies, capture it here, defer it to Requirements with a placeholder, or mark <code>n/a &mdash; reason</code>. Silent omission is the failure mode the checklist exists to prevent.</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Group</th><th>Dimension</th><th>What to capture</th></tr>
+      </thead>
+      <tbody>
+        <tr><td rowspan="3"><strong>Performance &amp; scale</strong></td>
+            <td>Availability</td><td>Uptime target, allowed downtime windows, behaviour under partial failure.</td></tr>
+        <tr><td>Latency</td><td>Response-time targets at p50 / p95 / p99 for the user-facing paths that matter.</td></tr>
+        <tr><td>Throughput / scale</td><td>Concurrent users, requests/sec, batch volumes, growth horizon.</td></tr>
+        <tr><td rowspan="2"><strong>Security, privacy &amp; compliance</strong></td>
+            <td>Security</td><td>Authentication / authorisation model, threat surface, secrets handling, audit logging needs.</td></tr>
+        <tr><td>Privacy / compliance</td><td>PII handling regime; applicable regulatory frameworks (GDPR, HIPAA, PCI, SOC2&hellip;); data residency and sovereignty constraints.</td></tr>
+        <tr><td rowspan="2"><strong>Data &amp; integration</strong></td>
+            <td>Data</td><td>Retention period, durability guarantees, portability / export, backup &amp; restore expectations.</td></tr>
+        <tr><td>Compatibility</td><td>Platform / browser / device support, API versioning policy, named integration partners and protocols.</td></tr>
+        <tr><td rowspan="3"><strong>Evolution &amp; operation</strong></td>
+            <td>Extensibility</td><td>What is expected to change, in which dimensions, on what cadence.</td></tr>
+        <tr><td>Operability / observability</td><td>Who runs it, on-call burden, what operators need to see (logs, metrics, traces, alerts).</td></tr>
+        <tr><td>Cost</td><td>Infrastructure ceiling, per-transaction or per-user economics, budget constraints that bound architecture.</td></tr>
+      </tbody>
+    </table>
+
+    <p>The ten dimensions above are the floor, not the ceiling. Domain-specific NFRs &mdash; real-time deadlines for control systems, accessibility (WCAG) and internationalisation for user-facing products, deterministic latency for trading systems &mdash; are added as the domain demands. The discipline is to walk the floor list explicitly before adding domain-specific items, not to skip straight to the dimensions the author already had in mind.</p>
+
+    <h4>Quality-attribute scenario shape</h4>
+    <p>For NFRs that are load-bearing enough to need rigour beyond a one-line target, the six-component scenario form keeps the requirement testable:</p>
+
+    <pre><code>stimulus:        what happens that exercises the attribute
+source:          who or what initiates the stimulus
+environment:     under what operational mode (normal, degraded, &hellip;)
+artifact:        the part of the system the stimulus reaches
+response:        what the system must do
+response_measure: how well, quantified
+
+# Example &mdash; availability
+stimulus: a database replica becomes unreachable
+source: infrastructure / network failure
+environment: normal operating mode
+artifact: the API service
+response: route reads to the surviving replica; surface a degraded health signal
+response_measure: no user-visible failures; failover within 5s; alert fires within 30s</code></pre>
+
+    <p>The <code>response_measure</code> is the field that does the work. An attribute scenario without a measured response is a wish.</p>
+
+    <h4>The three classes stakeholders rarely articulate</h4>
+    <p>Independently of the NFR list, three classes of requirement are systematically under-stated by stakeholders &mdash; they show up as defects rather than as elicited needs. Walk them at Brief time:</p>
+
+    <ul>
+      <li><strong>Negative requirements (shall-not).</strong> "The system must not lose committed data." "The system must not log PII." "The system must not exceed the monthly cost ceiling." These are constraints by their nature; they belong in &sect; E.</li>
+      <li><strong>Implicit requirements.</strong> Beliefs the Brief assumes without saying. <em>"The system is only used by employees on the corporate network during business hours."</em> Surface them or they show up as outages when the world changes.</li>
+      <li><strong>Interaction requirements.</strong> Behaviours that emerge from how subsystems combine, invisible from any one part. Mostly surface during Architecture, but the Brief should name the integrations that produce them so the Architecture knows where to look.</li>
+    </ul>
+
+    <h4>Assumptions &mdash; named, with invalidation triggers</h4>
+    <p>Assumptions are the largest source of silent Brief failure. The discipline is short and non-negotiable: every load-bearing assumption is written down, with a one-line note on what would invalidate it.</p>
+
+    <pre><code>assumptions:
+  - "The upstream billing API maintains its current 100 req/s rate limit through 2026.
+     Invalidated by: tighter quotas, deprecation announcements."
+  - "Customers tolerate up to 5s of cold-start latency for monthly reports.
+     Invalidated by: customer feedback indicating the threshold is lower; a competitor
+     shipping a sub-second alternative."
+  - "The finance team will continue to operate primarily during US business hours.
+     Invalidated by: international expansion adding 24/7 reconciliation needs."</code></pre>
+
+    <p>Buried assumptions are the most expensive defects in the spec tree because they cannot be reviewed &mdash; nobody can argue with a belief that has not been written down. Surfacing them in the Brief makes them inspectable, refutable, and updatable.</p>
+
+    <h4>Open questions and dependencies</h4>
+    <p>The Brief is not required to know everything. It is required to be honest about what it does not know.</p>
+
+    <ul>
+      <li><strong>Open questions</strong> &mdash; "we don't know yet, here is what would resolve it." Listed explicitly. Each has an owner and a target resolution date if one is realistic. A Brief with no open questions on a non-trivial system is either a finished retrospective or a fabrication.</li>
+      <li><strong>Dependencies</strong> &mdash; people, systems, decisions outside the Brief's control that the Brief rests on. "A designer is needed in Q3 to finalise the operator interface." "The org-wide data-store decision is pending; this Brief assumes Postgres but accepts the risk of revision." Each dependency is named, owned, and tracked.</li>
+    </ul>
+
+    <h3>F. Non-Goals</h3>
+    <p>What the system is explicitly not for, not solving, not building. The point is to defuse silent scope creep: stakeholders who learn their concern is out of scope can take it elsewhere; without explicit non-goals, every concern stays implicitly in scope and resurfaces as feature requests, design assumptions, or post-launch surprises.</p>
+
+    <p>Each non-goal carries a reason in one of four categories:</p>
+    <ul>
+      <li><strong>Not now.</strong> Will be addressed later. Includes a tentative when or trigger ("after the v2 release", "when we cross 10k MAU").</li>
+      <li><strong>Not us.</strong> A different team or product owns it. Names the alternative if known.</li>
+      <li><strong>Different product.</strong> Adjacent but architecturally distinct; conflating would distort both.</li>
+      <li><strong>Explicit out-of-scope decision.</strong> Reviewed and declined &mdash; for example, real-time collaboration was on the table and rejected for cost / complexity reasons, captured in an ADR.</li>
+    </ul>
+
+    <p>Non-goals are decision artifacts, not aspirations. <em>"We won't support multi-tenancy in v1"</em> is a non-goal &mdash; concrete, decided, architecturally load-bearing (a single-tenant architecture is materially simpler than one designed to evolve into multi-tenancy). <em>"We don't really care about collaboration"</em> is not a non-goal &mdash; it leaves the door open and provides no architectural relief.</p>
+
+    <h3>G. Success Criteria</h3>
+    <p>Measurable, observable, falsifiable indicators that the Desired Outcomes were achieved. Each criterion anchors back to a named outcome. A criterion that does not is either out of scope or signals an outcome that was not stated.</p>
+
+    <h4>Frameworks software actually uses</h4>
+    <p>Pick one consciously and use it consistently; mixing frameworks without reason confuses reviewers and leaves criteria neither comparable nor cumulable.</p>
+
+    <ul>
+      <li><strong>OKRs</strong> (Objectives + Key Results). Per-outcome objective; 2&ndash;4 measurable key results that confirm or refute it. Strong for outcome alignment; weak when the team conflates objectives with feature lists.</li>
+      <li><strong>SMART goals</strong>. Specific, Measurable, Achievable, Relevant, Time-bound. Useful as a checklist applied to each individual criterion regardless of containing framework.</li>
+      <li><strong>HEART</strong> (Happiness, Engagement, Adoption, Retention, Task success). Suited to user-facing products; structures criteria across user-experience dimensions that single-number metrics tend to miss.</li>
+      <li><strong>AARRR / Pirate metrics</strong> (Acquisition, Activation, Retention, Referral, Revenue). Suited to consumer or growth-stage products; aligns success with funnel stages.</li>
+    </ul>
+
+    <h4>Outcome metrics are not output metrics</h4>
+    <p>Outcome metrics measure the changed state of the world the system produces &mdash; users completing tasks, errors avoided, time saved, revenue generated. Output metrics count what the team shipped &mdash; features merged, lines written, sprints completed. Output metrics belong in project tracking; they do not belong in success criteria. A Brief whose criteria read "ship the v1 dashboard by Q3" has substituted output for outcome.</p>
+
+    <h4>Leading versus lagging</h4>
+    <p>Lagging indicators confirm what already happened (quarterly churn, annual revenue, post-launch NPS); leading indicators predict what is about to happen (week-1 retention, signup-to-activation rate, time-to-first-value). A Brief with only lagging indicators tells the team it has failed too late to act. Mix both deliberately: leading indicators for steering, lagging indicators for confirming.</p>
+
+    <h4>North Star</h4>
+    <p>The single number that, if it moves, indicates the product is succeeding overall. Not every Brief needs one, but if one cannot be named, it is worth checking whether the Outcomes are actually competing rather than reinforcing. Multiple incompatible primary metrics is the symptom of an unresolved product strategy &mdash; the Brief is not the place to resolve it, but it is the place to surface the conflict honestly rather than papering over it.</p>
+
+    <h4>Quantify when honest</h4>
+    <p>If the metric is real and the baseline known, name the number. If the metric is real but the baseline is to-be-measured, name the metric and write <code>baseline: TBD</code>. If neither baseline nor target is honestly knowable yet, say so and name a date by which the metric will be operationalised. Fabricated numbers are worse than absent ones &mdash; they pass review and then anchor decisions for years.</p>
+  </section>
+
+  <!-- ===================== SECTION 3: ANTI-PATTERNS ===================== -->
+  <section id="pb-anti-patterns">
+    <h2>3. Anti-Patterns</h2>
+    <ol>
+      <li><strong>Stakeholder collapse.</strong> "The user" is treated as a monolithic role. Distinct concerns from distinct stakeholders &mdash; normal users vs. maintainers vs. negative stakeholders &mdash; get averaged into a flat persona. Tell: only one or two roles in the Stakeholders section; Outcomes section reads as if all stakeholders want the same thing.</li>
+
+      <li><strong>Silent surrogacy.</strong> Inputs from a product manager, engineer, or sales lead speaking on behalf of a stakeholder are recorded as if they came from the stakeholder directly. Tell: the Stakeholders section names roles and concerns but no source chain; outcomes are confidently stated for stakeholders nobody on the team has ever spoken to.</li>
+
+      <li><strong>Solution disguised as problem.</strong> The Problem section names the chosen solution and works backwards. <em>"We need a real-time dashboard"</em> is the solution; the underlying problem (decision latency, conflict between teams, missing data) is missing. Tell: only one solution remains plausible by the time the Problem is read; alternative solutions feel like they would solve a different problem.</li>
+
+      <li><strong>Aspirational outcomes.</strong> Outcomes phrased as adjectives without an observable change. <em>"Better UX," "more efficient workflow," "enhanced visibility."</em> Tell: a reviewer cannot picture how to recognise the outcome happening; the same outcome paragraph could be pasted into ten unrelated Briefs.</li>
+
+      <li><strong>Mode-coverage gap.</strong> The Operational Concept describes only the happy path. Degraded behaviour, emergency response, maintenance, and shutdown are absent. Tell: the Modes question is unanswered or answered only with "normal"; the Brief contains no language about what the system does when its dependencies fail.</li>
+
+      <li><strong>Missing NFRs.</strong> The NFR Discovery Checklist was not walked. Architecture-driving qualities &mdash; availability, latency, security, extensibility, cost &mdash; are absent or hand-waved. Tell: the Constraints section lists tech-stack mandates and a launch date but no quality targets; the Architecture downstream invents defaults that the Brief never approved.</li>
+
+      <li><strong>Vague success criteria.</strong> "We'll know it when we see it." Criteria are unmeasurable, untimed, or unanchored to any named outcome. Tell: criteria use adverbs ("significantly", "noticeably", "broadly") instead of numbers; success is asserted at end-of-quarter without a falsifiable test.</li>
+
+      <li><strong>No non-goals.</strong> The Non-Goals section is absent or perfunctory. Every conceivable concern stays implicitly in scope. Tell: stakeholders raise feature requests in month two that everyone assumed had been declined and nobody can find a record of it being out of scope.</li>
+
+      <li><strong>Buried assumptions.</strong> Load-bearing assumptions are implicit in the Brief's prose rather than enumerated. Tell: the Brief has no place a reader can point to and say "if this changes, the Brief needs to be revisited"; six months later, an upstream change invalidates the Brief silently and the team rediscovers the assumption from a production incident.</li>
+
+      <li><strong>PRD mimicry / committee artifact.</strong> The Brief drifts into a feature list, a roadmap, or a marketing one-pager. It accumulates contributions from many authors and decides nothing. Tell: long Brief, no controversial position taken, every reviewer's preferred wording present somewhere; a junior engineer reading it cannot extract what the system is supposed to do.</li>
+
+      <li><strong>Architecture decisions hidden in Operational Concept.</strong> Specific technologies, patterns, or vendors are named in &sect; D. Tell: the Brief mentions Postgres, Kafka, AWS, or a specific framework as if it were an operational fact rather than a downstream decision; no ADR exists to record the choice or its alternatives.</li>
+
+      <li><strong>LLM-fabricated Brief (retrofit).</strong> An agent asked to retrofit a Brief from existing code emits crisp, committee-quality stakeholder lists, problem statements, and outcomes &mdash; all invented from training priors and the visible code. Tell: the retrofit had no preserved product documents, no accessible original deciders, no stakeholder interviews, yet the Brief reads as if a launch team produced it; <code>recovery_status</code> says <code>verified</code> on fields no human has ever supplied.</li>
+    </ol>
+  </section>
+
+  <!-- ===================== SECTION 4: EXAMPLES ===================== -->
+  <section id="pb-examples">
+    <h2>4. Examples</h2>
+
+    <h3>Good example &mdash; lean greenfield Brief</h3>
+    <p>An internal tool: a billing-reconciliation service that compares the upstream billing system against the company's ledger and surfaces exceptions for the finance team. Two engineers, one product sponsor, six-week target to first internal use.</p>
+
+    <pre><code>---
+id: PB
+title: "Ledger Reconciliation Service"
+summary: "Ledger Recon is an internal reconciliation service for the FP&amp;A team
+  that compares upstream billing entries against the internal ledger daily,
+  so that month-end close completes within two business days."
+status: accepted
+date: 2026-04-15
+---
+
+# Product Brief: Ledger Reconciliation Service
+
+## Stakeholders
+- Normal user: FP&amp;A analyst (3 named individuals, primary: @jane).
+  Source chain: direct (interview 2026-04-08).
+- Maintainer / on-call: platform team's data on-call rotation. Source chain: direct.
+- Functional beneficiary: CFO and Controller. Source chain: surrogate (1 hop, via @sponsor-pm).
+- Interfacing systems: upstream billing API (owner @billing-team);
+  internal ledger DB (owner @platform-team); finance team's spreadsheets (manual today).
+- Negative stakeholders: none identified after walk-through.
+  Reviewed 2026-04-12; revisit if the tool's outputs become inputs to compensation decisions.
+- Regulators: internal SOX-controls owner (treats financial-data tooling as in-scope for audit).
+
+## Problem
+Month-end close runs four to seven business days late in three of the last four
+months (Jan-Apr 2026). FP&amp;A logs 30-60 hours of overtime per close cycle
+attributed to manual reconciliation between the billing system and the ledger.
+The current process is a spreadsheet maintained by hand from CSV exports;
+discrepancies are found late, traced slowly, and fixed under time pressure.
+The cost is partly the overtime, partly delayed reporting to the board.
+
+Source: FP&amp;A close-cycle log Jan-Apr 2026; @jane interview; @sponsor-pm summary.
+
+## Desired Outcomes
+- For FP&amp;A analysts: at the start of close, the analyst sees a categorised list of
+  reconciliation exceptions (amount mismatch, missing entry, timing lag) with
+  drill-down to the source records, instead of building the comparison by hand
+  in Excel. Close-day overtime returns to baseline.
+- For the Controller: month-end close completes within two business days
+  reliably, with an audit trail explaining each resolved exception.
+- For the platform team: the service runs as one more job in the existing
+  data-pipeline stack with no novel infrastructure.
+
+## Operational Concept
+- Mission: produce a daily reconciliation report and an end-of-month exception
+  workbook that the FP&amp;A team works from during close.
+- Environment: internal AWS account, behind SSO; consumes the billing API
+  and reads the ledger DB read-replica.
+- Scenarios:
+  1. Daily run (~07:00 UTC): pull yesterday's billing entries, compare against
+     ledger, write a daily report.
+  2. Close run (1st business day of the month): full month comparison;
+     output the exception workbook.
+  3. Replay run (manual): re-process a date range when an upstream correction lands.
+- Modes: normal; degraded (billing API unreachable &mdash; produce a partial
+  report and alert); maintenance (skipped runs are caught up on next start).
+- Users / roles: FP&amp;A analyst (read), platform on-call (run / replay),
+  Controller (read).
+- Support: platform team's data on-call; runbook lives in the platform wiki.
+- Performance in operation: a daily run completes inside its 30-minute window;
+  the close run completes in under 2 hours.
+
+## Constraints, NFRs, and Assumptions
+
+### Hard constraints
+- Internal SSO required; no external network exposure.
+- All reads are from existing data sources; no schema changes upstream.
+- Hard deadline: first internal use 2026-06-01 (next month-end close).
+
+### NFRs
+- Availability: best-effort; one missed run per quarter acceptable
+  (it is a close-cycle tool, not a customer-facing system).
+- Latency: not user-interactive; report generation in operating windows above.
+- Throughput: ~2M billing entries/month; 10x growth horizon for two years.
+- Security: data is financial; SOX-controls scope; access via SSO + role check;
+  no PII beyond employee names of analysts who annotate exceptions.
+- Privacy / compliance: SOX audit trail for exception resolutions; 7-year
+  retention on exception workbooks per finance policy.
+- Data: source data read-only; outputs stored in S3 with versioning;
+  exception annotations stored in a small Postgres table owned by this service.
+- Compatibility: consumed only via the FP&amp;A team's existing tools (web report;
+  Excel-compatible workbook export). No external integrations.
+- Extensibility: new exception categories expected (~quarterly); new upstream
+  billing-system version expected (~annually).
+- Operability / observability: daily-run success / failure metric; alert on
+  failure or missed window; on-call expects to spend &lt;1 hour/month on this.
+- Cost: under $500/month infrastructure; well under the platform team's
+  budget envelope.
+
+### Assumptions
+- The billing API maintains its current schema and rate limit through 2026.
+  Invalidated by: deprecation notice; tighter quotas.
+- FP&amp;A close cycle remains monthly with the current categorisation of
+  exception types. Invalidated by: switch to weekly close; new exception types
+  appearing faster than quarterly.
+- The platform team continues to operate the existing data-pipeline stack.
+  Invalidated by: org change moving the platform out from under the team.
+
+### Open questions
+- Should resolved exceptions feed back to the billing team as an automated
+  correction queue, or stay manual? Owner: @sponsor-pm. Target: post-v1.
+
+## Non-Goals
+- Real-time reconciliation. Not now &mdash; daily latency is enough; revisit if
+  close cycle moves to weekly.
+- Multi-entity / multi-currency. Not us &mdash; the international finance team
+  has its own tool; this Brief covers US-entity reconciliation only.
+- Automatic correction of upstream billing errors. Different product &mdash;
+  corrections are billing-team workflow, not reconciliation.
+
+## Success Criteria
+Anchored to outcomes. Mixed leading and lagging.
+
+- (Outcome 1, lagging) FP&amp;A close-cycle overtime &le; 5 hours per close,
+  measured over three consecutive closes after launch. Baseline: 30-60 hours
+  per close (Jan-Apr 2026).
+- (Outcome 1, leading) Daily-run success rate &ge; 99% over rolling 30 days.
+- (Outcome 2, lagging) Month-end close completes within 2 business days for
+  three consecutive months. Baseline: 4-7 business days late.
+- (Outcome 2, lagging) Zero SOX-audit findings related to reconciliation
+  process for the first audit cycle after launch.
+- (Outcome 3, leading) Platform on-call time spent on this service &le; 1 hour
+  per month, rolling.
+
+North Star: business-days-to-close. If it moves from 4-7 to &le; 2, the system
+is succeeding.
+</code></pre>
+
+    <p>What this example gets right: every outcome anchored to a named stakeholder; problem stated with cited evidence rather than opinion; NFR Discovery Checklist walked explicitly with each dimension answered (including "best-effort, one miss per quarter acceptable" &mdash; an honest target rather than a fabricated SLA); assumptions listed with invalidation triggers; non-goals carry reasons; success criteria mix leading and lagging, every one anchored to an outcome with a baseline. The Brief does not name a database, a queue technology, or a deployment pattern &mdash; those are downstream.</p>
+
+    <h3>Bad example &mdash; same domain, several failures at once</h3>
+
+    <pre><code>---
+id: PB
+title: "Reconciliation Tool"
+status: accepted
+---
+
+# Product Brief
+
+## Stakeholders
+- Users: the finance team.                                 &larr; Stakeholder collapse. "Finance team"
+                                                              hides analyst, Controller, audit owner,
+                                                              upstream billing team.
+
+## Problem
+The finance team needs better tooling for reconciliation.  &larr; Solution disguised as problem.
+                                                              No evidence; the actual pain
+                                                              (late close, overtime hours) is missing.
+
+## Desired Outcomes
+- Improved efficiency.                                     &larr; Aspirational; unobservable.
+- Better visibility into financial data.                   &larr; Same. Pasteable into any Brief.
+
+## Operational Concept
+The system will be a Postgres-backed dashboard that pulls  &larr; Architecture decision in the
+data from the billing API every five minutes and presents     Operational Concept (Postgres,
+it in a real-time view.                                       five-minute polling, real-time view).
+                                                              No ADR; option space already collapsed.
+
+## Constraints
+- Must launch by Q2.                                       &larr; NFR Discovery Checklist not walked.
+- Should be secure.                                           No availability target. No latency
+                                                              target. No data-retention policy.
+                                                              "Should be secure" is vacuous.
+
+## Non-Goals
+(empty)                                                    &larr; Everything is implicitly in scope.
+                                                              Multi-tenancy, multi-currency,
+                                                              real-time correction, mobile UI,
+                                                              external API &mdash; all unreviewed.
+
+## Success Criteria
+- The finance team is happier.                             &larr; Vague; unmeasurable; not anchored.
+- Reconciliation is faster.                                &larr; No baseline, no target, no timing.
+</code></pre>
+
+    <p>Six anti-patterns in one page: stakeholder collapse, solution-disguised-as-problem, aspirational outcomes, architecture decisions hidden in operational concept, missing NFRs, no non-goals, vague success criteria. A reviewer cannot tell which constraints are load-bearing, what failure looks like, or whether the system has been built before because none of the choices are documented as choices.</p>
+
+    <h3>AI-era bad example &mdash; fabricated retrofit Brief</h3>
+    <p>A team runs a retrofit skill against a four-year-old internal reconciliation service. The codebase is intact; original product documents are not, and the engineers who built it have left the company. The agent produces:</p>
+
+    <pre><code>---
+id: PB
+title: "Ledger Reconciliation Service"
+status: accepted
+date: 2022-03-01                                          &larr; Back-dated; no evidence this was the
+                                                              original Brief date.
+recovery_status:
+  stakeholders: reconstructed                             &larr; Illegal state. No "reconstructed"
+  problem: reconstructed                                     for human-only fields.
+  outcomes: reconstructed
+---
+
+## Stakeholders
+- The finance team, who relied on manual spreadsheet            &larr; Crisp, plausible &mdash; entirely
+  reconciliation, faced increasing close delays as transaction      invented. No interviews,
+  volume grew. Engineering leadership prioritised an automated      no preserved documents.
+  reconciliation service to alleviate this burden.
+
+## Problem
+By early 2022, month-end close was running consistently late    &larr; Numbers fabricated from training
+due to manual reconciliation between the billing system and        priors that "sound right" for
+the ledger. Overtime hours had grown by approximately 40%          a reconciliation service.
+year-over-year.                                                    No source citation possible.
+
+## Desired Outcomes
+The team aimed to reduce close-cycle overtime to baseline       &larr; Reads as a real Brief but is
+levels and complete close within two business days, while          retro-fitted from observable code
+providing a SOX-compliant audit trail of all reconciliation        behaviour. Outcomes are
+exceptions.                                                        reverse-engineered from features.</code></pre>
+
+    <p>The tells: committee-quality prose despite no preserved conversation; specific numbers (40% overtime growth, two-business-day target) for which no archive exists; outcomes phrased as if extracted from a launch announcement that was never written; <code>recovery_status: reconstructed</code> on human-only fields, which the retrofit skill must refuse to emit. The Brief looks plausible and is therefore worse than no Brief at all &mdash; future readers will treat it as authoritative.</p>
+
+    <p>What the retrofit should produce instead:</p>
+
+    <pre><code>---
+id: PB
+title: "Ledger Reconciliation Service (retrofit)"
+status: accepted
+date: 2026-04-19                                          &larr; Date of the retrofit record itself,
+                                                              not a guessed Brief date.
+recovery_status:
+  stakeholders: unknown
+  problem: unknown
+  outcomes: unknown
+  operational_concept: verified   &larr; observable from code
+  constraints: partially_verified &larr; some NFRs derivable
+  non_goals: unknown
+  success_criteria: unknown
+---
+
+## Stakeholders
+unknown &mdash; no preserved interviews or stakeholder records as of the retrofit date.
+Observable users from access logs: 6 accounts in the &lsquo;finance&rsquo; AD group.
+Observable on-call: the data-platform team currently fields alerts for this service.
+Stakeholder follow-up scheduled: @sponsor-pm to interview current finance users.
+
+## Problem
+unknown &mdash; original problem statement is not preserved.
+Observable: the service exists, runs daily, produces a reconciliation report
+consumed by the finance team. Why it was built is not in the code.
+
+## Desired Outcomes
+unknown &mdash; original outcomes are not preserved.
+Observable consumption: the daily report is opened by the finance group within
+2 hours of generation 95% of the time over the last 90 days. Whether this
+matches the original intent is not knowable from code.
+
+## Operational Concept (observed from code and operations)
+[populated from code, runbooks, and observed behaviour]
+
+## Constraints (observable)
+- SSO required; no external network exposure (verified from infrastructure).
+- Hard deadline at original launch: not preserved.
+- NFRs derivable from observed operation:
+    Availability: ~99.5% over last year (operational data).
+    Latency: report generation observed at 8&ndash;15 minutes.
+    Cost: ~$320/month observed (cloud billing).
+    Other dimensions: unknown until human supplies original targets.
+
+## Non-Goals
+unknown &mdash; not preserved; current behaviour does not reveal what was
+deliberately excluded.
+
+## Success Criteria
+unknown &mdash; not preserved.</code></pre>
+
+    <p>Honest, useful, and forward-compatible. It distinguishes what code reveals from what only humans can supply, marks the gaps clearly, and queues up the stakeholder follow-up that the retrofit should produce as a deliverable. Future readers can tell at a glance which sections to trust and which need a human pass.</p>
+  </section>
+
+  <!-- ===================== SECTION 5: QUALITY BAR ===================== -->
+  <section id="pb-quality-bar">
+    <h2>5. Quality Bar</h2>
+    <p class="lead">Yes/No checklist, grouped by concern. A Brief passes when every applicable item is answered Yes. The meta-gate at the bottom &mdash; the Spec Ambiguity Test &mdash; overrides all of them: a Brief that ticks every box but cannot let a junior engineer or low-mid-tier AI write defensible Requirements from it fails.</p>
+
+    <div class="card">
+      <h3>Stakeholder completeness</h3>
+      <ul>
+        <li>Has the Onion Model been walked once, every slot considered?</li>
+        <li>For empty slots: is the reason recorded ("n/a &mdash; internal tool, single user"), not silently blank?</li>
+        <li>Are negative stakeholders explicitly considered (and either named or recorded as none after review)?</li>
+        <li>For each named stakeholder: is the source chain recorded (direct vs. surrogate vs. multi-hop)?</li>
+        <li>For multi-hop surrogate inputs: has a direct interview been triggered before treating their outcomes or constraints as load-bearing?</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Problem evidence</h3>
+      <ul>
+        <li>Is the Problem stated as a problem in the world, not as a solution?</li>
+        <li>Has the first problem statement been pushed past at least one "why"?</li>
+        <li>Is concrete evidence cited (data, artifacts, quotes), with sources?</li>
+        <li>Where evidence is honestly weak, is that admitted in the Brief rather than padded?</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Outcome specificity</h3>
+      <ul>
+        <li>Is there one outcome paragraph per stakeholder group named in &sect; A?</li>
+        <li>Does each outcome describe a changed state of the world (observable), not a feature or aspiration?</li>
+        <li>Could a reviewer picture how to recognise the outcome as having happened?</li>
+        <li>Working-backwards check: could the launch announcement be written from these outcomes without invention?</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Operational Concept coverage</h3>
+      <ul>
+        <li>Are all seven questions answered (mission, environment, scenarios, modes, users / roles, support, performance)?</li>
+        <li>Are at least three end-to-end scenarios written, naming a stakeholder, a trigger, and a result?</li>
+        <li>Is mode coverage explicit (normal, degraded, emergency, maintenance, startup, shutdown), with at least a one-line statement per mode the system has?</li>
+        <li>Is the section free of architecture decisions (no specific technologies, vendors, or patterns asserted as facts)?</li>
+      </ul>
+    </div>
+
+    <div class="card" style="border-left: 4px solid var(--accent-trace);">
+      <h3>NFR &amp; constraint capture</h3>
+      <ul>
+        <li>Has the NFR Discovery Checklist been walked once, every dimension answered (target, deferred-with-placeholder, or n/a-with-reason)?</li>
+        <li>For load-bearing NFRs: is a quality-attribute scenario or quantified target captured rather than a one-line wish?</li>
+        <li>Are domain-specific NFRs (real-time deadlines, accessibility, internationalisation, etc.) added explicitly when relevant, on top of the floor list?</li>
+        <li>Have the three under-articulated classes been walked &mdash; negative requirements, implicit requirements, interaction requirements?</li>
+        <li>Are hard constraints (regulatory, contractual, mandated tech, hard dates, budget ceilings) listed with their sources?</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Assumptions and unknowns</h3>
+      <ul>
+        <li>Are load-bearing assumptions enumerated, not buried in prose?</li>
+        <li>Does each assumption carry an invalidation trigger (what would make it false)?</li>
+        <li>Are open questions surfaced explicitly with owner and target resolution?</li>
+        <li>Are external dependencies (people, systems, decisions) named with owners?</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Non-goals discipline</h3>
+      <ul>
+        <li>Is the Non-Goals section non-empty?</li>
+        <li>Does each non-goal carry a reason in one of the four categories (not now, not us, different product, explicit out-of-scope decision)?</li>
+        <li>Are the most plausible scope-creep candidates (multi-tenancy, internationalisation, real-time, mobile, external API) addressed if not already in scope?</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Success criteria measurability</h3>
+      <ul>
+        <li>Does every criterion anchor back to a named outcome?</li>
+        <li>Are criteria measurable (numbers where honest, "baseline TBD" where not, never fabricated)?</li>
+        <li>Is the mix of leading and lagging indicators deliberate?</li>
+        <li>Are output metrics excluded (no "ship the v1 dashboard" in the success criteria)?</li>
+        <li>Where a single product strategy is intended: is there a North Star, or an honest acknowledgement that the outcomes compete?</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Retrofit honesty</h3>
+      <ul>
+        <li>For a retrofit Brief: are human-only fields without a human source set to <code>recovery_status: unknown</code>, never <code>reconstructed</code>?</li>
+        <li>Is the date the retrofit-record date, not a guessed original-Brief date?</li>
+        <li>Are observable fields (operational concept, parts of constraints) explicitly tagged as derived from code / operations rather than from human intent?</li>
+        <li>Is stakeholder follow-up queued as a deliverable, with named owners?</li>
+      </ul>
+    </div>
+
+    <div class="card" style="border-left: 4px solid var(--accent-trace);">
+      <h3>Spec Ambiguity Test &mdash; meta-gate</h3>
+      <ul>
+        <li>Could a junior engineer or low-mid-tier AI, reading only this Brief, derive defensible root-scope Requirements from it without guessing about stakeholders, outcomes, or NFR targets?</li>
+      </ul>
+      <p>If the answer is No, the Brief under-specifies its anchor role. Revise before accepting. This test overrides every box above: a Brief that passes all of them but fails this one is not done.</p>
+    </div>
+  </section>
+
+  <!-- ===================== REFERENCES ===================== -->
+  <section id="pb-references">
+    <h2>References</h2>
+    <p style="color: var(--fg-muted); font-size: 0.9em;">Primary backing from the engineering-codex (<code>/home/stefanus/repos/engineering-codex/</code>) and named primary sources. Claims load-bearing on this page are anchored in the cited material.</p>
+    <ul>
+      <li><code>wiki/sources/src-alexander-stakeholder-taxonomy-2005.md</code> &mdash; Alexander, Ian F. (2005). <em>A Taxonomy of Stakeholders: Human Roles in System Development.</em> IJTHI 1(1), 23&ndash;59. The Onion Model and the surrogacy concept used in &sect; A.</li>
+      <li><code>wiki/sources/src-arch-evaluation-quality-attribute-scenarios.md</code> &mdash; Bass, Clements, Kazman. <em>Software Architecture in Practice.</em> Six-component quality-attribute scenario form (stimulus / source / environment / artifact / response / response measure) used in &sect; E for load-bearing NFR specification.</li>
+      <li><code>wiki/concepts/concept-requirement-quality.md</code> &mdash; requirement quality characteristics (unambiguous, complete, singular, verifiable). Backs the Spec Ambiguity Test treatment and the success-criteria measurability bar in &sect; G and &sect; 5.</li>
+      <li>Jackson, Michael (2001). <em>Problem Frames: Analysing and Structuring Software Development Problems.</em> Addison-Wesley. The World / Machine distinction used in &sect; B.</li>
+      <li>Gause, Donald C. &amp; Weinberg, Gerald M. (1990). <em>Are Your Lights On? How to Figure Out What the Problem Really Is.</em> The "don't take the first problem statement seriously" principle in &sect; B.</li>
+      <li><code>wiki/sources/src-arc42-template-overview.md</code> &mdash; arc42. Structural analogy for the Brief's section discipline; arc42 covers architecture, the Brief covers the layer above, but the principle that named sections force completeness carries.</li>
+      <li>Doerr, John (2018). <em>Measure What Matters.</em> OKR mechanics referenced in &sect; G as one valid framework among several for success-criteria structure.</li>
+      <li>Rodden, Hutchinson, Fu (Google, 2010). <em>Measuring the User Experience on a Large Scale: User-Centered Metrics for Web Applications.</em> The HEART framework referenced in &sect; G.</li>
+      <li>Working backwards / PR-FAQ practice. Internal Amazon authoring discipline; widely written about. Used as a forcing-function technique in &sect; C.</li>
+    </ul>
+  </section>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'neutral' });</script>
+<script src="../js/app.js"></script>
+</body>
+</html>

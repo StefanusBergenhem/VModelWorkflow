@@ -85,11 +85,19 @@ Inspect for HTML template structure (CSS, header/sidebar/footer partials, sectio
 ## 6. HTML conventions (established on ADR page)
 
 - **Template:** inherit from other `docs/guide/artifacts/*.html` pages — same head, sidebar nav, footer, CSS.
-- **Quality Bar rendering:** grouped concern cards (matches `.card` style used on `detailed-design.html`). Each card = one concern group with 2–4 Yes/No items. Give the Spec Ambiguity Test card a visual accent to mark its meta-gate status.
+- **Quality Bar rendering:** grouped concern cards (matches `.card` style used on `detailed-design.html`). Each card = one concern group with 2–4 Yes/No items. Give the Spec Ambiguity Test card a visual accent to mark its meta-gate status. **Other meta or load-bearing cards may share the accent** (established on Product Brief 2026-04-19: the NFR & constraint capture card carries the accent because it is the section whose silent omission has the largest blast radius).
 - **Examples rendering:** code blocks with inline `←` annotations marking failure points on bad examples.
 - **Anti-patterns:** numbered list; each item is a 1–2 sentence failure mode + a concrete tell.
 - **Navigation:** confirm the page is linked in `docs/guide/index.html`; add if missing.
 - **References:** codex-backed citations at page end.
+- **Mermaid diagrams:** loaded via CDN at the bottom of the page, immediately before `app.js`. Established on Product Brief 2026-04-19 (Onion Model). Pattern:
+
+  ```html
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true, theme: 'neutral' });</script>
+  ```
+
+  Diagrams are wrapped in `<div class="mermaid">…</div>`. Pages that don't use Mermaid don't load the script. The Architecture page will need this for its mandatory Structure Diagram and sequence diagrams in Composition.
 
 ---
 
@@ -100,14 +108,25 @@ Inspect for HTML template structure (CSS, header/sidebar/footer partials, sectio
 - **Quantify example content** where it illustrates a point (e.g., "~1 engineer-week rollback"). Keep numbers clearly illustrative.
 - **Name retrofit / AI-era anti-patterns specifically** (e.g., "LLM confident invention," "laundering the current state," "test-as-requirement inversion"). Vague warnings don't land.
 
+## 7b. Conventions learned on Product Brief
+
+- **Lean by default; no separate "scaling" section.** Pre-pivot pages had explicit small-project / large-project scaling callouts. Post-pivot the page IS the lean version; scaling-up to heavyweight ceremony is out of framework scope (no pointer to pre-pivot pages — keeps voice clean).
+- **Walked checklists for completeness-bound sections.** Where the failure mode is silent omission, give the author an explicit checklist to walk: NFR Discovery Checklist (10 dimensions, grouped) and Onion Model slot walkthrough. The discipline is *walking the checklist explicitly* (every slot answered, including "n/a — reason"), not in populating every slot.
+- **Architecture-driving NFRs at upstream artifacts.** Surfacing NFRs at the anchor layer is non-negotiable; an artifact that drives architecture cannot let availability / latency / security / extensibility default silently. The NFR-10 list (availability, latency, throughput, security, privacy/compliance, data, compatibility, extensibility, operability, cost) is the floor for software-product Briefs; domain NFRs (real-time, accessibility, i18n) are added as needed. Adopt the same posture in Requirements and Architecture pages.
+- **Quality-attribute scenario form (six components)** — stimulus / source / environment / artifact / response / response_measure — is the canonical rigorous shape for an NFR. Cite Bass-Clements-Kazman; skip the QAW workshop ceremony.
+- **Forcing-function authoring techniques.** Working-backwards / PR-FAQ ("if you can't write the launch announcement, the outcomes aren't concrete enough") and the one-line `summary` frontmatter field both serve as can-you-write-this-cleanly tests. Mention as authoring techniques in best practices, not as artifact sections.
+- **Frameworks-by-name without endorsement.** For success criteria, name OKRs / SMART / HEART / AARRR explicitly with one-line trade-offs; teach the principles (outcome ≠ output, leading vs lagging, North Star) rather than mandating a framework. Avoid NASA/INCOSE measurement jargon (MOE/MOP/TPM) — opaque to the software audience.
+- **Assumptions are first-class.** Every load-bearing assumption is named with an invalidation trigger. Buried-in-prose assumptions are the highest-blast-radius silent failure mode in the spec tree.
+- **Honest unknowns over fabricated certainty.** Open questions, dependencies, and `recovery_status: unknown` (retrofit) are correct outcomes, not partial failures. Surface them visibly; do not pad them away.
+
 ---
 
 ## 8. Remaining artifact order
 
 1. ~~ADR~~ — complete (2026-04-19).
 2. ~~Detailed Design~~ — complete (2026-04-19). Compression carried ~45% of the pre-pivot page's substance (DbC example, behavioural-spec example, error matrix, config-loader example, References core) under the new 5-section + 7-artifact-section shape; the rest was rewritten.
-3. **Product Brief** — next. Consolidates former `stakeholder-needs` + `conops` + `completeness-analysis` pages.
-4. **Requirements** — new; EARS craft, rationale discipline, measurable QAs.
+3. ~~Product Brief~~ — complete (2026-04-19). Consolidated former `stakeholder-needs` + `conops` + `completeness-analysis` (combined ~17.5k words pre-pivot) into a single ~6.5k-word page. NFR Discovery Checklist (canonical 10) and Mermaid Onion Model introduced; assumptions absorbed into Constraints with invalidation triggers; success criteria framed via OKR/SMART/HEART/AARRR (MOE/MOP/TPM dropped as too aerospace-coded).
+4. **Requirements** — next. EARS craft, rationale discipline, measurable QAs.
 5. **Architecture** — new; decomposition, interfaces, mandatory Composition section.
 6. **TestSpec** — new; derivation strategies, per-layer emphasis, coverage targets.
 

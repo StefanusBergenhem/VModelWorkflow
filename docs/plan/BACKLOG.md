@@ -67,10 +67,10 @@ Architectural rationale — including the full Q8–Q15 and NQ-B/C/D/E decisions
 
 **Artifact order** (pattern-setter first, then hardest compression, then upper V):
 
-- [ ] **ADR** — pattern-setter. Lightest refresh (pre-pivot page already closest). Authored first to establish voice, section ordering, abstraction level, example style for the rest.
-- [ ] *After ADR is accepted:* write `docs/plan/PHASE2_AUTHORING_PATTERN.md` capturing chosen voice, section ordering, abstraction level, example style — loaded as context by subsequent fresh sessions so they don't re-invent.
-- [ ] **Detailed Design** — compression exercise. Existing page is the largest; whole-document rewrite under the 5-section structure; remove old Section 8 Test Strategy; reference TestSpec via traceability.
-- [ ] **Product Brief** — consolidates pre-pivot `stakeholder-needs.html` + `conops.html` + `completeness-analysis.html` into one page under the 5-section structure.
+- [x] **ADR** — pattern-setter. Lightest refresh (pre-pivot page already closest). Authored first to establish voice, section ordering, abstraction level, example style for the rest. *(Done 2026-04-19, commit `8b4fea2`.)*
+- [x] *After ADR is accepted:* write `docs/plan/PHASE2_AUTHORING_PATTERN.md` capturing chosen voice, section ordering, abstraction level, example style — loaded as context by subsequent fresh sessions so they don't re-invent. *(Done 2026-04-19, commit `8b4fea2`; updated after each subsequent artifact.)*
+- [x] **Detailed Design** — compression exercise. Existing page is the largest; whole-document rewrite under the 5-section structure; remove old Section 8 Test Strategy; reference TestSpec via traceability. *(Done 2026-04-19, commit `8328d33`.)*
+- [x] **Product Brief** — consolidates pre-pivot `stakeholder-needs.html` + `conops.html` + `completeness-analysis.html` into one page under the 5-section structure. *(Done 2026-04-19.)*
 - [ ] **Requirements** — new page: EARS craft, rationale discipline, measurable QAs, interface contracts.
 - [ ] **Architecture** — new page: decomposition, interfaces, **Composition section** (mandatory per `TARGET_ARCHITECTURE §5.3`).
 - [ ] **TestSpec** — new page: derivation strategies, per-layer emphasis, coverage targets, mandatory-non-empty `verifies`.
