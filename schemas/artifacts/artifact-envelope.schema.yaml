@@ -93,21 +93,6 @@ body:
     referenced in artifact_type. The envelope does not interpret body
     content — it is opaque at this level.
 
-# --- Optional Fields ---
-
-assurance_level:
-  type: integer
-  required: false
-  description: >
-    Generic assurance level (1-5). Only include where standards require it.
-    Not all artifact types need this.
-    Level 1 = highest rigor (maps to DAL A / ASIL D).
-    Level 5 = lowest rigor (maps to DAL E / QM).
-    See schemas/safety-levels/ for rigor parameters per level.
-  range:
-    min: 1
-    max: 5
-
 # --- Auto-Generated Fields ---
 
 content_hash:

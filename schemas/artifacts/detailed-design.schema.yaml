@@ -24,15 +24,12 @@ previous_version: "1.0"  # was pure YAML; migrated to markdown for human/assesso
 #
 #   Layer 1 — Component Design (always present)
 #     The map. Purpose, external interfaces, unit inventory, shared patterns.
-#     Sufficient for QM / ASIL A / IEC 62304 Class A.
 #
 #   Layer 2 — Unit Interface Contracts (added per unit as needed)
 #     Per-unit interfaces, behavior rules, error handling.
-#     Required for ASIL A-B / IEC 62304 Class B / DO-178C DAL D-E.
 #
 #   Layer 3 — Deep Design Evidence (added for critical/complex units)
 #     Rationale, state machines, concurrency model, negative requirements.
-#     Required for ASIL C-D / DO-178C DAL A-C / IEC 62304 Class C.
 #
 # Layer 2/3 units can be embedded in the component document or split into
 # separate files — the choice is based on practical document size.
@@ -110,14 +107,6 @@ frontmatter:
     examples:
       - "FuelRateLimiter"
       - "MessageParser"
-
-  # --- Optional ---
-
-  assurance_level:
-    type: integer
-    required: false
-    range: 1-5
-    description: "1 = highest rigor (DAL A / ASIL D), 5 = lowest (DAL E / QM)"
 
 # =============================================================================
 # DOCUMENT STRUCTURE — LAYER 1 (Component Design)
@@ -294,9 +283,9 @@ layer_2:
 
 layer_3:
   description: >
-    Additional design evidence for safety-critical or high-complexity units.
+    Additional design evidence for high-complexity units.
     Adds rationale, semi-formal notation, concurrency details, and
-    explicit negative requirements. Required for ASIL C-D / DAL A-C.
+    explicit negative requirements.
 
   required_headings:
 
