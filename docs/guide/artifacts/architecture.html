@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Architecture &mdash; VModelWorkflow Guide</title>
+  <link rel="stylesheet" href="../css/main.css">
+</head>
+<body>
+
+<!-- ============================================================
+     SIDEBAR
+     ============================================================ -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <h1>VModelWorkflow</h1>
+    <div class="subtitle">Spec-Driven Development Guide</div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-group">
+      <span class="nav-group-label">Navigation</span>
+      <a class="nav-link" href="../index.html">Back to Main Guide</a>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-group-label">Architecture</span>
+      <a class="nav-link" href="#arch-context">1. V-Model Context</a>
+      <a class="nav-link" href="#arch-best-practices">2. Best Practices</a>
+      <a class="nav-link" href="#arch-anti-patterns">3. Anti-Patterns</a>
+      <a class="nav-link" href="#arch-examples">4. Examples</a>
+      <a class="nav-link" href="#arch-quality-bar">5. Quality Bar</a>
+      <a class="nav-link" href="#arch-references">References</a>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-group-label">Related Artifacts</span>
+      <a class="nav-link" href="product-brief.html">Product Brief</a>
+      <a class="nav-link" href="requirements.html">Requirements</a>
+      <a class="nav-link" href="adr.html">ADR</a>
+      <a class="nav-link" href="detailed-design.html">Detailed Design</a>
+    </div>
+  </nav>
+</aside>
+
+<!-- ============================================================
+     MAIN CONTENT
+     ============================================================ -->
+<main class="main-content" style="margin-left: var(--sidebar-width); padding: var(--space-3xl) var(--space-2xl); max-width: calc(var(--content-max) + var(--space-2xl) * 2 + var(--sidebar-width));">
+
+  <!-- ===================== SECTION 1: V-MODEL CONTEXT ===================== -->
+  <section id="arch-context">
+    <div class="level-indicator left">Non-Leaf Scope Artifact</div>
+    <h2>1. V-Model Context</h2>
+    <p class="lead">An Architecture artifact states how a non-leaf scope is decomposed into children, how those children interact, and how they compose into a running system. One Architecture document per non-leaf scope. It is the allocation layer &mdash; the place where Requirements become a set of subordinate boxes with responsibilities, interfaces, and a runtime shape; where governing ADRs become concrete structural and behavioural commitments; and where integration and system tests derive their targets.</p>
+
+    <h3>Position on the V</h3>
+    <p>Architecture lives on the left-hand descent of the V, one at every non-leaf scope. The root-scope Architecture describes how the whole system is decomposed and composed. Each branch-scope Architecture refines its parent's allocated slice for a subsystem. Leaves have no Architecture artifact of their own &mdash; they hold a Detailed Design instead &mdash; but every leaf DD traces upward to the Architecture of its nearest non-leaf ancestor, receives a share of that ancestor's requirements via allocation, and honours its interface contracts.</p>
+
+    <p>The right-hand ascent verifies the left. Integration tests at a branch verify that branch's Architecture: the components interact as specified; the interfaces behave as contracted; the chosen composition pattern holds under load, failure, and concurrency. System / end-to-end tests at the root verify root-scope Architecture against Product Brief outcomes and root Requirements. Unit tests at a leaf are a different axis &mdash; they verify Detailed Design, not Architecture. Architecture is the first layer where tests can be <em>integration</em> in the meaningful sense: exercising cross-component behaviour rather than single-unit correctness.</p>
+
+    <h3>The scope tree and where Architecture sits</h3>
+    <p>A scope tree of variable depth. Root is the whole product. Non-leaf scopes are branches &mdash; each with its own Architecture. Leaf scopes are where subdivision stops earning its keep &mdash; each with its own Detailed Design. Architecture appears wherever a scope has children to coordinate.</p>
+
+    <div class="mermaid">
+flowchart TD
+    ROOT["Root Scope<br/>Product Brief · Requirements<br/><b>Architecture</b> · TestSpec (system)"]
+    B1["Branch Scope<br/>Requirements<br/><b>Architecture</b> · TestSpec (integration)"]
+    B2["Branch Scope<br/>Requirements<br/><b>Architecture</b> · TestSpec (integration)"]
+    L1["Leaf Scope<br/>Detailed Design<br/>TestSpec (unit)"]
+    L2["Leaf Scope<br/>Detailed Design<br/>TestSpec (unit)"]
+    L3["Leaf Scope<br/>Detailed Design<br/>TestSpec (unit)"]
+    L4["Leaf Scope<br/>Detailed Design<br/>TestSpec (unit)"]
+    ADRS["ADRs<br/>(flat, cross-cutting)"]
+
+    ROOT --> B1
+    ROOT --> B2
+    B1 --> L1
+    B1 --> L2
+    B2 --> L3
+    B2 --> L4
+    ADRS -.->|governing_adrs| ROOT
+    ADRS -.->|governing_adrs| B1
+    ADRS -.->|governing_adrs| B2
+
+    classDef arch fill:#eef,stroke:#557,stroke-width:2px
+    classDef leaf fill:#f5f5f5,stroke:#aaa,stroke-width:1px
+    classDef adr fill:#fff7e6,stroke:#c79a2f,stroke-width:1px
+    class ROOT,B1,B2 arch
+    class L1,L2,L3,L4 leaf
+    class ADRS adr
+    </div>
+
+    <p>Requirements, Architecture, and TestSpec move together down the non-leaf scopes. Leaves exchange Architecture for Detailed Design. ADRs are flat and cross-cutting &mdash; they do not sit inside the tree; they constrain whichever scopes reference them.</p>
+
+    <h3>Inputs and outputs</h3>
+    <p>An Architecture document consumes four things and produces five. <strong>Inputs:</strong> the parent's allocation (requirements inherited from the ancestor), the scope's own Requirements artifact, governing ADRs (cross-cutting decisions that bound this scope's choices), and observable / externally-imposed constraints (platform, integration partner, regulatory). <strong>Outputs:</strong> a decomposition (the set of child scopes with responsibilities); interface contracts between those children and with external parties; a composition specification (runtime pattern, wiring approach, and at root, deployment intent); a traceability footprint (every requirement allocated to at least one child; every governing ADR honoured); and often a set of <em>derived requirements</em> &mdash; obligations that arise from the decomposition itself and did not exist at the Requirements layer.</p>
+
+    <h3>C4 as a bridge</h3>
+    <div class="card">
+      <p>Most working software engineers model architecture with some variant of Simon Brown's <strong>C4 model</strong> (System Context &rarr; Container &rarr; Component &rarr; Code). The VModelWorkflow Architecture artifact is not a replacement for C4; it is a more opinionated shape that fits neatly on top of it.</p>
+      <p>Our <em>scope tree</em> is C4's hierarchical zoom: root scope &asymp; Context / Container level; branch scopes &asymp; Component level; leaves &asymp; Code level. Our <em>Structure Diagram</em> (mandatory in every Architecture artifact) is a C4 Container or Component diagram at the scope being documented. Readers familiar with C4 do not have to re-learn anything &mdash; they produce the same diagrams they already produce, and our framework adds a per-scope artifact shape around them (Decomposition entries, Interface contracts, Composition section) so that an allocation discipline and a traceability discipline ride alongside the drawings.</p>
+      <p>If your team already uses <strong>arc42</strong>: the Structure Diagram fits arc42 &sect;5 (Building Block View); Composition fits arc42 &sect;6 (Runtime View) and &sect;7 (Deployment View); Decomposition entries and Interfaces fit arc42 &sect;5 sub-sections. The rigor of an Architecture artifact is a strict subset of the arc42 template, with the additions that arc42 leaves to taste (interface contracts, traceability links, Quality Bar) made mandatory.</p>
+    </div>
+
+    <h3>This page teaches craft that holds across domains</h3>
+    <p>Examples throughout this page use a web-service domain (an order checkout service, implementable in Java / Spring Boot but written so the pattern is language-agnostic). This is a choice of shared vocabulary, not a scope limitation. Decomposition, interface design, composition patterns, and deployment intent apply identically to desktop applications (the "orchestration target" becomes installer / packaging; "environments" become OS versions), mobile apps (orchestration target = Play Store / App Store release channel; environments = API levels / device classes), batch and streaming pipelines (orchestration target = scheduler and cluster; runtime-unit boundaries = job stages), and embedded firmware (orchestration target = firmware image and bring-up sequence; environments = board revisions). The artifact shape, the Quality Bar, and the Spec Ambiguity Test are invariant. What changes is the vocabulary the Composition section reaches for when the deployment story is not a container in a cloud.</p>
+
+    <h3>What an Architecture artifact is not</h3>
+    <ul>
+      <li><strong>Not a Requirements document.</strong> Requirements say <em>what</em> the system must do. Architecture says <em>how it is organised</em> to do it. The two are cleanly separated; behaviour statements belong in Requirements, and structural statements belong here.</li>
+      <li><strong>Not a Detailed Design.</strong> Architecture stops at the interface between children. What happens <em>inside</em> a child &mdash; algorithms, data structures, error handling within the box &mdash; is Detailed Design territory. Crossing that line converts Architecture from a coordination document into a per-child blueprint that will be wrong before anyone reads it.</li>
+      <li><strong>Not a collection of ADRs.</strong> ADRs justify individual load-bearing decisions. Architecture <em>applies</em> those decisions to a specific scope: the ADR says "we use an event bus for cross-service notifications"; the Architecture says "in this scope, the pricing component publishes <code>PriceChanged</code> events consumed by the cart component over the bus described in ADR-017." ADRs are referenced via <code>governing_adrs</code>, not inlined.</li>
+      <li><strong>Not a deployment runbook.</strong> Deployment <em>intent</em> &mdash; environments, orchestration target, runtime-unit boundaries &mdash; lives in the root-scope Composition section. Deployment <em>procedure</em> (step-by-step, rollback playbook, on-call response) lives in operational documentation outside this framework.</li>
+      <li><strong>Not a C4 diagram on its own.</strong> A box-and-line drawing without per-child responsibilities, interface contracts, a stated composition pattern, and traceability links back to requirements is not an Architecture artifact &mdash; it is a picture. Most teams stop at the picture. This framework does not.</li>
+    </ul>
+
+    <h3>Retrofit posture</h3>
+    <p>Architecture retrofitted from existing code is a <em>mixed-evidence</em> document. Decomposition (what components exist, where the boundaries actually run) is largely recoverable from the code: dependency analysis, package structure, deployment manifests, and runtime call graphs all leave fingerprints. Interfaces (what each component exposes, what it consumes) are similarly observable. The <em>rationale</em> &mdash; why the boundaries were drawn where they were, which alternatives were rejected, which constraints were binding &mdash; is not. The framework's rule is explicit: rationale is human-only. A retrofit Architecture records observed structure with <code>recovery_status: reconstructed</code>; it records interpretation of that structure (what the responsibility of a component <em>should</em> be, not just what its code <em>does</em>) with <code>verified</code> where a human has confirmed it; and it marks anything intent-bearing that lacks a human source with <code>recovery_status: unknown</code>. Drawing a clean structure diagram that papers over the actual runtime mess &mdash; <em>laundering the current architecture</em> &mdash; is the single sharpest retrofit anti-pattern and the skill layer refuses to emit it.</p>
+
+    <h3>Why the framework treats this layer as non-negotiable</h3>
+    <p>Architecture is where the majority of long-lived cost is committed. A bad decomposition or a vague interface will outlast the team that wrote it; a wrong composition pattern will resurface as scaling pain, incident patterns, and rewrite pressure for years. Testing catches nothing at this layer: integration tests verify that the composition <em>you chose</em> works, not that it was the right choice. The Quality Bar at this layer is the last opportunity for a human to push back before the decomposition hardens into twenty leaf Detailed Designs and hundreds of unit tests that all assume the shape. The Spec Ambiguity Test applies with extra force: a diagram plus four paragraphs of prose is not enough &mdash; the artifact must specify, at interface granularity, what each child does and how the children coordinate, to the point that a junior engineer or mid-tier AI could produce defensible Detailed Designs for each leaf without asking clarifying questions.</p>
+  </section>
+
+  <!-- ===================== SECTION 2: BEST PRACTICES ===================== -->
+  <section id="arch-best-practices">
+    <h2>2. Best Practices</h2>
+    <p class="lead">Nine disciplines. Decomposition discipline first, because every subsequent discipline rests on correct boundaries. Interface contracts next, because that is where the boundaries become committable. Then the composition stack: protocol and sync/async choice, the composition patterns catalog, data and persistence architecture, resilience, and cross-cutting concerns (observability and security). Deployment intent at root scope. Finally evolution &mdash; fitness functions, strangler patterns, testability &mdash; because Architecture that cannot change is a liability long before it is a legacy.</p>
+
+    <h3>Frontmatter and shape</h3>
+    <p>An Architecture artifact is a single Markdown file per non-leaf scope at <code>/specs/{scope}/architecture.md</code> (root-scope lives at <code>/specs/architecture.md</code>). YAML front-matter identifies the artifact; the body holds prose sections, Mermaid diagrams, and embedded YAML blocks for per-child and per-interface entries. Canonical front-matter:</p>
+
+    <pre><code>---
+id: ARCH-checkout
+scope: checkout
+parent_scope: null          # root
+derived_from: [REQ-001, REQ-002, REQ-017, ...]
+governing_adrs: [ADR-012, ADR-019]
+recovery_status: reconstructed      # omitted on greenfield
+---</code></pre>
+
+    <p>The mandatory section structure of the body is specified in <a href="../index.html#framework">TARGET_ARCHITECTURE &sect;5.3</a>: Metadata, Overview (2&ndash;3 paragraphs), Structure Diagram (Mermaid), Decomposition (one entry per child), Interfaces (one entry per cross-child or external interface), Composition (runtime pattern, wiring, key sequence diagrams, deployment intent at root). All six sections are mandatory; a Composition section that is empty or reduced to a sentence is a Quality Bar failure regardless of the quality of the other sections.</p>
+
+    <h3 id="arch-bp-1">2.1 &nbsp; Decomposition discipline</h3>
+    <p>Decomposition is the primary architectural decision at any non-leaf scope. A wrong decomposition cannot be rescued by clever interfaces, resilient composition, or strong tests &mdash; it leaks entropy into every downstream artifact. Five principles, in order of precedence.</p>
+
+    <p><strong>Information hiding (Parnas).</strong> Each module's boundary hides a design decision likely to change. The published test is not "what does this module do?" but "if requirement X changes, how many modules have to change with it?" A good decomposition answers <em>one</em>. Canonical example: Parnas's KWIC system contrasted two decompositions that looked similar on paper &mdash; one by processing step, one by hidden decision (line storage format, character encoding, sort strategy). Only the second survived a change in any of those hidden decisions without cascading. The mental test: list the next three changes the business is likely to demand; check that each change lands in one module, not a diagonal across the whole tree.</p>
+
+    <p><strong>Cohesion and coupling (Constantine &amp; Myers, Stevens).</strong> Inside a module, elements should belong together because they contribute to one well-defined responsibility (<em>functional cohesion</em>, the strongest form). Between modules, the interaction should carry the minimum information needed (<em>data coupling</em> over structure-passing over shared state over control). The useful form for an architect is: write one sentence stating what the module is responsible for. If the sentence needs <em>and</em>, or an enumerated list, the module is doing two jobs and will change for two reasons. Split it, or accept that one box in the diagram hides two that need separate interfaces.</p>
+
+    <p><strong>Bounded contexts (Evans, DDD).</strong> A bounded context is a region of the system within which a single model of the domain applies and every term carries one meaning. The boundary is linguistic: when the same word (<em>order</em>, <em>customer</em>, <em>shipment</em>) starts to mean different things in two regions of the codebase, a context boundary is forming whether you named it or not. Strategic DDD gives you the vocabulary to name it on purpose. At Architecture time, look for where the ubiquitous language fractures: those are the lines of the diagram. Drawing a child at a boundary that cuts through the language will cost you interface breakage for the lifetime of the system.</p>
+
+    <p><strong>Context-mapping patterns.</strong> When children are themselves bounded contexts that have to talk, DDD names the relationships. Three are worth knowing by name at an architect's level:</p>
+    <ul>
+      <li><strong>Anticorruption Layer (ACL).</strong> One context's model would contaminate the other; a translation layer inside one of the two quarantines the other's vocabulary. Used heavily when integrating with a legacy system or a third-party API whose model you cannot fix and do not want to propagate.</li>
+      <li><strong>Partnership.</strong> Two contexts evolve in lock-step with mutual dependency acknowledged; interfaces change together; release coordination is explicit. Reserve for genuinely coupled teams; defaulting to Partnership because it is comfortable is how a system acquires six teams that cannot ship independently.</li>
+      <li><strong>Published Language.</strong> A stable, versioned vocabulary (a schema, an event format, a protocol) that third parties can depend on; changes follow a deprecation policy. Used at external-facing boundaries (public APIs, event buses consumed by independent teams, inter-service contracts in a large organisation).</li>
+    </ul>
+    <p>Evans catalogues nine; these three cover the majority of real decisions. If the right pattern is not one of these, name the pattern explicitly and cite its source.</p>
+
+    <p><strong>Conway's Law, inverted.</strong> Conway observed that systems replicate the communication structure of the organisations that build them. Skelton and Pais's <em>Team Topologies</em> (2019) made the operational flip: choose the contexts you want teams to own &mdash; stream-aligned teams on value streams, platform teams on internal capabilities, complicated-subsystem teams on narrow specialisation, enabling teams on short-term uplift &mdash; then staff the teams to match. At Architecture time, the question is symmetric. If your decomposition forces six teams to coordinate on every change, the decomposition is wrong. If it maps one child to one team with a clear cognitive load, the decomposition has a chance of staying honest under pressure. Architecture that ignores team topology designs its own drift.</p>
+
+    <p><strong>Depth heuristics.</strong> Three rules of thumb for when to stop subdividing:</p>
+    <ul>
+      <li><strong>Depth test.</strong> If children interact in ways the parent's Architecture cannot explain, go deeper &mdash; the parent is under-specifying; the actual design lives a level down.</li>
+      <li><strong>Cognitive-load test.</strong> A scope should fit in one Requirements / Architecture pair that a reviewer can hold in their head. If a reviewer has to page in and out to reason about the box, the box is too large or too small (usually too large; a diagram with 14 children is a decomposition that has not decomposed).</li>
+      <li><strong>Change-blast test.</strong> If subdividing further would not let parts change independently, you have gone too deep &mdash; you have split something that has no seam. Undo.</li>
+    </ul>
+    <p>The three tests pull against each other and that is the point. A good decomposition sits where none of them fires.</p>
+
+    <h3 id="arch-bp-2">2.2 &nbsp; Interface design and contracts</h3>
+    <p>Interfaces are the committable surface of an Architecture. Components come and go; interfaces, once published, are load-bearing for everything downstream. The Best Practice rule: specify interfaces to the level that a second team could build against them without talking to the first.</p>
+
+    <p><strong>Syntax vs semantics.</strong> The syntactic interface &mdash; signature, types, error enum &mdash; is what a compiler or schema validator can check. The semantic interface &mdash; preconditions, postconditions, invariants, failure modes, quality-of-service &mdash; is what a caller actually needs to code against. Most interface documentation ships only the syntactic half; most integration failures come from the missing semantic half. An Architecture interface entry specifies both, or the interface is not specified.</p>
+
+    <p><strong>Design by Contract (Meyer, Hoare).</strong> Every externally callable operation has three contract clauses: <strong>preconditions</strong> the caller must satisfy (what is true on the way in), <strong>postconditions</strong> the supplier guarantees (what is true on the way out, including error returns), and <strong>invariants</strong> that hold across the operation (state properties the operation preserves). Hoare's foundational axiom &mdash; <code>{P} S {Q}</code>, "if P holds and S executes, then Q holds" &mdash; is the formal shape. At Architecture level the clauses are prose or structured YAML; at Detailed Design level they become assertable predicates; at test level they become test cases. The chain breaks if any layer skips them. The value is fault attribution: when a call fails a postcondition, the supplier is at fault; when it fails a precondition, the caller is at fault; anyone can tell which from the interface doc.</p>
+
+    <p><strong>SEI nine-part interface template.</strong> The Carnegie Mellon SEI's <em>Views and Beyond</em> gives a complete interface document structure, of which we use the essentials per Architecture interface: <em>identity</em> (name, version), <em>resources provided</em> (operations with syntax and semantics), <em>data types</em> (structures passed across), <em>exceptions / errors</em> (raised when, propagated how), <em>quality attributes</em> (performance, throughput, availability budget carried by this interface), <em>element requirements</em> (constraints on the caller or supplier beyond the operations themselves), <em>rationale</em> (why this interface, why not a different shape), <em>usage guide</em> (how to call correctly). Specify nine when you can; at minimum, an Architecture interface entry carries the first five. The last four are where drift usually hides.</p>
+
+    <p><strong>Interface Segregation (ISP, Martin).</strong> No component should depend on an interface method it does not use. Fat interfaces couple consumers to changes they do not care about. When a Decomposition entry allocates three distinct responsibilities, each responsibility gets its own narrow interface &mdash; not a single god-interface whose every change forces a re-review of every consumer. Segregated interfaces also survive teardown: retiring one responsibility does not force a breaking change on the other two.</p>
+
+    <p><strong>Versioning and deprecation.</strong> Any externally visible interface needs a versioning scheme (semantic versioning, <code>MAJOR.MINOR.PATCH</code>, is the defensible default) and a deprecation policy. The Architecture artifact records the scheme and the policy; it does not wait for a breaking-change emergency to invent them. Discipline: a new interface is born with version <code>1.0.0</code>, an additive change bumps <code>MINOR</code>, a breaking change bumps <code>MAJOR</code> and is preceded by a deprecation window with both versions live. A <em>Published Language</em> interface (see &sect;2.1) needs an explicit deprecation window (weeks, months, quarters) documented in the interface entry, not assumed.</p>
+
+    <p><strong>What goes in the Architecture entry vs what goes downstream.</strong> Architecture specifies the contract &mdash; shape, semantics, errors, quality-of-service, rationale. It does <em>not</em> specify the implementation: the serialization format chosen, the specific framework's routing layer, the internal caching strategy. Those belong in the relevant leaf Detailed Design. If the choice has downstream consequences that affect how callers must behave (e.g., "all requests are idempotent" is a contract; "implemented using a Redis deduplication store" is not), it is a contract concern and belongs in the interface entry.</p>
+
+    <h3 id="arch-bp-3">2.3 &nbsp; Protocol and sync/async choice</h3>
+    <p>Before you pick a composition pattern you pick a shape of communication. Four dominant families, each with distinct trade-offs along coupling, evolution, discoverability, and streaming.</p>
+
+    <ul>
+      <li><strong>REST / HTTP+JSON.</strong> Request-response, stateless, schema-last. Strengths: universal tooling, trivial to curl, cache-friendly, evolves by adding fields. Weaknesses: weak typing at the boundary, no native streaming contract, polling or long-polling for event-like behaviour. Default choice for external APIs consumed by heterogeneous clients.</li>
+      <li><strong>gRPC / protobuf.</strong> Request-response and streaming, strongly typed via IDL, code-generated clients. Strengths: contract-first, low-latency binary, bidirectional streaming. Weaknesses: binary wire format (harder to debug), browser support requires a proxy, breaking changes are easier to introduce because generated code masks them. Default for internal high-throughput service-to-service calls.</li>
+      <li><strong>GraphQL.</strong> Client-driven query shape over a strongly typed schema. Strengths: one endpoint for many read-shape needs, avoids chatty REST graphs, strong introspection. Weaknesses: non-trivial caching, authorisation granularity, and rate-limiting (per-field is the unit of concern); N+1 resolver problem is a near-universal misstep. Default for front-ends with many varying read patterns over a rich domain model.</li>
+      <li><strong>Events / messaging.</strong> Asynchronous publish-subscribe or queue-based. Strengths: decoupled temporal contract, natural fan-out, back-pressure-friendly. Weaknesses: eventual consistency, schema evolution across asynchronous consumers, debugging distributed event flows. Default for integrations where the producer should not know or care who consumes.</li>
+    </ul>
+
+    <p>The choice is the first composition decision. A REST contract between two components is a different architecture than the same two components connected by an event bus: the REST version couples the producer's availability to the consumer's; the event version buffers, but trades immediate consistency for eventual. The Architecture entry names the protocol and the rationale.</p>
+
+    <p><strong>Sync vs async as a meta-decision.</strong> Cross-cutting every family above is the synchronous-vs-asynchronous question. Three axes decide it:</p>
+    <ul>
+      <li><strong>Coupling.</strong> Synchronous calls couple availability (if the callee is down, the caller fails or waits); asynchronous calls do not. If you need the producer to keep working when the consumer is down, you need async.</li>
+      <li><strong>Failure mode.</strong> Synchronous surfaces failure at the call site &mdash; easy to handle, easy to see. Asynchronous pushes failure into retry logic, dead-letter queues, and compensation &mdash; harder to debug, harder to reason about, and a poor fit for "user is waiting on the outcome" workflows.</li>
+      <li><strong>Back-pressure.</strong> Synchronous naturally applies back-pressure (a slow callee slows every caller). Asynchronous needs an explicit back-pressure mechanism (bounded queues, consumer acknowledgements, reactive streams). Systems that fail to design back-pressure into async flows fail by cascade: the queue fills, the producer OOMs, the consumer is unchanged &mdash; and nobody saw it coming.</li>
+    </ul>
+    <p>The Best Practice is not "prefer async". It is: <em>name the axis that dominates this interface, make the choice, record the rationale in the interface entry or a governing ADR</em>. Defaulting to sync because it is easier is a legitimate answer when the coupling trade-off does not bite; defaulting to async because it is trendy is how you acquire a distributed system with synchronous semantics and asynchronous blast radius.</p>
+
+    <h3 id="arch-bp-4">2.4 &nbsp; Composition patterns catalog</h3>
+    <p>The Composition section of an Architecture artifact states, explicitly, what runtime pattern the children are wired together in. "We will figure it out at build time" is not an answer. A short catalog follows, with enough detail to name the pattern, state when it fits, and what it demands from the wiring.</p>
+
+    <p><strong>Request-response (client-server, RPC, HTTP).</strong> One component calls another and waits for a result. Fits: user-facing workflows where the user blocks on the outcome; read paths; transactional writes where the outcome must be confirmed before the caller proceeds. Implications for wiring: timeout discipline at every call; idempotency where the network can retry; back-pressure via connection limits and queue caps; circuit breakers to avoid caller exhaustion. Anti-pattern: request-response chains longer than three hops turn every downstream latency spike into a caller outage.</p>
+
+    <p><strong>Event-driven (publish-subscribe).</strong> A producer emits events on a topic; any number of consumers subscribe and act asynchronously. Fits: fan-out notifications, audit logging, downstream integrations that must not block the producer, workflows where the consumer set changes independently. Implications: event schema is a published contract (versioned, deprecation-windowed); message bus topology is an architectural artifact (topic per aggregate, partition key choice, retention policy); consumer idempotency is non-negotiable because at-least-once is the baseline. The fan-out is the strength; debugging the fan-out is the weakness &mdash; distributed tracing across async edges is not optional.</p>
+
+    <p><strong>Event sourcing.</strong> State is stored as a stream of domain events; current state is a fold over the stream. Fits: domains where the <em>why</em> of every change is as important as the current value (finance, audit-heavy regulation, systems with complex undo); domains where multiple read models need to be derived from the same writes. Implications: event schema evolution becomes the hard problem (immutable history plus evolving code); projections are first-class architectural elements; snapshotting is a performance concern the Architecture must address. Expensive choice; wrong for most systems; extraordinary when right.</p>
+
+    <p><strong>Saga.</strong> A long-running, multi-step workflow coordinated across services, with compensating actions for partial failure. Two variants: <em>orchestration</em> (a coordinator service owns the workflow) and <em>choreography</em> (each service reacts to events and emits the next). Fits: cross-service business transactions where distributed atomic commit is not available; human-approval-gated workflows; retry-and-compensate flows. Orchestration is easier to reason about and harder to scale; choreography is the reverse. Implications: compensation is a design axis (not every step has a clean inverse); timeout and retry budgets are explicit; visibility (where is this saga stuck?) is a first-class Architecture concern.</p>
+
+    <p><strong>Pipeline / data flow.</strong> A sequence of stages, each consuming the previous stage's output. Fits: batch processing, streaming analytics, ETL, build systems, media processing. Implications: stage interfaces are the pressure points (what exactly flows between stage 3 and stage 4?); parallelism is per-stage with bounded buffers between; back-pressure is explicit. Under-served by most patterns catalogues because it does not look like request-response; deserves first-class treatment whenever data transformation is a load-bearing part of the system.</p>
+
+    <p><strong>Layered (n-tier).</strong> Stacked layers where each layer depends only on the layer beneath (presentation &rarr; business logic &rarr; data access). Fits: simple CRUD applications where the same entity flows through every layer. Anti-pattern warning: in non-trivial systems, layers become horizontal slices through every feature rather than vertical boundaries around concepts, producing a distributed monolith (see &sect;3). Teams change feature-by-feature, not layer-by-layer; if your decomposition does not match how change arrives, it will punish every change.</p>
+
+    <p><strong>Hexagonal (ports and adapters, Cockburn).</strong> An inner domain hexagon with <em>driving</em> ports (primary, invoked by users / jobs / APIs) and <em>driven</em> ports (secondary, depended on by the domain for persistence / messaging / external services). Adapters translate between ports and concrete technologies. Fits: any domain complex enough to have real business logic that should not know the database. Implications: the domain depends on abstractions, not concretes; adapters are per-technology and swap without touching the domain; testability is a structural property, not a shoehorn. Hexagonal is arguably the single most cost-effective pattern for long-lived domain-heavy services. The Architecture artifact names the ports (one entry per port, primary and secondary).</p>
+
+    <p><strong>Clean architecture (Martin).</strong> A more prescriptive elaboration of hexagonal, organised as concentric rings (entities &rarr; use cases &rarr; interface adapters &rarr; frameworks and drivers) with a strict dependency rule: source code dependencies point only inward. Fits: teams that benefit from opinionated structure, especially when the team is large or the domain is regulated. Implications identical to hexagonal plus the inward-dependency discipline.</p>
+
+    <p><strong>Microservices vs modular monolith.</strong> Two deployment topologies with similar decomposition. A modular monolith is a single deployable with strict internal module boundaries, in-process calls, and a shared database (or per-module schemas in a shared database). Microservices are the same decomposition spread across independently deployable services with network calls and independent persistence. The choice is not "which is better"; it is <em>when does the independent-deployment benefit outweigh the distributed-system cost?</em> A useful heuristic: if two modules do not need to scale independently, fail independently, or be owned by independent teams, they do not need to be independent services. Defaulting to microservices for a small team with one deployment cadence is how projects acquire distributed monoliths.</p>
+
+    <p><strong>Serverless / FaaS.</strong> Composition as short-lived functions triggered by events, HTTP requests, or schedules. Fits: spiky loads, glue code, event processors, infrastructure automation. Implications: cold-start latency is a first-class NFR; stateless-between-invocations is the contract; the wiring lives largely in the cloud provider's configuration (event sources, permissions, triggers); observability requires provider-specific instrumentation. Does not fit: long-running stateful workflows, high steady-state traffic (cost and cold-start both bite), deep end-to-end latency budgets.</p>
+
+    <p><strong>Wiring: DI, middleware, and message-bus topology.</strong> Whatever pattern the Composition section names, three wiring concerns are always explicit in the Architecture artifact:</p>
+    <ul>
+      <li><strong>Dependency injection strategy.</strong> How components acquire their dependencies: constructor injection, a DI container, a composition root. Name the strategy so a leaf DD does not reinvent it per component.</li>
+      <li><strong>Middleware stack.</strong> The ordered chain that every request (or event) passes through &mdash; authentication, authorisation, logging, tracing, rate limiting, request validation. Order matters, and the Architecture states it: <em>tracing outermost, auth before authz, rate limiting before handler, logging on exit</em> is not something you discover by running production for six months.</li>
+      <li><strong>Message-bus topology.</strong> Event-driven and saga patterns rely on a bus; topic naming, partition key choice, retention policy, dead-letter routing, and consumer group layout are architectural decisions, not infrastructure details. The Architecture artifact names them.</li>
+    </ul>
+
+    <h3 id="arch-bp-5">2.5 &nbsp; Data and persistence architecture</h3>
+    <p>Data topology is where most post-launch regret accumulates. An Architecture that decomposes beautifully at the component level and punts persistence to "we'll use a Postgres" is a ticking liability; by the time the topology becomes a problem, it is expensive to change.</p>
+
+    <p><strong>Database-per-service vs shared database.</strong> The orthodox microservices answer is database-per-service (each service owns its schema; no other service reads its tables; cross-service joins become cross-service calls). The benefit is independent schema evolution and blast-radius isolation. The cost is data consistency across services is now an application concern. The shared-database approach (one database, schemas per module) is cheaper to operate and trivial for joins, but couples deployment: a schema migration affects every service. The Architecture entry names the choice and the rationale; a modular monolith can legitimately share a database; a microservices system that shares a database has imported microservices' operational cost without its independence benefit.</p>
+
+    <p><strong>Consistency model.</strong> Strong consistency (every read sees every prior write, globally) costs availability or latency under partitions &mdash; the CAP trilemma (Brewer) and its PACELC refinement (Abadi) state the trade-off formally; Kleppmann's <em>Designing Data-Intensive Applications</em> is the standard reference. Most systems accept some eventual consistency somewhere; the Architecture decision is where. The useful question is not "strong or eventual?" but "what is the maximum staleness window the user can tolerate for this read path, and what is the reconciliation story when two writes collide?" Eventual consistency without a reconciliation story is a bug factory.</p>
+
+    <p><strong>Read replicas and CQRS.</strong> Read traffic commonly exceeds write by 10&times; or more. A read replica (same schema, asynchronous copy) absorbs read load with a bounded staleness budget; CQRS (Command-Query Responsibility Segregation) takes the split further with a separate read model optimised for query shape (denormalised, indexed for the read patterns, fed by events). CQRS is powerful when read and write shapes diverge sharply; overkill when they do not.</p>
+
+    <p><strong>Event sourcing as persistence.</strong> See &sect;2.4. When event sourcing is the composition pattern, persistence is the event log plus projections; the Architecture entry for the log (retention, partitioning, schema evolution) is the central data decision.</p>
+
+    <p><strong>Multi-tenancy.</strong> Four isolation tiers, increasing in cost and isolation: row-level (<code>tenant_id</code> column on every table), schema-level (schema per tenant in a shared database), database-level (database per tenant on shared infrastructure), deployment-level (separate deployment per tenant). Architecture entry chooses a tier per data category; a high-isolation tier for audit data can coexist with row-level for most operational tables. Defaulting to row-level for everything is cheap until the first compliance audit; defaulting to deployment-level for everything is expensive forever.</p>
+
+    <h3 id="arch-bp-6">2.6 &nbsp; Resilience and fault tolerance</h3>
+    <p>Resilience is a property of composition, not of components. A component that behaves correctly in isolation can bring down a system when composed with others under load or partial failure. Four patterns are baseline architectural vocabulary; the Architecture artifact names which apply where and why.</p>
+
+    <p><strong>Bulkhead.</strong> Partition a shared resource so that failure in one partition cannot starve others. Classic form: per-dependency thread and connection pools. If the pricing service is slow, only the pool allocated to pricing fills; the inventory service's pool is untouched, and inventory calls continue. Without bulkheads, a single slow dependency drains the global pool and cascades. The Architecture entry names the partitions.</p>
+
+    <p><strong>Circuit breaker.</strong> Three-state machine: <em>closed</em> (normal, count errors), <em>open</em> (reject requests fast when error rate exceeds a threshold, letting the downstream recover), <em>half-open</em> (probe with a small number of requests; if they succeed, close). The value is not "retry less" but "stop the feedback loop where a failing dependency exhausts its caller". Circuit breakers are modal behaviour (different responses in different states), which complicates testing &mdash; the AWS Builders' Library explicitly recommends caution. Use at cross-service boundaries; do not use inside a tight internal loop where the operation cost is low enough that failing fast saves nothing.</p>
+
+    <p><strong>Retry with backoff and jitter.</strong> Exponential backoff (wait <code>2^n &times; base</code>) spreads retries away from the failure moment; jitter (a random component of the wait) prevents synchronised retry storms. Without jitter, every caller retries at the same second and the downstream sees a second wave identical in size to the first. The classic cautionary number: a five-layer call chain where each layer retries three times on failure sees <code>3^5 = 243&times;</code> normal load on the innermost dependency. Retry is only safe with idempotent operations; for side-effecting operations, idempotency is a deliberate design (idempotency keys, conditional writes, deduplication stores).</p>
+
+    <p><strong>Graceful degradation vs fallback.</strong> Degradation shrinks scope on the same path: the e-commerce landing page loads without the recommendation carousel; the checkout proceeds without the loyalty-points lookup. Fallback is a parallel substitute path (try primary, then secondary). Degradation is preferable &mdash; fewer code paths, smaller blast radius, fewer failure modes to test. Fallback looks attractive until the fallback path has its own failure mode that differs from the primary's, and your incident report has three distinct failure categories. The Architecture decides, per non-essential dependency, whether degradation is designed in.</p>
+
+    <p><strong>Failure domain design.</strong> A failure domain is a set of components that fail together. Two components sharing a process, a host, a database, a region, or a cloud provider are in the same failure domain at that level. The Architecture artifact is explicit: which domains matter (process / host / availability zone / region / provider), which components share which domains, and where the boundaries are drawn on purpose.</p>
+
+    <p><strong>Common-cause failure.</strong> Two supposedly independent redundant components can fail together if they share a cause: the same library with the same bug, the same specification interpreted the same wrong way, the same operator running the same bad command on both. Redundancy without independence is theatre. The Architecture entry for a redundancy mechanism names the independence property: "primary and secondary regions are in different cloud providers" is a real independence claim; "we run two instances of the same binary behind a load balancer" is not (shared binary, shared library versions, shared deploy pipeline &mdash; every common-cause path).</p>
+
+    <h3 id="arch-bp-7">2.7 &nbsp; Observability and security as architectural concerns</h3>
+    <p>Cross-cutting concerns that teams try to bolt on post-hoc are the ones most punished for the effort. The Architecture artifact specifies where they enter.</p>
+
+    <p><strong>Observability &mdash; telemetry emergence points.</strong> Three axes: structured logs, metrics, distributed traces. The architectural decisions are where each enters the system and who consumes it. For logs: what fields are carried on every record (request ID, tenant, user, correlation ID, span context), which components log at which level, what is the retention and the search tool. For metrics: which metrics are SLO-bearing (user-visible promises), which are diagnostic (for on-call), what dimensions they carry. For traces: every cross-process boundary propagates a trace context; sampling policy is explicit (100% of errors and 1% of successes is a common baseline). OpenTelemetry is the current de facto standard for instrumentation; the Architecture entry names it or a reasoned alternative. Observability bolted on at incident time is always slower and always misses the context that would have made the incident short.</p>
+
+    <p><strong>Security &mdash; trust zones.</strong> A trust zone is a region of the system that shares a threat model. The internet is one zone; the authenticated user session is another; the internal network between services is another; the service's own process is another. Architecture draws the zone boundaries explicitly and specifies what crosses each boundary and with what guarantees. The STRIDE mnemonic (Spoofing, Tampering, Repudiation, Information disclosure, Denial of service, Elevation of privilege) is the standard checklist for each crossing; the Architecture artifact does not teach STRIDE but names the threats considered and the controls.</p>
+
+    <p><strong>Secrets flow.</strong> Credentials, tokens, keys, and signed URLs cross boundaries and get logged, cached, and inherited. The Architecture entry for a secret names: where it originates (secret manager, KMS, external identity provider), which components hold it in memory (and for how long), which components see it only as a bearer token, and where it must never appear (logs, metrics, traces, error messages). The laws of leakage are not subtle; the shape of the leakage is almost always in the Architecture's omissions.</p>
+
+    <p><strong>Authentication and authorisation as interface concerns.</strong> Every externally callable interface entry states authentication requirements (what identity is asserted, how it is verified, what claims are carried) and authorisation requirements (what permission is required, evaluated at which layer &mdash; the gateway, a middleware, the handler). Mixing these up is how you get systems that authenticate correctly and authorise catastrophically. The Architecture is the right layer to state them because it is where cross-component guarantees become visible; putting them in DD alone duplicates the decision per component.</p>
+
+    <h3 id="arch-bp-8">2.8 &nbsp; Deployment intent at root scope</h3>
+    <p>The root-scope Architecture's Composition section carries one concern no branch does: deployment intent. The framework's stance, post-pivot: Architecture Composition is the authoritative spec for deployment; Infrastructure-as-Code (terraform, Kubernetes manifests, compose files) is the <em>implementation</em> of that intent; there is no separate prose Detailed Design layer above the IaC.</p>
+
+    <p><strong>Environments.</strong> Every environment the system runs in (dev, staging, production, production-EU, customer-tenant-X) is named; the differences across environments are enumerated (scale, data set, external integrations, observability stack); where environment differences matter behaviourally, they are explicitly tied to requirements or ADRs. Environments that exist but are not enumerated are environments that drift.</p>
+
+    <p><strong>Orchestration target.</strong> The target platform for runtime composition: Kubernetes (which distribution, which ingress, which service mesh if any), a serverless platform (which provider, which FaaS and managed services), container orchestration (ECS, Nomad, Swarm), a VM-based deployment (systemd units, cloud-init), a bare-metal target (for embedded: firmware image + hardware bring-up sequence). The choice determines what "wiring" concretely means and bounds the operational primitives the rest of the architecture can reach for.</p>
+
+    <p><strong>Runtime-unit boundaries.</strong> A runtime unit is a unit of deployment, scaling, and failure. Each runtime unit has its own lifecycle (start, stop, rolling restart), its own observability surface (metrics, logs, traces emerge from this unit), its own resource budget (CPU, memory, concurrency), and its own failure story (what happens when this unit dies). The Architecture artifact at root maps which components from the Decomposition live in which runtime units; co-location is a choice (shared fate is the cost) and so is separation (network boundary and operational overhead are the cost).</p>
+
+    <p><strong>IaC as implementation.</strong> Terraform, Kubernetes manifests, Helm charts, and compose files are declarative: they describe the runtime and the platform applies them. Architecture Composition specifies the <em>intent</em> (what environments exist, what the orchestration target is, where the unit boundaries fall); IaC artifacts implement that intent concretely. The Architecture does not re-specify what the IaC already states; it specifies what the IaC cannot capture (rationale, tying choices to requirements and ADRs, naming the unit-boundary logic behind the manifests).</p>
+
+    <p><strong>12-factor as cloud-native reference.</strong> Heroku's <a href="https://12factor.net">Twelve-Factor App</a> (Wiggins, 2011) catalogues operational norms &mdash; config in environment, processes disposable, logs as streams, dev/prod parity &mdash; that any cloud-native composition either follows or explicitly departs from. Root-scope Architecture states the stance factor by factor where the factor is load-bearing for the system. 12-factor is not craft doctrine; it is a useful reference that makes departures visible.</p>
+
+    <p><strong>Cost as a constraint.</strong> Serverless vs container vs VM, managed service vs self-hosted, hot replica vs cold backup, and multi-region active-active vs active-passive are all cost decisions as much as architectural ones. Cost sits under Constraints in Requirements; at Architecture it resurfaces as a binding input to orchestration and runtime-unit choices. Naming the cost model in the Architecture (monthly infra cost envelope, cost-per-request target, cost-of-a-9 on availability) prevents the common failure where a well-engineered architecture is killed by the bill.</p>
+
+    <p><strong>Architecture-as-code tooling.</strong> Mermaid (used in this framework), Structurizr (Brown's C4 workbench), PlantUML, D2, and draw.io are mechanisms for keeping diagrams close to the code they describe. The Architecture artifact does not mandate a tool; it does mandate that the Structure Diagram and Composition sequence diagrams live in the artifact, not in an image pasted from whiteboarding. Mermaid is the framework's default because it is text, version-controllable, and AI-readable; Structurizr is a legitimate alternative when the team is already committed to it.</p>
+
+    <h3 id="arch-bp-9">2.9 &nbsp; Architecture evolution and fitness functions</h3>
+    <p>Architecture that cannot change becomes a liability before it becomes a legacy. The Best Practice is to design for evolution deliberately: specify the properties the Architecture must preserve, automate their verification, and plan the migration path for changes that do not preserve them.</p>
+
+    <p><strong>Architecture as hypothesis.</strong> Every non-trivial decomposition is a bet on how the system will change over the next one to three years. The bet is wrong some of the time; the Architecture is a hypothesis, not a statute. Naming the hypothesis (<em>"we expect the checkout service to remain a single deployable while inventory and pricing scale independently"</em>) converts an implicit assumption into a testable one, and gives future teams a first-class place to write down when the hypothesis broke.</p>
+
+    <p><strong>Evolutionary architecture (Ford, Parsons, Kua, 2017).</strong> Accept that Architecture evolves; build verification into the development loop to catch deviation early. The load-bearing device is the <em>fitness function</em>: an automated check that an architectural property still holds. Ford et al. classify them along two axes &mdash; <em>atomic</em> (one property) vs <em>holistic</em> (multiple together), <em>triggered</em> (runs on events, e.g., CI, deploy) vs <em>continuous</em> (runs in production, observes live behaviour).</p>
+
+    <p><strong>Fitness functions in CI.</strong> Four concrete categories worth most non-trivial Architectures:</p>
+    <ul>
+      <li><strong>Dependency direction.</strong> A test that fails if a forbidden package imports another (e.g., domain imports infrastructure). Tools: ArchUnit (Java), dependency-cruiser (JS/TS), custom AST scripts.</li>
+      <li><strong>Latency budget.</strong> A test (load or synthetic) that fails if a critical interface exceeds its budgeted p95. Run on a recurring schedule, not just release; regressions creep in from underlying platform changes.</li>
+      <li><strong>Module size and coupling.</strong> A test that fails when a module exceeds a line or complexity threshold, or when its coupling to peers exceeds a number. Crude but catches the slow slide toward god components.</li>
+      <li><strong>Security posture.</strong> A test that fails when a known-bad dependency pattern appears (SQL string concatenation, plaintext secret in config) or when a boundary loses a required control (unauthenticated endpoint on a service that should authenticate).</li>
+    </ul>
+    <p>Fitness functions are not a substitute for integration tests; they cover a different shape of drift &mdash; the slow erosion of architectural properties that no functional test will notice. The Architecture artifact names which properties are load-bearing enough to warrant a fitness function, and references the check in the governing Architecture entry.</p>
+
+    <p><strong>Strangler fig (Fowler, 2004).</strong> A migration pattern for replacing a legacy system without a big-bang rewrite. Stand a new system alongside the old; route traffic to the new for capabilities it covers; expand the new system's coverage; retire the old when the vine has covered the tree. Relevant here because the Architecture artifact for a system being retrofitted often describes the target state, with strangler-fig migration between current and target as the change plan. The Architecture entry for a component being strangled names the routing mechanism (reverse proxy, feature flag, conditional dispatch), the acceptance criteria for retiring the legacy path, and the rollback point.</p>
+
+    <p><strong>Testability as an architectural quality.</strong> A system's testability &mdash; how easily integration and unit tests can be written against its components &mdash; is a property of its Architecture, not of its test suite. Hexagonal's port separation, dependency injection, a pure-core / impure-shell split, and explicit test seams all earn their keep here. An Architecture that makes every component depend on a singleton database client is an Architecture that mandates heavyweight integration tests for every unit test; one that specifies driven-port abstractions lets the same tests run in seconds against fakes. The Quality Bar in &sect;5 has a card for this; the Best Practice rule is to name, in each Decomposition entry, the test-seam shape the component provides.</p>
+  </section>
+
+  <!-- ===================== SECTION 3: ANTI-PATTERNS ===================== -->
+  <section id="arch-anti-patterns">
+    <h2>3. Anti-Patterns</h2>
+    <p class="lead">Six universal Architecture failure modes, plus four specific to AI-augmented authoring and retrofit. The universal six are named in the literature across decades; the AI-era four are newer and their remedies differ because the failure is in the generation process, not the author's discipline.</p>
+
+    <h3>Universal (six)</h3>
+    <ol>
+      <li><strong>Big ball of mud (Foote &amp; Yoder, 1997).</strong> No discernible decomposition; every component depends on every other; changes ripple unpredictably. Symptoms: a diagram nobody draws because it would fit on a wall; onboarding times measured in months; "where does X happen?" is answered by a guided tour. Tell: the Architecture artifact exists but the Structure Diagram is either missing, absent of arrows, or a spider's web of arrows with no discernible flow.</li>
+      <li><strong>Distributed monolith.</strong> Microservices decomposition without microservices independence &mdash; services cannot be deployed, scaled, or failed independently because they share a database, a schema, a deploy cadence, or a synchronous request chain. The operational cost of a distributed system without the benefits. Tell: every release requires all services to ship together; any one service going down takes down the feature; integration tests must spin up the whole constellation.</li>
+      <li><strong>God component.</strong> One component in the Decomposition owns everything central to the domain; peripheral components are thin wrappers around its API. The single-responsibility test fails loudly (the god component's one-sentence responsibility needs three <em>and</em>s). Tell: the god component's leaf DDs total more lines than the rest of the scope combined; most changes require touching it.</li>
+      <li><strong>Premature decomposition.</strong> Boundaries drawn where the domain has not yet shown seams. Ten services for a system three people can fit in a room for. Cost: all the distributed-system tax (network, schema, deployment coordination) for none of the independent-evolution benefit (there is only one team). Tell: services that always deploy together; services that cannot be tested independently; "we need to call across three services for a login".</li>
+      <li><strong>Stale architecture documentation.</strong> The diagram is two years old; the running system has evolved; newcomers trust the diagram and discover the divergence the hard way. Universal, mostly lived as operational pain rather than named as an architectural failure. Tell: the Architecture artifact was last edited in the initial release; the codebase has had two major refactors since; integration tests pass but describe a different topology than the diagram.</li>
+      <li><strong>Cyclic dependencies.</strong> Components depend on each other in a cycle (A imports B imports C imports A). Consequences: no independent build order, no independent release, no module-level replacement. Tell: the dependency-direction fitness function fails; changes in one component break compilation in a "downstream" component that is actually upstream in the cycle.</li>
+    </ol>
+
+    <h3>AI-era and retrofit (four)</h3>
+    <ol start="7">
+      <li><strong>Laundering the current architecture.</strong> A retrofit-generated Architecture that describes the system's current structure as if every boundary were intentional and every interface contracted. The diagram looks clean; the rationale fields cite no rejected alternatives; every decision appears inevitable. The document is an apologetic, not an Architecture. Tell: zero <code>recovery_status: unknown</code> values; no acknowledgement that any of the observed boundaries were accidental; no gap report accompanying the artifact.</li>
+      <li><strong>Fabricated decomposition rationale.</strong> An AI agent asked to retrofit produces plausible-sounding rationale for every child's existence, phrased as if recalled from the original design. The rationale reads competent and is entirely synthesised from training priors. Tell: rationales that say "chosen because it matches the single-responsibility principle" rather than "the original team chose this boundary because [specific constraint / date / incident]". Fabricated rationale is confident precisely where a real one would be uncertain; the remedy is enforced <code>recovery_status: unknown</code> on rationale fields during retrofit, not better prompting.</li>
+      <li><strong>Ad-hoc composition.</strong> The Composition section is a sentence or a single diagram with no stated pattern, no wiring strategy, no runtime-unit boundaries, and no deployment intent at root. The system is "a bunch of services that talk to each other". Symptom: every incident post-mortem names a different emergent behaviour; nobody can predict cascade paths; capacity planning is guesswork. Tell: the Composition section is shorter than a single Decomposition entry; no named runtime pattern; no sequence diagrams.</li>
+      <li><strong>Missing composition spec.</strong> The Decomposition and Interfaces are thorough; Composition is empty or reduced to "see deployment config". Teams build the system, discover the composition at integration time, and hardcode whichever quirk of the orchestration they first got to work. The document exists but abdicates the most load-bearing section. This is the most common failure mode in Architectures produced by engineers who are fluent in component design but treat runtime as "someone else's problem"; mandate a non-trivial Composition section at the Quality Bar and reject the artifact when it is absent.</li>
+    </ol>
+  </section>
+
+  <!-- ===================== SECTION 4: EXAMPLES ===================== -->
+  <section id="arch-examples">
+    <h2>4. Examples</h2>
+    <p class="lead">All examples use a single worked domain: an <strong>order checkout service</strong> within a larger e-commerce platform. The service takes a shopping cart, validates inventory, calculates pricing (including discounts and tax), authorises payment, commits the order, and emits events for downstream fulfilment. The examples are shown in a form that is trivially implementable in Java / Spring Boot but written to language-agnostic contracts; a Python FastAPI or Go implementation would read the same interface entries and produce the same tests.</p>
+
+    <h3>4.1 &nbsp; Structure Diagram &mdash; good</h3>
+    <p>Root-scope Architecture for the checkout service. Four child components, one external dependency, one published event stream.</p>
+
+    <div class="mermaid">
+flowchart TB
+    CLIENT["Storefront<br/>(external client)"]
+    GW["API Gateway<br/>(auth, rate limit, routing)"]
+    CART["Cart<br/>(session state, line items)"]
+    PRICE["Pricing<br/>(discounts, tax, totals)"]
+    INV["Inventory<br/>(stock reservation)"]
+    PAY["Payment Orchestrator<br/>(tokenise, authorise, capture)"]
+    ORDER["Order Committer<br/>(idempotent write, emit)"]
+    PSP["Payment Service Provider<br/>(external)"]
+    BUS["Event Bus<br/>(OrderPlaced, PaymentCaptured)"]
+    DB[("Postgres<br/>checkout schema")]
+
+    CLIENT --> GW
+    GW --> CART
+    CART --> PRICE
+    CART --> INV
+    CART --> PAY
+    PAY --> PSP
+    CART --> ORDER
+    ORDER --> DB
+    ORDER --> BUS
+
+    classDef internal fill:#eef,stroke:#557,stroke-width:2px
+    classDef external fill:#fff7e6,stroke:#c79a2f,stroke-width:1px
+    classDef store fill:#f0f7f0,stroke:#4a7
+    class CART,PRICE,INV,PAY,ORDER,GW internal
+    class CLIENT,PSP,BUS external
+    class DB store
+    </div>
+
+    <p>Each internal box is a child scope of the checkout root. The diagram reads in one direction (top to bottom for the happy path); the external payment provider and the event bus are drawn outside the internal region; the database is one of several persistent stores and is explicit. A reader asks three questions &mdash; <em>what depends on what? what's internal? where is state?</em> &mdash; and the diagram answers them at a glance. The four internal components each correspond to a Decomposition entry (4.2).</p>
+
+    <h3>4.2 &nbsp; Decomposition entries (one per child)</h3>
+
+    <pre><code># YAML embedded in architecture.md body
+
+decomposition:
+  - id: cart
+    purpose: "Session-lived container for line items and checkout progress."
+    responsibilities:
+      - "Hold the customer's line items, coupons, and selected shipping option."
+      - "Orchestrate the checkout workflow across pricing, inventory, payment, order."
+      - "Emit checkout-session lifecycle events (started, updated, abandoned)."
+    allocates: [REQ-001, REQ-002, REQ-014, REQ-017]
+
+  - id: pricing
+    purpose: "Deterministic total calculation given line items, customer context, and active promotions."
+    responsibilities:
+      - "Compute line totals, discounts, taxes, shipping, grand total."
+      - "Return a signed price quote with a validity window."
+      - "Source promotion rules and tax rates from the pricing-rules read store."
+    allocates: [REQ-005, REQ-006, REQ-007]
+
+  - id: inventory
+    purpose: "Authoritative stock reservation and release."
+    responsibilities:
+      - "Reserve inventory atomically against a cart's line items."
+      - "Release reservations on abandonment or on order failure."
+      - "Expose current availability reads for pre-checkout UI hints."
+    allocates: [REQ-010, REQ-011]
+
+  - id: payment-orchestrator
+    purpose: "Boundary with the payment service provider; tokenisation, authorisation, capture."
+    responsibilities:
+      - "Exchange raw card input for a PSP token at the browser boundary."
+      - "Authorise the token against an amount; handle PSP errors with typed codes."
+      - "Capture on order commit; void on failure."
+    allocates: [REQ-020, REQ-021, REQ-022]
+
+  - id: order-committer
+    purpose: "Idempotent write of the finalised order; emit downstream events."
+    responsibilities:
+      - "Write the Order aggregate in a single transaction with outbox events."
+      - "Produce an OrderPlaced event on the bus after transaction commit."
+      - "Retry-safe under duplicate submission via the idempotency key."
+    allocates: [REQ-025, REQ-026, REQ-028]
+</code></pre>
+
+    <p>Every entry has the four required fields (<code>id</code>, <code>purpose</code>, <code>responsibilities</code>, <code>allocates</code>). Purposes are one sentence; responsibilities are three or fewer (beyond three, the child is probably two children pretending to be one). Every requirement in the parent's allocation is named in at least one child's <code>allocates</code> &mdash; the traceability validator would fail otherwise. No technology names appear in <code>responsibilities</code> except where the responsibility <em>is</em> the technology boundary (the payment orchestrator explicitly names the PSP).</p>
+
+    <h3>4.3 &nbsp; Interface contract &mdash; Design-by-Contract form</h3>
+
+    <pre><code>interfaces:
+  - name: ICartFinaliseCheckout
+    from: api-gateway
+    to: cart
+    protocol: HTTP/1.1 + JSON (REST)
+    contract:
+      operation: "POST /checkout/{cart_id}/finalise"
+      preconditions:
+        - "Cart exists and is in state ACTIVE or PRICED."
+        - "Authenticated session's subject owns the cart."
+        - "Idempotency-Key header present and globally unique per 24h window."
+      postconditions:
+        on_success:
+          - "Order is committed; an OrderPlaced event is published within 5s."
+          - "Cart transitions to state COMPLETED; no further operations accepted."
+          - "Response carries the order id and the captured payment amount."
+        on_precondition_failure:
+          - "HTTP 409 with typed error (cart-state, auth, idempotency-collision)."
+          - "No state mutation."
+        on_downstream_failure:
+          - "HTTP 502 or 504 with typed error (inventory-unavailable, pricing-stale, payment-declined, payment-timeout)."
+          - "Cart state unchanged; any in-flight reservations released within 30s."
+      invariants:
+        - "Double submission with the same idempotency key returns the first response body and does not re-commit."
+        - "If HTTP 200 is returned, the OrderPlaced event is guaranteed to be published."
+      errors:
+        - { code: cart-state, http: 409, meaning: "Cart is not in a finalisable state." }
+        - { code: auth, http: 403, meaning: "Session subject does not own the cart." }
+        - { code: idempotency-collision, http: 409, meaning: "Idempotency key already seen with different payload." }
+        - { code: inventory-unavailable, http: 502, meaning: "Reservation could not be completed." }
+        - { code: pricing-stale, http: 502, meaning: "Signed quote has expired; client must re-price." }
+        - { code: payment-declined, http: 502, meaning: "PSP refused authorisation." }
+        - { code: payment-timeout, http: 504, meaning: "PSP did not respond within 8s." }
+      quality_attributes:
+        availability: "99.9% monthly, per platform SLO (REQ-051)."
+        latency: "p95 &le; 1200 ms under nominal load (REQ-052)."
+        idempotency_window: "24 hours from first observation of the key."
+      rationale: "REST over JSON chosen for the gateway boundary (see ADR-008). Idempotency key mandated by REQ-028 (at-least-once order-placement semantics over unreliable clients)."
+</code></pre>
+
+    <p>The contract is a full Design-by-Contract specification of one interface: preconditions the caller must satisfy, typed postconditions on success / precondition-failure / downstream-failure, invariants across repeat calls, a typed error enum with HTTP mapping, and quality attributes that carry budget obligations into this boundary. A reader could write the integration test suite from this entry without looking at any other artifact.</p>
+
+    <h3>4.4 &nbsp; Composition &mdash; sequence diagram for the happy path</h3>
+
+    <div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as Client
+    participant GW as API Gateway
+    participant Cart as Cart
+    participant Price as Pricing
+    participant Inv as Inventory
+    participant Pay as Payment
+    participant PSP as PSP
+    participant Ord as Order Committer
+    participant Bus as Event Bus
+
+    C->>GW: POST /checkout/{cart_id}/finalise (Idempotency-Key)
+    GW->>GW: AuthN · AuthZ · RateLimit · Trace
+    GW->>Cart: finalise(cart_id)
+    Cart->>Price: quote(cart_id)
+    Price-->>Cart: signed_quote (valid 60s)
+    Cart->>Inv: reserve(items, cart_id)
+    Inv-->>Cart: reservation_id (ttl 5m)
+    Cart->>Pay: authorise(signed_quote.total, token)
+    Pay->>PSP: auth(amount, token)
+    PSP-->>Pay: auth_code
+    Pay-->>Cart: auth_ok(auth_code)
+    Cart->>Ord: commit(cart_id, reservation_id, auth_code, idem_key)
+    Ord->>Ord: tx: insert order + insert outbox
+    Ord-->>Cart: order_id
+    Cart->>Pay: capture(auth_code)
+    Pay->>PSP: capture(auth_code)
+    PSP-->>Pay: capture_ok
+    Cart-->>GW: 200 {order_id, captured_amount}
+    GW-->>C: 200 {order_id, captured_amount}
+    Note over Ord,Bus: Outbox relay (async): Ord publishes OrderPlaced via Bus within 5s
+    Ord-->>Bus: OrderPlaced
+    </div>
+
+    <p>Five observations about this sequence as a Composition element. First, the gateway's middleware stack (AuthN &rarr; AuthZ &rarr; RateLimit &rarr; Trace) is stated explicitly on the edge, not left as "the gateway does its thing". Second, the pricing quote is signed and has a validity window, making the pricing &rarr; cart interaction a published contract rather than an implicit assumption. Third, the inventory reservation is a first-class artifact with a TTL &mdash; an explicit release path on abandonment is a design requirement, not an afterthought. Fourth, order commit is transactional with an outbox pattern, decoupling the synchronous response from the asynchronous event publish; the invariant "if HTTP 200 is returned, OrderPlaced is published" is maintainable precisely because of this separation. Fifth, the PSP is drawn outside the boundary and treated as a potential failure point; every PSP call has its own timeout and error path (elided in this diagram for clarity, specified in 4.3).</p>
+
+    <p>A second sequence diagram (not shown here to keep the example tractable) covers the failure paths &mdash; inventory-unavailable, PSP-declined, PSP-timeout &mdash; each with its compensation sequence. In a full Architecture artifact, the happy path and two or three critical failure paths each get a sequence diagram; obvious paths are elided.</p>
+
+    <h3>4.5 &nbsp; Deployment intent at root scope</h3>
+
+    <div class="mermaid">
+flowchart TB
+    subgraph ENV["Production Environment (single region, EU-West)"]
+      subgraph RU1["Runtime Unit: checkout-api<br/>(K8s Deployment, 3-10 pods)"]
+        POD_GW["api-gateway"]
+        POD_CART["cart"]
+        POD_PRICE["pricing (read-heavy)"]
+      end
+      subgraph RU2["Runtime Unit: checkout-writers<br/>(K8s Deployment, 2-5 pods)"]
+        POD_INV["inventory"]
+        POD_PAY["payment-orch"]
+        POD_ORD["order-committer"]
+      end
+      subgraph RU3["Runtime Unit: pg-primary<br/>(managed Postgres)"]
+        PG["checkout schema"]
+      end
+      subgraph RU4["Runtime Unit: event-bus<br/>(managed Kafka)"]
+        BUS["topics: orders-v1, payments-v1"]
+      end
+    end
+
+    RU1 -->|JDBC| PG
+    RU2 -->|JDBC| PG
+    RU2 -->|Kafka producer| BUS
+
+    classDef compute fill:#eef,stroke:#557
+    classDef data fill:#f0f7f0,stroke:#4a7
+    classDef event fill:#fff7e6,stroke:#c79a2f
+    class RU1,RU2 compute
+    class RU3 data
+    class RU4 event
+    </div>
+
+    <p>Four runtime units: a read-heavy compute deployment for the gateway / cart / pricing; a writer deployment for inventory / payment / order-committer; managed Postgres; managed Kafka. The separation between read-heavy and writer is deliberate &mdash; pricing's scaling curve is different from the order committer's, and a bad day on pricing (promotion storm) should not starve the committer's connection pool. The database and event bus are explicit runtime units so that failure domains are visible: a Postgres incident takes writes down; a Kafka incident delays the OrderPlaced event but does not block the synchronous response (outbox).</p>
+
+    <p>The IaC (terraform for the managed services, Kubernetes manifests for the compute, Helm charts for the chart wiring) lives in a sibling repository. This Architecture does not re-specify it; it specifies the intent (<em>four runtime units, these boundaries, these dependencies</em>) and references the IaC paths. Capacity numbers (pod counts, Postgres instance size, Kafka partition counts) live in the IaC with the ADR-backed rationale for the initial sizing. Future changes to capacity go through the IaC; changes to the unit-boundary structure go through the Architecture.</p>
+
+    <h3>4.6 &nbsp; Bad decomposition (distributed monolith)</h3>
+
+    <pre><code># What NOT to do &mdash; same requirements, five tightly-coupled services
+
+decomposition:
+  - id: cart-service
+    purpose: "Cart and pricing and checkout workflow."
+    responsibilities:
+      - "Hold cart items."
+      - "Call pricing-service for totals on every update."  &larr; chatty sync call on every edit
+      - "Call inventory-service on every view."              &larr; sync read on every cart display
+      - "Orchestrate checkout."
+      - "Persist cart to its own database."                  &larr; per-service DB, same transactional scope as inventory
+    allocates: [REQ-001, REQ-002, REQ-005, REQ-010, REQ-014, REQ-017]  &larr; six requirements in one child
+
+  - id: pricing-service
+    # ...
+
+  - id: inventory-service
+    purpose: "Stock reservation."
+    responsibilities:
+      - "Reserve stock on cart update."                      &larr; coupled to cart's lifecycle; one of the services can't ship independently
+      - "Return current stock on every read."
+      - "Persist to its own database."                       &larr; distributed transaction with cart on checkout
+</code></pre>
+
+    <p>The failure modes of this decomposition are visible before anything runs. <em>cart-service</em> hosts six requirements with three distinct change drivers (cart UX, pricing rules, inventory behaviour) &mdash; one god component masquerading as a coordinating service. Every cart update triggers synchronous calls to pricing and inventory; the three services cannot ship independent releases because their call contracts change together; the per-service databases require a distributed transaction on checkout (or, more commonly, an incident catalogue of inconsistent states). The diagram would look like independent microservices; the operational reality is a monolith with HTTP instead of function calls. The Quality Bar in &sect;5 catches this via the one-sentence responsibility test (the <em>cart-service</em> sentence needs two <em>and</em>s) and the cross-service transaction smell.</p>
+
+    <h3>4.7 &nbsp; Retrofit &mdash; honest vs laundered</h3>
+
+    <pre><code># LAUNDERED (fabricated; the kind of output an unguarded AI produces)
+
+decomposition:
+  - id: cart
+    purpose: "Holds the user's shopping cart, optimised for extensibility and single responsibility."
+    responsibilities:
+      - "Manage cart state with clean separation of concerns."  &larr; generic, reads-like-a-template
+      - "Coordinate with pricing and inventory following DDD principles."
+    allocates: [REQ-001, REQ-002]
+    recovery_status: reconstructed                                 &larr; rationale marked as if recoverable
+    rationale: "Chosen because it adheres to the single-responsibility principle and provides clean bounded-context separation, following DDD best practices."  &larr; no citation; no historical record; generic training prior
+
+# HONEST (correct retrofit output)
+
+decomposition:
+  - id: cart
+    purpose: "Holds line items and orchestrates checkout workflow across pricing, inventory, payment, order."
+    responsibilities:                                              &larr; derived from code and call graphs
+      - "Line-item state (observed: CartController + CartRepository, src/main/java/&hellip;)"
+      - "Calls PricingClient on every update (observed: CartService.updateLine, src/main/java/&hellip;/CartService.java:142)"
+      - "Calls InventoryClient on reservation (observed: CheckoutService.reserve, ditto:201)"
+      - "Writes via shared CheckoutDb (observed: flyway migrations V001&hellip;V034 in db/migration/)"
+    allocates: [REQ-001, REQ-002]
+    recovery_status: reconstructed                                 &larr; for observed structure
+    rationale:
+      status: unknown                                              &larr; human-only field, no fabrication
+      note: "No design document, ADR, or decision-record preserved for why the cart boundary was drawn here. Git history shows the boundary has been stable since commit abc123 (2021-06); no commit message cites a motivating decision. Follow up with @original-lead (see TEAM.md) before marking verified."
+</code></pre>
+
+    <p>The laundered version reads smoother; it is generic to the point of interchangeability and its rationale cites principles rather than history. The honest version carries the same observed structure with every responsibility tied to a file-and-line, and the rationale field says <em>we do not know</em> rather than inventing a plausible answer. The framework's retrofit skill enforces the honest shape at the tool layer: the laundered output cannot pass review because the rationale field under <code>recovery_status: reconstructed</code> requires either a preserved decision record or a marker of <code>unknown</code>. <em>"Because it follows DDD principles"</em> is what a language model produces from training priors; it is not a retrofit finding.</p>
+  </section>
+
+  <!-- ===================== SECTION 5: QUALITY BAR ===================== -->
+  <section id="arch-quality-bar">
+    <h2>5. Quality Bar</h2>
+    <p class="lead">Yes/No checklist, grouped by concern. An Architecture artifact passes when every applicable item is answered Yes. Two cards are meta-or-load-bearing and carry a visual accent: <strong>Composition completeness</strong> (where silent omission has the largest blast radius) and the <strong>Spec Ambiguity Test</strong> (the meta-gate that overrides everything above it).</p>
+
+    <div class="card">
+      <h3>Decomposition and boundaries</h3>
+      <ul>
+        <li>Is every child's purpose stated in exactly one sentence without conjunctions?</li>
+        <li>Does every child's responsibility list contain at most three items, each scoped at architectural (not implementation) level?</li>
+        <li>Is every parent-allocated requirement named in at least one child's <code>allocates</code>? (No requirements orphaned.)</li>
+        <li>Does every child <code>allocate</code> at least one requirement? (No components orphaned.)</li>
+        <li>Has the one-sentence-responsibility test been walked per child (no hidden <em>and</em>s)?</li>
+        <li>Has the depth/cognitive-load/change-blast trio been checked, with a record of which one fired if decomposition was revised?</li>
+        <li>Where a bounded-context language fracture exists, is the child boundary drawn at the fracture?</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Interfaces and contracts</h3>
+      <ul>
+        <li>Does every interface entry carry preconditions, postconditions (on success, on precondition failure, on downstream failure), invariants, a typed error enum, and quality attributes?</li>
+        <li>Does every externally callable interface state authentication and authorisation requirements?</li>
+        <li>Is every interface segregated by responsibility (no fat god-interfaces)?</li>
+        <li>Does every versioned interface name its versioning scheme and deprecation policy?</li>
+        <li>Is rationale carried on every interface (at least one line tying the choice to a requirement, ADR, or constraint)?</li>
+        <li>Are externally-imposed protocols cited by specification (RFC, API spec, standard identifier), not informal name?</li>
+      </ul>
+    </div>
+
+    <div class="card" style="border-left: 4px solid var(--accent-trace);">
+      <h3>Composition completeness &mdash; load-bearing</h3>
+      <ul>
+        <li>Is the runtime pattern named explicitly (request-response / event-driven / pipeline / hexagonal / &hellip;) rather than implied?</li>
+        <li>Does every runtime pattern choice have a rationale (inline or <code>governing_adrs</code>)?</li>
+        <li>Is the middleware stack ordered and stated (authN / authZ / rate limit / trace / &hellip;)?</li>
+        <li>Is the DI / composition-root strategy named?</li>
+        <li>Is the message-bus topology specified where applicable (topics, partition keys, retention, dead-letter, consumer groups)?</li>
+        <li>Does every critical flow (happy path plus one or two failure paths) have a sequence diagram?</li>
+        <li><strong>At root scope:</strong> are environments, orchestration target, and runtime-unit boundaries named?</li>
+        <li><strong>At root scope:</strong> does deployment intent resolve to concrete IaC artifacts (by reference) or explicitly planned ones?</li>
+        <li><strong>At root scope:</strong> does every runtime-unit boundary have an integration-test target in the branch / root TestSpec?</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Quality-attribute coverage</h3>
+      <ul>
+        <li>Does every NFR from the parent Requirements appear as either an Architecture child's allocated requirement or a cross-cutting composition commitment?</li>
+        <li>Are latency / throughput / availability budgets allocated to specific interfaces or components, not left at system-wide level?</li>
+        <li>Are consistency-model choices (strong / eventual / read-your-writes / bounded staleness) named per data path?</li>
+        <li>Is the cost model (envelope, cost-per-request target, cost-of-a-9 if availability is a binding concern) stated at root scope?</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Resilience coverage</h3>
+      <ul>
+        <li>Are bulkhead partitions named for shared resources that matter (connection pools, thread pools, external-dependency pools)?</li>
+        <li>Are circuit breakers placed at cross-service boundaries where caller exhaustion is a real failure mode?</li>
+        <li>Is retry policy (backoff, jitter, max attempts) specified where retries are safe, with idempotency design where they are not?</li>
+        <li>Is graceful degradation designed-in (not fallback-in) for non-essential dependencies, with the essential-vs-non-essential split named?</li>
+        <li>Are failure domains (process / host / AZ / region / provider) named, and is every redundancy claim backed by a named independence property (not assumed)?</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Security and observability at boundaries</h3>
+      <ul>
+        <li>Are trust zones drawn explicitly with named boundary crossings?</li>
+        <li>Is authn / authz stated per externally callable interface, with the evaluation layer (gateway, middleware, handler) named?</li>
+        <li>Is secrets flow specified (origin, in-memory-holders, where they must never appear)?</li>
+        <li>Are telemetry emergence points specified (what is logged, what is metric'd, what is traced; sampling policy; common context fields)?</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Rationale and traceability</h3>
+      <ul>
+        <li>Does every Decomposition entry, interface entry, and load-bearing composition choice carry a rationale field with non-trivial content?</li>
+        <li>Are governing ADRs listed in front-matter and referenced at the point in the body where each decision lands?</li>
+        <li>Has the traceability validator been run and returned zero orphan children, zero unallocated requirements, zero unresolved references?</li>
+        <li>Are fitness functions named for load-bearing architectural properties (dependency direction, latency budget, module size, security posture)?</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Retrofit discipline</h3>
+      <ul>
+        <li>Is observed structure marked <code>recovery_status: reconstructed</code> with evidence (file/line, commit, schema, operational log)?</li>
+        <li>Is human-only content (rationale, rejected alternatives, original intent) marked <code>verified</code> or <code>unknown</code> only &mdash; never <code>reconstructed</code>?</li>
+        <li>Is every <code>unknown</code> field paired with a follow-up owner and an action?</li>
+        <li>Is laundering audited &mdash; does any rationale read as generic principle invocation rather than historical recall?</li>
+        <li>Is the gap report populated (lost rationale, structural drift, missing ADRs, coverage gaps, ambiguous spec)?</li>
+      </ul>
+    </div>
+
+    <div class="card" style="border-left: 4px solid var(--accent-trace);">
+      <h3>Spec Ambiguity Test &mdash; meta-gate</h3>
+      <ul>
+        <li>Could a junior engineer or mid-tier AI, reading only this Architecture artifact (plus its governing ADRs and parent Requirements), produce defensible Detailed Designs for each leaf, and a TestSpec whose cases verify every interface and every composition-level invariant &mdash; without asking clarifying questions?</li>
+      </ul>
+      <p>If the answer is No, the artifact under-specifies its allocation role. Revise before accepting. This test overrides every box above: an Architecture artifact that passes all the other checks but fails this one has not done the job Architecture exists to do.</p>
+    </div>
+  </section>
+
+  <!-- ===================== REFERENCES ===================== -->
+  <section id="arch-references">
+    <h2>References</h2>
+    <p style="color: var(--fg-muted); font-size: 0.9em;">Primary backing from the engineering-codex (<code>/home/stefanus/repos/engineering-codex/</code>) and named primary sources. Load-bearing claims on this page are anchored in the cited material.</p>
+    <ul>
+      <li><code>wiki/sources/src-sw-arch-decomp-parnas-1972.md</code> &mdash; Parnas, <em>On the Criteria To Be Used in Decomposing Systems into Modules</em>, CACM 15(12), 1972. Information hiding foundation used in &sect;2.1.</li>
+      <li><code>wiki/sources/src-sw-arch-decomp-cohesion-types.md</code>, <code>wiki/sources/src-sw-arch-decomp-coupling-types.md</code> &mdash; Constantine, Stevens, Myers. Cohesion and coupling taxonomies cited in &sect;2.1.</li>
+      <li><code>wiki/concepts/concept-domain-driven-design.md</code>, <code>wiki/concepts/concept-bounded-context.md</code>, <code>wiki/sources/src-evans-ddd-reference-2015.md</code> &mdash; Evans, <em>Domain-Driven Design Reference</em> (2015); <em>Domain-Driven Design</em> (Addison-Wesley, 2003). Bounded contexts and the nine context-mapping patterns (ACL, Partnership, Published Language used here) in &sect;2.1.</li>
+      <li>Skelton, Matthew; Pais, Manuel. <em>Team Topologies</em> (IT Revolution, 2019). Conway inversion and the four team types in &sect;2.1.</li>
+      <li><code>wiki/sources/src-c4-model-simonbrown-2026.md</code> &mdash; Brown, <em>The C4 Model for Visualising Software Architecture</em> (simonbrown.je). Context &rarr; Container &rarr; Component &rarr; Code used in &sect;1.</li>
+      <li><code>wiki/sources/src-arch-documentation-41-view-model-wikipedia.md</code> &mdash; Kruchten, <em>Architectural Blueprints &mdash; The &ldquo;4+1&rdquo; View Model of Software Architecture</em>, IEEE Software 12(6), 1995. Cited as the alternative view taxonomy to C4 in &sect;1.</li>
+      <li><code>wiki/sources/src-sei-views-beyond.md</code> &mdash; Clements, Bachmann, Bass, Garlan et al., <em>Documenting Software Architectures: Views and Beyond</em> (SEI / Addison-Wesley, 2nd ed., 2011). The nine-part interface template in &sect;2.2 and the module / component-and-connector / allocation view taxonomy.</li>
+      <li><code>wiki/sources/src-arch-documentation-interface-docs.md</code> &mdash; SEI, <em>Interface Documentation</em>. Syntactic vs semantic split in &sect;2.2.</li>
+      <li><code>wiki/concepts/concept-design-by-contract.md</code>, <code>wiki/sources/src-meyer-dbc-chapter.md</code> &mdash; Meyer, <em>Object-Oriented Software Construction</em> (Prentice Hall, 1988 / 1997); Hoare, <em>An Axiomatic Basis for Computer Programming</em>, CACM 12(10), 1969; Liskov &amp; Wing, <em>A Behavioral Notion of Subtyping</em>, TOPLAS 16(6), 1994. Preconditions / postconditions / invariants in &sect;2.2.</li>
+      <li><code>wiki/sources/src-sw-arch-decomp-hexagonal-aws.md</code> &mdash; Cockburn, <em>Hexagonal Architecture</em> (2005); AWS Builders' Library summary. Ports and adapters in &sect;2.4.</li>
+      <li><code>wiki/sources/src-sw-arch-decomp-clean-architecture.md</code> &mdash; Martin, <em>Clean Architecture: A Craftsman's Guide to Software Structure and Design</em> (Prentice Hall, 2017). Component principles (REP, CCP, CRP, ADP, SDP, SAP) underlying &sect;2.1 and the concentric-ring elaboration of hexagonal in &sect;2.4.</li>
+      <li><code>wiki/sources/src-sw-arch-decomp-layered-bitloops.md</code>, <code>wiki/sources/src-sw-arch-decomp-microservice-granularity.md</code> &mdash; layered and microservices composition-pattern references in &sect;2.4.</li>
+      <li><code>wiki/concepts/concept-fault-tolerance.md</code> &mdash; bulkhead, circuit breaker, retry+jitter, graceful degradation, common-cause failure in &sect;2.6. Primary sources include Nygard, <em>Release It!</em> (2nd ed., Pragmatic, 2018) and the AWS Builders' Library resilience articles.</li>
+      <li><code>wiki/sources/src-nygard-adr-2011.md</code> &mdash; Nygard, <em>Documenting Architecture Decisions</em> (2011). Cross-referenced; the Architecture page cites ADRs via <code>governing_adrs</code> &mdash; see the <a href="adr.html">ADR page</a> for the artifact itself.</li>
+      <li><code>wiki/sources/src-arch-evaluation-atam-wikipedia.md</code>, <code>wiki/sources/src-arch-evaluation-quality-attribute-scenarios.md</code> &mdash; Kazman, Klein, Clements, <em>ATAM: Method for Architecture Evaluation</em>, SEI TR CMU/SEI-2000-TR-004, 2000; and <em>Software Architecture in Practice</em> (Bass, Clements, Kazman, 4th ed., 2021). ATAM and the six-component quality-attribute scenario referenced for &sect;2.9 fitness functions and for the Quality-attribute-coverage Quality Bar card; the Product Brief page carries the scenario-authoring discipline.</li>
+      <li>Ford, Neal; Parsons, Rebecca; Kua, Patrick. <em>Building Evolutionary Architectures</em> (O'Reilly, 2nd ed., 2023). Fitness functions in &sect;2.9.</li>
+      <li>Fowler, Martin. <em>StranglerFigApplication</em> (martinfowler.com, 2004). Strangler pattern in &sect;2.9.</li>
+      <li>Kleppmann, Martin. <em>Designing Data-Intensive Applications</em> (O'Reilly, 2017). Consistency models, CAP/PACELC, event sourcing and CQRS in &sect;2.5 &mdash; pointer rather than repeated teaching.</li>
+      <li>Wiggins, Adam. <em>The Twelve-Factor App</em> (12factor.net, 2011). Cloud-native operational norms referenced in &sect;2.8.</li>
+      <li>Foote, Brian; Yoder, Joseph. <em>Big Ball of Mud</em>, Pattern Languages of Program Design 4, 1997. Named anti-pattern in &sect;3.</li>
+      <li>OpenTelemetry Specification (<a href="https://opentelemetry.io/docs/specs/otel/">opentelemetry.io</a>). Telemetry reference in &sect;2.7.</li>
+    </ul>
+  </section>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'neutral' });</script>
+<script src="../js/app.js"></script>
+</body>
+</html>

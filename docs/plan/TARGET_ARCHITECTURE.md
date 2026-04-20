@@ -116,7 +116,7 @@ The system is modelled as a **tree of scopes**, discovered per-system, of variab
 - **Cognitive-load test** — a scope should fit in one R+A pair a reviewer can hold in their head.
 - **Change-blast test** — if subdividing wouldn't let parts change independently, you've gone too deep.
 
-**Wiring as a leaf sibling.** Composition code at a non-leaf scope (event-bus setup, DI wiring, deployment orchestration) is modelled as a leaf sibling in that scope's decomposition, with its own DD. Root-scope deployment orchestration (compose/terraform/k8s) is treated the same way.
+**Deployment and wiring.** Architecture Composition (§5.3) is the authoritative spec for runtime pattern, wiring approach, and deployment intent. IaC artifacts (terraform/k8s/compose) implement that intent rather than sitting under a separate Detailed Design. Whether some imperative composition code (DI containers, middleware stacks, event-bus setup) warrants its own DD is deferred to the Build workflow design (see §8.4, §15). Integration and end-to-end coverage are carried by branch- and root-scope TestSpec tracing to Architecture Composition and child interfaces — not by a redundant DD layer above IaC.
 
 ### 5.2 Artifact Set
 
@@ -319,7 +319,7 @@ A concrete Yes/No checklist grouped by concern, subject to the **Spec Ambiguity 
 |---|---|
 | Product Brief | Stakeholder completeness, problem evidence, outcome specificity, non-goals explicit, success criteria measurable |
 | Requirements | EARS where apt, rationale present, QAs measurable, interface contracts, constraint inheritance traced |
-| Architecture | Composition section complete, every child allocated, every req allocated, ADRs linked, interfaces contracted |
+| Architecture | Composition section complete (runtime patterns have rationale; deployment intent resolves to concrete IaC artifacts; runtime-unit boundaries have integration-test targets), every child allocated, every req allocated, ADRs linked, interfaces contracted |
 | ADR | Context specific, ≥ 2 alternatives, reversibility sub-prompt answered, affected scopes listed |
 | Detailed Design | Junior-implementable, contracts on every public function, state machines explicit, error handling complete, language-portable |
 | TestSpec | Derivation strategies applied (requirement-based, equivalence class, boundary, state transitions, error paths, fault injection), coverage targets declared, every spec element has ≥ 1 test |
@@ -495,6 +495,7 @@ The Build workflow consumes specifications and produces code + tests. It will be
 - Build-side artifacts add `realizes` links to the traceability graph; Spec artifacts are oblivious to them.
 - When Build finds a spec insufficient to implement, the change enters Specification workflow at the appropriate layer (per §8.3).
 - **Build-side rule** (to be encoded when Build is designed): do not hunt external channels for product / design intent. If intent isn't in the spec, the Spec Ambiguity Test failed and the spec updates.
+- **Wiring / IaC spec question** (deferred from §5.1): Architecture Composition is the current authoritative spec for deployment and wiring. Build will decide whether imperative wiring code (DI containers, middleware stacks, event-bus setup) warrants its own Detailed Design, or whether Composition + integration TestSpec is sufficient. Declarative IaC (terraform, k8s, compose) is already decided — no separate DD layer above it.
 
 ---
 
@@ -662,3 +663,4 @@ Genuine architectural uncertainties to revisit as we learn more. (Execution open
 5. **Retrofit completeness threshold.** How many `unknown` fields make a retrofit "not useful" vs "partial but usable"? No principled answer today; real retrofit runs will inform.
 6. **Product Brief for micro-projects.** The 7-section shape fits real products. For internal tools or one-week prototypes a "Product Brief Lite" may be useful — out of scope until we see the need.
 7. **Domain translation reintroduction.** Whether, when, and how to reinstate a domain-vocabulary translation mechanism once Phase 2 content is stable. Options include the pre-pivot JSON-plugin runtime, manual per-domain page variants, or abandoning translation in favor of a single-voice corpus. Deferred until we have stable content to evaluate against.
+8. **Imperative wiring spec layer.** Does imperative composition code (DI containers, middleware stacks, event-bus setup) warrant its own Detailed Design, or is Architecture Composition + integration TestSpec sufficient? Declarative IaC (terraform, k8s, compose) is already decided — no separate DD; Architecture Composition is the intent spec, IaC is the implementation. Deferred to Build workflow design.
