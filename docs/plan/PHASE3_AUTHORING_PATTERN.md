@@ -8,7 +8,7 @@ Load this file at the start of every Phase 3 session.
 
 ## 1. Status as of 2026-04-22
 
-**Phase 3 work to date (6 commits):**
+**Phase 3 work to date (9 commits):**
 
 | Commit | Step | What |
 |---|---|---|
@@ -18,6 +18,9 @@ Load this file at the start of every Phase 3 session.
 | `5b84d62` | #5 Product Brief schema | Pattern-setter for per-artifact schemas. Front-matter-only validation; `id` const `"PB"`; `summary` required; `recovery_status: reconstructed` banned at scalar + map levels (human-only artifact). |
 | `bf0fb76` | Status-wording sweep | Reconcile PB + Requirements HTML pages to the universal lifecycle enum — `accepted` → `active` in 6 places. ADR page intentionally kept on Nygard convention (see §2 lock below). |
 | `7742783` | #6 Requirements schema | Front-matter + `$defs/requirement` for per-req embedded-YAML blocks. Artifact `id` prefix `REQS-`; per-req `id` prefix `REQ-` (do not conflate). `rationale_recovery_status` narrowed to `verified \| unknown` (no-fabrication on human-only rationale). |
+| `831bf2d` | Handoff-doc update | Log PB / sweep / Requirements commits; lock ADR status override in §2 Lifecycle; refresh recommended next step. |
+| `4a6a4d7` | Envelope status relaxation | Refactor motivated by ADR override need: envelope owns status *shape* (required, non-empty); per-artifact schemas own *vocabulary* (enum). See §2 Vocabulary ownership lock. Touches envelope + PB + Requirements. |
+| `0dcba63` | #8 ADR schema | Third per-artifact schema. Nygard status enum override (`proposed \| accepted \| superseded`); `id` requires mandatory kebab slug; `scope_tags` minItems 1; `supersedes` / `superseded_by` tightened to ADR id pattern; `recovery_status` narrowed on four human-only keys (context, alternatives_considered, rationale, consequences). Archive pre-pivot `adr.schema.yaml`. |
 
 **Pending tasks (Phase 3 backlog):**
 
@@ -25,15 +28,13 @@ Load this file at the start of every Phase 3 session.
 |---|---|---|
 | 3 | Quality Bar YAML container shape | Its own session. Do before #12. |
 | 7 | architecture schema | Deepest (DbC contract shape); **own session recommended**. |
-| 8 | adr schema | Rewrite; per-artifact `status` enum override to Nygard wording (§2). |
-| 9 | detailed-design schema | Rewrite; drops pre-pivot Layer 1/2/3 model. |
+| 9 | detailed-design schema | Rewrite; drops pre-pivot Layer 1/2/3 model. Comparable complexity to #7. |
 | 10 | test-spec schema | New; mandatory non-empty `verifies`. |
-| 11 | traceability link-types + validation rules | Parallel-able with per-artifact work. |
+| 11 | traceability link-types + validation rules | Parallel-able with per-artifact work; good short-session candidate. |
 | 12 | Extract Quality Bar YAML per artifact | Depends on #3. |
 | 13 | Minimal-example fixtures per artifact | Depends on all schemas. |
 
 **Pre-pivot-tainted schemas still in place (to be archived as their replacements land):**
-- `schemas/artifacts/adr.schema.yaml` (pre-pivot sections + fields)
 - `schemas/artifacts/detailed-design.schema.yaml` (pre-pivot Layer 1/2/3 model)
 
 ---
@@ -75,9 +76,15 @@ Load this file at the start of every Phase 3 session.
 
 ### Lifecycle
 
-- **Universal enum:** `draft | active | superseded`. Default for all artifact types.
-- **ADR exception — locked 2026-04-22.** `adr.schema.json` (task #8) overrides the universal `status` enum to Nygard's `proposed | accepted | superseded`. Reviewed and chose to preserve the 15-year ADR community convention rather than force uniformity: the universal enum remains the default for everything else, so one principled exception costs less than fighting reader expectations across every ADR tool and article. Implementation: per-artifact `status` enum override at the top of `adr.schema.json`.
+- **Universal enum:** `draft | active | superseded`. Default for all artifact types; lives in `common-defs#/$defs/lifecycle_status`.
+- **ADR exception — locked 2026-04-22, shipped `0dcba63`.** `adr.schema.json` overrides the universal `status` enum to Nygard's `proposed | accepted | superseded`. Preserved the 15-year ADR community convention rather than force uniformity; one principled exception costs less than fighting reader expectations across every ADR tool and article.
 - **NOT `deprecated`** — explicitly rejected. Wrong metaphor for specs (specs are in force or not; they don't fade).
+
+### Vocabulary ownership — locked 2026-04-22, shipped `4a6a4d7`
+
+- **Envelope owns shape; per-artifact schemas own vocabulary.** The envelope declares `status` as required + non-empty string without mandating a specific enum. Each per-artifact schema supplies its vocabulary via `$ref common-defs#/$defs/lifecycle_status` (universal default — PB, Requirements) or inline `enum` (ADR's Nygard override).
+- **Rationale.** `allOf` in JSON Schema narrows intersections but cannot override a `$ref`-enforced enum. Pushing vocabulary to per-artifact schemas is architecturally clean (envelope = universal structure, per-artifact = domain terms) and avoids conditional `if/then/else` patterns that would bake artifact-specific knowledge into the envelope. Discovered while writing the ADR schema; the refactor was applied before ADR landed.
+- **Implication for future per-artifact schemas.** Every new per-artifact schema must explicitly declare its `status` property override in its inline `allOf` branch — inheriting from the envelope alone no longer enforces a vocabulary.
 
 ### Versioning — Model A
 
@@ -240,8 +247,8 @@ EOF
 
 ## 8. Recommended Next Step
 
-**Task #8 — ADR schema.** Next manageable per-artifact schema. Rewrite from scratch against the new ADR structure (TARGET §5.3 + §9); apply the per-artifact `status` enum override to Nygard's `proposed | accepted | superseded` per §2 Lifecycle lock; archive pre-pivot `schemas/artifacts/adr.schema.yaml` in the same commit. Follow §4 Authoring Rhythm.
+**Task #7 — Architecture schema.** Deepest per-artifact schema: Design-by-Contract interface shape (preconditions, postconditions, errors, invariants per the HTML §3), per-child Decomposition entries (`id`, `purpose`, `responsibilities`, `allocates`), per-interface entries, mandatory Composition section (runtime pattern, sequence diagrams, deployment intent at root), root-scope-only extras (environments, orchestration target, runtime-unit boundaries). Substantially more complex than PB, Requirements, or ADR — **own session recommended**. Follow §4 Authoring Rhythm. Remember: per §2 Vocabulary ownership, the Architecture schema must explicitly declare its own `status` override (universal via `$ref lifecycle_status`).
 
-Alternative 1: **Task #7 — Architecture schema.** Deepest per-artifact schema (Design-by-Contract interface shape, mandatory Composition section). Merits its own focused session; avoid squeezing into a busy one.
+Alternative 1: **Task #11 — traceability link-types + validation rules.** Small, TARGET §7 is well-specified, parallel-able with per-artifact work. Good for a short session or running alongside #7.
 
-Alternative 2: **Task #11 — traceability link-types + validation rules.** Small, TARGET §7 is well-specified, parallel-able with per-artifact work.
+Alternative 2: **Task #9 — Detailed Design schema.** Comparable complexity to #7 (public-interface shape is similar DbC territory, plus data-structure invariants, algorithm pseudocode shape, state-machine references). Alternative choice if Architecture's Composition section feels too heavy for the available context window. Remember to archive pre-pivot `detailed-design.schema.yaml` in the same commit.
