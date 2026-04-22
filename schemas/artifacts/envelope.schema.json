@@ -27,8 +27,9 @@
     },
 
     "status": {
-      "description": "Lifecycle state. Universal across all artifact types.",
-      "$ref": "https://vmodelworkflow.dev/schemas/artifacts/common-defs/v1#/$defs/lifecycle_status"
+      "description": "Lifecycle state. Required and non-empty at envelope level; the per-artifact schema constrains the specific vocabulary. Most artifacts use the universal lifecycle (draft | active | superseded) via common-defs#/$defs/lifecycle_status; ADR overrides to Nygard's proposed | accepted | superseded. The envelope intentionally does not mandate an enum so per-artifact schemas can choose their vocabulary without fighting schema intersection rules.",
+      "type": "string",
+      "minLength": 1
     },
 
     "date": {

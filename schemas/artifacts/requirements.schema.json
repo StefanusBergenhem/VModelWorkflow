@@ -50,6 +50,11 @@
           "items": {
             "$ref": "https://vmodelworkflow.dev/schemas/artifacts/common-defs/v1#/$defs/artifact_id_ref"
           }
+        },
+
+        "status": {
+          "description": "Lifecycle state. Requirements uses the universal lifecycle vocabulary: draft → active, re-enters draft on material edit, transitions to superseded only when a differently-named Requirements document replaces this one (rare).",
+          "$ref": "https://vmodelworkflow.dev/schemas/artifacts/common-defs/v1#/$defs/lifecycle_status"
         }
       }
     }
