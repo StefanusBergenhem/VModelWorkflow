@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vmodelworkflow.dev/schemas/artifacts/requirements/v1",
+  "title": "Requirements front-matter",
+  "description": "Front-matter shape for a Requirements artifact. Lives at /specs/{scope}/requirements.md for non-leaf scopes; at /specs/requirements.md for the root scope. Composes the universal envelope and adds the artifact-level identity (scope, parent_scope, derived_from, governing_adrs) that the body's requirement entries inherit. The per-requirement embedded-YAML block shape is defined in $defs/requirement and exported for use by the artifact parser and downstream validators — this schema does not parse or validate body contents itself; it validates only the front-matter YAML. The artifact-level id prefix REQS- is distinct from the per-requirement id prefix REQ- — do not conflate: REQS identifies the document, REQ identifies an individual requirement inside it.",
+
+  "allOf": [
+    { "$ref": "https://vmodelworkflow.dev/schemas/artifacts/envelope/v1" },
+    {
+      "type": "object",
+      "required": ["id", "artifact_type", "scope", "parent_scope", "derived_from"],
+      "properties": {
+
+        "id": {
+          "description": "Artifact identifier. Literal 'REQS' at root scope; 'REQS-{scope-flattened}' otherwise, where scope path segments (normally separated by '/') are joined with hyphens. Example: scope 'session/user-mgmt' → id 'REQS-session-user-mgmt'. This is the artifact-level id; individual requirements inside carry REQ-{…} ids (see $defs/requirement).",
+          "type": "string",
+          "pattern": "^REQS(-[a-z0-9]+(-[a-z0-9]+)*)?$"
+        },
+
+        "artifact_type": {
+          "description": "Artifact-type discriminator, fixed for this schema.",
+          "const": "requirements"
+        },
+
+        "scope": {
+          "description": "Scope path this Requirements artifact covers. Empty string denotes the root scope. Kebab-case segments separated by '/'.",
+          "$ref": "https://vmodelworkflow.dev/schemas/artifacts/common-defs/v1#/$defs/scope_path"
+        },
+
+        "parent_scope": {
+          "description": "Parent scope path. Null at root (no parent). At branches: the containing scope's path.",
+          "oneOf": [
+            { "$ref": "https://vmodelworkflow.dev/schemas/artifacts/common-defs/v1#/$defs/scope_path" },
+            { "type": "null" }
+          ]
+        },
+
+        "derived_from": {
+          "description": "Upstream artifact ids this Requirements document is refined from. At root: [PB]. At non-root branches: typically [REQS-<parent>] plus any inherited constraints. Non-empty list; empty would mean an orphan artifact.",
+          "type": "array",
+          "items": {
+            "$ref": "https://vmodelworkflow.dev/schemas/artifacts/common-defs/v1#/$defs/artifact_id_ref"
+          },
+          "minItems": 1
+        },
+
+        "governing_adrs": {
+          "description": "Cross-cutting ADRs that constrain this scope. Optional; empty or absent when the scope inherits no ADR-level constraints.",
+          "type": "array",
+          "items": {
+            "$ref": "https://vmodelworkflow.dev/schemas/artifacts/common-defs/v1#/$defs/artifact_id_ref"
+          }
+        }
+      }
+    }
+  ],
+
+  "$defs": {
+
+    "requirement": {
+      "description": "Per-requirement block shape — the YAML an embedded requirement entry in the markdown body renders to. Exported for use by parsers and validators extracting individual requirement blocks from a Requirements document. Not enforced by the top-level schema on the front-matter object itself. Rationale is required and non-empty; the retrofit discipline narrows rationale_recovery_status to 'verified' or 'unknown' only — the 'reconstructed' value is nonsensical for a human-only field (no-fabrication rule).",
+      "type": "object",
+      "required": ["id", "statement", "rationale"],
+      "properties": {
+
+        "id": {
+          "description": "Requirement identifier. Pattern REQ-{scope-or-seq}. Examples: 'REQ-001' at root; 'REQ-session-042'; 'REQ-app-checkout-017'. Lowercase kebab-case throughout.",
+          "type": "string",
+          "pattern": "^REQ-[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+
+        "statement": {
+          "description": "The requirement itself. Atomic (one 'shall'), testable, solution-free. Non-empty string.",
+          "type": "string",
+          "minLength": 1
+        },
+
+        "rationale": {
+          "description": "Why this requirement exists — the defensible 'why' that survives pressure to drop or rework it. Human-only field: must be authored by a human or explicitly marked unknown in retrofit (see rationale_recovery_status). Non-empty string.",
+          "type": "string",
+          "minLength": 1
+        },
+
+        "acceptance": {
+          "description": "Acceptance criteria clarifying test conditions when the statement alone is ambiguous. Prose (commonly Given/When/Then). Optional.",
+          "type": "string",
+          "minLength": 1
+        },
+
+        "derived_from": {
+          "description": "Per-requirement lineage: upstream user story, stakeholder need, parent requirement, or inherited constraint this requirement was refined from. Optional — when absent, the artifact-level derived_from provides lineage.",
+          "type": "array",
+          "items": {
+            "$ref": "https://vmodelworkflow.dev/schemas/artifacts/common-defs/v1#/$defs/artifact_id_ref"
+          }
+        },
+
+        "derivation": {
+          "description": "Optional marker explaining how this requirement came to be (for example 'derived' when it was derived from an inherited constraint rather than directly authored). Free-text; no closed enum — tighten only when a stable vocabulary emerges.",
+          "type": "string",
+          "minLength": 1
+        },
+
+        "statement_recovery_status": {
+          "description": "Retrofit provenance of the statement field specifically. Behaviour-side field: observable from code and tests. Allowed values: 'verified' (human confirmed), 'reconstructed' (inferred from code/test evidence), 'unknown'.",
+          "$ref": "https://vmodelworkflow.dev/schemas/artifacts/common-defs/v1#/$defs/recovery_status_scalar"
+        },
+
+        "rationale_recovery_status": {
+          "description": "Retrofit provenance of the rationale field specifically. Human-only: the 'reconstructed' value is banned by the no-fabrication rule. Allowed values: 'verified' or 'unknown' only.",
+          "type": "string",
+          "enum": ["verified", "unknown"]
+        },
+
+        "follow_up": {
+          "description": "Open actions to close gaps surfaced by retrofit or authoring (missing rationale, pending stakeholder confirmation, unresolved constraint). Optional; empty or absent when no follow-ups are tracked.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["owner", "action"],
+            "properties": {
+              "owner": {
+                "description": "Person, team, or role responsible for closing this follow-up.",
+                "type": "string",
+                "minLength": 1
+              },
+              "action": {
+                "description": "Concrete action to take.",
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}
