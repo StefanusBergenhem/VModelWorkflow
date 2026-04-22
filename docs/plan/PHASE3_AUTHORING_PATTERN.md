@@ -8,22 +8,24 @@ Load this file at the start of every Phase 3 session.
 
 ## 1. Status as of 2026-04-22
 
-**Phase 3 work to date (2 commits):**
+**Phase 3 work to date (6 commits):**
 
 | Commit | Step | What |
 |---|---|---|
 | `2993385` | Phase 3 prep | Archive 4 pre-pivot schemas (`sw-architecture`, `sw-requirement`, `system-requirement`, `system-test-case`) + EARS dir. Drop speculative `priority` field from `requirements.html`. |
 | `a00181f` | Envelope + shared defs | Author `envelope.schema.json` + `common-defs.schema.json` as JSON Schema draft 2020-12. Archive pre-pivot-tainted `artifact-envelope.schema.yaml`. |
+| `7c0dca8` | Authoring pattern | Phase 3 session handoff / authoring pattern doc (this file). |
+| `5b84d62` | #5 Product Brief schema | Pattern-setter for per-artifact schemas. Front-matter-only validation; `id` const `"PB"`; `summary` required; `recovery_status: reconstructed` banned at scalar + map levels (human-only artifact). |
+| `bf0fb76` | Status-wording sweep | Reconcile PB + Requirements HTML pages to the universal lifecycle enum — `accepted` → `active` in 6 places. ADR page intentionally kept on Nygard convention (see §2 lock below). |
+| `7742783` | #6 Requirements schema | Front-matter + `$defs/requirement` for per-req embedded-YAML blocks. Artifact `id` prefix `REQS-`; per-req `id` prefix `REQ-` (do not conflate). `rationale_recovery_status` narrowed to `verified \| unknown` (no-fabrication on human-only rationale). |
 
 **Pending tasks (Phase 3 backlog):**
 
 | # | Task | Notes |
 |---|---|---|
 | 3 | Quality Bar YAML container shape | Its own session. Do before #12. |
-| 5 | product-brief schema | Simplest; **recommended pattern-setter**. |
-| 6 | requirements schema | Rewrite from scratch. |
-| 7 | architecture schema | Deepest (DbC contract shape). |
-| 8 | adr schema | Rewrite; universal lifecycle applies. |
+| 7 | architecture schema | Deepest (DbC contract shape); **own session recommended**. |
+| 8 | adr schema | Rewrite; per-artifact `status` enum override to Nygard wording (§2). |
 | 9 | detailed-design schema | Rewrite; drops pre-pivot Layer 1/2/3 model. |
 | 10 | test-spec schema | New; mandatory non-empty `verifies`. |
 | 11 | traceability link-types + validation rules | Parallel-able with per-artifact work. |
@@ -73,7 +75,8 @@ Load this file at the start of every Phase 3 session.
 
 ### Lifecycle
 
-- **Universal enum:** `draft | active | superseded`. Applies to all six artifact types including ADR (semantic match: proposed ≡ draft, accepted ≡ active).
+- **Universal enum:** `draft | active | superseded`. Default for all artifact types.
+- **ADR exception — locked 2026-04-22.** `adr.schema.json` (task #8) overrides the universal `status` enum to Nygard's `proposed | accepted | superseded`. Reviewed and chose to preserve the 15-year ADR community convention rather than force uniformity: the universal enum remains the default for everything else, so one principled exception costs less than fighting reader expectations across every ADR tool and article. Implementation: per-artifact `status` enum override at the top of `adr.schema.json`.
 - **NOT `deprecated`** — explicitly rejected. Wrong metaphor for specs (specs are in force or not; they don't fade).
 
 ### Versioning — Model A
@@ -217,9 +220,10 @@ EOF
 
 ## 6. Open Architectural Points (defer decisions)
 
-- **ADR status wording.** Unified to `draft | active | superseded`. If industry-standard `proposed | accepted | superseded` is preferred, add a per-artifact enum override in `adr.schema.json` — one-line change.
 - **Quality Bar container shape (task #3).** Its own session. HTML sections are authoritative for content; task is to design the YAML shape that tools consume. Must precede task #12 extraction.
 - **`priority` field.** Dropped from requirements.html this session. Reintroduce only when grounded in actual use.
+- **HTML front-matter under-specification.** Several artifact pages (architecture, detailed-design, testspec) do not show `title` / `version` / `artifact_type` in their front-matter tables despite these being envelope-universal. Schemas drive consistency; HTML wording sweep is a follow-up when enough drift accumulates.
+- **`partially_verified` recovery_status value** in `product-brief.html` retrofit example (line ~607) is not in the common-defs enum (`verified | reconstructed | unknown`). Content defect in the page example; fix when next touching the PB page.
 
 ---
 
@@ -236,6 +240,8 @@ EOF
 
 ## 8. Recommended Next Step
 
-**Task #5 — Product Brief schema.** Root-only, simplest per-artifact shape, pattern-setter for the remaining five. Follow §4 Authoring Rhythm.
+**Task #8 — ADR schema.** Next manageable per-artifact schema. Rewrite from scratch against the new ADR structure (TARGET §5.3 + §9); apply the per-artifact `status` enum override to Nygard's `proposed | accepted | superseded` per §2 Lifecycle lock; archive pre-pivot `schemas/artifacts/adr.schema.yaml` in the same commit. Follow §4 Authoring Rhythm.
 
-Alternative: **Task #11 — traceability link-types + validation rules.** Small, TARGET §7 is well-specified, parallel-able with per-artifact work.
+Alternative 1: **Task #7 — Architecture schema.** Deepest per-artifact schema (Design-by-Contract interface shape, mandatory Composition section). Merits its own focused session; avoid squeezing into a busy one.
+
+Alternative 2: **Task #11 — traceability link-types + validation rules.** Small, TARGET §7 is well-specified, parallel-able with per-artifact work.
