@@ -129,7 +129,7 @@ flowchart LR
       </tbody>
     </table>
 
-    <p>Per requirement, the embedded YAML block carries <code>id</code>, <code>statement</code>, <code>rationale</code> (required), <code>acceptance</code> (optional; required when the statement alone leaves test conditions ambiguous), <code>priority</code> (optional), and <code>derived_from</code> (the upstream user story, stakeholder need, or parent requirement).</p>
+    <p>Per requirement, the embedded YAML block carries <code>id</code>, <code>statement</code>, <code>rationale</code> (required), <code>acceptance</code> (optional; required when the statement alone leaves test conditions ambiguous), and <code>derived_from</code> (the upstream user story, stakeholder need, or parent requirement).</p>
 
     <h3>2.1 &nbsp; Vocabulary discipline &mdash; glossary and ubiquitous language</h3>
     <p>Before any requirement statement has meaning, the terms it uses must mean the same thing to every reader. This is Evans' ubiquitous language adapted to the requirements layer: a single vocabulary, binding across conversation, requirements text, architecture diagrams, code, and tests, scoped to one bounded context. Within that scope there is one word per concept and one concept per word. Different scopes are free to use the same word with different meanings; that is the whole point of a bounded context.</p>
@@ -264,9 +264,6 @@ flowchart LR
 
     <h4>Conditional completeness &mdash; state-driven pairs</h4>
     <p>Every state-driven requirement (<em>While &lt;state&gt;&hellip;</em>) implicitly raises the question: what does the system do <em>outside</em> that state? A Requirements document that says <em>"While the session is elevated, the system shall allow changes to payment methods"</em> but never states what happens outside the elevated state has a latent gap; a reviewer has no way to tell whether the behaviour is "allow it with a prompt", "deny it", or "deny silently". Write the complementary pair whenever the state axis is load-bearing: <em>"While the session is elevated, the system shall allow&hellip;"</em> paired with <em>"While the session is not elevated, the system shall prompt for step-up authentication before allowing&hellip;"</em>. State-driven requirements without complements are among the most common findings in requirements review.</p>
-
-    <h4>Prioritisation &mdash; an attribute, not a section</h4>
-    <p>Teams with many requirements and bounded capacity inevitably need to express <em>which</em> requirements are must-have. The framework stores priority as a per-requirement attribute, not as a grouping section, because grouping by priority fragments the natural grouping by type. Common schemes: MoSCoW (<em>must / should / could / won't</em>) for straightforward prioritisation; WSJF (weighted shortest job first) for scaled agile with cost-of-delay estimates; RICE (reach / impact / confidence / effort) for product-driven prioritisation. Pick one consciously and apply it uniformly; a Requirements document whose priority field uses three schemes cannot be sorted reliably.</p>
 
     <h3>2.5 &nbsp; Quality attributes at requirement granularity</h3>
     <p>The Product Brief page covers quality-attribute <em>scoping</em>: the NFR-10 floor list (availability, latency, throughput, security, privacy / compliance, data, compatibility, extensibility, operability, cost) and the six-component quality-attribute scenario form (stimulus / source / environment / artifact / response / response measure). This page covers what changes when those scenarios harden into individual, testable requirement statements.</p>
