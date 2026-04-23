@@ -76,7 +76,7 @@ DOCUMENTATION              TEMPLATES & SCHEMAS         TRACEABILITY             
 │ 5-section HTML  │       │ Per-artifact     │       │ Forward links    │       │ Craft skills     │
 │ per artifact    │       │ YAML schemas     │       │ embedded in      │       │ (standalone best │
 │ (V-model ctx,   │       │                  │       │ artifacts        │       │ practices)       │
-│  best practices,│       │ Quality Bar YAML │       │                  │       │                  │
+│  best practices,│       │ Quality Bar JSON │       │                  │       │                  │
 │  anti-patterns, │       │ (canonical,      │       │ Reverse derived  │       │ Framework skills │
 │  examples,      │       │  Phase 3)        │       │ by tooling       │       │ (orchestration,  │
 │  Quality Bar)   │       │ Scaffolder       │       │                  │       │ template, trace, │
@@ -305,7 +305,7 @@ Traceability links reference IDs, not paths.
 Lives in the artifact schema. Mandatory sections, required fields, required traceability links. Mechanically validatable: `vmodel validate <artifact>` returns pass/fail.
 
 ### Semantic rigor (Quality Bar checklist)
-A concrete Yes/No checklist grouped by concern, subject to the **Spec Ambiguity Test** as a meta-test. Lives as the **5th section** in each `docs/guide/artifacts/<type>.html` page (alongside the other four: V-model context, best practices, anti-patterns, examples). Extracted as canonical YAML in Phase 3 alongside other schemas, consumed by templates, authoring skills, and review skills — single source of truth.
+A concrete Yes/No checklist grouped by concern, subject to the **Spec Ambiguity Test** as a meta-test. Lives as the **5th section** in each `docs/guide/artifacts/<type>.html` page (alongside the other four: V-model context, best practices, anti-patterns, examples). Extracted as canonical JSON in Phase 3 alongside other schemas, consumed by templates, authoring skills, and review skills — single source of truth.
 
 **Quality Bar is additive per layer.** Upstream failure blocks downstream approval. A leaf DD cannot pass review if its parent Architecture Quality Bar has unresolved items. Tooling surfaces the chain rather than allowing a reviewer to rubber-stamp a leaf on top of a broken parent.
 
@@ -313,7 +313,7 @@ A concrete Yes/No checklist grouped by concern, subject to the **Spec Ambiguity 
 
 **Reversibility** is captured as a mandatory sub-prompt inside ADR Consequences (see §5.3 ADR), not as a separate flag or field. Model tier (junior engineer / low-mid AI) is a **complexity heuristic** used when judging artifact quality — never a property stored on an artifact.
 
-**Per-artifact rigor dimensions** (HTML checklists authored in Phase 2, YAML extraction in Phase 3 — see BACKLOG):
+**Per-artifact rigor dimensions** (HTML checklists authored in Phase 2, JSON extraction in Phase 3 — see BACKLOG):
 
 | Artifact | Key dimensions |
 |---|---|

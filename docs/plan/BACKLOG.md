@@ -79,11 +79,11 @@ Architectural rationale — including the full Q8–Q15 and NQ-B/C/D/E decisions
 - Pre-pivot artifact pages, domain plugin JSON, and domain plugin runtime archived.
 - `PHASE2_AUTHORING_PATTERN.md` — written during the phase and archived to `archive/phase2/` on Phase 2 completion.
 
-**Dependencies:** Phase 1. **Blocks:** Phase 3 (schemas + Quality Bar YAML derive from these HTML pages).
+**Dependencies:** Phase 1. **Blocks:** Phase 3 (schemas + Quality Bar JSON derive from these HTML pages).
 
 ### 3.3 Phase 3 — Schemas
 
-**Goal:** Per-artifact YAML schemas derived from the Phase 2 docs; traceability schema; **Quality Bar YAML extraction (canonical machine format)** per artifact. All schemas in one phase.
+**Goal:** Per-artifact schemas derived from the Phase 2 docs; traceability schema; **Quality Bar JSON extraction (canonical machine format)** per artifact. All schemas in one phase. JSON Schema draft 2020-12 throughout (see `PHASE3_AUTHORING_PATTERN.md §2`).
 
 **Tasks:**
 - [ ] `schemas/artifacts/product-brief.schema.yaml` — new.
@@ -94,11 +94,11 @@ Architectural rationale — including the full Q8–Q15 and NQ-B/C/D/E decisions
 - [ ] `schemas/artifacts/test-spec.schema.yaml` — new.
 - [ ] `schemas/artifacts/artifact-envelope.schema.yaml` — consolidate envelope for all six artifact types.
 - [ ] `schemas/traceability/` — update link type catalog; add validation rules per `TARGET_ARCHITECTURE §7`.
-- [ ] **Quality Bar YAML extraction per artifact** — derive canonical machine-readable checklists from the Phase 2 HTML Quality Bar sections. Consumed by templates and by future authoring/review skills. Design the container shape here (the HTML sections are authoritative for content).
+- [ ] **Quality Bar JSON extraction per artifact** — derive canonical machine-readable checklists from the Phase 2 HTML Quality Bar sections. Consumed by templates and by future authoring/review skills. Design the container shape here (the HTML sections are authoritative for content).
 
-**Deliverables:** Updated `schemas/` matching `TARGET_ARCHITECTURE §5` and §6, including per-artifact Quality Bar YAML files.
+**Deliverables:** Updated `schemas/` matching `TARGET_ARCHITECTURE §5` and §6, including per-artifact Quality Bar JSON files.
 
-**Success criteria:** Schemas mechanically validate a minimal example of each artifact type; Quality Bar YAML parses and is consumable by a mechanical checker.
+**Success criteria:** Schemas mechanically validate a minimal example of each artifact type; Quality Bar JSON parses and is consumable by a mechanical checker.
 
 **Dependencies:** Phase 2 (docs are source of truth; Quality Bar HTML sections authored there).
 
@@ -117,7 +117,7 @@ Architectural rationale — including the full Q8–Q15 and NQ-B/C/D/E decisions
 
 ### 3.5 Phase 5 — Skills (craft + framework)
 
-**Goal:** Build per-artifact authoring + review skills, plus framework skills (orchestration, traceability, retrofit). Quality Bar content is already in place — HTML in Phase 2, canonical YAML in Phase 3 — and is consumed here.
+**Goal:** Build per-artifact authoring + review skills, plus framework skills (orchestration, traceability, retrofit). Quality Bar content is already in place — HTML in Phase 2, canonical JSON in Phase 3 — and is consumed here.
 
 **Tasks (per-artifact skills):**
 - [ ] `vmodel-skill-author-product-brief` and `vmodel-skill-review-product-brief`.
@@ -135,7 +135,7 @@ Architectural rationale — including the full Q8–Q15 and NQ-B/C/D/E decisions
 **Tasks (skills architecture rewrite):**
 - [ ] Rewrite `docs/guide/skills-architecture.html` for the new 6-artifact model (pre-pivot version is stale).
 
-**Deliverables:** Skill directories under `.claude/skills/`; updated `skills-architecture.html`. (Quality Bar YAML is a Phase 3 deliverable, consumed here.)
+**Deliverables:** Skill directories under `.claude/skills/`; updated `skills-architecture.html`. (Quality Bar JSON is a Phase 3 deliverable, consumed here.)
 
 **Success criteria:**
 - Each skill passes `/skill-creator` evaluation on Haiku at agreed thresholds.
@@ -238,7 +238,7 @@ Content that survives the pivot verbatim or with minor adaptation:
 
 Questions tied to upcoming phases. Architectural open questions live in `TARGET_ARCHITECTURE §15`.
 
-1. **Quality Bar YAML schema format.** Structure for the canonical per-artifact checklist file. Addressed in Phase 3 as part of "all schemas in Phase 3"; HTML Quality Bar sections from Phase 2 are the authoritative source.
+1. **Quality Bar container format.** Structure for the canonical per-artifact checklist file. Resolved 2026-04-23 (commit `d012dec`): JSON Schema draft 2020-12; `schemas/artifacts/quality-bar/` layout; see `PHASE3_AUTHORING_PATTERN.md §2 Quality Bar container`. HTML Quality Bar sections from Phase 2 are the authoritative source for content.
 2. **Topology discovery algorithm choice.** Dependency analysis vs package boundaries vs bounded-context detection. Phase 7 decision; pilot-driven.
 3. **Scaffolder CLI shape.** Exact commands and options for the scaffolder tool. Phase 6.
 4. **Project config format (e.g., `.vmodel/tools.yaml`).** How projects declare available tools. Draft needed before Phase 5's framework skills reference it.

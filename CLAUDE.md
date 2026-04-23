@@ -76,7 +76,7 @@ Ten load-bearing principles. Canonical wording in `TARGET_ARCHITECTURE.md §3`. 
 - **Phase 2** — Per-artifact documentation (6 types, whole document per artifact under the 5-section structure; information density over length).
 - **Phase 3** — Schemas derived from docs.
 - **Phase 4** — Product Briefs for purpose-built tools (context only; can run parallel with Phase 5).
-- **Phase 5** — Skills (craft authoring + review per artifact; framework skills). Quality Bar YAML is extracted in Phase 3, not a Phase 5 prerequisite.
+- **Phase 5** — Skills (craft authoring + review per artifact; framework skills). Quality Bar JSON is extracted in Phase 3, not a Phase 5 prerequisite.
 - **Phase 6** — Tools (each a separate product repo, built via framework — dogfooding). Gates on Build workflow design (deferred).
 - **Phase 7** — Retrofit-specific additions.
 
@@ -105,7 +105,7 @@ Full details in `docs/plan/BACKLOG.md`.
 2. **Best practices** — how to produce quality output (the bulk).
 3. **Anti-patterns** — common mistakes.
 4. **Examples** — good and bad.
-5. **Quality Bar** — concrete Yes/No checklist grouped by concern. Canonical YAML form is extracted in Phase 3 alongside other schemas and consumed by templates + authoring/review skills.
+5. **Quality Bar** — concrete Yes/No checklist grouped by concern. Canonical JSON form is extracted in Phase 3 alongside other schemas and consumed by templates + authoring/review skills.
 
 Framework-integration and AI-skills-integration coverage — which appeared as separate sections in an earlier draft — are craft-orthogonal and belong in tool docs and skill docs respectively, not in per-artifact craft pages.
 
