@@ -1,0 +1,269 @@
+{
+  "$schema": "https://vmodelworkflow.dev/schemas/artifacts/quality-bar/v1",
+  "artifact_type": "test-spec",
+  "version": 1,
+  "extracted_from": "docs/guide/artifacts/testspec.html",
+  "extracted_at": "2026-04-23",
+
+  "groups": [
+    {
+      "id": "derivation-discipline",
+      "title": "Derivation discipline",
+      "kind": "checklist",
+      "load_bearing": false,
+      "items": [
+        {
+          "id": "QB-TS-derivation-discipline-001",
+          "prompt": "Is the derivation source named explicitly in derived_from and does it match the layer (PB+Req at root; Architecture at branch; DD at leaf)?",
+          "references": { "fields": ["derived_from"] }
+        },
+        {
+          "id": "QB-TS-derivation-discipline-002",
+          "prompt": "Was the TestSpec authored before the test code and before the implementation code (or, in retrofit, independently of the existing tests)?"
+        },
+        {
+          "id": "QB-TS-derivation-discipline-003",
+          "prompt": "Does every case declare a type from the derivation-strategy vocabulary (functional / boundary / error / fault-injection / state-transition / property / contract / performance / security / accessibility / error-guessing)?",
+          "references": { "fields": ["type"] }
+        },
+        {
+          "id": "QB-TS-derivation-discipline-004",
+          "prompt": "Has every applicable strategy been applied: RBT always; ECP+BVA for every input range; decision tables for every compound predicate; state-transition for every stateful unit; error paths for every named error; fault injection for every dependency?"
+        },
+        {
+          "id": "QB-TS-derivation-discipline-005",
+          "prompt": "Is the error-path-to-happy-path case ratio \u2265 1:2?"
+        }
+      ]
+    },
+
+    {
+      "id": "case-shape",
+      "title": "Case shape",
+      "kind": "checklist",
+      "load_bearing": false,
+      "items": [
+        {
+          "id": "QB-TS-case-shape-001",
+          "prompt": "Does every case have a non-empty verifies resolving to live spec IDs at this layer?",
+          "references": {
+            "fields": ["verifies"],
+            "rules": ["TRV-COMP-004"]
+          }
+        },
+        {
+          "id": "QB-TS-case-shape-002",
+          "prompt": "Is every case's expected a specific value or a bounded invariant, not a qualitative non-negative assertion?",
+          "references": { "fields": ["expected"] }
+        },
+        {
+          "id": "QB-TS-case-shape-003",
+          "prompt": "Does every case carry a title that describes the scenario rather than the method under test?",
+          "references": { "fields": ["title"] }
+        },
+        {
+          "id": "QB-TS-case-shape-004",
+          "prompt": "Is every case independent, repeatable, and deterministic (F.I.R.S.T.), with clocks and random seeds named where relevant?"
+        },
+        {
+          "id": "QB-TS-case-shape-005",
+          "prompt": "Is the one-Act-per-test discipline declared and the steps block respecting it (at layers where steps is present)?",
+          "references": { "fields": ["steps"] }
+        }
+      ]
+    },
+
+    {
+      "id": "per-layer-weight",
+      "title": "Per-layer weight",
+      "kind": "checklist",
+      "load_bearing": false,
+      "items": [
+        {
+          "id": "QB-TS-per-layer-weight-001",
+          "prompt": "At leaf: are cases thin (title + type + verifies + inputs + expected, with steps usually omitted)?",
+          "applies_at": ["leaf"],
+          "references": { "fields": ["title", "type", "verifies", "inputs", "expected", "steps"] }
+        },
+        {
+          "id": "QB-TS-per-layer-weight-002",
+          "prompt": "At branch: do preconditions name fixtures, doubles, and environment, and does steps enumerate the cross-child interactions?",
+          "applies_at": ["branch"],
+          "references": { "fields": ["preconditions", "steps"] }
+        },
+        {
+          "id": "QB-TS-per-layer-weight-003",
+          "prompt": "At root: do cases read as user journeys, with expected phrased in the Product Brief's vocabulary rather than internal API terms?",
+          "applies_at": ["root"],
+          "references": { "fields": ["expected"] }
+        },
+        {
+          "id": "QB-TS-per-layer-weight-004",
+          "prompt": "Are integration/system cases that close leaf-level test-double gaps explicitly traced (leaf case notes the closer case; closer case verifies back)?",
+          "references": { "fields": ["notes", "verifies"] }
+        }
+      ]
+    },
+
+    {
+      "id": "traceability-and-completeness",
+      "title": "Traceability and completeness",
+      "kind": "checklist",
+      "load_bearing": false,
+      "items": [
+        {
+          "id": "QB-TS-traceability-and-completeness-001",
+          "prompt": "Is every spec element at this layer covered by at least one case in the coverage matrix?",
+          "references": { "rules": ["TRV-COMP-003"] }
+        },
+        {
+          "id": "QB-TS-traceability-and-completeness-002",
+          "prompt": "Are uncovered elements recorded as gaps, not hidden?"
+        },
+        {
+          "id": "QB-TS-traceability-and-completeness-003",
+          "prompt": "Does verifies granularity match the layer (field-level at leaf and branch; Requirement / outcome level at root)?",
+          "references": { "fields": ["verifies"] }
+        },
+        {
+          "id": "QB-TS-traceability-and-completeness-004",
+          "prompt": "Has the traceability validator returned zero orphan cases and zero unresolved references?",
+          "references": {
+            "rules": ["TRV-COMP-004", "TRV-REF-001"]
+          }
+        }
+      ]
+    },
+
+    {
+      "id": "coverage-mutation-independence",
+      "title": "Coverage-mutation independence \u2014 load-bearing",
+      "kind": "checklist",
+      "load_bearing": true,
+      "items": [
+        {
+          "id": "QB-TS-coverage-mutation-independence-001",
+          "prompt": "Does the TestSpec declare a structural coverage bar (branch \u2265 85% is a defensible default) enforced in CI?"
+        },
+        {
+          "id": "QB-TS-coverage-mutation-independence-002",
+          "prompt": "Does the TestSpec declare a mutation-score bar (60% minimum viable / 80% target) enforced in CI at a named frequency?"
+        },
+        {
+          "id": "QB-TS-coverage-mutation-independence-003",
+          "prompt": "Is the mutation-testing tool named (PIT, Stryker, mutmut, \u2026) with its scope (files / modules / per-PR subset)?"
+        },
+        {
+          "id": "QB-TS-coverage-mutation-independence-004",
+          "prompt": "Have weak-assertion and tautological-test audits been run (e.g., grep for assert-only-not-null; ratio of hard-coded expected values vs computed ones)?"
+        },
+        {
+          "id": "QB-TS-coverage-mutation-independence-005",
+          "prompt": "Is it understood and documented that 100% line coverage with a 4% mutation score is an achievable state that ships no verification?"
+        }
+      ]
+    },
+
+    {
+      "id": "test-double-discipline",
+      "title": "Test-double discipline",
+      "kind": "checklist",
+      "load_bearing": false,
+      "items": [
+        {
+          "id": "QB-TS-test-double-discipline-001",
+          "prompt": "Does every test double in a leaf case's preconditions have a named type (dummy / stub / spy / mock / fake) and a reason?",
+          "references": { "fields": ["preconditions"] }
+        },
+        {
+          "id": "QB-TS-test-double-discipline-002",
+          "prompt": "Does every fake have a contract-test suite declared against the real implementation, run at a named frequency?"
+        },
+        {
+          "id": "QB-TS-test-double-discipline-003",
+          "prompt": "Is no leaf case using more than two doubles (or, if more, has the coupling been flagged as a design issue)?"
+        },
+        {
+          "id": "QB-TS-test-double-discipline-004",
+          "prompt": "Is interaction verification (mocks, spies) reserved for cases where the interaction itself is the observable behaviour?"
+        }
+      ]
+    },
+
+    {
+      "id": "integration-and-system-specifics",
+      "title": "Integration and system specifics",
+      "kind": "checklist",
+      "load_bearing": false,
+      "items": [
+        {
+          "id": "QB-TS-integration-and-system-specifics-001",
+          "prompt": "At branch scope: does every child-to-child interface have at least one contract or integration case?",
+          "applies_at": ["branch"]
+        },
+        {
+          "id": "QB-TS-integration-and-system-specifics-002",
+          "prompt": "At branch / root scope: does every case name the environment shape its preconditions require?",
+          "applies_at": ["branch", "root"],
+          "references": { "fields": ["preconditions"] }
+        },
+        {
+          "id": "QB-TS-integration-and-system-specifics-003",
+          "prompt": "Are specialised cases (performance, security, accessibility) present where the Requirements quality attributes call for them?"
+        },
+        {
+          "id": "QB-TS-integration-and-system-specifics-004",
+          "prompt": "Do specialised cases declare thresholds, derivation source (threat model, WCAG, SLO budget), and verification method?"
+        },
+        {
+          "id": "QB-TS-integration-and-system-specifics-005",
+          "prompt": "Is contract-testing active where the scope has external consumers (Pact / OpenAPI / Avro), and are contract versions pinned in preconditions?",
+          "references": { "fields": ["preconditions"] }
+        }
+      ]
+    },
+
+    {
+      "id": "retrofit-discipline",
+      "title": "Retrofit discipline",
+      "kind": "checklist",
+      "load_bearing": false,
+      "items": [
+        {
+          "id": "QB-TS-retrofit-discipline-001",
+          "prompt": "In retrofit, are TestSpec cases derived from the DD / Architecture / Requirements first, and existing tests mapped against the result afterwards?"
+        },
+        {
+          "id": "QB-TS-retrofit-discipline-002",
+          "prompt": "Are proposed verifies links for observed tests marked recovery_status: unknown until a human confirms?",
+          "references": {
+            "fields": ["recovery_status", "verifies"],
+            "rules": ["TRV-RETRO-001"]
+          }
+        },
+        {
+          "id": "QB-TS-retrofit-discipline-003",
+          "prompt": "Is stated intent (title, notes) limited to observed behaviour when the original intent is not recoverable?",
+          "references": { "fields": ["title", "notes"] }
+        },
+        {
+          "id": "QB-TS-retrofit-discipline-004",
+          "prompt": "Is the gap report populated (uncovered spec elements, tests not mapping to any element, observed-but-suspect cases)?"
+        }
+      ]
+    },
+
+    {
+      "id": "spec-ambiguity-test",
+      "title": "Spec Ambiguity Test \u2014 meta-gate",
+      "kind": "meta_gate",
+      "load_bearing": true,
+      "items": [
+        {
+          "id": "QB-TS-spec-ambiguity-test-001",
+          "prompt": "Could a junior engineer or mid-tier AI, reading only this TestSpec (plus the layer's spec artifact and governing ADRs), write test code that implements every case as specified, and \u2014 crucially \u2014 would a reviewer reading only the TestSpec be able to tell whether every equivalence class, every boundary, every error path was considered, without having to read the implementation or the test code?"
+        }
+      ]
+    }
+  ]
+}
