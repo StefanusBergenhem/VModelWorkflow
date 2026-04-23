@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vmodelworkflow.dev/schemas/artifacts/test-spec/v1",
+  "title": "TestSpec front-matter",
+  "description": "Front-matter shape for a TestSpec artifact. Lives at /specs/testspec.md (root), /specs/{branch}/testspec.md, or /specs/{branch}/{leaf}/testspec.md — every scope carries one. Composes the universal envelope and adds the artifact-level identity (scope, parent_scope, level, verifies, derived_from, governing_adrs) that the body's case entries reference. Load-bearing rule: verifies is mandatory non-empty at both the artifact level (the TestSpec as a whole verifies at least one upstream spec) and at every per-case level (every TC traces to at least one spec element). This is the first cross-artifact mandatory-link constraint encoded inside a schema — the anti-orphan rule that distinguishes TestSpec from every other artifact type. The level field (system | integration | unit) is scope-derived (root → system; non-leaf non-root → integration; leaf → unit) but carried explicitly so downstream tooling does not have to re-derive it. The per-case embedded-YAML block shape is exported as $defs/test_case for the artifact parser and downstream validators; this schema validates only the front-matter YAML. Scope is nullable at root — a deliberate deviation from the Detailed-Design / Architecture precedent (empty-string-is-root via scope_path) because the TestSpec HTML page explicitly specifies null at root for both scope and parent_scope (HTML §2.9). Recovery_status scalar keeps the full 3-value vocabulary (TestSpec's structural content — case shapes, verifies links, inputs, expected — is spec-derivable); map form is unconstrained at artifact level. The no-fabrication rule on per-case title and notes (anti-pattern 13 'Fabricated retrofit intent') is enforced by the retrofit skill, not by the schema — schema validates shape, skill validates provenance.",
+
+  "allOf": [
+    { "$ref": "https://vmodelworkflow.dev/schemas/artifacts/envelope/v1" },
+    {
+      "type": "object",
+      "required": ["id", "artifact_type", "scope", "parent_scope", "level", "verifies", "derived_from"],
+      "properties": {
+
+        "id": {
+          "description": "Artifact identifier. Literal 'TS' at root scope; 'TS-{scope-flattened}' otherwise, where scope path segments (normally separated by '/') are joined with hyphens. Example: scope 'session-store/expiry-calculator' → id 'TS-session-store-expiry-calculator'. This is the artifact-level id; individual cases inside carry TC-{…} ids (see $defs/test_case). Do not conflate: TS identifies the document, TC identifies a case inside it — same split as REQS/REQ in the Requirements schema.",
+          "type": "string",
+          "pattern": "^TS(-[a-z0-9]+(-[a-z0-9]+)*)*$"
+        },
+
+        "artifact_type": {
+          "description": "Artifact-type discriminator, fixed for this schema.",
+          "const": "test-spec"
+        },
+
+        "scope": {
+          "description": "Scope path this TestSpec covers. Null at root — deviates from the Detailed-Design / Architecture precedent (empty-string-is-root) because the TestSpec HTML page (§2.9) explicitly specifies null at root for both scope and parent_scope. Kebab-case segments separated by '/' at non-root scopes.",
+          "oneOf": [
+            { "$ref": "https://vmodelworkflow.dev/schemas/artifacts/common-defs/v1#/$defs/scope_path" },
+            { "type": "null" }
+          ]
+        },
+
+        "parent_scope": {
+          "description": "Parent scope path. Null at root (no parent). At non-root scopes: the containing scope's path.",
+          "oneOf": [
+            { "$ref": "https://vmodelworkflow.dev/schemas/artifacts/common-defs/v1#/$defs/scope_path" },
+            { "type": "null" }
+          ]
+        },
+
+        "level": {
+          "description": "Test level. Scope-derived: root → 'system', non-leaf non-root → 'integration', leaf → 'unit'. Carried explicitly so downstream tooling (coverage reporters, pyramid-shape dashboards, CI pipelines) does not have to re-derive it from the scope tree. The level drives per-layer emphasis (HTML §2.2) — leaf cases lean on inputs + expected, branch cases grow preconditions and steps, root cases carry full scenario weight — but the envelope shape is invariant across levels.",
+          "type": "string",
+          "enum": ["system", "integration", "unit"]
+        },
+
+        "verifies": {
+          "description": "Upstream spec artifact ids this TestSpec verifies at the artifact level. MANDATORY non-empty — a TestSpec that verifies nothing is either misplaced or testing unspecified behaviour (anti-pattern 12 'Orphan tests'). Points at the spec artifact(s) this layer is derived from — a leaf TestSpec typically verifies one DD, a branch TestSpec verifies its Architecture and allocated Requirements, a root TestSpec verifies the Product Brief plus root Requirements.",
+          "type": "array",
+          "items": {
+            "$ref": "https://vmodelworkflow.dev/schemas/artifacts/common-defs/v1#/$defs/artifact_id_ref"
+          },
+          "minItems": 1
+        },
+
+        "derived_from": {
+          "description": "Upstream artifact ids this TestSpec is derived from — the spec(s) the TestSpec was authored against. Usually identical or overlapping with verifies (they answer different questions: derived_from is provenance, verifies is traceability), but may diverge when a TestSpec draws on multiple spec elements. Non-empty list; empty would mean an orphan TestSpec with no derivation source. Schema requires artifact IDs (REQS-… / ARCH-… / DD-… / PB); do not use filenames.",
+          "type": "array",
+          "items": {
+            "$ref": "https://vmodelworkflow.dev/schemas/artifacts/common-defs/v1#/$defs/artifact_id_ref"
+          },
+          "minItems": 1
+        },
+
+        "governing_adrs": {
+          "description": "Cross-cutting ADRs that constrain this TestSpec. Optional; empty or absent when the TestSpec inherits no ADR-level constraints beyond what its parent spec already references. Tightened to the ADR id pattern — the reference target is unambiguous by context.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^ADR-\\d{3,}-[a-z0-9]+(-[a-z0-9]+)*$"
+          }
+        },
+
+        "status": {
+          "description": "Lifecycle state. TestSpec uses the universal lifecycle vocabulary: draft → active, re-enters draft on material edit, transitions to superseded only when a differently-named TestSpec document replaces this one (rare; routine revisions bump version instead).",
+          "$ref": "https://vmodelworkflow.dev/schemas/artifacts/common-defs/v1#/$defs/lifecycle_status"
+        },
+
+        "recovery_status": {
+          "description": "Retrofit provenance. Scalar form keeps the full 3-value vocabulary because TestSpec's structural content (case shapes, verifies links, inputs, expected, preconditions) is derivable from the spec it was authored against — a whole-TestSpec 'reconstructed' is legitimate when the spec exists and cases were systematically derived from it. Map form is unconstrained at artifact level. The no-fabrication rule on per-case title and notes (anti-pattern 13) — test intent is human-only in retrofit — is enforced by the retrofit skill, not the schema: schemas validate shape, skills validate provenance.",
+          "$ref": "https://vmodelworkflow.dev/schemas/artifacts/common-defs/v1#/$defs/recovery_status"
+        }
+      }
+    }
+  ],
+
+  "$defs": {
+
+    "test_case": {
+      "description": "Per-test-case block shape — the YAML an embedded case entry in the markdown body renders to. Exported for parsers and validators extracting individual cases from a TestSpec document. Not enforced by the top-level schema on the front-matter object itself. Load-bearing rule: verifies is mandatory non-empty at every case — the anti-orphan rule. A case with empty or missing verifies is either misplaced or testing unspecified behaviour (anti-pattern 12 'Orphan tests'). The type field drives per-case derivation discipline: every case cites at least one strategy (functional, boundary, error, fault-injection, property, state-transition, contract, performance, security, accessibility, error-guessing) so the derivation path is visible to reviewers. Fields preconditions / inputs / steps / expected are deliberately not shape-constrained — HTML examples show both string-prose and YAML-map forms across layers (leaf inputs as a key-value map, root steps as an ordered narrative), and constraining them prematurely would force artificial conversions. Quality Bar asserts the forms are informative at each layer; schema validates presence. Reserved growth fields fixtures / data / expected_range (HTML §2.9) pass through via additionalProperties — their shape canonicalises in a later schema revision when empirical usage settles.",
+      "type": "object",
+      "required": ["id", "title", "type", "verifies"],
+      "properties": {
+
+        "id": {
+          "description": "Case identifier. Local to the parent TestSpec document — a case lives inside a parent TS and is referenced in-document as TC-001, TC-003, TC-login-R1, TC-contract-001, TC-legacy-001. Cross-document references globally qualify as {parent-TS-id}.{TC-id} when needed (e.g., coverage matrices in upstream specs), but the case id itself stays local. Pattern TC- followed by kebab-case segments — accepts numeric suffixes (TC-001), prefixed suffixes (TC-login-R1, TC-contract-001), and scope-tagged suffixes (TC-legacy-001) uniformly.",
+          "type": "string",
+          "pattern": "^TC-[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+
+        "title": {
+          "description": "One-line description of the scenario, not the method — HTML §2.9 convention. Human-only field in retrofit (anti-pattern 13 'Fabricated retrofit intent'): an AI must not infer a stated intent from the test name or body; retrofit proposals carry recovery_status: unknown until a human confirms. Non-empty string.",
+          "type": "string",
+          "minLength": 1
+        },
+
+        "suite": {
+          "description": "Optional tag grouping cases for display. Flat — cases are not nested; suite is a label, not a hierarchy. Free-form; typical values: 'happy-path', 'boundary', 'error-paths', 'concurrency', 'performance-soak'.",
+          "type": "string",
+          "minLength": 1
+        },
+
+        "type": {
+          "description": "Derivation strategy the case applies. Every case declares at least one strategy — this is the derivation discipline that makes the TestSpec reviewable before any test code exists (HTML §2.3). Closed enum of eleven values per TARGET §5.3 TestSpec entry: functional (requirement-based), boundary (BVA), error (error-path), fault-injection (resilience), property (invariant-based), state-transition (FSM coverage), contract (consumer-driven / provider contract), performance (throughput / latency / resource), security (threat-model-derived), accessibility (WCAG or equivalent), error-guessing (experience-derived edge cases).",
+          "type": "string",
+          "enum": [
+            "functional",
+            "boundary",
+            "error",
+            "fault-injection",
+            "property",
+            "state-transition",
+            "contract",
+            "performance",
+            "security",
+            "accessibility",
+            "error-guessing"
+          ]
+        },
+
+        "verifies": {
+          "description": "Spec artifact IDs this case verifies. MANDATORY non-empty — the anti-orphan rule (anti-pattern 12 'Orphan tests'). References target the layer's own spec: at leaf, a DD function / contract / error / invariant; at branch, an Architecture interface / composition invariant / allocated requirement; at root, a Product Brief outcome or root Requirements quality attribute. Field-level qualification is permitted (e.g., 'DD-session-store-expiry-calculator.behavior.earliest_of_idle_and_absolute', 'ARCH-session-store.composition.cleanup-api-coordination') — common-defs artifact_id_ref accepts dot-qualified forms; traceability tooling resolves the qualified target.",
+          "type": "array",
+          "items": {
+            "$ref": "https://vmodelworkflow.dev/schemas/artifacts/common-defs/v1#/$defs/artifact_id_ref"
+          },
+          "minItems": 1
+        },
+
+        "preconditions": {
+          "description": "State assumed true before the act step. Weight varies by layer (HTML §2.2): at leaf, typically one line or omitted; at branch, fixtures / test containers / test doubles / seed data; at root, environment / tenants / feature flags / personas. Shape is not constrained — accepts string prose, ordered list, or keyed map — because the HTML examples use different forms at different layers and forcing one form would require artificial conversions."
+        },
+
+        "inputs": {
+          "description": "Stimuli supplied to the system under test. Typical form at leaf: keyed map of argument name to value. At branch and root: often merged into steps and preconditions, or omitted. Shape unconstrained for the same reason as preconditions."
+        },
+
+        "steps": {
+          "description": "Ordered actions. Omit when trivial (HTML §2.2) — typical at leaf where inputs + expected carry the case. Grows at branch (cross-child interactions) and root (user-journey narrative). Shape unconstrained."
+        },
+
+        "expected": {
+          "description": "Pass criteria. At leaf: specific expected values (not weak assertions — anti-pattern 5 'Weak assertions' rules out assertNotNull alone, instanceof, 'does not throw' as the sole assertion). At branch: observable cross-child state. At root: outcomes in the Product Brief's vocabulary (not internal state). Shape unconstrained; Quality Bar asserts specificity."
+        },
+
+        "notes": {
+          "description": "Optional reviewer notes — derivation justification, known-limitation markers, cross-references to related cases. Human-only field in retrofit (anti-pattern 13) alongside title: an AI must not populate notes with inferred intent. Free-form string when present.",
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}
