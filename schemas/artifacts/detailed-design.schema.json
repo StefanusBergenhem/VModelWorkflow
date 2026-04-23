@@ -1,0 +1,313 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vmodelworkflow.dev/schemas/artifacts/detailed-design/v1",
+  "title": "Detailed Design front-matter",
+  "description": "Front-matter shape for a Detailed Design artifact. Lives at /specs/{leaf-scope}/detailed_design.md — leaf scopes only; branch scopes carry Architecture instead. Composes the universal envelope and adds artifact-level identity (scope, parent_scope, parent_architecture, derived_from, governing_adrs). Status uses the universal lifecycle vocabulary (draft | active | superseded). The seven mandatory body sections (Metadata, Overview, Public Interface, Data Structures, Algorithms, State, Error Handling per TARGET §5.3) live in prose / Mermaid / code fences inside the markdown body — this schema validates only the front-matter YAML. Per-entry embedded-YAML shapes are exported as $defs/public_interface_entry, $defs/data_structure_entry, and $defs/error_matrix_row for parsers and validators that extract individual blocks. The public-interface def lifts the Design-by-Contract discipline from architecture.schema.json's $defs/interface (preconditions / postconditions.on_success|on_failure / typed errors) but makes the sub-fields optional: rigor is a Quality Bar concern, shape is schema's. Recovery_status narrows map-form 'overview' to verified | unknown only — the Overview section carries intent (why this leaf exists, what invariants must hold), which is a human-only field under the no-fabrication rule. Scalar recovery_status keeps the full 3-value vocabulary because DD's dominant content (interfaces, data, algorithms, state, error matrix) is code-observable, so a whole-artifact 'reconstructed' is legitimate for the structural side even when intent must be re-verified separately.",
+
+  "allOf": [
+    { "$ref": "https://vmodelworkflow.dev/schemas/artifacts/envelope/v1" },
+    {
+      "type": "object",
+      "required": ["id", "artifact_type", "scope", "parent_scope", "parent_architecture", "derived_from"],
+      "properties": {
+
+        "id": {
+          "description": "Artifact identifier. Pattern DD-{scope-flattened}-{name}, where the scope's '/' separators are flattened to '-' and the leaf-local name follows. Examples: scope 'app/jobs' with name 'dequeue-service' → 'DD-app-jobs-dequeue-service'; scope 'legacy/auth' with name 'session-validator' → 'DD-legacy-session-validator'. The schema does not enforce a structural scope/name split — it only requires the DD- prefix followed by kebab-case segments — so team conventions on the leaf-name portion remain flexible.",
+          "type": "string",
+          "pattern": "^DD-[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+
+        "artifact_type": {
+          "description": "Artifact-type discriminator, fixed for this schema.",
+          "const": "detailed-design"
+        },
+
+        "scope": {
+          "description": "Scope path this Detailed Design covers. Kebab-case segments separated by '/'. Empty string denotes root scope — only legal for single-module systems where the root is itself a leaf.",
+          "$ref": "https://vmodelworkflow.dev/schemas/artifacts/common-defs/v1#/$defs/scope_path"
+        },
+
+        "parent_scope": {
+          "description": "Parent scope path. Null only when this DD lives at the root (rare — single-module systems). For the normal leaf case, parent_scope is the containing branch's scope.",
+          "oneOf": [
+            { "$ref": "https://vmodelworkflow.dev/schemas/artifacts/common-defs/v1#/$defs/scope_path" },
+            { "type": "null" }
+          ]
+        },
+
+        "parent_architecture": {
+          "description": "The Architecture artifact that allocates this leaf's responsibilities. Required — every leaf DD is governed by a parent Architecture's Decomposition entry. Tightened to the ARCH id pattern so broken references surface at schema validation rather than deferring to the traceability tool.",
+          "type": "string",
+          "pattern": "^ARCH(-[a-z0-9]+(-[a-z0-9]+)*)?$"
+        },
+
+        "derived_from": {
+          "description": "Upstream artifact ids this DD is refined from. Typically at least one requirement (REQ-…) plus optionally sibling DDs, ARCH interfaces, or ADRs that shape the contract. Non-empty list; empty would mean an orphan design.",
+          "type": "array",
+          "items": {
+            "$ref": "https://vmodelworkflow.dev/schemas/artifacts/common-defs/v1#/$defs/artifact_id_ref"
+          },
+          "minItems": 1
+        },
+
+        "governing_adrs": {
+          "description": "Cross-cutting ADRs that constrain this leaf. Optional; empty or absent when the leaf inherits no ADR-level constraints beyond what its Architecture already references. Tightened to the ADR id pattern — the reference target is unambiguous by context.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^ADR-\\d{3,}-[a-z0-9]+(-[a-z0-9]+)*$"
+          }
+        },
+
+        "status": {
+          "description": "Lifecycle state. DD uses the universal lifecycle vocabulary: draft → active, re-enters draft on material edit, transitions to superseded only when a differently-named DD document replaces this one (rare; routine revisions bump version instead).",
+          "$ref": "https://vmodelworkflow.dev/schemas/artifacts/common-defs/v1#/$defs/lifecycle_status"
+        },
+
+        "recovery_status": {
+          "description": "Retrofit provenance. Scalar form applies the status to the whole artifact — 'reconstructed' is legitimate here because DD's dominant content (interfaces, data structures, algorithms, state, error matrix) is code-observable. Map form targets individual sections / fields; the 'overview' key is narrowed to 'verified' | 'unknown' only because Overview carries intent (why this leaf exists, what invariants must hold), which is a human-only field under the no-fabrication rule. Other map keys accept the full 3-value vocabulary.",
+          "oneOf": [
+            { "$ref": "https://vmodelworkflow.dev/schemas/artifacts/common-defs/v1#/$defs/recovery_status_scalar" },
+            {
+              "type": "object",
+              "minProperties": 1,
+              "properties": {
+                "overview": {
+                  "description": "Recovery status for the Overview section specifically. Human-only (intent, invariants) — the 'reconstructed' value is banned by the no-fabrication rule. Allowed: 'verified' or 'unknown'.",
+                  "type": "string",
+                  "enum": ["verified", "unknown"]
+                }
+              },
+              "additionalProperties": {
+                "$ref": "https://vmodelworkflow.dev/schemas/artifacts/common-defs/v1#/$defs/recovery_status_scalar"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+
+  "$defs": {
+
+    "public_interface_entry": {
+      "description": "Per-function / per-method block shape — the YAML an embedded Public Interface entry in the markdown body renders to. Exported for parsers and validators extracting individual function contracts from a DD document. Not enforced by the top-level schema on the front-matter object itself. Lifts the Design-by-Contract discipline from the Architecture interface def (preconditions, postconditions split by outcome, typed errors, invariants) but makes sub-fields optional — shape vs completeness is the deliberate split: the schema refuses malformed contracts, the Quality Bar asserts that populated contracts are complete. The errors shape is lighter than Architecture's (no kebab-code or HTTP status) because DD errors describe internal raise/return semantics, not wire protocol.",
+      "type": "object",
+      "required": ["name", "signature"],
+      "properties": {
+
+        "name": {
+          "description": "Function / method name. Non-empty string; no stricter pattern so that team conventions (camelCase claimJob, snake_case claim_job, PascalCase ClaimJob) all fit.",
+          "type": "string",
+          "minLength": 1
+        },
+
+        "signature": {
+          "description": "Language-neutral signature. Typical forms: 'claimJob(worker_id: string, lease_duration: Duration) -> ClaimResult' or 'fn claim_job(worker_id: &str, lease: Duration) -> Result<ClaimResult, ClaimError>'. Free-form — the Quality Bar asserts types are declared; the schema only asserts non-emptiness.",
+          "type": "string",
+          "minLength": 1
+        },
+
+        "description": {
+          "description": "One- or two-sentence description of what this function does. Optional at schema level; the Quality Bar asserts presence on every public entry.",
+          "type": "string",
+          "minLength": 1
+        },
+
+        "preconditions": {
+          "description": "What the caller must ensure on the way in. Each item is one precondition expressed as a predicate (value ranges, state conditions, relationship constraints, units). A function with no preconditions beyond 'callable' should state that explicitly — absence is a Quality Bar issue, not a schema violation.",
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+
+        "postconditions": {
+          "description": "What the function guarantees on the way out. Split by outcome: on_success describes the normal return; on_failure describes the guaranteed state / raised error / partial-mutation guarantees when the function fails. The DbC value is that callers can reason about state after failure, not only after success; the split is what makes it work.",
+          "type": "object",
+          "properties": {
+            "on_success": {
+              "description": "Guaranteed postconditions when the function returns normally. Typical content: return-value constraints, state mutation performed, idempotency window, old-value relationships.",
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 }
+            },
+            "on_failure": {
+              "description": "Guaranteed postconditions when the function fails. Typical content: 'no state mutation', 'partial mutation bounded to X', 'caller receives error Y'. An interface that does not declare on_failure postconditions is silently undefined on the failure path — a Quality Bar issue rather than a schema one.",
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 }
+            }
+          },
+          "additionalProperties": true
+        },
+
+        "invariants": {
+          "description": "Properties that hold before and after every public call. Typical examples: 'does not mutate its input parameters', 'does not acquire locks beyond the scope of this call', 'preserves monotonic ordering of the input sequence'. Optional at schema level.",
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+
+        "errors": {
+          "description": "Error enumeration. Each entry names the error class / code the caller may observe and optionally describes when it is raised and what it means. Lighter shape than the Architecture interface errors (no HTTP status, no kebab-code pattern) because DD errors describe internal raise/return semantics, not wire protocol. Populated per the error_matrix cross-reference — rows in the Error Handling matrix should have a corresponding entry here for every error that crosses the public interface.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["error"],
+            "properties": {
+              "error": {
+                "description": "Error class, exception type, sentinel name, or result variant — whatever the caller inspects to distinguish outcomes. Free-form; team language conventions decide capitalization.",
+                "type": "string",
+                "minLength": 1
+              },
+              "raised_when": {
+                "description": "Trigger condition — the precondition violation, state, or downstream failure that causes this error. Optional; absent when the 'error' name alone is self-describing.",
+                "type": "string",
+                "minLength": 1
+              },
+              "meaning": {
+                "description": "One-line human-readable meaning — read by integrators, on-call engineers, and anyone writing error-handling logic.",
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+
+        "side_effects": {
+          "description": "Observable side effects — I/O, shared-state mutation, observable reads, logging at non-debug levels, metrics emission. Required category per the HTML; absence is a Quality Bar issue.",
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+
+        "thread_safety": {
+          "description": "Thread-safety guarantee the function commits to. The 'thread-hostile' category is explicit — some functions are safe only in single-threaded contexts, and silent assumptions are bugs.",
+          "type": "string",
+          "enum": [
+            "immutable",
+            "thread-safe",
+            "conditionally-thread-safe",
+            "thread-compatible",
+            "thread-hostile"
+          ]
+        },
+
+        "nullability": {
+          "description": "Per-parameter / return nullability declarations. Each item names a parameter or 'return' and states whether null is permitted and what it means. Optional at schema level; Quality Bar asserts presence for every nullable parameter and return.",
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+
+        "complexity_notes": {
+          "description": "Contractual time / space bounds when complexity is part of the contract (not a curiosity). Example: 'O(log n) in the number of active claims' or 'constant memory regardless of input size'. Optional.",
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": true
+    },
+
+    "data_structure_entry": {
+      "description": "Per-internal-data-structure block shape — the YAML an embedded Data Structures entry renders to. Exported for parsers and validators. Minimum committable shape: name + fields (name / type / invariant). Ownership, lifetime, and returned-object semantics are recorded when the data structure is observable across module boundaries; they are optional at schema level and asserted by the Quality Bar when the structure is publicly returned or long-lived.",
+      "type": "object",
+      "required": ["name", "fields"],
+      "properties": {
+
+        "name": {
+          "description": "Data structure name. PascalCase is typical (Claim, DequeueResult, SessionToken) but the schema does not enforce casing so that team conventions fit.",
+          "type": "string",
+          "minLength": 1
+        },
+
+        "description": {
+          "description": "One- or two-sentence description of what this structure represents and where it is used. Optional; Quality Bar asserts presence.",
+          "type": "string",
+          "minLength": 1
+        },
+
+        "fields": {
+          "description": "Per-field shape: name, type, invariant. 'type' is at one level of abstraction above the implementation language — 'integer', 'timestamp-utc', 'job-id' — so the same DD applies across language implementations. 'invariant' is the per-field property that holds whenever the structure is observed (non-negative, monotonic, matches foreign key, etc.); optional when the type alone captures the constraint.",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["name", "type"],
+            "properties": {
+              "name": {
+                "description": "Field name.",
+                "type": "string",
+                "minLength": 1
+              },
+              "type": {
+                "description": "Field type in language-neutral terms.",
+                "type": "string",
+                "minLength": 1
+              },
+              "invariant": {
+                "description": "Per-field invariant — what holds whenever this field is read. Optional when the type alone captures the constraint.",
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+
+        "ownership": {
+          "description": "Who constructs, mutates, and releases instances of this structure. Examples: 'constructed by DequeueService.claimJob; read-only elsewhere', 'caller-owned; cleaned up at request scope exit', 'shared immutable — safe to alias'. Optional; required by Quality Bar for any structure that crosses a module boundary.",
+          "type": "string",
+          "minLength": 1
+        },
+
+        "lifetime": {
+          "description": "How long instances live and what bounds their lifetime. Examples: 'request-scoped', 'per-connection', 'process lifetime (singleton)', 'event-sourced; persists in the outbox until drained'. Optional.",
+          "type": "string",
+          "minLength": 1
+        },
+
+        "returned_semantics": {
+          "description": "When this structure is returned across the public interface: does the caller receive a copy, a live view, a read-only reference, or ownership? Explicit declarations prevent the subtle bug class where callers mutate what they believe is a copy. Optional when the structure is never returned.",
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": true
+    },
+
+    "error_matrix_row": {
+      "description": "Per-row shape of the Error Handling matrix. Exported for parsers and validators extracting individual rows. The five-column matrix (error / detection / containment / recovery / caller_receives) is the authoritative structure for DD error handling per the HTML page. Rows correspond directly to robustness test cases in the sibling TestSpec — the TestSpec's fault-injection and error cases trace back to these rows. 'recovery' is an enum because the five strategies (fail-fast / retry / fallback / compensate / propagate) are the stable vocabulary called out in the HTML best practices — silent strategies are a recognised anti-pattern.",
+      "type": "object",
+      "required": ["error", "detection", "caller_receives"],
+      "properties": {
+
+        "error": {
+          "description": "Error condition — typically the exception class, error code, or sentinel value. Matches an entry in the corresponding public_interface_entry.errors array when this error crosses the public interface.",
+          "type": "string",
+          "minLength": 1
+        },
+
+        "detection": {
+          "description": "How this error is detected — precondition check, downstream status, timeout, invariant violation, sensor reading. Specific enough that a test can force the condition.",
+          "type": "string",
+          "minLength": 1
+        },
+
+        "containment": {
+          "description": "Where this error is handled — which function, layer, or boundary catches it. Optional; absent when the strategy is 'propagate' and containment is delegated upward by design.",
+          "type": "string",
+          "minLength": 1
+        },
+
+        "recovery": {
+          "description": "Recovery strategy. Closed enum: fail-fast (abort the operation and surface the error to the caller), retry (with bound), fallback (alternate path), compensate (undo partial effects), propagate (re-raise / return to caller). Silence is not an option; every row declares a strategy.",
+          "type": "string",
+          "enum": ["fail-fast", "retry", "fallback", "compensate", "propagate"]
+        },
+
+        "caller_receives": {
+          "description": "What the caller observes when this error path fires. Exception type, return value, sentinel, error code, or structured result variant. Read by integrators writing error-handling logic; also the cross-check against the public_interface_entry.errors entry.",
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}
