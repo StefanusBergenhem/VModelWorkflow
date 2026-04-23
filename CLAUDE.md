@@ -35,7 +35,7 @@ The project pivoted on 2026-04-18 from a safety-specific V-model framework (HW/S
 - **Structured back-and-forth.** Present ideas, ask for input or approval, then implement. Applies to schemas, skills, prompts, and any new files.
 - **Small increments.** One concept at a time. Get alignment, then move on.
 - **Dispatch concrete execution to subagents.** Keep the main conversation focused on design, alignment, and sign-offs; file operations, multi-step lookups, and content rewrites go to subagents.
-- **Phase 2: fresh session per artifact.** Research substrate discipline: engineering-codex first (primary, software-first), `research/` second (secondary, with explicit safety-bias caveat — extract craft, discard framing), existing `docs/guide/artifacts/*.html` as pre-pivot output reference only (not substrate). Per-artifact loop: explore → propose structure+gaps → author → review.
+- **Per-phase handoff docs.** Non-trivial phases get their own `PHASE{N}_AUTHORING_PATTERN.md` under `docs/plan/` — session handoff scaffolding, locked decisions, open points, recommended next step. Load alongside `CLAUDE.md` + `BACKLOG.md` + `TARGET_ARCHITECTURE.md` at session start. Archive to `archive/phase{n}/` on phase completion. Precedents: `archive/phase2/PHASE2_AUTHORING_PATTERN.md`, `archive/phase3/PHASE3_AUTHORING_PATTERN.md`.
 
 ---
 
@@ -71,12 +71,12 @@ Ten load-bearing principles. Canonical wording in `TARGET_ARCHITECTURE.md §3`. 
 
 ## Build Order
 
-- **Phase 0** — Archival — **DONE** (commit `69330f3`, 2026-04-18).
-- **Phase 1** — Foundation rewrite (BACKLOG, TARGET_ARCHITECTURE, this CLAUDE.md) — **IN PROGRESS**.
-- **Phase 2** — Per-artifact documentation (6 types, whole document per artifact under the 5-section structure; information density over length).
-- **Phase 3** — Schemas derived from docs.
+- **Phase 0** — Archival — **DONE** (2026-04-18).
+- **Phase 1** — Foundation rewrite (BACKLOG, TARGET_ARCHITECTURE, this CLAUDE.md) — **DONE** (2026-04-18).
+- **Phase 2** — Per-artifact documentation (6 types, 5-section structure) — **DONE** (2026-04-22).
+- **Phase 3** — Schemas (per-artifact JSON Schema draft 2020-12 + traceability catalogs + Quality Bar JSON + minimal fixtures) — **DONE** (2026-04-23).
 - **Phase 4** — Product Briefs for purpose-built tools (context only; can run parallel with Phase 5).
-- **Phase 5** — Skills (craft authoring + review per artifact; framework skills). Quality Bar JSON is extracted in Phase 3, not a Phase 5 prerequisite.
+- **Phase 5** — Skills (craft authoring + review per artifact; framework skills). Consumes Phase 3 schemas + Quality Bar JSON directly.
 - **Phase 6** — Tools (each a separate product repo, built via framework — dogfooding). Gates on Build workflow design (deferred).
 - **Phase 7** — Retrofit-specific additions.
 
@@ -95,7 +95,7 @@ Full details in `docs/plan/BACKLOG.md`.
 
 **Keep documentation in sync with every change.** Whenever components are updated (schemas, trace model, skills), the corresponding section in `docs/guide/` must also be updated.
 
-**Domain translation plugin — deferred.** Phase 2 content is authored in direct software-engineering English only; the runtime translation plugin system and domain JSON files (`docs/guide/domains/*.json`) are being parked. Maintaining the plugin machinery while simultaneously establishing voice and rigor in new content created unacceptable drift risk. The JSON files will be archived to `archive/pre-pivot-2026-04-18/domains/` as a separate Phase 2 task; the mechanism (or a simpler successor) may be reintroduced once content is stable (see `TARGET_ARCHITECTURE §15`).
+**Domain translation plugin — parked.** Content is authored in direct software-engineering English. The runtime translation plugin and domain JSON files were archived to `archive/pre-pivot-2026-04-18/domains/` in Phase 2; `js/domain.js` was removed; page-level `[data-term]` wiring was stripped. The mechanism (or a simpler successor) may be reintroduced once content is stable (see `TARGET_ARCHITECTURE §15`).
 
 **Proactively raise this:** when working on component changes, always remind that `docs/guide/` needs a corresponding update before the work is considered complete.
 
@@ -105,7 +105,7 @@ Full details in `docs/plan/BACKLOG.md`.
 2. **Best practices** — how to produce quality output (the bulk).
 3. **Anti-patterns** — common mistakes.
 4. **Examples** — good and bad.
-5. **Quality Bar** — concrete Yes/No checklist grouped by concern. Canonical JSON form is extracted in Phase 3 alongside other schemas and consumed by templates + authoring/review skills.
+5. **Quality Bar** — concrete Yes/No checklist grouped by concern. Canonical JSON form lives under `schemas/artifacts/quality-bar/` (extracted in Phase 3) and is consumed by templates + authoring/review skills.
 
 Framework-integration and AI-skills-integration coverage — which appeared as separate sections in an earlier draft — are craft-orthogonal and belong in tool docs and skill docs respectively, not in per-artifact craft pages.
 
@@ -149,19 +149,20 @@ Each phase produces traceable artifacts. Human gates between phases.
 ## Repository Structure
 
 ```
-archive/                — Pre-pivot content preserved (pre-pivot-2026-04-18/)
+archive/                — Pre-pivot content preserved (pre-pivot-2026-04-18/) + per-phase handoff docs (phase2/, phase3/)
 research/               — Research documents on standards, patterns, strategies
-docs/plan/              — Architecture (TARGET_ARCHITECTURE.md) and backlog (BACKLOG.md)
+docs/plan/              — Architecture (TARGET_ARCHITECTURE.md) and backlog (BACKLOG.md); per-phase handoff docs live here while a phase is active
 docs/guide/             — Interactive HTML documentation (V-model guide + framework docs)
   css/                  — Styling
-  js/                   — app.js (nav), v-diagram.js (SVG); domain.js wiring to be removed in Phase 2
-  domains/              — Domain translation plugins (generic.json, do178c.json, aspice.json) — to be archived in Phase 2
-  artifacts/            — Per-artifact HTML pages (to be rewritten under 5-section structure in Phase 2)
+  js/                   — app.js (nav)
+  artifacts/            — Per-artifact HTML pages (post-pivot 5-section structure)
+  skills-architecture.html — pre-pivot; to be rewritten in Phase 5
 schemas/
   core/                 — Meta-schemas (skill contracts, pipeline contracts)
-  artifacts/            — Artifact type schemas (Phase 3 rewrite against 6-artifact model)
-  traceability/         — Link model and validation rules (Phase 3 update)
-  translations/         — Domain-specific term mappings
+  artifacts/            — Per-artifact JSON schemas (draft 2020-12) + envelope + common-defs
+    quality-bar/        — Quality Bar meta-schema + per-artifact checklists
+    fixtures/            — Minimal-example Markdown fixtures (one per artifact type)
+  traceability/         — Link-type + validation-rule catalogs (with their schemas)
 .claude/skills/         — Installed AI skills (some operational, more in Phase 5)
 ```
 
