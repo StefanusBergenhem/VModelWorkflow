@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vmodelworkflow.dev/schemas/traceability/validation-rules/v1",
+  "title": "V-Model traceability — validation-rules catalog schema",
+  "description": "Validates the shape of validation-rules.catalog.json. The catalog enumerates every cross-artifact traceability rule from TARGET_ARCHITECTURE §7: reference integrity, completeness, cycle, retrofit, cascade. JSON Schema alone cannot enforce these rules because they span multiple documents; they are consumed at runtime by the traceability validator tool. Rules overlapping with per-artifact schema enforcement carry overlaps_with_schema: true.",
+
+  "type": "object",
+  "required": ["$schema", "version", "rules"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "const": "https://vmodelworkflow.dev/schemas/traceability/validation-rules/v1"
+    },
+    "version": {
+      "description": "Monotonic integer version of the catalog. Bumped when rules are added, removed, or materially revised.",
+      "type": "integer",
+      "minimum": 1
+    },
+    "rules": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/rule" }
+    }
+  },
+
+  "$defs": {
+    "category_enum": {
+      "description": "Rule family per TARGET §7. Drives the ID code (REF / COMP / CYCLE / RETRO / QB) and typically the implementation strategy in the validator tool.",
+      "type": "string",
+      "enum": ["reference_integrity", "completeness", "cycle", "retrofit", "cascade"]
+    },
+
+    "severity_enum": {
+      "description": "Single value today: every traceability rule is an error (uniform high rigor — TARGET §3 principle 3). Enum form leaves room to add warning/info tiers later without a breaking change.",
+      "type": "string",
+      "enum": ["error"]
+    },
+
+    "artifact_type_enum": {
+      "type": "string",
+      "enum": [
+        "product-brief",
+        "requirements",
+        "architecture",
+        "adr",
+        "detailed-design",
+        "test-spec"
+      ]
+    },
+
+    "scope_kind_enum": {
+      "description": "Position in the scope tree the rule fires on. root = exactly one (the whole product). non_leaf = root or branch (holds Requirements, Architecture, TestSpec). leaf = where subdivision stops (holds Detailed Design, TestSpec).",
+      "type": "string",
+      "enum": ["root", "non_leaf", "leaf"]
+    },
+
+    "link_name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+
+    "rule": {
+      "type": "object",
+      "required": ["id", "title", "category", "description", "severity"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "Rule id. Pattern: TRV-<CATEGORY-CODE>-<NNN>. Category codes: REF (reference_integrity), COMP (completeness), CYCLE (cycle), RETRO (retrofit), QB (cascade/Quality Bar).",
+          "type": "string",
+          "pattern": "^TRV-(REF|COMP|CYCLE|RETRO|QB)-\\d{3}$"
+        },
+        "title": { "type": "string", "minLength": 1 },
+        "category": { "$ref": "#/$defs/category_enum" },
+        "description": {
+          "description": "One-paragraph prose statement of the rule. Readable out of context; includes enough detail for a validator implementer to code against it without re-reading TARGET §7.",
+          "type": "string",
+          "minLength": 1
+        },
+        "severity": { "$ref": "#/$defs/severity_enum" },
+        "applies_to_links": {
+          "description": "Link types the rule ranges over. Used by reference_integrity and cycle rules.",
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/link_name" }
+        },
+        "applies_to_artifact_types": {
+          "description": "Artifact types the rule fires on.",
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/artifact_type_enum" }
+        },
+        "applies_to_scope_kind": {
+          "description": "Scope-tree position the rule fires on.",
+          "$ref": "#/$defs/scope_kind_enum"
+        },
+        "overlaps_with_schema": {
+          "description": "True when the rule is also enforced (partially or fully) by a per-artifact JSON Schema. The catalog keeps the rule listed to document the cross-artifact principle regardless of local schema enforcement.",
+          "type": "boolean"
+        },
+        "deferred_until": {
+          "description": "When a rule cannot be enforced yet (missing dependency), name the gate that unblocks it. Absent when the rule is enforceable today.",
+          "type": "string",
+          "minLength": 1
+        },
+        "note": {
+          "description": "Free-text addendum — typically points at the per-artifact schemas that share enforcement or at TARGET sections that source the rule.",
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

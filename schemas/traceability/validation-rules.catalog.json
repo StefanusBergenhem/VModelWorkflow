@@ -1,0 +1,117 @@
+{
+  "$schema": "https://vmodelworkflow.dev/schemas/traceability/validation-rules/v1",
+  "version": 1,
+
+  "rules": [
+    {
+      "id": "TRV-REF-001",
+      "title": "Link target resolves",
+      "category": "reference_integrity",
+      "severity": "error",
+      "description": "Every derived_from, allocates, verifies, governing_adrs, supersedes, and superseded_by target resolves to an existing artifact in the corpus. Unresolved targets are validation errors, never warnings.",
+      "applies_to_links": ["derived_from", "allocates", "verifies", "governing_adrs", "supersedes", "superseded_by"]
+    },
+    {
+      "id": "TRV-REF-002",
+      "title": "Scope reference resolves",
+      "category": "reference_integrity",
+      "severity": "error",
+      "description": "Every scope reference (scope, parent_scope, scope_tags, affected_scopes) resolves to a scope present in the scope tree.",
+      "applies_to_links": ["scope_tags", "affected_scopes"]
+    },
+    {
+      "id": "TRV-COMP-001",
+      "title": "Every requirement is allocated",
+      "category": "completeness",
+      "severity": "error",
+      "description": "Every requirement at a non-leaf scope is allocated (via that scope's Architecture decomposition_child.allocates) to at least one child component. Unallocated requirements represent untraced intent.",
+      "applies_to_artifact_types": ["requirements"]
+    },
+    {
+      "id": "TRV-COMP-002",
+      "title": "Every architecture child allocates a requirement",
+      "category": "completeness",
+      "severity": "error",
+      "description": "Every child in an Architecture decomposition allocates at least one requirement. No orphan components — components without a requirement have no justification for existing.",
+      "applies_to_artifact_types": ["architecture"]
+    },
+    {
+      "id": "TRV-COMP-003",
+      "title": "Every requirement and DD contract is verified",
+      "category": "completeness",
+      "severity": "error",
+      "description": "Every requirement, and every Detailed Design public-interface contract, has at least one verifying test case (some TestSpec case with a matching verifies entry). Covers the design-test-coupling axiom (TARGET §3 principle 10).",
+      "applies_to_artifact_types": ["requirements", "detailed-design"]
+    },
+    {
+      "id": "TRV-COMP-004",
+      "title": "Every test case has non-empty verifies",
+      "category": "completeness",
+      "severity": "error",
+      "description": "Every TestSpec case declares at least one verifies target. Tests without traceable intent are either misplaced or testing unspecified behaviour. The anti-orphan rule (TARGET §5.3 TestSpec).",
+      "applies_to_artifact_types": ["test-spec"],
+      "overlaps_with_schema": true,
+      "note": "Also enforced inline by test-spec.schema.json (artifact-level envelope requires verifies minItems 1; $defs/test_case.verifies also minItems 1)."
+    },
+    {
+      "id": "TRV-COMP-005",
+      "title": "Leaf has Detailed Design and TestSpec",
+      "category": "completeness",
+      "severity": "error",
+      "description": "Every leaf scope in the scope tree carries both a Detailed Design artifact and a TestSpec artifact. Leaves without either are incomplete.",
+      "applies_to_scope_kind": "leaf"
+    },
+    {
+      "id": "TRV-COMP-006",
+      "title": "Non-leaf has Requirements, Architecture, TestSpec",
+      "category": "completeness",
+      "severity": "error",
+      "description": "Every non-leaf scope (root or branch) carries Requirements, Architecture, and TestSpec artifacts. Missing any of the three breaks the per-layer pattern (TARGET §8.1).",
+      "applies_to_scope_kind": "non_leaf"
+    },
+    {
+      "id": "TRV-COMP-007",
+      "title": "ADR consequence is anchored",
+      "category": "completeness",
+      "severity": "error",
+      "description": "Every ADR consequence is either satisfied by a requirement at the ADR's own scope (propagation-by-requirement) or referenced as a constraint by a child artifact via governing_adrs (propagation-by-reference). No dangling consequences.",
+      "applies_to_artifact_types": ["adr"],
+      "note": "Implements the hybrid technical-selection propagation rule (TARGET §5.3 ADR, §9)."
+    },
+    {
+      "id": "TRV-CYCLE-001",
+      "title": "No circular derived_from",
+      "category": "cycle",
+      "severity": "error",
+      "description": "The derived_from graph across all spec artifacts is acyclic. A cycle indicates upstream / downstream confusion.",
+      "applies_to_links": ["derived_from"]
+    },
+    {
+      "id": "TRV-CYCLE-002",
+      "title": "No circular supersedes",
+      "category": "cycle",
+      "severity": "error",
+      "description": "The supersedes / superseded_by graph across ADRs is acyclic. A cycle implies an ADR replaces one of its own ancestors.",
+      "applies_to_links": ["supersedes", "superseded_by"]
+    },
+    {
+      "id": "TRV-RETRO-001",
+      "title": "No reconstructed on human-only fields",
+      "category": "retrofit",
+      "severity": "error",
+      "description": "recovery_status value 'reconstructed' is banned on human-only fields: ADR context / alternatives_considered / rationale / consequences; Requirements rationale; all Product Brief content; Detailed Design Overview (intent). Allowed states on those fields are verified or unknown only. No-fabrication rule (TARGET §3 principle 7, §8.2).",
+      "applies_to_artifact_types": ["product-brief", "requirements", "detailed-design", "adr"],
+      "overlaps_with_schema": true,
+      "note": "Enforced inline by each per-artifact schema on the specific field keys (PB scalar + map bans; Requirements rationale_recovery_status enum; ADR four-key map ban; DD overview map-key ban). This catalog rule documents the cross-artifact principle."
+    },
+    {
+      "id": "TRV-QB-001",
+      "title": "Quality Bar cascade",
+      "category": "cascade",
+      "severity": "error",
+      "description": "Upstream Quality Bar failure blocks downstream approval. A leaf artifact cannot pass review if any ancestor scope has unresolved Quality Bar items. Prevents leaf-level rubber-stamping on top of a broken parent (TARGET §6).",
+      "deferred_until": "phase_3_task_3_and_12",
+      "note": "Enforcement requires Quality Bar YAML — Phase 3 task #3 (container shape) and task #12 (per-artifact extraction). Listed here so the cross-artifact rule inventory is complete."
+    }
+  ]
+}
