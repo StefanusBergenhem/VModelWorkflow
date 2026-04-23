@@ -10,7 +10,8 @@ Execution plan for the VModelWorkflow framework following the 2026-04-18 pivot. 
 - **Phase 0** — archival — **DONE** (commit `69330f3`, 2026-04-18).
 - **Phase 1** — foundation rewrite (this document + `TARGET_ARCHITECTURE.md` + `CLAUDE.md`) — **DONE**.
 - **Phase 2** — per-artifact documentation + cleanup — **DONE** (2026-04-22). Six artifact pages authored under the 5-section structure, landing-page rewrite against TARGET_ARCHITECTURE, domain-plugin machinery unwired, pre-pivot artifact pages archived. See §3.2.
-- Phases 3–7 — pending.
+- **Phase 3** — schemas + traceability + Quality Bar — **DONE** (2026-04-23). Six per-artifact JSON Schemas (draft 2020-12), envelope + common-defs, traceability link-types + validation-rules catalogs, Quality Bar container + six per-artifact checklists, six minimal-example fixtures round-tripping clean through the schemas. `PHASE3_AUTHORING_PATTERN.md` archived to `archive/phase3/` on completion. See §3.3.
+- Phases 4–7 — pending.
 
 **Preserved and operational:**
 - Craft skills `develop-code` (Haiku eval 91%, +13% over baseline), `derive-test-cases` (100%, +3%), `vmodel-skill-review-code` (95.8%, +25%).
@@ -81,24 +82,33 @@ Architectural rationale — including the full Q8–Q15 and NQ-B/C/D/E decisions
 
 **Dependencies:** Phase 1. **Blocks:** Phase 3 (schemas + Quality Bar JSON derive from these HTML pages).
 
-### 3.3 Phase 3 — Schemas
+### 3.3 Phase 3 — Schemas — DONE (2026-04-23)
 
-**Goal:** Per-artifact schemas derived from the Phase 2 docs; traceability schema; **Quality Bar JSON extraction (canonical machine format)** per artifact. All schemas in one phase. JSON Schema draft 2020-12 throughout (see `PHASE3_AUTHORING_PATTERN.md §2`).
+**Goal:** Per-artifact schemas derived from the Phase 2 docs; traceability schema; **Quality Bar JSON extraction (canonical machine format)** per artifact. All schemas in one phase. JSON Schema draft 2020-12 throughout (see `PHASE3_AUTHORING_PATTERN.md §2`, archived on Phase 3 completion).
+
+**Filename convention.** Tasks below originally listed `.schema.yaml`; Phase 3 landed on JSON Schema draft 2020-12 with `.schema.json` extensions (see archived `PHASE3_AUTHORING_PATTERN.md §2`). The `.json` suffix is the as-built state.
 
 **Tasks:**
-- [ ] `schemas/artifacts/product-brief.schema.yaml` — new.
-- [ ] `schemas/artifacts/requirements.schema.yaml` — update against new Requirements structure.
-- [ ] `schemas/artifacts/architecture.schema.yaml` — update; include mandatory Composition section.
-- [ ] `schemas/artifacts/adr.schema.yaml` — update (reversibility sub-prompt).
-- [ ] `schemas/artifacts/detailed-design.schema.yaml` — update (remove old Section 8 Test Strategy).
-- [ ] `schemas/artifacts/test-spec.schema.yaml` — new.
-- [ ] `schemas/artifacts/artifact-envelope.schema.yaml` — consolidate envelope for all six artifact types.
-- [ ] `schemas/traceability/` — update link type catalog; add validation rules per `TARGET_ARCHITECTURE §7`.
-- [ ] **Quality Bar JSON extraction per artifact** — derive canonical machine-readable checklists from the Phase 2 HTML Quality Bar sections. Consumed by templates and by future authoring/review skills. Design the container shape here (the HTML sections are authoritative for content).
+- [x] `schemas/artifacts/product-brief.schema.json` — new (commit `5b84d62`).
+- [x] `schemas/artifacts/requirements.schema.json` — new against post-pivot Requirements structure (commit `7742783`).
+- [x] `schemas/artifacts/architecture.schema.json` — new with mandatory Composition section (commit `a392c94`).
+- [x] `schemas/artifacts/adr.schema.json` — new with Nygard status vocabulary + reversibility sub-prompt + human-only-field `recovery_status` narrowing (commit `0dcba63`).
+- [x] `schemas/artifacts/detailed-design.schema.json` — new; pre-pivot Section 8 "Test Strategy" removed; DbC shape lifted into `$defs/public_interface_entry` (commit `3854f9e`).
+- [x] `schemas/artifacts/test-spec.schema.json` — new; load-bearing `verifies: minItems 1` at both artifact and per-case levels (commit `c103964`).
+- [x] `schemas/artifacts/envelope.schema.json` + `schemas/artifacts/common-defs.schema.json` — foundation; vocabulary ownership lock (envelope = shape; per-artifact = enum) landed in `4a6a4d7` after ADR's Nygard override (commits `a00181f`, `4a6a4d7`).
+- [x] `schemas/traceability/` — four files: `link-types.schema.json` + `link-types.catalog.json` (9 link types), `validation-rules.schema.json` + `validation-rules.catalog.json` (13 rules) (commit `ca07b4b`). Pre-pivot `link-types.yaml` + `trace.schema.yaml` archived alongside.
+- [x] **Quality Bar container + six per-artifact JSON files** — `quality-bar.schema.json` meta-schema + ADR exemplar (`d012dec`), Product Brief (`c3b6800`), Requirements (`1ae007e`), Detailed Design (`7a4920a`), Architecture (`81b20f7`), TestSpec (`d16972b`). Five parallel Sonnet subagent extractions; `applies_at` exercised root-only (Architecture) and across all three layers with one multi-value case (TestSpec).
+- [x] **Minimal-example fixtures per artifact** (task #13) — six Markdown fixtures under `schemas/artifacts/fixtures/`, round-tripping clean through their respective schema + envelope + common-defs registries. LinkSnip URL-shortener scenario with cross-references (REQS → PB, ARCH → PB+REQS, DD → ARCH+REQs, TS → DD) (commit `f194465`).
+- [x] **TRV-QB-001 activation** — Quality Bar cascade rule flipped from `deferred_until: phase_3_task_3_and_12` to active on Phase 3 closeout. Runtime enforcement deferred to Phase 5/6 tooling.
 
-**Deliverables:** Updated `schemas/` matching `TARGET_ARCHITECTURE §5` and §6, including per-artifact Quality Bar JSON files.
+**Deliverables (all produced):**
+- Six per-artifact schemas + envelope + common-defs under `schemas/artifacts/`.
+- Four traceability schemas/catalogs under `schemas/traceability/`.
+- Seven files under `schemas/artifacts/quality-bar/` (one container schema + six data files).
+- Six minimal-example Markdown fixtures under `schemas/artifacts/fixtures/`.
+- `PHASE3_AUTHORING_PATTERN.md` — written during the phase, archived to `archive/phase3/` on Phase 3 completion.
 
-**Success criteria:** Schemas mechanically validate a minimal example of each artifact type; Quality Bar JSON parses and is consumable by a mechanical checker.
+**Success criteria (met):** All schemas mechanically validate `schemas/artifacts/fixtures/*.example.md` with zero errors via `jsonschema` (draft 2020-12) + `referencing`. Quality Bar JSON parses against the meta-schema and is consumable by a mechanical checker (per-group `kind`, per-item `applies_at` + `references`).
 
 **Dependencies:** Phase 2 (docs are source of truth; Quality Bar HTML sections authored there).
 
@@ -296,4 +306,4 @@ Phase 0 (done) → Phase 1 (this commit) → Phase 2 (docs)
 
 ---
 
-*Last updated: 2026-04-22 (Phase 2 complete).*
+*Last updated: 2026-04-23 (Phase 3 complete).*

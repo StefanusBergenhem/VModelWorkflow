@@ -110,8 +110,8 @@
       "category": "cascade",
       "severity": "error",
       "description": "Upstream Quality Bar failure blocks downstream approval. A leaf artifact cannot pass review if any ancestor scope has unresolved Quality Bar items. Prevents leaf-level rubber-stamping on top of a broken parent (TARGET §6).",
-      "deferred_until": "phase_3_task_3_and_12",
-      "note": "Enforcement requires Quality Bar YAML — Phase 3 task #3 (container shape) and task #12 (per-artifact extraction). Listed here so the cross-artifact rule inventory is complete."
+      "applies_to_artifact_types": ["product-brief", "requirements", "architecture", "adr", "detailed-design", "test-spec"],
+      "note": "Quality Bar container (schemas/artifacts/quality-bar/quality-bar.schema.json) and all six per-artifact checklists (product-brief / requirements / architecture / adr / detailed-design / test-spec) are in place. Runtime enforcement depends on Phase 5/6 tooling: the review skill reads upstream QB results via the traceability graph before approving a downstream artifact. Listed here as the cross-artifact rule; schemas validate shape, the review skill evaluates content."
     }
   ]
 }
