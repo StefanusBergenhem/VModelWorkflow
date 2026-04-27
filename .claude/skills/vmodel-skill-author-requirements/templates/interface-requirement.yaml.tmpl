@@ -1,0 +1,61 @@
+- id: REQ-<scope>-<NNN>
+  type: interface
+  operation: "<name and method, e.g. POST /sessions/{id}/invalidate>"
+
+  # FIVE DIMENSIONS — all required.
+
+  protocol: |
+    <wire protocol + version + transport security>
+    <cite RFC / OIDC version / spec draft where applicable>
+
+  message_structure:
+    request:
+      - field: <name>, <required|optional>, <type>, <constraints>
+      # ...
+    response_2xx:
+      - body: <schema or empty>
+    response_4xx:
+      - <status>: { <body schema> }
+    response_5xx:
+      - <status>: { <body schema> }
+
+  timing: |
+    <latency target — e.g. "≤ 200 ms at p95 under normal load">
+    <rate limits if applicable>
+    <server-side timeout>
+    <retry expectations>
+
+  error_handling: |
+    <what happens on each failure mode>
+    <retry policy with back-off>
+    <failure threshold and final response>
+    <which errors are caller's responsibility vs system's>
+
+  startup_initial_state: |
+    <cold-start behaviour before backing dependencies are reachable>
+    <readiness probe behaviour>
+    <first-request-after-restart behaviour>
+
+  # DESIGN BY CONTRACT — required for each externally callable operation.
+
+  precondition:
+    - <what the caller must guarantee>
+  postcondition_on_success:
+    - <what the system guarantees if preconditions hold and request succeeds>
+  postcondition_on_error:
+    - <status>: <what the system guarantees on this error response>
+  invariants:
+    - <condition true before and after, always — e.g. idempotency, no enumeration>
+
+  # VERSIONING — required.
+
+  versioning: |
+    <version label — e.g. v1, 2026-04, semver>
+    <compatibility regime — additive-only, breaking-change-policy>
+    <deprecation policy — minimum availability of older versions>
+
+  rationale: |
+    <why this contract; security / auditability / idempotency reasoning>
+
+  derived_from:
+    - <parent requirement / governing architectural decision>

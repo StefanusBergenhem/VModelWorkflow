@@ -1,0 +1,18 @@
+- id: IC-<scope>-<NNN>
+  source: |
+    <citation — architectural decision ID, regulation reference, contract clause,
+     organisational policy ID>
+  summary: |
+    <what the constraint requires, in one or two sentences; the *what*, not yet the *why*>
+  category: <technical | regulatory | organisational | financial | temporal>
+  cost_of_relaxing: |
+    <what specifically would break if this constraint were lifted>
+    # Examples:
+    # - "Customer-wide re-certification (estimated 6 months, ~$500K cost)."
+    # - "Audit finding under SOC 2 with material remediation cost."
+    # - "Loss of platform support; system would need to be rebuilt on a different stack."
+    # If you cannot name a specific cost, the constraint may be a preference, not a constraint.
+  derived_requirements:
+    # IDs of requirements that translate this constraint into testable behaviour.
+    # Only present when the constraint has behavioural consequences at this scope.
+    - <REQ-id>

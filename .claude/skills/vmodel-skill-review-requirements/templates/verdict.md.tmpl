@@ -1,0 +1,51 @@
+```yaml
+review:
+  document: <document identifier or path>
+  reviewer: vmodel-skill-review-requirements
+  date: <YYYY-MM-DD>
+
+  verdict: <APPROVED | REJECTED | DESIGN_ISSUE>
+  # Decision-table outcome — see SKILL.md "Verdict decision table".
+  # Precedence: DESIGN_ISSUE wins over REJECTED.
+
+  upstream_input_provided: <true | false>
+  # When false, note in summary that DESIGN_ISSUE triggers cannot be fully evaluated.
+
+  perspectives_applied:
+    - designer
+    - tester
+    # - user_stakeholder      # only when scope is root OR any inherited constraint is regulatory
+
+  findings:
+    # Zero or more findings, one per failed check.
+    # Each follows finding.yaml.tmpl.
+    - id: F-001
+      requirement_id: <REQ-id or "GLOBAL">
+      check_failed: <dotted catalog identifier>
+      severity: <hard_reject | soft_reject | info>
+      category: <vocabulary | type | statement-quality | nfr | interface | constraints | rationale | traceability | anti-pattern | meta-gate | design-issue>
+      evidence: |
+        <verbatim quote from the document or specific structural observation>
+      recommended_action: |
+        <generic pointer; never specific replacement wording>
+
+    # ... more findings ...
+
+  summary: |
+    # 2-4 sentences. Cite the dominant findings, not every finding.
+    # Verdict justification: which trigger fired, why DESIGN_ISSUE vs REJECTED if applicable,
+    # whether upstream input was provided.
+
+  counts:
+    hard_reject: <integer>
+    soft_reject: <integer>
+    info: <integer>
+    design_issue: <integer>
+```
+
+## Notes for emitting the verdict
+
+- `verdict` matches the decision table in SKILL.md exactly. Do not override.
+- If the document is APPROVED but the review surfaced `info` findings, list them — they are useful observations, even though they do not affect the verdict.
+- The `summary` field should be the first thing a human reader sees. Aim for: *"Verdict: \<X>. Trigger: \<dominant cause>. Upstream input: \<provided | not provided — implications>."*
+- For DESIGN_ISSUE verdicts where upstream input was not provided, the summary must explicitly say so: the verdict is based on partial information.

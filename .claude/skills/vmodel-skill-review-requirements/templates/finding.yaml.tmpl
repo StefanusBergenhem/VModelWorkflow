@@ -1,0 +1,44 @@
+- id: F-NNN
+  # Sequential within this review (F-001, F-002, ...). Stable for a single review run.
+
+  requirement_id: <REQ-id or "GLOBAL">
+  # The specific requirement the finding applies to.
+  # Use "GLOBAL" for document-wide findings (missing glossary, level confusion at the artifact level,
+  # laundering current state, etc.).
+
+  check_failed: <dotted catalog identifier>
+  # Must appear in `references/quality-bar-gate.md`'s catalog. Examples:
+  #   - check.vocabulary.term-undefined
+  #   - check.nfr.missing-condition
+  #   - anti-pattern.compound
+  #   - anti-pattern.fabricated-rationale
+  #   - check.rationale.recovery-status-reconstructed
+  #   - design-issue.derived-from-cites-nonexistent-artifact
+  # Do not invent ad-hoc strings. If the check is genuinely new, add it to the catalog first.
+
+  severity: <hard_reject | soft_reject | info>
+  # hard_reject — fatal; one occurrence triggers REJECTED (or DESIGN_ISSUE if upstream).
+  # soft_reject — Quality Bar item No, or anti-pattern hit other than the hard-reject ones; accumulates to REJECTED.
+  # info — observation worth surfacing but does not affect verdict.
+
+  category: <vocabulary | type | statement-quality | nfr | interface | constraints | rationale | traceability | anti-pattern | meta-gate | design-issue>
+  # Top-level category — matches the namespaces in `quality-bar-gate.md`.
+
+  evidence: |
+    <verbatim quote from the document, OR a specific structural observation>
+    # Examples:
+    # - "The system shall authenticate the user and shall log the attempt."
+    #              ↑                                ↑
+    #           shall 1                          shall 2
+    # - "Glossary section is absent; document contains 12 requirements."
+    # - "REQ-NNN's `derived_from` lists [user-experience, security] — neither is an artifact identifier."
+
+  recommended_action: |
+    <generic pointer; never specific replacement wording>
+    # Acceptable:
+    # - "Split into atomic statements per the EARS one-shall rule."
+    # - "Add the missing condition (load + environment + measurement point). See nfr-five-elements-checks.md element 5."
+    # - "Replace abstract categories in `derived_from` with artifact identifiers."
+    # NOT acceptable:
+    # - "Replace with: 'When a user submits a credential pair, the system shall validate it...'"
+    # - The author skill rewrites; this skill points to the rule, not the replacement text.

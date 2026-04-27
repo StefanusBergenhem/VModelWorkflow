@@ -1,0 +1,139 @@
+---
+id: REQS-<scope-path-or-empty-if-root>
+scope: <scope-path>
+parent_scope: <parent-scope-path-or-null-if-root>
+derived_from:
+  - <upstream-artifact-id>
+governing_decisions:
+  - <ADR-id>
+status: draft
+date: <YYYY-MM-DD>
+recovery_status:
+  # retrofit only — per-section map; remove this block in greenfield mode
+  glossary: <verified | unknown>
+  requirements: <verified | reconstructed | unknown>
+  rationale: <verified | unknown>     # NEVER 'reconstructed' for rationale
+---
+
+# Requirements — <scope name>
+
+Brief one-paragraph statement of what this scope is responsible for and how it fits in the larger system. Cite the upstream input (parent requirements, product brief, user stories) by ID.
+
+## Glossary
+
+```yaml
+glossary:
+  - term: "<canonical term>"
+    definition: |
+      <single, complete-sentence definition>
+    distinct_from: <optional — similar concepts and how they differ>
+    model_refs: <optional — entity / value-object / aggregate names>
+
+  # Add one entry per domain term used anywhere in this document.
+```
+
+## Inherited Constraints
+
+```yaml
+inherited_constraints:
+  - id: IC-<scope>-<NNN>
+    source: "<citation: ADR / regulation / contract / policy>"
+    summary: |
+      <what the constraint requires, in one or two sentences>
+    category: <technical | regulatory | organisational | financial | temporal>
+    cost_of_relaxing: |
+      <what specifically would break if this were lifted>
+    derived_requirements: [<list of REQ-IDs>]
+```
+
+## Functional Requirements
+
+```yaml
+- id: REQ-<scope>-<NNN>
+  type: functional
+  statement: |
+    <EARS-shaped statement: ubiquitous, event-driven, state-driven,
+     optional-feature, or unwanted-behaviour>
+  acceptance: |
+    # optional — use when the statement alone leaves test conditions ambiguous
+    Given <state>
+    When <trigger>
+    Then <observable response>
+  rationale: |
+    <why this requirement; the option chosen and the alternatives considered>
+  derived_from: [<upstream IDs>]
+  derivation: <derived-only — omit for normal requirements>
+```
+
+## Quality Attributes (NFRs)
+
+```yaml
+- id: REQ-<scope>-<NNN>
+  type: quality_attribute
+  statement: |
+    The <SYSTEM/SUBSYSTEM, named>
+    shall <RESPONSE>
+    in <METRIC + UNIT>
+    at <TARGET at correct statistical level — e.g. p95>
+    under <CONDITION — load + environment + measurement point>.
+  # OR multi-level form:
+  planguage:
+    scale: "<what is measured>"
+    meter: "<how, over what window>"
+    fail:    "<below which the system is in violation>"
+    goal:    "<committed target>"
+    stretch: "<desirable, not committed>"
+    wish:    "<aspirational>"
+  rationale: |
+    <derivation of the target; what trade-off; cite parent-scope NFR if applicable>
+  derived_from: [<upstream IDs>]
+```
+
+## Interface Requirements
+
+```yaml
+- id: REQ-<scope>-<NNN>
+  type: interface
+  operation: "<name and method>"
+  protocol: |
+    <wire protocol + version + transport security; cite RFC/spec where applicable>
+  message_structure:
+    request: [...]
+    response_2xx: [...]
+    response_4xx: [...]
+    response_5xx: [...]
+  timing: |
+    <latency target; rate limits; retry expectations; timeouts>
+  error_handling: |
+    <what happens on each failure mode; retry policy; failure threshold>
+  startup_initial_state: |
+    <cold-start behaviour; readiness signal; first-request-after-restart>
+  precondition: [<caller guarantees>]
+  postcondition_on_success: [<system guarantees on success>]
+  postcondition_on_error: [<system guarantees on each error response>]
+  invariants: [<conditions true before and after, always>]
+  versioning: |
+    <version label; compatibility regime; deprecation policy>
+  rationale: |
+    <why this contract; security/auditability/idempotency reasoning as applicable>
+  derived_from: [<upstream IDs>]
+```
+
+## Data Requirements
+
+```yaml
+- id: REQ-<scope>-<NNN>
+  type: data
+  statement: |
+    <statement about format, retention, privacy class, integrity invariants>
+  rationale: |
+    <why this data rule; cite regulatory or architectural source if applicable>
+  derived_from: [<upstream IDs>]
+```
+
+## Notes
+
+- Replace `<placeholders>` with concrete content.
+- Every requirement needs `rationale`; if none is recoverable, mark `pending` (greenfield) or `unknown` (retrofit) — **never fabricate**.
+- Run `references/quality-bar-checklist.md` before delivering.
+- Run `references/anti-patterns.md` sweep before delivering.

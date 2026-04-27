@@ -140,7 +140,7 @@ Architectural rationale — including the full Q8–Q15 and NQ-B/C/D/E decisions
 
 **Tasks (per-artifact skills):**
 - [ ] `vmodel-skill-author-product-brief` and `vmodel-skill-review-product-brief`.
-- [ ] `vmodel-skill-author-requirements` and `vmodel-skill-review-requirements`.
+- [x] `vmodel-skill-author-requirements` and `vmodel-skill-review-requirements` — **DONE (2026-04-27)**. Pattern-setter for the remaining 5 author/review pairs. See `docs/plan/PHASE5_AUTHORING_PATTERN.md` §2 for locked decisions (lean-fragile DoF, self-contained content, framework-neutral body, sister naming, project-local install, structured-verdict format with DESIGN_ISSUE > REJECTED precedence on the review side).
 - [ ] `vmodel-skill-author-architecture` and `vmodel-skill-review-architecture`.
 - [ ] `vmodel-skill-author-adr` and `vmodel-skill-review-adr`.
 - [ ] `vmodel-skill-author-detailed-design` and `vmodel-skill-review-detailed-design` (supersedes C2–C4).
