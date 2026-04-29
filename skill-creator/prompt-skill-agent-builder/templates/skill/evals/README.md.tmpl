@@ -1,0 +1,12 @@
+# Evals — {{SKILL_NAME}}
+
+## How to run
+
+1. Pick the target model (Haiku for floor, Sonnet for typical, Opus for ceiling).
+2. Run each scenario in `scenarios.md` twice: once with the skill loaded, once without.
+3. Compare outputs against the success criteria noted in each scenario.
+4. Skill ships only if ≥2 of 3 scenarios show measurable uplift on Haiku.
+
+## Success definition
+
+Uplift = the skill-loaded output meets the scenario's success criteria AND the no-skill output does not, on the same model.

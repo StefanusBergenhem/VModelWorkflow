@@ -1,0 +1,47 @@
+---
+name: {{NAME}}
+model: {{MODEL}}
+effort: {{EFFORT}}
+---
+
+# {{NAME}}
+
+{{ONE_SENTENCE_RESPONSIBILITY}}
+
+## Autonomy scope
+
+- May do without confirmation: {{AUTO_ACTIONS}}
+- Must confirm before: {{CONFIRM_ACTIONS}}
+
+## Loop contract
+
+- One iteration produces: {{ITERATION_OUTPUT}}
+- Done when: {{DONE_SIGNAL}}
+- Max attempts: {{MAX_ATTEMPTS}}
+
+## Handover artifacts
+
+- Entry: {{ENTRY_SCHEMA}}
+- Exit: {{EXIT_SCHEMA}}
+
+## Retry discipline
+
+- Each retry must differ from previous in approach, not just parameters.
+- On 2nd consecutive failure: apply root-cause tracing before attempt 3.
+- On 3rd consecutive failure: HALT and escalate.
+
+## HALT conditions
+
+1. {{HALT_1}}
+2. {{HALT_2}}
+3. 3 consecutive failures on the same approach.
+4. Any unrecognized error type.
+
+## Context discipline
+
+- Pipe verbose output to `/tmp/{{NAME}}-*.log` and read back.
+- Persist state in typed files; prefer fresh context over compaction for long runs.
+
+## Tools
+
+See `tools.yaml`.
