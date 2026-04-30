@@ -1,0 +1,37 @@
+%% Mermaid deployment diagram — root scope only. One per Architecture artifact at root.
+%% Shows environments (subgraph), runtime units (sub-subgraph), and components placed in units.
+%% A runtime unit = unit of deployment, scaling, and failure. Edges are network protocols (JDBC, HTTPS, Kafka producer, ...).
+
+flowchart TB
+    subgraph ENV["<<environment name — e.g., Production (single region, EU-West)>>"]
+
+        subgraph RU1["<<Runtime Unit 1 — e.g., checkout-api (K8s Deployment, 3-10 pods)>>"]
+            <<POD1>>["<<component-id 1>>"]
+            <<POD2>>["<<component-id 2>>"]
+        end
+
+        subgraph RU2["<<Runtime Unit 2 — e.g., checkout-writers (K8s Deployment, 2-5 pods)>>"]
+            <<POD3>>["<<component-id 3>>"]
+            <<POD4>>["<<component-id 4>>"]
+        end
+
+        subgraph RU3["<<Runtime Unit 3 — e.g., pg-primary (managed Postgres)>>"]
+            <<DB>>["<<schema name>>"]
+        end
+
+        subgraph RU4["<<Runtime Unit 4 — e.g., event-bus (managed Kafka)>>"]
+            <<BUS>>["<<topics — e.g., orders-v1, payments-v1>>"]
+        end
+
+    end
+
+    RU1 -->|<<protocol — e.g., JDBC>>| <<DB>>
+    RU2 -->|<<protocol>>| <<DB>>
+    RU2 -->|<<protocol — e.g., Kafka producer>>| <<BUS>>
+
+    classDef compute fill:#eef,stroke:#557
+    classDef data    fill:#f0f7f0,stroke:#4a7
+    classDef event   fill:#fff7e6,stroke:#c79a2f
+    class RU1,RU2 compute
+    class RU3 data
+    class RU4 event

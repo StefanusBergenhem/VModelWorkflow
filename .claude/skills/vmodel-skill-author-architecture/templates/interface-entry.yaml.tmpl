@@ -1,0 +1,58 @@
+# One entry per cross-child or externally callable interface.
+# Embed inside the architecture.md `interfaces:` block.
+# Specify both syntactic (signature, types, errors) and semantic (pre/post/invariants) — the second half is where most integration failures come from.
+
+- name: <<IInterfaceName>>                    # PascalCase; "I"-prefix optional but consistent within the artifact
+  from: <<source-component-id>>               # caller — must match a Decomposition child id or be an external actor
+  to: <<target-component-id>>                 # supplier — must match a Decomposition child id
+  protocol: "<<HTTP/1.1 + JSON | gRPC + protobuf | GraphQL | Kafka topic | ...>>"  # cite RFC/spec where externally imposed
+
+  contract:
+    operation: "<<METHOD /path  |  rpc Name(Req) returns (Resp)  |  event-name on topic-name>>"
+
+    preconditions:
+      - "<<caller guarantee 1 — what is true on the way in>>"
+      - "<<auth / idempotency-key / cart-state-is-X / ...>>"
+
+    postconditions:
+      on_success:
+        - "<<supplier guarantee on success — what is true on the way out>>"
+        - "<<observable side effect — event published, state transitioned, response carries X>>"
+      on_precondition_failure:
+        - "<<typed error returned + which precondition failed>>"
+        - "<<no state mutation>>"
+      on_downstream_failure:
+        - "<<typed error returned + recovery behaviour>>"
+        - "<<state cleanup window — e.g., reservations released within 30s>>"
+
+    invariants:
+      - "<<idempotency — repeat call with same key returns first response, no re-execution>>"
+      - "<<ordering — events for one aggregate arrive in causal order>>"
+      - "<<consistency — if 200, then downstream side effect is guaranteed>>"
+
+    errors:
+      - { code: <<error-code>>,           http: <<NNN>>, meaning: "<<short human-readable>>" }
+      - { code: <<another-error-code>>,   http: <<NNN>>, meaning: "<<...>>" }
+      # Use a typed error enum, not free-form strings. Each error has a stable identifier callers can match on.
+
+    quality_attributes:
+      availability: "<<99.X% per SLO REQ-NNN>>"
+      latency:      "<<p95 ≤ NNN ms under <load> per REQ-NNN>>"
+      throughput:   "<<NNN req/s sustained, NNN req/s peak>>"        # if applicable
+      idempotency_window: "<<24h from first observation of the key>>"  # if applicable
+      <<other-QA>>: "<<...>>"
+
+    authn: "<<what identity is asserted; how it is verified — e.g., OIDC bearer at gateway>>"
+    authz: "<<what permission is required; evaluated at which layer — gateway / middleware / handler>>"
+
+    rationale: "<<why this protocol; why not async / why not sync; cite ADR-NNN if extracted; cite REQ-NNN if a quality budget drove the shape>>"
+
+  version: "<<MAJOR.MINOR.PATCH>>"             # 1.0.0 for new interfaces
+  deprecation_policy: "<<minimum window e.g. 12 months between v(N) and v(N+1) breaking change; both versions live in parallel>>"
+
+  # === RETROFIT-ONLY FIELDS — uncomment in retrofit mode ===
+  # recovery_status: reconstructed
+  # evidence:
+  #   - "<<file/line — e.g., src/main/java/.../CartController.java:78>>"
+  #   - "<<API spec / OpenAPI / proto file>>"
+  # rationale_status: <<verified | unknown>>   # NEVER 'reconstructed'

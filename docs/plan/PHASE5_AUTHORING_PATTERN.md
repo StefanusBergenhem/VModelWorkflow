@@ -6,7 +6,7 @@ Load this file alongside `CLAUDE.md` + `BACKLOG.md` + `TARGET_ARCHITECTURE.md` a
 
 ---
 
-## 1. Status as of 2026-04-29 (pattern locked + elicit-needs landed)
+## 1. Status as of 2026-04-30 (architecture pair landed)
 
 **Phase 5 goal:** Build per-artifact authoring + review skills (6 × 2 = 12 per-artifact skills), plus framework skills (orchestration, traceability, retrofit), plus the stakeholder-elicitation skill carried over from Phase 4 closeout, plus a rewrite of `docs/guide/skills-architecture.html` for the new 6-artifact model.
 
@@ -16,12 +16,13 @@ Load this file alongside `CLAUDE.md` + `BACKLOG.md` + `TARGET_ARCHITECTURE.md` a
 |---|---|---|
 | 2026-04-27 | Pattern-setter pair | `vmodel-skill-author-requirements` (18 files, ~2071 lines) and `vmodel-skill-review-requirements` (14 files, ~1823 lines) authored under `.claude/skills/`. Both self-contained, framework-neutral, lean-fragile. The author skill encodes the EARS / NFR-five-elements / interface-five-dimensions / no-fabrication / no-smuggled-design disciplines. The review skill mirrors them as checks plus a structured-verdict (APPROVED / REJECTED / DESIGN_ISSUE) with deterministic gates and a stable `check_failed` identifier catalog. |
 | 2026-04-29 | Phase 4 carryover | `vmodel-skill-elicit-needs` (17 files, ~1340 lines) authored under `.claude/skills/`. Renamed from `vmodel-skill-elicit-requirements` during authoring to align with INCOSE's Needs vs Requirements distinction (Stakeholder Real-World Expectations → Integrated Set of Needs → Design Input Requirements). Output is a rough `needs.md` in **prototype mode** — not a tracked framework artifact yet (decision γ — prototype before formalizing). Encodes a state-machine spine (ELICIT → DRAFT → READBACK → CONFIRM → COMMIT) with readback-for-joint-agreement as a fragile contract. Self-review surfaced 2 MAJOR findings (description over 1024-char cap; WRAP-UP state coherence drift), both fixed at landing. |
+| 2026-04-30 | Phase 5 second pair | `vmodel-skill-author-architecture` (22 files, ~2270 lines) and `vmodel-skill-review-architecture` (17 files, ~1805 lines) authored under `.claude/skills/`. Pair total ~4075 lines (under Option-2 budget of ~4500). **12 references per side** (vs requirements pair's 9), reflecting architecture's broader surface (9 best-practice disciplines vs requirements' 5-or-so) — `protocols-sync-async` merged into `composition-patterns` per Option 2 of the size-trim discussion. Hard refusals A/B/C/D + Spec Ambiguity Test meta-gate. `check_failed` catalog of **10 `anti-pattern.*` + 58 `check.*` = 68 IDs**, partitioned across `anti-patterns-catalog.md` and `quality-bar-gate.md`. **13 hard-reject IDs**, **1 override** (`check.spec-ambiguity-test.fail`), rest soft-reject. Order-of-pairs deviation from the §3 Q2 recommendation: architecture taken before product-brief at user's call (rationale: rich-artifact stress-test of the locked pattern; pattern held). Self-review clean except documented exception — `quality-bar-gate.md` at 233 lines (over ~150 soft cap), justified by single-source-of-truth catalog density and acknowledged inline in the file at line 7 (decision A taken 2026-04-30: accept as documented exception; do not split). Architecture-specific seam captured in `references/adr-extraction-cues.md` + `references/adr-traceability-checks.md` — the `[NEEDS-ADR: <decision>]` stub mechanism formalises when an Architecture decision should be externalised to an ADR (load-bearing AND cross-cutting AND hard-to-reverse) and how the matched review skill verifies `governing_adrs:` resolution. |
 
 **Pending tasks (Phase 5 backlog):**
-- [ ] `vmodel-skill-author-product-brief` and `vmodel-skill-review-product-brief`.
-- [ ] `vmodel-skill-author-architecture` and `vmodel-skill-review-architecture`.
+- [-] ~~`vmodel-skill-author-product-brief` and `vmodel-skill-review-product-brief`.~~ **DEFERRED INDEFINITELY 2026-04-30.** `needs.md` from `vmodel-skill-elicit-needs` will carry the root-scope upstream role for now. Re-evaluate alongside the elicit-needs decision γ (promote / merge / stay-transient) once pilot reps inform whether a formal Product Brief authoring skill is load-bearing or ceremonial. Framework still retains the Product Brief artifact type — only the authoring/review *skill pair* is skipped; if a formal PB is needed for a specific project, it can be hand-authored against the existing `docs/guide/artifacts/product-brief.html` craft doc + `schemas/artifacts/product-brief.schema.json`.
+- [x] ~~`vmodel-skill-author-architecture` and `vmodel-skill-review-architecture`.~~ (landed 2026-04-30)
+- [ ] `vmodel-skill-author-detailed-design` and `vmodel-skill-review-detailed-design` (supersedes the paused C2–C4 DD skills). **Recommended next.**
 - [ ] `vmodel-skill-author-adr` and `vmodel-skill-review-adr`.
-- [ ] `vmodel-skill-author-detailed-design` and `vmodel-skill-review-detailed-design` (supersedes the paused C2–C4 DD skills).
 - [ ] `vmodel-skill-author-testspec` and `vmodel-skill-review-testspec`.
 - [ ] `vmodel-skill-traceability` (framework).
 - [ ] `vmodel-skill-orchestration` (framework).
@@ -117,16 +118,25 @@ Phase 5 success criteria say each skill passes `/skill-creator` Haiku evaluation
 
 **Recommendation when reopened:** start incremental — run the requirements pair through Haiku eval first to surface concrete failure modes; let those failures shape the eval discipline for the remaining 14 skills.
 
-### Q2 — Order of remaining pairs
+### Q2 — Order of remaining pairs — RESOLVED 2026-04-30 (revised)
 
-Six per-artifact pairs total; one done. The remaining five:
-- `product-brief` (root-only artifact; smallest, most templated)
-- `architecture` (with mandatory Composition section)
+Six per-artifact pairs originally; **two landed** (requirements 2026-04-27, architecture 2026-04-30); **one deferred indefinitely** (product-brief — `needs.md` from elicit-needs carries root-scope upstream until pilot reps re-evaluate). Three remaining:
+- `detailed-design` (junior-implementable; supersedes paused C2–C4 DD skills) — **next**
 - `adr` (with Reversibility sub-prompt)
-- `detailed-design` (junior-implementable; supersedes paused C2–C4)
 - `testspec` (with mandatory non-empty `verifies`)
 
-**Recommendation:** product-brief next (simplest, lowest risk; further validates the pattern). Then `testspec` (rigid `verifies` requirement is mechanically checkable, low novelty). Then `architecture` + `adr` together (cross-cutting; Composition / Reversibility have novel sub-shapes that benefit from co-authoring). Detailed-design last (largest scope per artifact; superseding C2–C4 introduces migration concerns).
+**What the architecture pair taught:**
+- The locked §2 pattern absorbs richer artifacts cleanly. 12 references / 7 templates / 2 examples per side held up; total pair size ~4075 lines (Option-2 budget honoured). The size-trim discussion (Option 1-4 in the build session) is a useful template for stress-testing the next pair-size pre-build.
+- One genuine cap-violation site emerged: catalog files. `quality-bar-gate.md` at 233 lines is irreducible without splitting the single-source-of-truth catalog. Future pairs with comparable ID-density (likely DD given its breadth, ADR less so) should plan for the same exception up front rather than fight it in self-review.
+- Cross-artifact seams (here: ADR ↔ Architecture via `[NEEDS-ADR: ...]` stub + `governing_adrs:` resolution check) work well as dedicated reference files (`adr-extraction-cues.md` author-side + `adr-traceability-checks.md` review-side) rather than inline in other references. Apply this pattern to other seams: ADR ↔ Detailed Design (via `governing_adrs` from DD), TestSpec ↔ everything (via `verifies` traceability), Architecture ↔ Detailed Design (via the leaf-allocation contract).
+
+**Why detailed-design next (user call 2026-04-30):**
+- Product-brief deferred — see §1 pending tasks for rationale.
+- Detailed-design is the largest, most consequential remaining pair: it specifies leaf-scope artifacts that AI agents implement against; DD craft quality is the bottleneck for AI-augmented development workflows in the framework's primary use case.
+- Pre-pivot C2–C4 DD skills are paused waiting for replacement; the new author/review pair takes their content into account. There is also pre-pivot doc material (`docs/guide/artifacts/detailed-design.html` — already updated in Phase 2) and three operational sister skills (`develop-code`, `derive-test-cases`, `vmodel-skill-review-code`) whose seams the new DD pair must understand.
+- Stress-test for the locked pattern: DD has the broadest surface (function-by-function specification at junior-implementable level); will it stay within Option 2 budget or force a third file-count exception? Useful pattern signal.
+
+**Order for the remaining two after DD:** `testspec` (rigid `verifies` requirement is mechanically checkable; smallest of the three); `adr` last (Reversibility sub-prompt is a unique sub-shape; ADR ↔ Architecture seam is already partially specified by the architecture-side, so the ADR pair is mostly anchored).
 
 ### Q3 — When to do the elicitation skill — RESOLVED 2026-04-29
 
@@ -148,6 +158,15 @@ Pre-pivot version is stale. Should describe the post-pivot 6-artifact model and 
 
 ## 4. Recommended Next Step
 
-**Author the `product-brief` pair** (`vmodel-skill-author-product-brief` + `vmodel-skill-review-product-brief`) in a single session, following the pattern locked in §2. Expected size: ~3,000–4,000 lines across ~26–30 files. Pattern-validation — if the pair lands without significant deviation from §2, the pattern is robust enough to template the remaining four per-artifact pairs.
+**Author the `detailed-design` pair** (`vmodel-skill-author-detailed-design` + `vmodel-skill-review-detailed-design`) in a single session, following the pattern locked in §2. Expected size: comparable to or slightly larger than architecture's ~4,075 lines — DD has broad function-by-function specification surface at junior-implementable level. The architecture pair stress-tested the *upper* size end of the pattern; DD will stress-test the *broadest disciplines* end (likely 12-14 references per side, similar template count to architecture).
 
-If pattern stress is observed (e.g., product-brief shape doesn't fit the 5-section requirements layout), surface the deviation explicitly in this handoff doc before locking it.
+**Pre-build checklist for the DD pair:**
+- Read `docs/guide/artifacts/detailed-design.html` — Phase 2 craft doc with the post-pivot 5-section structure.
+- Read `schemas/artifacts/detailed-design.schema.json` — Phase 3 schema; DbC shape is in `$defs/public_interface_entry`.
+- Read `schemas/artifacts/quality-bar/detailed-design.qb.json` — canonical Quality Bar items.
+- Inventory the three sister skills at `.claude/skills/{develop-code,derive-test-cases,vmodel-skill-review-code}/` — these are operational pre-pivot skills whose seams the new DD pair must understand. The new author skill produces the DD; `develop-code` consumes it. The new review skill validates DD craft; `vmodel-skill-review-code` (already operational) cross-checks code against the DD.
+- Inventory the paused C2–C4 DD skills (mentioned in `BACKLOG.md` §4 / `archive/`) — content may be mineable; framing was pre-pivot tier-based.
+- Cross-artifact seam to specify: Architecture → DD via leaf-allocation contract. Author skill should refuse to author DD without a parent Architecture's allocation (analogous to architecture refusing without parent Requirements).
+- Likely hard refusals (analogous to architecture's A/B/C/D): *(A)* honest retrofit posture on rationale fields (mirrors architecture's refusal A); *(B)* algorithmic-detail discipline (refuse to write "use bubble-sort" when the algorithm choice is the implementer's call — but DD is allowed to specify algorithms when the choice is load-bearing — this is the inverse-of-architecture refusal; needs careful design); *(C)* every leaf has a TestSpec verification target (analogue of composition-completeness — DD without testable surface is incomplete); *(D)* Spec Ambiguity Test as meta-gate.
+
+If pattern stress is observed (e.g., DD's algorithmic-detail discipline doesn't have a clean "do/don't" boundary; or the leaf-allocation contract from Architecture doesn't fit the YAML conventions cleanly), surface the deviation explicitly in this handoff doc before locking it.

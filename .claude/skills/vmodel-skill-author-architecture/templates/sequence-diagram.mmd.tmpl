@@ -1,0 +1,28 @@
+%% Mermaid sequence diagram — one for the happy path, one or two for critical failure paths.
+%% Use `autonumber` so reviewers can reference steps. Label every cross-component edge with the operation name.
+%% Make middleware stack visible at the gateway (AuthN → AuthZ → RateLimit → Trace).
+%% Note async edges with a `Note` block — the reader needs to see where the synchronous response separates from the async commit.
+
+sequenceDiagram
+    autonumber
+    participant <<P1>> as <<Participant 1 (e.g., Client)>>
+    participant <<P2>> as <<Participant 2 (e.g., API Gateway)>>
+    participant <<P3>> as <<Participant 3 (e.g., Cart)>>
+    participant <<P4>> as <<Participant 4 (e.g., Downstream)>>
+
+    <<P1>>->><<P2>>: <<request — e.g., POST /resource (Idempotency-Key)>>
+    <<P2>>->><<P2>>: <<middleware stack — AuthN · AuthZ · RateLimit · Trace>>
+    <<P2>>->><<P3>>: <<forwarded operation>>
+    <<P3>>->><<P4>>: <<downstream call>>
+    <<P4>>-->><<P3>>: <<downstream response>>
+    <<P3>>-->><<P2>>: <<response>>
+    <<P2>>-->><<P1>>: <<200 + body>>
+
+    Note over <<P3>>: <<async work split — e.g., outbox commit; event publishes within Ns of HTTP 200>>
+
+%% === SLOT FOR ONE CRITICAL FAILURE PATH ===
+%% Duplicate the block above for each critical failure scenario:
+%%   - downstream-timeout (with circuit-breaker open transition)
+%%   - partial-failure compensation (saga rollback)
+%%   - idempotent-replay (second call with same idempotency-key returns first response)
+%%   - degradation (non-essential dependency unavailable; primary path proceeds with reduced scope)

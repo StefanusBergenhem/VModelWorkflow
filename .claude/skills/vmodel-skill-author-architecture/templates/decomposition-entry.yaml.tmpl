@@ -1,0 +1,23 @@
+# One entry per child of the scope being decomposed.
+# Embed inside the architecture.md `decomposition:` block.
+
+- id: <<child-id>>                        # short, lowercase, hyphenated; matches Structure Diagram label
+  purpose: "<<one sentence, no conjunctions — if you need 'and', split the child>>"
+  responsibilities:
+    - "<<responsibility 1, architectural-level — what cross-component effect does this have?>>"
+    - "<<responsibility 2>>"
+    - "<<responsibility 3 — max 3 items; beyond three, the child is two children pretending to be one>>"
+  allocates: [<<REQ-NNN>>, <<REQ-NNN>>]   # parent requirements this child carries; every parent-allocated req lands in ≥1 child
+
+  # OPTIONAL: test-seam shape the component provides — port type, fake/stub strategy, in-process vs out-of-process
+  test_seam: "<<...>>"
+
+  # === RETROFIT-ONLY FIELDS — uncomment in retrofit mode ===
+  # recovery_status: reconstructed
+  # evidence:
+  #   - "<<file/line — e.g., src/main/java/.../CartService.java:142>>"
+  #   - "<<commit / migration / runtime call-graph>>"
+  # rationale:
+  #   status: <<verified | unknown>>     # NEVER 'reconstructed' — rationale is human-only
+  #   note: "<<if verified: cite the human source — preserved decision record, ADR, conversation>>"
+  #         "<<if unknown: name the follow-up owner and the action — e.g., 'follow up with @owner; no preserved decision record'>>"

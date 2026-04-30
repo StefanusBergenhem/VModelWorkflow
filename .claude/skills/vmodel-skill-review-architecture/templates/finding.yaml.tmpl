@@ -1,0 +1,68 @@
+- id: F-NNN
+  # Sequential within this review (F-001, F-002, ...). Stable for a single review run.
+
+  element_id: <decomposition-id | interface-name | "GLOBAL">
+  # The specific architectural element the finding applies to.
+  # Examples:
+  #   - decomposition: "cart" / "order-committer" / "payment-orchestrator"
+  #   - interface:     "ICartFinaliseCheckout" / "OrderPlaced (event)"
+  #   - composition:   "GLOBAL" (Composition section is one whole; finding applies document-wide)
+  #   - meta-gate:     "GLOBAL"
+  #   - retrofit gap:  "GLOBAL"
+  # Use "GLOBAL" for document-wide findings (laundered architecture at the artifact
+  # level, missing Composition section, Spec Ambiguity Test failure, retrofit Gap
+  # report missing).
+
+  check_failed: <dotted catalog identifier>
+  # Must appear in `references/quality-bar-gate.md` (for `check.*`) or
+  # `references/anti-patterns-catalog.md` (for `anti-pattern.*`). Examples:
+  #   - check.decomposition.responsibility-too-many
+  #   - check.interface.missing-postcondition
+  #   - check.composition.no-named-pattern
+  #   - check.retrofit.human-only-content-marked-reconstructed
+  #   - check.adr.governing-not-resolved
+  #   - check.spec-ambiguity-test.fail
+  #   - anti-pattern.dd-content-in-architecture
+  #   - anti-pattern.fabricated-decomposition-rationale
+  # Do not invent ad-hoc strings. If the check is genuinely new, surface it as a
+  # self-review note rather than minting a new identifier mid-review.
+
+  severity: <hard_reject | soft_reject | info>
+  # hard_reject — fatal; one occurrence triggers REJECTED (or DESIGN_ISSUE if
+  #   the meta-gate fires upstream-traceably).
+  # soft_reject — Quality Bar item No, or anti-pattern hit other than the
+  #   hard-reject ones; accumulates to REJECTED.
+  # info — observation worth surfacing but does not affect verdict.
+
+  category: <decomposition | interface | composition | quality-attribute | resilience | security | observability | rationale | adr | traceability | retrofit | meta-gate>
+  # Top-level category — matches the namespaces in `quality-bar-gate.md` and the
+  # eight-step review sweep in SKILL.md.
+
+  evidence: |
+    <verbatim quote from the document, OR a specific structural observation>
+    # Examples:
+    # - "ICartFinaliseCheckout has only `postconditions.on_success`. Branches
+    #    `on_precondition_failure` and `on_downstream_failure` are absent."
+    # - "Decomposition entry `cart` purpose: 'Holds cart and orchestrates pricing
+    #    and emits events' — three architectural responsibilities joined by 'and'."
+    # - "governing_adrs lists ADR-019; no body citation of ADR-019 anywhere in
+    #    the artifact."
+    # - "Composition section is two sentences: 'We use microservices. They talk
+    #    over HTTP.' No named runtime pattern; no sequence diagram."
+    # - "rationale_recovery_status: reconstructed on REQ-cart-001 — illegal value
+    #    for a rationale field."
+
+  recommended_action: |
+    <generic pointer; never specific replacement wording>
+    # Acceptable:
+    # - "Complete the postcondition triple: add on_precondition_failure and
+    #    on_downstream_failure clauses. See interface-contract-checks.md."
+    # - "Apply the one-sentence-responsibility test per child. Split joined
+    #    responsibilities into separate entries, or split the child."
+    # - "Cite governing ADRs at the body decision point; a `governing_adrs:` list
+    #    without body citations is decoration."
+    # NOT acceptable:
+    # - "Replace with: 'on_downstream_failure: HTTP 502 with code payment-timeout
+    #    is returned; cart state remains unchanged; reservation released within 30s.'"
+    # - The matched author skill rewrites; this skill points to the rule, not
+    #   the replacement text.
