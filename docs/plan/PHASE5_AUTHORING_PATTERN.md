@@ -6,7 +6,7 @@ Load this file alongside `CLAUDE.md` + `BACKLOG.md` + `TARGET_ARCHITECTURE.md` a
 
 ---
 
-## 1. Status as of 2026-04-30 (architecture pair landed)
+## 1. Status as of 2026-04-30 (DD pair landed; builder-skill drift discovered)
 
 **Phase 5 goal:** Build per-artifact authoring + review skills (6 × 2 = 12 per-artifact skills), plus framework skills (orchestration, traceability, retrofit), plus the stakeholder-elicitation skill carried over from Phase 4 closeout, plus a rewrite of `docs/guide/skills-architecture.html` for the new 6-artifact model.
 
@@ -17,13 +17,15 @@ Load this file alongside `CLAUDE.md` + `BACKLOG.md` + `TARGET_ARCHITECTURE.md` a
 | 2026-04-27 | Pattern-setter pair | `vmodel-skill-author-requirements` (18 files, ~2071 lines) and `vmodel-skill-review-requirements` (14 files, ~1823 lines) authored under `.claude/skills/`. Both self-contained, framework-neutral, lean-fragile. The author skill encodes the EARS / NFR-five-elements / interface-five-dimensions / no-fabrication / no-smuggled-design disciplines. The review skill mirrors them as checks plus a structured-verdict (APPROVED / REJECTED / DESIGN_ISSUE) with deterministic gates and a stable `check_failed` identifier catalog. |
 | 2026-04-29 | Phase 4 carryover | `vmodel-skill-elicit-needs` (17 files, ~1340 lines) authored under `.claude/skills/`. Renamed from `vmodel-skill-elicit-requirements` during authoring to align with INCOSE's Needs vs Requirements distinction (Stakeholder Real-World Expectations → Integrated Set of Needs → Design Input Requirements). Output is a rough `needs.md` in **prototype mode** — not a tracked framework artifact yet (decision γ — prototype before formalizing). Encodes a state-machine spine (ELICIT → DRAFT → READBACK → CONFIRM → COMMIT) with readback-for-joint-agreement as a fragile contract. Self-review surfaced 2 MAJOR findings (description over 1024-char cap; WRAP-UP state coherence drift), both fixed at landing. |
 | 2026-04-30 | Phase 5 second pair | `vmodel-skill-author-architecture` (22 files, ~2270 lines) and `vmodel-skill-review-architecture` (17 files, ~1805 lines) authored under `.claude/skills/`. Pair total ~4075 lines (under Option-2 budget of ~4500). **12 references per side** (vs requirements pair's 9), reflecting architecture's broader surface (9 best-practice disciplines vs requirements' 5-or-so) — `protocols-sync-async` merged into `composition-patterns` per Option 2 of the size-trim discussion. Hard refusals A/B/C/D + Spec Ambiguity Test meta-gate. `check_failed` catalog of **10 `anti-pattern.*` + 58 `check.*` = 68 IDs**, partitioned across `anti-patterns-catalog.md` and `quality-bar-gate.md`. **13 hard-reject IDs**, **1 override** (`check.spec-ambiguity-test.fail`), rest soft-reject. Order-of-pairs deviation from the §3 Q2 recommendation: architecture taken before product-brief at user's call (rationale: rich-artifact stress-test of the locked pattern; pattern held). Self-review clean except documented exception — `quality-bar-gate.md` at 233 lines (over ~150 soft cap), justified by single-source-of-truth catalog density and acknowledged inline in the file at line 7 (decision A taken 2026-04-30: accept as documented exception; do not split). Architecture-specific seam captured in `references/adr-extraction-cues.md` + `references/adr-traceability-checks.md` — the `[NEEDS-ADR: <decision>]` stub mechanism formalises when an Architecture decision should be externalised to an ADR (load-bearing AND cross-cutting AND hard-to-reverse) and how the matched review skill verifies `governing_adrs:` resolution. |
+| 2026-04-30 | Phase 5 third pair | `vmodel-skill-author-detailed-design` (22 files, ~2166 lines) and `vmodel-skill-review-detailed-design` (19 files, ~1954 lines) authored under `.claude/skills/`. Pair total ~4120 lines (under Option-2 budget of ~4500, comparable to architecture). **12 references per side** held; **7 templates** author-side, **2 templates** review-side; **2 examples** per side (matched pattern). Hard refusals A/B/C/D mirror across pair: A — Overview narrowed to `verified \| unknown` (schema-enforced); B — DD-without-parent-Architecture; C — code paraphrase / algorithmic postcondition / permutation-half-omitted (the "two halves rule"); D — Spec Ambiguity Test override. `check_failed` catalog ~16 anti-patterns + ~50 `check.*` IDs. Cross-artifact seams: Architecture → DD via leaf-allocation contract (refusal B); DD → TestSpec via dedicated `testspec-traceability-{cues,checks}.md` files (mirroring architecture's adr-extraction pattern). **Catalog-file exception**: review's `quality-bar-gate.md` at 238 lines, documented inline at file head per architecture-pair precedent. **Builder-skill drift discovered mid-build**: see §2.12 (new locked decision) and §3 Q6 (audit needed). |
 
 **Pending tasks (Phase 5 backlog):**
 - [-] ~~`vmodel-skill-author-product-brief` and `vmodel-skill-review-product-brief`.~~ **DEFERRED INDEFINITELY 2026-04-30.** `needs.md` from `vmodel-skill-elicit-needs` will carry the root-scope upstream role for now. Re-evaluate alongside the elicit-needs decision γ (promote / merge / stay-transient) once pilot reps inform whether a formal Product Brief authoring skill is load-bearing or ceremonial. Framework still retains the Product Brief artifact type — only the authoring/review *skill pair* is skipped; if a formal PB is needed for a specific project, it can be hand-authored against the existing `docs/guide/artifacts/product-brief.html` craft doc + `schemas/artifacts/product-brief.schema.json`.
 - [x] ~~`vmodel-skill-author-architecture` and `vmodel-skill-review-architecture`.~~ (landed 2026-04-30)
-- [ ] `vmodel-skill-author-detailed-design` and `vmodel-skill-review-detailed-design` (supersedes the paused C2–C4 DD skills). **Recommended next.**
-- [ ] `vmodel-skill-author-adr` and `vmodel-skill-review-adr`.
-- [ ] `vmodel-skill-author-testspec` and `vmodel-skill-review-testspec`.
+- [x] ~~`vmodel-skill-author-detailed-design` and `vmodel-skill-review-detailed-design`~~ (landed 2026-04-30; supersedes the paused C2–C4 DD skills)
+- [ ] **Builder-skill conformance audit across the four shipped pairs** (requirements / elicit-needs / architecture / DD). **Recommended next** — see §3 Q6 and §4.
+- [ ] `vmodel-skill-author-testspec` and `vmodel-skill-review-testspec` (after audit).
+- [ ] `vmodel-skill-author-adr` and `vmodel-skill-review-adr` (after audit).
 - [ ] `vmodel-skill-traceability` (framework).
 - [ ] `vmodel-skill-orchestration` (framework).
 - [ ] `vmodel-skill-retrofit` (framework — four-phase retrofit mode; enforces `recovery_status` discipline at the skill level).
@@ -104,6 +106,25 @@ The requirements pair took ~3,900 lines across 32 files (18 author + 14 review).
 
 The author and review for one artifact are best done back-to-back in the same session, because the review's `check_failed` catalog mirrors the author's hard refusals and slot-fill templates. Splitting them across sessions costs context-loading overhead.
 
+### 2.12 Builder skill is the primary authority — PHASE5 conventions LAYER ON TOP
+
+**Locked 2026-04-30 after the DD pair build.**
+
+Every Phase 5 skill pair must conform to the discipline encoded in the `prompt-skill-agent-builder` skill's `references/skill.md` and `references/anti-patterns.md`. Those files define the craft floor — frontmatter shape, reference-file caps with TOC requirement, prime-don't-teach, implementation intentions ("when X, do Y" not general maxims), no-alternatives-dumps, and the rest. PHASE5 §2 conventions (self-containment, framework-neutral body, hard-refusal ABCD pattern, verdict format) are project-specific *additions* on top of the builder's craft rules — they do not replace them.
+
+**Mandatory at session start:**
+
+1. When the user invokes `/prompt-skill-agent-builder` (or any skill via slash-prefix), call the `Skill` tool with that skill name **before** doing anything else. The slash-prefix is a tool invocation, not a textual reference.
+2. Read the active type's reference (`references/skill.md`) and the universal anti-patterns (`references/anti-patterns.md`) before opening PHASE5_AUTHORING_PATTERN.md.
+3. Walk the builder's 8-step flow (parse intent → type-mismatch check → load type ref → interview → termination → output path → self-review → eval scaffold). PHASE5 §2 layers on top of step 7 (self-review).
+4. Run the builder's anti-pattern self-review against every reference, template, and example before declaring the pair done. Notably:
+   - Reference files >100 lines need a Table of Contents.
+   - "Prime, don't teach" — do not derive Hoare/Meyer/Liskov/Goetz from first principles; state the contract shape and let the model bring its prior.
+   - "When X, do Y" implementation intentions, not "X is generally Y" maxims.
+   - No alternatives dumps — pick a default plus one escape hatch.
+
+**Why this needed to be written down:** the requirements / elicit-needs / architecture / DD pairs were authored without invoking the builder skill. PHASE5 §2 was extracted from the requirements pair which had the same blind spot, so the discipline drifted across all four pairs. The DD-pair build surfaced the drift mid-stream; this section is the structural fix so the next pair starts from the right authority.
+
 ---
 
 ## 3. Open Questions
@@ -154,19 +175,47 @@ Pre-pivot version is stale. Should describe the post-pivot 6-artifact model and 
 
 **Recommendation:** defer to Phase 5 closeout. The HTML page documents skills; documenting them while they are in flux costs more than it earns.
 
+### Q6 — Builder-skill conformance audit (NEW, 2026-04-30)
+
+**Discovered during the DD pair build:** four shipped pairs (`requirements`, `elicit-needs`, `architecture`, `detailed-design`) were authored without invoking `prompt-skill-agent-builder` and without reading its `references/{skill,anti-patterns}.md`. PHASE5 §2 substituted for the builder's craft rules. Drift symptoms (surfaced in DD-pair self-review):
+
+- **Reference files >100 lines without Table of Contents** — common across all four pairs (builder anti-pattern).
+- **Re-explaining fundamentals** — Hoare/Meyer/Liskov/Goetz derivations in references when the model already knows them (violates prime-don't-teach).
+- **General maxims** instead of "when X, do Y" implementation intentions in some places.
+
+**Audit scope (next-session task):**
+
+1. Walk every shipped pair's references through the builder's anti-pattern checklist (`prompt-skill-agent-builder/references/anti-patterns.md`).
+2. Add TOCs to references >100 lines OR trim them under 100.
+3. Replace any first-principles re-derivation of well-known concepts with terse rule statements.
+4. Convert general maxims to implementation intentions where the rule has clear "when X" triggers.
+5. Catalog file exceptions (architecture's `quality-bar-gate.md` at 233; DD's at 238) keep the inline justification — they are documented exceptions, not violations to fix.
+
+**Recommendation:** dedicate a focused audit session before the next pair build. Estimated effort: surgical fixes across ~50 reference files; few-line edits per file; 2-4 hours.
+
 ---
 
 ## 4. Recommended Next Step
 
-**Author the `detailed-design` pair** (`vmodel-skill-author-detailed-design` + `vmodel-skill-review-detailed-design`) in a single session, following the pattern locked in §2. Expected size: comparable to or slightly larger than architecture's ~4,075 lines — DD has broad function-by-function specification surface at junior-implementable level. The architecture pair stress-tested the *upper* size end of the pattern; DD will stress-test the *broadest disciplines* end (likely 12-14 references per side, similar template count to architecture).
+**Run the builder-skill conformance audit (§3 Q6).** The four shipped pairs (requirements / elicit-needs / architecture / DD) drifted from `prompt-skill-agent-builder`'s craft floor because PHASE5 §2 was extracted from the first pair (requirements) which had the same blind spot. The drift compounds — each new pair patterns-matched on the previous one rather than on the builder's actual rules. The DD pair self-review caught the symptoms and §2.12 records the fix, but the four shipped pairs still carry the violations.
 
-**Pre-build checklist for the DD pair:**
-- Read `docs/guide/artifacts/detailed-design.html` — Phase 2 craft doc with the post-pivot 5-section structure.
-- Read `schemas/artifacts/detailed-design.schema.json` — Phase 3 schema; DbC shape is in `$defs/public_interface_entry`.
-- Read `schemas/artifacts/quality-bar/detailed-design.qb.json` — canonical Quality Bar items.
-- Inventory the three sister skills at `.claude/skills/{develop-code,derive-test-cases,vmodel-skill-review-code}/` — these are operational pre-pivot skills whose seams the new DD pair must understand. The new author skill produces the DD; `develop-code` consumes it. The new review skill validates DD craft; `vmodel-skill-review-code` (already operational) cross-checks code against the DD.
-- Inventory the paused C2–C4 DD skills (mentioned in `BACKLOG.md` §4 / `archive/`) — content may be mineable; framing was pre-pivot tier-based.
-- Cross-artifact seam to specify: Architecture → DD via leaf-allocation contract. Author skill should refuse to author DD without a parent Architecture's allocation (analogous to architecture refusing without parent Requirements).
-- Likely hard refusals (analogous to architecture's A/B/C/D): *(A)* honest retrofit posture on rationale fields (mirrors architecture's refusal A); *(B)* algorithmic-detail discipline (refuse to write "use bubble-sort" when the algorithm choice is the implementer's call — but DD is allowed to specify algorithms when the choice is load-bearing — this is the inverse-of-architecture refusal; needs careful design); *(C)* every leaf has a TestSpec verification target (analogue of composition-completeness — DD without testable surface is incomplete); *(D)* Spec Ambiguity Test as meta-gate.
+**Audit pre-flight (mandatory at session start, per §2.12):**
 
-If pattern stress is observed (e.g., DD's algorithmic-detail discipline doesn't have a clean "do/don't" boundary; or the leaf-allocation contract from Architecture doesn't fit the YAML conventions cleanly), surface the deviation explicitly in this handoff doc before locking it.
+1. **Invoke `prompt-skill-agent-builder` via the Skill tool** — not as a textual reference. The slash-prefix `/prompt-skill-agent-builder` is a tool call.
+2. **Read** `references/skill.md` and `references/anti-patterns.md` from that skill before reading anything else.
+3. **Apply** the universal + skill-specific anti-pattern checklists across the four shipped pairs.
+
+**Audit execution:**
+- For each of the four shipped pairs, walk every reference file (~12 per pair × 4 = ~48 files plus author SKILL.md / review SKILL.md).
+- Apply the surgical-fix list from §3 Q6.
+- Update each pair's status row in §1 with an "audit-conformance" annotation when complete.
+
+**After audit:** resume the pair build. Order: `testspec` next (smallest of the remaining two; rigid `verifies` requirement is mechanically checkable; ADR pair is partially anchored by architecture-side already). Then `adr` last.
+
+**Pre-build checklist for the testspec pair (when reached):**
+- Read `docs/guide/artifacts/testspec.html` — Phase 2 craft doc.
+- Read `schemas/artifacts/test-spec.schema.json` and `schemas/artifacts/quality-bar/test-spec.quality-bar.json`.
+- Cross-artifact seams to specify: TestSpec ↔ DD (every error-matrix row → robustness test; postconditions → contract tests; invariants → property tests — already partially specified by `testspec-traceability-{cues,checks}.md` in the DD pair); TestSpec ↔ Architecture (interface contracts → integration tests); TestSpec ↔ Requirements (every requirement → at least one verification target via `verifies`).
+- Likely hard refusals: *(A)* honest retrofit posture on rationale; *(B)* `verifies` field non-empty per schema (testspec without verification targets is decoration); *(C)* every test case has an oracle (the assertion is named, not "verify behaviour"); *(D)* Spec Ambiguity Test meta-gate.
+
+If pattern stress is observed, surface the deviation explicitly before locking.

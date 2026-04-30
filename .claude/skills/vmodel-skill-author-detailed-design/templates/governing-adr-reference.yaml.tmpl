@@ -1,0 +1,44 @@
+# Pattern for referencing ADRs from a Detailed Design.
+# ADRs are flat and cross-cutting; the DD references them by id, never inlines them.
+
+# === FRONT-MATTER FORM ===
+# Inside detailed_design.md YAML front-matter:
+
+governing_adrs:
+  - <<ADR-NNN-name>>      # short title — e.g., "ADR-008: bearer-JWT authn at gateway"
+  - <<ADR-NNN-name>>      # short title — e.g., "ADR-019: idempotency-key under at-least-once delivery"
+
+
+# === BODY-CITATION PATTERN ===
+# At each spot in the body where a governing ADR's decision lands, cite the ADR.
+# The DD applies the decision; the ADR justifies it.
+
+# Example — inside a postcondition:
+#   on_success:
+#     - "Duplicate-key calls return the first response byte-for-byte and do not
+#        re-commit (per ADR-019)."
+
+# Example — inside a recovery strategy:
+#   recovery: retry (max 2; exponential backoff; idempotency-assumption per ADR-019)
+
+# Example — inside a state-transition action:
+#   action: "Emit OrderPlaced via outbox relay (per ADR-019 — at-least-once delivery)"
+
+
+# === STUB FOR DECISIONS NOT YET ADR'D ===
+# When DD authoring surfaces a decision meeting all three criteria (load-bearing AND
+# cross-cutting AND hard-to-reverse) but no ADR exists yet, emit a stub:
+
+# [NEEDS-ADR: <one-sentence decision> — extract before finalising]
+
+# Examples:
+# [NEEDS-ADR: choose at-least-once vs exactly-once delivery for OrderPlaced events
+#             — extract before finalising]
+# [NEEDS-ADR: choose HMAC-SHA256 over JWT for session token signature
+#             — extract before finalising]
+
+# Finalising means: ADR authored → ADR id added to `governing_adrs:` → stub replaced
+# with the body-citation pattern above.
+
+# A `governing_adrs:` list with no body citations is decoration.
+# A body citation with no `governing_adrs:` entry is an unresolvable reference.

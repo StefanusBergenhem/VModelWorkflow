@@ -1,0 +1,57 @@
+# One entry per internal data structure that has invariants beyond the type system,
+# crosses the public interface, is shared across threads/callers, or has non-obvious
+# ownership / lifetime.
+# Embed inside the detailed_design.md `data_structures:` block.
+# Schema: $defs/data_structure_entry — required: name, fields (each with name + type).
+
+- name: <<StructureName>>                    # PascalCase typical; not enforced
+  description: "<<what this structure represents and where it is used>>"
+
+  fields:
+    # Per-field shape. Type at one level above the implementation language —
+    # 'non-negative integer', 'UTC timestamp', 'job-id'. Bit-width / language-specific
+    # type only when contractual (wire format, fixed-size buffer).
+    - name: <<field_name>>
+      type: "<<language-neutral type>>"
+      invariant: "<<...>>"            # optional; required when type alone does not capture the constraint
+    - name: <<...>>
+      type: "<<...>>"
+      invariant: "<<...>>"
+
+  # === STRUCTURE INVARIANTS (across-field properties) ===
+  # Optional — populate when properties span multiple fields (e.g., 'amount' and 'currency'
+  # both present or both absent; sum of line.line_total equals subtotal).
+  invariants:
+    - "<<cross-field property>>"
+
+  ownership: "<<who constructs / mutates / releases>>"
+  # Examples:
+  #   "Constructed by DequeueService.claimJob; read-only elsewhere"
+  #   "Caller-owned; cleaned up at request scope exit"
+  #   "Shared immutable — safe to alias"
+  #   "Singleton; constructed at process startup, never destructed"
+  #   "Pool-managed; instances borrowed and returned via XxxPool"
+
+  lifetime: "<<how long instances live and what bounds them>>"
+  # Examples:
+  #   "Request-scoped"
+  #   "Per-connection"
+  #   "Process lifetime (singleton)"
+  #   "Event-sourced; persists in the outbox until drained"
+
+  returned_semantics: "<<copy | live view | read-only reference | snapshot | ownership transfer>>"
+  # Required when this structure crosses the public interface (returned from a public function).
+  # copy                    — caller receives a fresh instance; mutations isolated
+  # live view               — caller's reference into supplier's state; mutations observable on either side
+  # read-only reference     — caller cannot mutate; supplier may continue to (state if so)
+  # read-only snapshot      — caller observes an immutable copy taken at call time
+  # ownership transfer      — caller takes responsibility; supplier no longer owns
+
+  # === SHARED-MUTABLE-ONLY — uncomment if shared across threads or callers ===
+  # lock: "<<which lock guards the structure or per-field>>"
+  # happens_before: "<<publication / lock release-acquire / atomic CAS>>"
+  # readers: "<<who may read>>"
+  # writers: "<<who may write>>"
+
+  # === RETROFIT-ONLY ===
+  # rationale_status: <<verified | unknown>>   # NEVER 'reconstructed' — refusal A
