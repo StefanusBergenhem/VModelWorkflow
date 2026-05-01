@@ -1,0 +1,32 @@
+%% Mermaid stateDiagram-v2 skeleton for the State section.
+%% Use ONLY when the state machine fits on one page (≤ ~10 states).
+%% For larger machines, prefer a transition table (textual, scrollable, diff-friendly).
+%% Pair the diagram with the textual transition table — the table is the source of truth.
+
+stateDiagram-v2
+    [*] --> <<INITIAL_STATE>>
+
+    %% Transitions — one line per legal transition.
+    %% Format:  <source> --> <target> : <event> [<guard>] / <action>
+    <<SOURCE>> --> <<TARGET>> : <<event>> [<<guard condition>>] / <<action>>
+    <<SOURCE>> --> <<TARGET>> : <<event>> / <<action>>
+    <<SOURCE>> --> <<TARGET>> : <<event>> [<<guard condition>>]
+
+    %% Self-loop transitions (state-internal events that do not change state)
+    <<STATE>> --> <<STATE>> : <<event>> / <<action>>
+
+    %% Terminal transitions
+    <<STATE>> --> [*]
+
+    %% Optional: hierarchical states (when sub-modes share a parent)
+    %% state <<PARENT>> {
+    %%     [*] --> <<SUB_INITIAL>>
+    %%     <<SUB_A>> --> <<SUB_B>> : <<event>>
+    %%     <<SUB_B>> --> [*]
+    %% }
+
+    %% Optional: notes for entry / exit actions
+    %% note right of <<STATE>>
+    %%   entry: <<action on entering>>
+    %%   exit:  <<action on leaving>>
+    %% end note

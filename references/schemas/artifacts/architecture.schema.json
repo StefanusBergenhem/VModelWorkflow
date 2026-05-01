@@ -1,0 +1,253 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vmodelworkflow.dev/schemas/artifacts/architecture/v1",
+  "title": "Architecture front-matter",
+  "description": "Front-matter shape for an Architecture artifact. Lives at /specs/{scope}/architecture.md for non-leaf scopes; at /specs/architecture.md for the root scope. Composes the universal envelope and adds the artifact-level identity (scope, parent_scope, derived_from, governing_adrs) plus two narrowings relative to the loose envelope defaults: governing_adrs is tightened to the ADR id pattern (context makes ADR-only membership unambiguous), and id follows ARCH / ARCH-{scope-flattened}. Status uses the universal lifecycle vocabulary (draft | active | superseded). Top-level recovery_status is not narrowed: Architecture's primary content (structure, decomposition, interfaces) is code-observable and 'reconstructed' is legitimate at the artifact level; human-only narrowing lives one layer deeper on per-child rationale (see $defs/decomposition_child.rationale). The body's Decomposition and Interfaces YAML blocks are defined as $defs/decomposition_child and $defs/interface — exported for artifact parsers that extract individual blocks, not enforced on the front-matter object. The Composition section (runtime pattern, middleware stack, sequence diagrams, DI strategy, message-bus topology, deployment intent at root) lives in prose and Mermaid inside the markdown body and is checked by the structural/review skills, not by JSON Schema.",
+
+  "allOf": [
+    { "$ref": "https://vmodelworkflow.dev/schemas/artifacts/envelope/v1" },
+    {
+      "type": "object",
+      "required": ["id", "artifact_type", "scope", "parent_scope", "derived_from"],
+      "properties": {
+
+        "id": {
+          "description": "Artifact identifier. Literal 'ARCH' at root scope; 'ARCH-{scope-flattened}' otherwise, where scope path segments (normally separated by '/') are joined with hyphens. Example: scope 'checkout' → id 'ARCH-checkout'; scope 'app/checkout' → id 'ARCH-app-checkout'.",
+          "type": "string",
+          "pattern": "^ARCH(-[a-z0-9]+(-[a-z0-9]+)*)?$"
+        },
+
+        "artifact_type": {
+          "description": "Artifact-type discriminator, fixed for this schema.",
+          "const": "architecture"
+        },
+
+        "scope": {
+          "description": "Scope path this Architecture artifact covers. Empty string denotes the root scope. Kebab-case segments separated by '/'.",
+          "$ref": "https://vmodelworkflow.dev/schemas/artifacts/common-defs/v1#/$defs/scope_path"
+        },
+
+        "parent_scope": {
+          "description": "Parent scope path. Null at root (no parent). At branches: the containing scope's path.",
+          "oneOf": [
+            { "$ref": "https://vmodelworkflow.dev/schemas/artifacts/common-defs/v1#/$defs/scope_path" },
+            { "type": "null" }
+          ]
+        },
+
+        "derived_from": {
+          "description": "Upstream artifact ids this Architecture is refined from. At root: typically [PB] plus the root Requirements. At non-root branches: the parent Requirements for this scope plus any inherited constraints (parent Architecture, governing ADRs that bound the decomposition). Non-empty list; empty would mean an orphan artifact.",
+          "type": "array",
+          "items": {
+            "$ref": "https://vmodelworkflow.dev/schemas/artifacts/common-defs/v1#/$defs/artifact_id_ref"
+          },
+          "minItems": 1
+        },
+
+        "governing_adrs": {
+          "description": "Cross-cutting ADRs that constrain this scope's architecture. Optional; empty or absent when the scope inherits no ADR-level constraints. Tightened to the ADR id pattern — the reference target is unambiguous by context, and requiring the full ADR shape surfaces broken references at schema validation instead of deferring to the traceability tool.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^ADR-\\d{3,}-[a-z0-9]+(-[a-z0-9]+)*$"
+          }
+        },
+
+        "status": {
+          "description": "Lifecycle state. Architecture uses the universal lifecycle vocabulary: draft → active, re-enters draft on material edit, transitions to superseded only when a differently-named Architecture document replaces this one (rare; routine revisions bump version instead).",
+          "$ref": "https://vmodelworkflow.dev/schemas/artifacts/common-defs/v1#/$defs/lifecycle_status"
+        }
+      }
+    }
+  ],
+
+  "$defs": {
+
+    "decomposition_child": {
+      "description": "Per-child block shape — the YAML an embedded Decomposition entry in the markdown body renders to. Exported for use by parsers and validators extracting individual decomposition entries from an Architecture document. Not enforced by the top-level schema on the front-matter object itself. Required keys match the minimum committable shape of a child (id, purpose, responsibilities, allocates); 'allocates' is tightened to the REQ id pattern because allocation targets are requirements by definition. Rationale accepts either a scalar string (greenfield) or a {status, note} object (retrofit, where human-only rationale must either be confirmed by a human or marked unknown — the no-fabrication rule bans 'reconstructed' for this field). 'recovery_status' here is the per-child observed-structure marker (see the retrofit example in docs/guide/artifacts/architecture.html §4.7).",
+      "type": "object",
+      "required": ["id", "purpose", "responsibilities", "allocates"],
+      "properties": {
+
+        "id": {
+          "description": "Child identifier within the Decomposition. Kebab-case segment — lowercase letters / digits with single hyphens.",
+          "$ref": "https://vmodelworkflow.dev/schemas/artifacts/common-defs/v1#/$defs/kebab_segment"
+        },
+
+        "purpose": {
+          "description": "One-sentence statement of what this child is for. The 'no conjunctions / no hidden ands' discipline is enforced by the Quality Bar, not by the schema — the schema only enforces non-empty string.",
+          "type": "string",
+          "minLength": 1
+        },
+
+        "responsibilities": {
+          "description": "What this child is responsible for at the architecture level. Each item is one architectural-level responsibility (not an implementation detail). Non-empty; the Quality Bar bounds the count ('≤3, no hidden ands') but the schema does not impose a maxItems so that exceptions remain reviewable rather than silently blocked.",
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1
+        },
+
+        "allocates": {
+          "description": "Requirement ids this child realises. Non-empty — an architecture child that allocates no requirements is orphaned. Tightened to the REQ id pattern because allocation targets are requirements by definition; keeps reference-integrity failures loud at schema time.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^REQ-[a-z0-9]+(-[a-z0-9]+)*$"
+          },
+          "minItems": 1
+        },
+
+        "rationale": {
+          "description": "Why this child is drawn at this boundary. Two legitimate forms: scalar string (the normal greenfield case — one or two lines citing the design driver, relevant ADRs, or bounded-context split) or a {status, note} object (the retrofit form — human-only field, so status is narrowed to 'verified' | 'unknown'; note describes what is known and the follow-up path for 'unknown'). The no-fabrication rule bans 'reconstructed' on this field.",
+          "oneOf": [
+            { "type": "string", "minLength": 1 },
+            {
+              "type": "object",
+              "required": ["status"],
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": ["verified", "unknown"]
+                },
+                "note": { "type": "string", "minLength": 1 }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+
+        "recovery_status": {
+          "description": "Per-child retrofit provenance marker for the observed structure of this child. Scalar only at this level (artifact-level recovery_status at front-matter handles the whole-artifact or per-section map). Allowed values: verified | reconstructed | unknown — the observed-structure fields are code-derivable, so 'reconstructed' is legitimate here.",
+          "$ref": "https://vmodelworkflow.dev/schemas/artifacts/common-defs/v1#/$defs/recovery_status_scalar"
+        }
+      },
+      "additionalProperties": true
+    },
+
+    "interface": {
+      "description": "Per-interface block shape — the YAML an embedded Interfaces entry in the markdown body renders to. Exported for use by parsers and validators. Design-by-Contract structured: preconditions, postconditions (on_success, on_precondition_failure, on_downstream_failure), invariants, typed errors with HTTP mapping, and quality_attributes. The schema enforces the structural committable minimum — name / from / to / protocol / contract at the outer level; operation / preconditions / postconditions.on_success inside contract. Full DbC completeness (invariants, error enums, quality attributes, rationale) is a Quality Bar concern: shape vs completeness is the deliberate split. Review skills check that populated interfaces also look complete; the schema refuses malformed ones.",
+      "type": "object",
+      "required": ["name", "from", "to", "protocol", "contract"],
+      "properties": {
+
+        "name": {
+          "description": "Interface identifier. Human-readable name (commonly PascalCase or I-prefixed) — the Architecture page treats this as a committable name, not an implementation symbol. Non-empty string; no stricter pattern enforced so that team conventions (ICartFinaliseCheckout, PaymentAuthorizationV2, finalise_checkout) all fit.",
+          "type": "string",
+          "minLength": 1
+        },
+
+        "from": {
+          "description": "Caller / publisher side of this interface. Conventionally the kebab-case id of a child in the Decomposition (or an external label like 'client' / 'psp' for cross-boundary interfaces). Non-empty string; the schema does not try to cross-reference the Decomposition entries here — that's a traceability-tool check.",
+          "type": "string",
+          "minLength": 1
+        },
+
+        "to": {
+          "description": "Callee / subscriber side of this interface. Same shape as 'from'.",
+          "type": "string",
+          "minLength": 1
+        },
+
+        "protocol": {
+          "description": "Wire protocol family. Free-form string so that 'HTTP/1.1 + JSON (REST)', 'gRPC (bidi stream)', 'Kafka (at-least-once)', 'in-process call', and 'WebSocket' all fit without schema thrash. Externally-imposed protocols should be cited by specification in the body text (the Quality Bar flags interfaces whose protocol is named only informally).",
+          "type": "string",
+          "minLength": 1
+        },
+
+        "contract": {
+          "description": "Design-by-Contract specification of the interface. Minimum structural shape: operation + preconditions + postconditions (with on_success). invariants / errors / quality_attributes / rationale are optional at schema level — the Quality Bar asserts they are populated for complete interfaces; absence at schema time flags a structural error rather than an incomplete one.",
+          "type": "object",
+          "required": ["operation", "preconditions", "postconditions"],
+          "properties": {
+
+            "operation": {
+              "description": "The operation this contract describes. Free-form — HTTP method + path for REST ('POST /checkout/{cart_id}/finalise'), RPC signature for gRPC ('CartService.FinaliseCheckout'), topic name for events ('checkout.order-placed.v1'), or a function signature for in-process.",
+              "type": "string",
+              "minLength": 1
+            },
+
+            "preconditions": {
+              "description": "What the caller must ensure on the way in. Each item is one precondition expressed as a predicate (can be prose at Architecture level; tightens to assertable predicates at Detailed Design). An interface with no preconditions beyond 'callable' should state that explicitly — absence is a Quality Bar issue, not a schema violation.",
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 }
+            },
+
+            "postconditions": {
+              "description": "What the supplier guarantees on the way out. Split across outcome: on_success is required (an interface without a success condition is meaningless); the two failure variants are recorded when the interface distinguishes them — precondition-failure is the caller's fault, downstream-failure is a dependency fault. The DbC value is fault attribution; the split is what makes it work.",
+              "type": "object",
+              "required": ["on_success"],
+              "properties": {
+                "on_success": {
+                  "description": "Guaranteed postconditions when the operation succeeds. Non-empty.",
+                  "type": "array",
+                  "items": { "type": "string", "minLength": 1 },
+                  "minItems": 1
+                },
+                "on_precondition_failure": {
+                  "description": "Guaranteed response shape when the caller violated a precondition — fault is with the caller. Typical content: HTTP status class, typed error code, 'no state mutation' guarantees.",
+                  "type": "array",
+                  "items": { "type": "string", "minLength": 1 }
+                },
+                "on_downstream_failure": {
+                  "description": "Guaranteed response shape when a dependency or internal resource failed — fault is not with the caller. Typical content: HTTP status class, typed error code, compensation / reservation-release timing guarantees.",
+                  "type": "array",
+                  "items": { "type": "string", "minLength": 1 }
+                }
+              },
+              "additionalProperties": true
+            },
+
+            "invariants": {
+              "description": "Properties that hold across repeat or concurrent calls. Typical examples: idempotency ('same key returns the first response and does not re-commit'), ordering ('events published in the order the commits landed'), and global conservation rules ('reservations released equal reservations taken'). Optional at schema level; present on any interface where the Quality Bar invariants card applies.",
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 }
+            },
+
+            "errors": {
+              "description": "Typed error enumeration. Each entry carries a kebab-case error code, an HTTP status (when the protocol has one — REST / gRPC-over-HTTP), and a one-line meaning. For non-HTTP protocols, 'http' can be present as the nearest equivalent or omitted by convention (the schema requires it here as the demonstrated shape; teams with event-only interfaces can extend this def via additionalProperties if a domain-specific error catalogue is in use).",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["code", "http", "meaning"],
+                "properties": {
+                  "code": {
+                    "description": "Typed error code. Kebab-case so it reads consistently across log lines, metric labels, and API responses.",
+                    "type": "string",
+                    "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+                  },
+                  "http": {
+                    "description": "HTTP status code. Restricted to 4xx / 5xx — 2xx / 3xx are not error states and would indicate a shape error in the entry.",
+                    "type": "integer",
+                    "minimum": 400,
+                    "maximum": 599
+                  },
+                  "meaning": {
+                    "description": "One-line human-readable meaning of this error code. Read by integrators, on-call engineers, and anyone writing the client-side error handling.",
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "additionalProperties": true
+              }
+            },
+
+            "quality_attributes": {
+              "description": "NFR budgets this interface carries — availability, latency, throughput, idempotency window, and similar. Keys are free-form attribute names (availability, latency, p95, idempotency_window); values are free-form strings that typically reference a requirement or platform SLO (e.g., 'p95 ≤ 1200 ms under nominal load (REQ-052)'). If the key is present it must be non-empty.",
+              "type": "object",
+              "additionalProperties": { "type": "string", "minLength": 1 },
+              "minProperties": 1
+            },
+
+            "rationale": {
+              "description": "Why this interface has this shape — the protocol choice, the sync/async call, the idempotency design. One or two lines tying the choice to requirements, ADRs, or standards. Optional at schema level; the Quality Bar asserts rationale is present on every interface.",
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

@@ -1,0 +1,14 @@
+- term: "<canonical term — pick one wording and stick to it across all requirements>"
+  definition: |
+    <single, complete-sentence definition. Mention what it is and what bounds it.
+     Be specific to this domain, not generic.>
+    # Good: "A server-side record of an authenticated user's continuous interaction
+    #        with the system, scoped to a single device and identified by an opaque
+    #        session token."
+    # Bad: "A way for users to stay logged in." (generic, scope-free)
+  distinct_from: |
+    # Optional. Name similar concepts within this scope and how they differ.
+    # Helpful when readers might confuse this term with adjacent ones.
+  model_refs:
+    # Optional. Names of entities, value objects, aggregates in the domain model.
+    - <entity-or-value-object-name in <bounded context>>

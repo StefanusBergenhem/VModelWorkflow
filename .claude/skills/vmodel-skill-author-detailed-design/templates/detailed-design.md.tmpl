@@ -1,0 +1,123 @@
+---
+id: DD-<<scope-flattened>>-<<leaf-name>>
+artifact_type: detailed-design
+scope: <<scope-path>>                # e.g., app/jobs/dequeue-service
+parent_scope: <<parent-scope-path>>  # e.g., app/jobs ; null only at single-module root
+parent_architecture: ARCH-<<parent-scope-flattened>>
+derived_from:
+  - <<REQ-NNN>>
+  - <<REQ-NNN-or-other-upstream-id>>
+governing_adrs:
+  - <<ADR-NNN-NNN-name>>             # omit list if no governing ADRs apply
+status: draft
+date: <<YYYY-MM-DD>>
+# === RETROFIT-ONLY — uncomment for retrofit mode ===
+# recovery_status:
+#   overview: unknown                # MUST be 'verified' or 'unknown' — schema enforces (refusal A)
+#   public_interface: reconstructed
+#   data_structures: reconstructed
+#   algorithms: reconstructed
+#   state: reconstructed
+#   error_handling: reconstructed
+---
+
+# Detailed Design — <<leaf name>>
+
+## Overview
+
+<<2-3 paragraphs.>>
+
+<<Para 1: what this leaf is and what slice of its parent Architecture it realises.>>
+
+<<Para 2: the approach at one level of abstraction above the code — not pseudocode. Name the load-bearing posture (e.g., "thin shell over the persistence library", "stateless transformer", "event-driven aggregate root").>>
+
+<<Para 3 (optional): posture relative to siblings — what this leaf consumes and produces, what the parent Architecture's interface contract requires this leaf to honour.>>
+
+## Public Interface
+
+```yaml
+public_interface:
+  # one entry per externally visible function/class/type
+  # see templates/public-interface-entry.yaml.tmpl
+  - name: <<functionName>>
+    signature: "<<language-neutral signature>>"
+    description: "<<one to two sentences>>"
+    preconditions:
+      - "<<...>>"
+    postconditions:
+      on_success:
+        - "<<property of the result; not steps>>"
+      on_failure:
+        - "<<typed error returned + state guarantee>>"
+    invariants:
+      - "<<property holding before and after every public call>>"
+    errors:
+      - { error: "<<ErrorClass>>", raised_when: "<<condition>>", meaning: "<<one-line>>" }
+    side_effects:
+      - "<<...or 'none'>>"
+    thread_safety: <<immutable | thread-safe | conditionally-thread-safe | thread-compatible | thread-hostile>>
+    nullability:
+      - "<<param>>: <<may be null | must not be null | meaning of null>>"
+      - "return: <<may be null | must not be null | meaning of null>>"
+    complexity_notes: "<<O(...) — only if contractual>>"
+```
+
+## Data Structures
+
+```yaml
+data_structures:
+  # one entry per internal data structure with invariants/ownership/lifetime
+  # see templates/data-structure-entry.yaml.tmpl
+  - name: <<StructureName>>
+    description: "<<...>>"
+    fields:
+      - { name: <<field_name>>, type: "<<language-neutral type>>", invariant: "<<...>>" }
+    ownership: "<<who constructs / mutates / releases>>"
+    lifetime: "<<request-scoped | per-connection | process | event-sourced | ...>>"
+    returned_semantics: "<<copy | live view | read-only reference | snapshot | ownership transfer>>"
+```
+
+## Algorithms
+
+<<Default: state result properties; leave algorithm to the implementer. See references/algorithms.md.>>
+
+<<Where the algorithm IS contractual (determinism / worst-case bound / operational constraint / wire compatibility) — name it AND name why. Cite a spec or paper when one applies.>>
+
+<<For rule-based logic, use a decision table — see templates/decision-table.md.tmpl.>>
+
+<<For multi-step protocols, use numbered sequences with per-step invariants.>>
+
+## State
+
+<<For stateless leaves, ONE LINE: "Stateless between calls; all state lives in <where>." Then move on.>>
+
+<<For stateful leaves: state inventory, transition table, undefined-event handling, initial / terminal states, entry / exit actions where applicable. See references/state-and-concurrency.md and templates/state-machine.mmd.tmpl.>>
+
+```mermaid
+<<paste content from templates/state-machine.mmd.tmpl, filled in — only if state machine is small enough to fit on a page>>
+```
+
+## Error Handling
+
+| Error | Detection | Containment | Recovery | Caller receives |
+|---|---|---|---|---|
+| <<ErrorClass>> | <<how detected>> | <<where contained>> | <<fail-fast \| retry \| fallback \| compensate \| propagate>> | <<exception / sentinel / typed result>> |
+| <<...>> | <<...>> | <<...>> | <<...>> | <<...>> |
+
+<<Add a per-row "state after error" note for stateful leaves, or extend to a sixth column.>>
+
+## Retrofit Gap Report <<retrofit only — delete on greenfield>>
+
+| Bucket | Items |
+|---|---|
+| Lost rationale | <<per-decision unknown markings with follow-up owners and actions>> |
+| Behavioural drift | <<where observed code differs from what tests assert; cite file/line>> |
+| Missing ADRs | <<load-bearing decisions with no preserved record — emit [NEEDS-ADR: ...] stubs>> |
+| Coverage gaps | <<public functions with no observable test coverage; tests with no DD postcondition>> |
+
+## Notes
+
+- Replace `<<placeholders>>` with concrete content. No placeholder text in finalised artifacts.
+- Every non-obvious decision carries inline rationale (one of: external / architectural / resource / temporal). When rationale is `unknown` (retrofit), pair with a follow-up owner.
+- Run `references/anti-patterns.md` and `references/quality-bar-checklist.md` sweeps before delivering.
+- Apply the Spec Ambiguity Test as the meta-gate (refusal D).

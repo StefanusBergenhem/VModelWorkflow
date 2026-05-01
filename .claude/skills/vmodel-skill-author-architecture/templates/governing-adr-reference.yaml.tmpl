@@ -1,0 +1,35 @@
+# Pattern for referencing ADRs from an Architecture artifact.
+# ADRs are flat and cross-cutting; Architecture references them by ID, never inlines them.
+
+# === FRONT-MATTER FORM ===
+# Inside architecture.md YAML front-matter:
+
+governing_adrs:
+  - <<ADR-NNN>>      # short title — e.g., "ADR-008: REST over JSON for gateway boundary"
+  - <<ADR-NNN>>      # short title — e.g., "ADR-017: Event bus for cross-aggregate notifications"
+
+
+# === BODY-CITATION PATTERN ===
+# At each point in the body where the decision lands, cite the ADR inline.
+# The Architecture *applies* the decision; the ADR *justifies* it.
+
+# Example — inside an interface entry's rationale:
+#   rationale: "REST over JSON chosen for the gateway boundary (see ADR-008).
+#               Idempotency key mandated by REQ-028."
+
+# Example — inside a Composition section paragraph:
+#   "Cross-aggregate notifications use the event bus described in ADR-017;
+#    the cart component publishes CheckoutStarted; downstream consumers subscribe."
+
+# Example — inside a Decomposition entry's purpose where an ADR drove the boundary:
+#   purpose: "Boundary with the payment service provider (per ADR-019: PCI scope isolation)."
+
+
+# === STUB FOR DECISIONS NOT YET ADR'D ===
+# When authoring surfaces a load-bearing + cross-cutting + hard-to-reverse decision that has no preserved ADR,
+# do not inline a justification — emit a stub marker:
+
+# [NEEDS-ADR: <decision summary> — extract before finalising]
+#
+# Example:
+# [NEEDS-ADR: choice between modular monolith and microservices for checkout — extract before finalising]

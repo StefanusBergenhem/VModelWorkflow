@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vmodelworkflow.dev/schemas/artifacts/adr/v1",
+  "title": "ADR front-matter",
+  "description": "Front-matter shape for an Architecture Decision Record. Lives flat in /specs/adrs/adr-NNN-{slug}.md regardless of which scopes the decision applies to — ADRs are cross-cutting by design. Composes the universal envelope and (a) overrides status to Nygard's proposed|accepted|superseded instead of the universal draft|active|superseded, preserving the 15-year ADR community convention; (b) requires scope_tags non-empty to defuse the orphan-ADR anti-pattern; (c) tightens supersedes / superseded_by to the ADR id pattern — in practice these always cross-reference another ADR; (d) narrows recovery_status to ban AI-reconstructed content on the four human-only fields: context, alternatives_considered, rationale, consequences. Body sections (Context, Decision, Alternatives, Rationale, Consequences with its mandatory Reversibility sub-prompt) live in the markdown body and are checked by the structural/review skills, not by JSON Schema.",
+
+  "allOf": [
+    { "$ref": "https://vmodelworkflow.dev/schemas/artifacts/envelope/v1" },
+    {
+      "type": "object",
+      "required": ["id", "artifact_type", "status", "scope_tags"],
+      "properties": {
+
+        "id": {
+          "description": "Stable identifier. Format ADR-{seq}-{slug}: three-or-more-digit sequence number (globally monotonic, never reused), hyphen, kebab-case slug naming the decision. Example: ADR-017-use-postgres-for-job-queue. The slug is mandatory — TARGET §5.4 treats it as load-bearing for directory navigation and human recognition.",
+          "type": "string",
+          "pattern": "^ADR-\\d{3,}-[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+
+        "artifact_type": {
+          "description": "Artifact-type discriminator, fixed for this schema.",
+          "const": "adr"
+        },
+
+        "status": {
+          "description": "Lifecycle state. ADR overrides the universal lifecycle vocabulary to Nygard's proposed | accepted | superseded (locked 2026-04-22 in PHASE3_AUTHORING_PATTERN §2). Once an ADR is accepted its body is immutable; changing a decision means writing a new ADR that supersedes the old one.",
+          "type": "string",
+          "enum": ["proposed", "accepted", "superseded"]
+        },
+
+        "scope_tags": {
+          "description": "Scopes the decision primarily applies to. Non-empty — an ADR with no scope_tags is orphaned. An empty-string element denotes the root scope. Multiple tags are allowed for decisions that span scopes.",
+          "type": "array",
+          "items": {
+            "$ref": "https://vmodelworkflow.dev/schemas/artifacts/common-defs/v1#/$defs/scope_path"
+          },
+          "minItems": 1
+        },
+
+        "affected_scopes": {
+          "description": "Scopes the decision consequences reach beyond its primary scope. Optional; omit or leave empty when scope_tags fully covers reach.",
+          "type": "array",
+          "items": {
+            "$ref": "https://vmodelworkflow.dev/schemas/artifacts/common-defs/v1#/$defs/scope_path"
+          }
+        },
+
+        "supersedes": {
+          "description": "ADR id of the predecessor this ADR replaces. Narrowed from the envelope's generic artifact_id_ref to the ADR id pattern — ADR lineage crosses only to other ADRs.",
+          "type": "string",
+          "pattern": "^ADR-\\d{3,}-[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+
+        "superseded_by": {
+          "description": "ADR id of the successor that replaces this ADR. Set when status transitions to superseded.",
+          "type": "string",
+          "pattern": "^ADR-\\d{3,}-[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+
+        "recovery_status": {
+          "description": "Retrofit provenance. Narrowed for ADR: the scalar form accepts only 'verified' or 'unknown' because the ADR's core content (context, alternatives, rationale, consequences) is human-only and cannot be honestly reconstructed artifact-wide. In map form, the four named human-only keys are restricted to verified|unknown; other keys (typically 'decision' or author-added markers for observable-from-code fragments) keep the broader verified|reconstructed|unknown set.",
+          "oneOf": [
+            {
+              "description": "Scalar: applies to the whole ADR. 'reconstructed' banned because the artifact is human-only at its core.",
+              "type": "string",
+              "enum": ["verified", "unknown"]
+            },
+            {
+              "description": "Map: per-field status. Human-only keys (context, alternatives_considered, rationale, consequences) cannot be 'reconstructed'; other keys keep the full set.",
+              "type": "object",
+              "properties": {
+                "context":                 { "$ref": "#/$defs/human_only_recovery" },
+                "alternatives_considered": { "$ref": "#/$defs/human_only_recovery" },
+                "rationale":               { "$ref": "#/$defs/human_only_recovery" },
+                "consequences":            { "$ref": "#/$defs/human_only_recovery" }
+              },
+              "additionalProperties": {
+                "$ref": "https://vmodelworkflow.dev/schemas/artifacts/common-defs/v1#/$defs/recovery_status_scalar"
+              },
+              "minProperties": 1
+            }
+          ]
+        }
+      }
+    }
+  ],
+
+  "$defs": {
+
+    "human_only_recovery": {
+      "description": "Recovery status narrowed for ADR human-only fields. The no-fabrication rule bans 'reconstructed': AI cannot supply human rationale, context, alternatives, or anticipated consequences — those fields carry either 'verified' (a human confirmed the content) or 'unknown' (no honest record exists).",
+      "type": "string",
+      "enum": ["verified", "unknown"]
+    }
+  }
+}

@@ -1,0 +1,22 @@
+- id: REQ-<scope>-<NNN>
+  type: quality_attribute
+  # Single-target form (most NFRs):
+  statement: |
+    The <ELEMENT 1: system or subsystem, named specifically>
+    shall <ELEMENT 2: response or behaviour being measured>
+    in <ELEMENT 3: metric with unit>
+    at <ELEMENT 4: target at correct statistical level — e.g. p95, not mean>
+    under <ELEMENT 5: condition — load + environment + measurement point>.
+  # Multi-level form (Planguage) — replace `statement` with `planguage` block
+  # when the right target is a range:
+  # planguage:
+  #   scale:   "<what is being measured>"
+  #   meter:   "<how, over what window; exclusions>"
+  #   fail:    "<below which the system is in violation>"
+  #   goal:    "<committed target>"
+  #   stretch: "<desirable, not committed>"
+  #   wish:    "<aspirational>"
+  rationale: |
+    <why this target; what trade-off; derivation from parent NFR if applicable>
+  derived_from:
+    - <upstream NFR / inherited regulatory constraint / parent commitment>

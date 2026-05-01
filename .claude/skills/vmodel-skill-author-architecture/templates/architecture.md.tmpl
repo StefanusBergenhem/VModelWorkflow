@@ -1,0 +1,133 @@
+---
+id: ARCH-<<scope-id>>
+scope: <<scope-name>>
+parent_scope: <<parent-scope-name-or-null-if-root>>
+derived_from:
+  - <<REQ-NNN>>
+  - <<REQ-NNN>>
+governing_adrs:
+  - <<ADR-NNN>>
+status: draft
+date: <<YYYY-MM-DD>>
+recovery_status: <<reconstructed | omit on greenfield>>
+---
+
+# Architecture — <<scope name>>
+
+## Overview
+
+<<2–3 paragraphs: what this scope is responsible for, its place in the parent scope, and the headline architectural choices it commits. Cite parent Requirements artifact and governing ADRs by ID.>>
+
+<<Second paragraph: name the architecture-as-hypothesis bet — "we expect <X> to remain stable while <Y> scales independently / changes independently / fails independently". This converts an implicit assumption into a testable one.>>
+
+## Structure Diagram
+
+```mermaid
+<<paste content from templates/structure-diagram.mmd.tmpl, filled in>>
+```
+
+<<One short paragraph reading the diagram for the reader: what is internal, what is external, where state lives, what direction the happy path flows. The reader asks three questions — what depends on what? what's internal? where is state? — and the prose answers them at a glance.>>
+
+## Decomposition
+
+```yaml
+decomposition:
+  # one entry per child — see templates/decomposition-entry.yaml.tmpl
+  - id: <<child-1>>
+    purpose: "<<one sentence, no conjunctions>>"
+    responsibilities:
+      - "<<...>>"
+    allocates: [<<REQ-NNN>>]
+
+  - id: <<child-2>>
+    purpose: "<<...>>"
+    responsibilities:
+      - "<<...>>"
+    allocates: [<<REQ-NNN>>]
+```
+
+<<Short prose under the YAML: walk the one-sentence-responsibility test for each child. Note any decomposition revisions and which of the depth/cognitive-load/change-blast tests fired.>>
+
+## Interfaces
+
+```yaml
+interfaces:
+  # one entry per cross-child or external interface — see templates/interface-entry.yaml.tmpl
+  - name: <<IInterfaceName>>
+    from: <<source-component-id>>
+    to: <<target-component-id>>
+    protocol: "<<protocol family + version>>"
+    contract:
+      operation: "<<...>>"
+      preconditions: [...]
+      postconditions: { on_success: [...], on_precondition_failure: [...], on_downstream_failure: [...] }
+      invariants: [...]
+      errors: [...]
+      quality_attributes: { ... }
+      rationale: "<<...>>"
+    version: "<<MAJOR.MINOR.PATCH>>"
+    deprecation_policy: "<<window in time-units>>"
+```
+
+## Composition
+
+### Runtime pattern
+
+<<Name the composition pattern explicitly: request-response / event-driven / event-sourcing / saga / pipeline / layered / hexagonal / clean / serverless. State the rationale (inline or by `governing_adrs:` reference). Defaulting is not a pattern.>>
+
+### Wiring
+
+- **DI strategy:** <<constructor injection | DI container | composition root + concrete component>>
+- **Middleware stack (in order):** <<tracing → authN → authZ → rate-limit → request-validation → handler>>
+- **Message-bus topology:** <<topics, partition keys, retention, dead-letter, consumer groups — or "n/a — no async messaging at this scope">>
+
+### Sequence diagrams
+
+#### Happy path
+
+```mermaid
+<<paste content from templates/sequence-diagram.mmd.tmpl, filled in>>
+```
+
+#### Critical failure path: <<name the failure>>
+
+```mermaid
+<<second sequence diagram for one critical failure path — e.g., downstream-timeout, partial-failure compensation, idempotent-replay>>
+```
+
+### Deployment intent <<root scope only — delete this whole subsection at branch scope>>
+
+<<Enumerate environments. Name the orchestration target. Map components to runtime units (deployment / scaling / failure boundaries). State the cost model. Reference IaC paths for the implementation; do not re-specify what IaC declares.>>
+
+```mermaid
+<<paste content from templates/deployment-diagram.mmd.tmpl, filled in>>
+```
+
+<<Short prose under the deployment diagram: explain the runtime-unit boundaries, the failure-domain split, and where the IaC artifacts live (by repo path or sibling repo reference).>>
+
+## Quality attributes (allocated)
+
+<<For every NFR in the parent Requirements, state where it lands: which child's allocated requirement, which interface's `quality_attributes` field, or which cross-cutting composition commitment. Latency / throughput / availability budgets are allocated to specific interfaces or components, not left at system-wide level.>>
+
+## Resilience
+
+<<Bulkhead partitions, circuit-breaker placement, retry policy (backoff + jitter + idempotency), graceful-degradation choices per non-essential dependency, failure domains, named independence properties for any redundancy.>>
+
+## Observability + security
+
+<<Telemetry emergence points (logs / metrics / traces, common context fields, sampling). Trust zones with named boundary crossings. Authn / authz per externally callable interface with evaluation layer named. Secrets flow.>>
+
+## Evolution + fitness functions
+
+<<Fitness functions for load-bearing properties: dependency direction, latency budget, module size + coupling, security posture. Strangler-fig migration plan if applicable (routing mechanism, retirement criteria, rollback point).>>
+
+## Retrofit gap report <<retrofit only — delete on greenfield>>
+
+<<Lost rationale (per child). Structural drift (where the diagram differs from observed runtime). Missing ADRs (load-bearing decisions with no preserved record). Coverage gaps (requirements with no observable allocation). Ambiguous spec (where evidence is conflicting).>>
+
+## Notes
+
+- Replace `<<placeholders>>` with concrete content.
+- Every Decomposition entry, interface entry, and load-bearing composition choice carries a `rationale` field with non-trivial content; if none is recoverable, mark `pending` (greenfield) or `unknown` (retrofit) — **never fabricate**.
+- Run `references/quality-bar-checklist.md` and `references/anti-patterns.md` sweeps before delivering.
+- Apply the Spec Ambiguity Test as the meta-gate.

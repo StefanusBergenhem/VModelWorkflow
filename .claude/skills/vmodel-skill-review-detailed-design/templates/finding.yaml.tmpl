@@ -1,0 +1,74 @@
+- id: F-NNN
+  # Sequential within this review (F-001, F-002, ...). Stable for a single review run.
+
+  element_id: <function-name | data-structure-name | error-matrix-row-id | "GLOBAL">
+  # The specific DD element the finding applies to.
+  # Examples:
+  #   - public_interface: "claimJob" / "completeJob" / "validate"
+  #   - data_structure:   "Claim" / "SessionClaims"
+  #   - error_matrix_row: "row-database-timeout" / "row-claim-expired"
+  #   - state_machine:    "STATE_AUTHORISED" / "transition-finalise"
+  #   - rationale / adr:  "GLOBAL" or the element where it lands
+  #   - retrofit gap:     "GLOBAL"
+  #   - meta-gate:        "GLOBAL"
+  # Use "GLOBAL" for document-wide findings (laundered retrofit, missing Gap report,
+  # Spec Ambiguity Test failure).
+
+  check_failed: <dotted catalog identifier>
+  # Must appear in `references/quality-bar-gate.md` (for `check.*`) or
+  # `references/anti-patterns-catalog.md` (for `anti-pattern.*`). Examples:
+  #   - check.contract.postcondition-failure-branch-missing
+  #   - check.parent-architecture.missing
+  #   - check.recovery-status.overview-reconstructed
+  #   - check.error.recovery-not-named
+  #   - check.adr.governing-not-resolved
+  #   - check.spec-ambiguity-test.fail
+  #   - anti-pattern.code-paraphrase
+  #   - anti-pattern.algorithmic-postcondition
+  #   - anti-pattern.permutation-half-omitted
+  #   - anti-pattern.fabricated-rationale
+  # Do not invent ad-hoc strings. If the check is genuinely new, surface it as a
+  # self-review note rather than minting a new identifier mid-review.
+
+  severity: <hard_reject | soft_reject | info>
+  # hard_reject — fatal; one occurrence triggers REJECTED (or DESIGN_ISSUE if
+  #   the meta-gate fires upstream-traceably). Maps to refusal A / B / C / broken-reference
+  #   or to the meta-gate.
+  # soft_reject — Quality Bar No or anti-pattern hit other than the hard-reject ones;
+  #   accumulates to REJECTED.
+  # info — observation worth surfacing but does not affect verdict.
+
+  category: <shape | function-contract | data-invariant | algorithm | state | error-handling | rationale | adr | testspec-traceability | retrofit | meta-gate>
+  # Top-level category — matches the namespaces in `quality-bar-gate.md` and the
+  # eight-step review sweep in SKILL.md.
+
+  evidence: |
+    <verbatim quote from the document, OR a specific structural observation>
+    # Examples:
+    # - "claimJob has only `postconditions.on_success`. Branch `on_failure`
+    #    is absent."
+    # - "Algorithms section walks through the implementation step-by-step:
+    #    'Declare a result list, iterate from 0 to length-1, compare elements,
+    #    swap when out of order, return the result.' — refusal C."
+    # - "Postcondition states 'returns ordered list' — permutation half is
+    #    omitted; `return []` would pass the contract."
+    # - "Front-matter declares `recovery_status: { overview: reconstructed }`
+    #    — schema enum violation; refusal A."
+    # - "rationale: 'balances flexibility and performance' — generic-principle
+    #    invocation on retrofit; no preserved decision record."
+    # - "governing_adrs lists ADR-019; no body citation of ADR-019 anywhere
+    #    in the artifact."
+
+  recommended_action: |
+    <generic pointer; never specific replacement wording>
+    # Acceptable:
+    # - "Add `postconditions.on_failure` clause per the postcondition split.
+    #    See `function-contract-checks.md` `check.contract.postcondition-failure-branch-missing`."
+    # - "Replace pseudocode-paraphrase with result-property statement (refusal C)."
+    # - "Mark `recovery_status: { overview: unknown }` (with follow-up) or
+    #    `verified` (with cited human source). See `retrofit-discipline-checks.md`."
+    # NOT acceptable:
+    # - "Replace with: 'on_failure: typed error TokenInvalid; no state mutation;
+    #    caller receives 401 unauthorised.'"
+    # - The matched author skill rewrites; this skill points to the rule, not
+    #   the replacement text.
