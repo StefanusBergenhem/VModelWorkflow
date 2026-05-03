@@ -85,3 +85,74 @@ Findings discovered while dogfooding the framework's per-artifact authoring + re
 **Suggested resolution.** Extend `anti-assumption.md` (or add a small companion ref `premature-numbers.md`) calling out numerical commitment as a category of design-smuggling. When a seed PD or candidate stakeholder answer suggests a specific number but the underlying need is shape-only ("fast enough not to block workflow"), preserve shape and explicitly defer the number — recording in session notes which numbers were deferred and why. Numbers belong in pilot calibration, Architecture, or downstream design — not in needs.md when no real anchor exists yet.
 
 ---
+
+## 2026-05-03
+
+### Issue 5 — Skill silent on input precedence between upstream needs.md and framework references
+
+**Where surfaced.** `vmodel-skill-author-requirements` pilot run (specs/requirements.md, 2026-05-03). needs.md (Open gaps) defers most CLI ergonomic patterns to pilot evidence. TARGET §10 has "applies to every tool" CLI patterns including the same patterns needs.md defers. The skill's "Inputs" section names both as legitimate upstream — *"a product brief or scope statement", "a parent-scope requirements document", "user stories or stakeholder needs", "governing architectural decisions (ADRs)", "inherited constraints"* — but does not articulate which wins when both speak to the same topic. Stakeholder ruled mid-session: *"in cases where there is conflicts between needs.md and the TARGET_ARCHITECTURE or BACKLOG, then the needs document supersedes."* That ruling came from the human in the loop; an autonomous run would have to choose silently or guess.
+
+**The gap.**
+- `vmodel-skill-author-requirements/SKILL.md` `## Inputs` lists upstream input classes but specifies no ordering between them.
+- The hard-refusal section bans fabrication and design-smuggling but is silent on the mirror failure — silent override of stakeholder-confirmed deferrals by framework-level "applies to every tool" content.
+- Without a precedence rule, a skill run in non-interactive mode against a needs.md that defers a topic and a TARGET that commits the same topic has no protocol for which wins.
+
+**Suggested resolution.** Add to `vmodel-skill-author-requirements/SKILL.md` a *Precedence rule* subsection: *"When two or more upstream sources speak to the same topic, the most recent stakeholder-confirmed source wins, unless the framework reference is itself an inherited constraint named in the upstream source. In practice: needs.md > parent requirements > framework TARGET / BACKLOG / docs > schema-implied conventions. Where conflict exists, capture the precedence reasoning in the affected requirement's rationale rather than applying the override silently."* Generalise to all per-artifact authoring skills.
+
+---
+
+### Issue 6 — Skill template `governing_decisions` does not match schema field `governing_adrs`
+
+**Where surfaced.** `vmodel-skill-author-requirements/templates/requirements.md.tmpl` (2026-05-03). Line 7 of the template uses front-matter property `governing_decisions:`. The framework requirements schema (`schemas/artifacts/requirements.schema.json`) defines the property as `governing_adrs`. Authoring directly against the template would produce front-matter that fails schema validation; vmodel-core (when it runs against this artifact) would emit a structural finding for an unknown property.
+
+**The gap.**
+- Concrete bug in the skill bundle. Self-containment test fails: the skill, taken on its own, produces output that fails the framework schema.
+- Likely an artefact of a rename in the schema that did not propagate to the skill template.
+
+**Suggested resolution.**
+- Rename `governing_decisions` to `governing_adrs` in `vmodel-skill-author-requirements/templates/requirements.md.tmpl`.
+- Audit other author-skill templates (`vmodel-skill-author-architecture`, `vmodel-skill-author-detailed-design`, `vmodel-skill-author-testspec`, `vmodel-skill-author-adr`) for the same divergence.
+- Add to skill QA: when releasing a new version of any author skill, every template field name must be diff'd against the matching schema. Mechanise if cheap.
+
+---
+
+### Issue 7 — NFR five-element rule has no protocol for explicitly deferred numerical targets
+
+**Where surfaced.** `vmodel-skill-author-requirements` pilot run (REQ-022 performance, REQ-023 scale, 2026-05-03). needs.md (turn 8, 2026-05-01) explicitly defers specific latency and scale numbers to pilot evidence to avoid prematurely narrowing technology selection. The NFR five-element rule (`references/nfr-five-elements.md`) requires every NFR to commit metric+unit+target+condition. With numerical targets explicitly deferred, no NFR can be authored that satisfies the rule as written.
+
+**Resolution improvised this session.** Planguage form with `scale` and `meter` filled (shape only, no numbers) and `fail`/`goal`/`stretch`/`wish` slots set to `pending — pilot calibration`, plus `follow_up` blocks owning the calibration. Documented in *Open gaps*. The review skill accepted this resolution and the *Spec Ambiguity Test* passed (downstream readers can see the deferral and know which questions to wait on).
+
+**The gap.** The resolution is doctrine-shaped but not articulated anywhere in the skill. A future user without the precedent might fabricate numbers (violating the no-fabrication rule extended to numbers per Issue 4 above) or HALT for stakeholder input that doesn't exist yet (the calibration evidence is *future* pilot data, not a current human gap). Pairs with Issue 4: both surface that numerical commitments need their own discipline distinct from vocabulary-level design-smuggling.
+
+**Suggested resolution.** Extend `references/nfr-five-elements.md` (or add a companion `references/deferred-numbers.md` co-located with the resolution to Issue 4): *"When upstream input explicitly defers numerical targets to pilot evidence or downstream calibration, use Planguage with `scale` and `meter` filled (shape) and `fail`/`goal`/`stretch`/`wish` set to `pending — <named calibration source>`. Author a `follow_up` block owning the calibration with a named owner and action. Document the deferral in the artifact's *Open gaps* section. Do not fabricate numbers; do not HALT — the document is honestly partial, not invalid. The Quality Bar items demanding target+statistical-level are then evaluated against the Planguage `scale`+`meter` rather than the empty target slots; a missing `scale` or `meter` remains a defect."*
+
+---
+
+### Issue 8 — Interface-versioning check forces premature commitment when upstream is silent on versioning
+
+**Where surfaced.** `vmodel-skill-review-requirements` first-pass review of `specs/requirements.md` (2026-05-03). The author's first draft of REQ-024 / REQ-025 marked all three versioning sub-elements (label, compatibility regime, deprecation policy) as `pending — to be set by ADR before v1 release` because needs.md is silent on versioning. The review skill flagged both as soft_reject (`check.interface.missing-versioning`). Author resolved by committing version label (v1) and compatibility regime (additive-only-within-major) at requirements scope, with rationale citing *"the standard-engineering interpretation of IC-006's stable-contract constraint"*; deprecation notice period remained the only pending element.
+
+**The gap.**
+- The additive-within-major commitment is borderline fabrication: it derives from "standard-engineering interpretation" rather than from any explicit stakeholder decision or framework reference.
+- The review skill forced a commitment; the author resolved by importing engineering-convention defaults. The resolution is plausibly correct (the convention is well-established) but the no-fabrication discipline (`references/rationale-and-traceability.md`) does not have a clear rule on when standard-convention imports are acceptable rationale vs. when they cross into fabrication.
+- Conversely: a strict reading of the no-fabrication rule would have forced HALT on every interface contract whose upstream is silent on versioning — almost every greenfield interface, especially at first-draft.
+
+**Suggested resolution.** Extend `references/rationale-and-traceability.md` no-fabrication discipline with a *Standard-engineering-convention imports* clause: *"Standard-engineering-convention imports (industry convention is well-established and the upstream constraint clearly implies the convention as a single natural read) are permissible rationale, provided the rationale explicitly identifies (a) the convention being imported, (b) the upstream constraint that implies it, and (c) why the convention is the natural read of that constraint rather than one of several reasonable reads. If multiple reasonable reads exist, HALT and ask."* Optionally also relax `check.interface.missing-versioning` from soft_reject to info when versioning sub-elements are explicitly `pending — <named ADR>` AND a `follow_up` is queued AND the document is in `status: draft`.
+
+---
+
+### Issue 9 — Author skills provide no protocol for downstream artifacts with no canonical upstream
+
+**Where surfaced.** `vmodel-skill-author-requirements` pilot run, front-matter `derived_from` (2026-05-03). vmodel-core has no Product Brief; needs.md is not in the canonical artifact set per TARGET §5. The schema requires non-empty `derived_from` with resolvable `artifact_id_ref`. Three coherent paths existed at session start: (a) HALT and ask the stakeholder to author the upstream first; (b) use a placeholder upstream id and document the gap; (c) cite a framework reference (e.g. TARGET §10) as upstream.
+
+**Resolution improvised this session.** Stakeholder selected (b) — placeholder `NEEDS-vmodel-core` documented in *Open gaps* with a two-path resolution (author PB or promote needs.md). The consequent `TRV-REF-001` finding when vmodel-core eventually validates this artifact is treated as a deliberate pilot data point.
+
+**The gap.**
+- `vmodel-skill-author-requirements/SKILL.md` `## Inputs` lists upstream input classes but does not address *"what if no canonical upstream artifact exists yet"*.
+- HALT condition #1 (*"upstream allocation is itself ambiguous"*) is close but does not match this case — the upstream is clear (needs.md), it is just not in the canonical artifact set.
+- The same gap exists in every per-artifact authoring skill, not only requirements: a leaf DD authored before its parent Architecture exists, an Architecture authored before its parent Requirements exists, etc.
+- Compounds Issues 1, 2, 6 from 2026-05-01: those flagged that needs.md placement, cascade, and template/schema mismatches are unresolved; Issue 9 generalises to *"how does any author skill handle a missing canonical upstream"*.
+
+**Suggested resolution.** Add an explicit pre-check to every author skill (template subsection, then make concrete in each skill's SKILL.md): *"Before authoring, check that the canonical upstream artifact exists and has a resolvable `artifact_id`. If it does not, three paths are acceptable — choose explicitly: (a) HALT and ask the stakeholder to author the upstream artifact first (default for greenfield once the framework is mature); (b) use a placeholder upstream id and document the gap in *Open gaps* with a `follow_up` owning the resolution (acceptable when stakeholder explicitly accepts the orphan for a documented pilot reason); (c) cite a framework reference as upstream only if that reference is itself a canonical artifact in the framework's own scope tree (this is currently rare — most framework references are documentation, not artifacts). Do not silently invent an upstream id; do not bypass the schema's non-empty-`derived_from` requirement."* Cross-link from each per-artifact author skill to the new shared protocol.
+
+---

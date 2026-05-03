@@ -26,9 +26,13 @@ If a skill bug surfaces during the pilot, the fix goes to the framework repo fir
 
 ## Status
 
-**2026-05-01 — Repo bootstrapped.** 11 vmodel skills copied into `.claude/skills/`; phase-4 PD copied into `seed/`; framework reference documents (TARGET_ARCHITECTURE, BACKLOG, schemas, Zakariasson codex source) copied into `references/`. No specs authored yet. Build workflow not designed yet (deferred at framework level).
+**2026-05-01 — Repo bootstrapped.** 11 vmodel skills copied into `.claude/skills/`; phase-4 PD copied into `seed/`; framework reference documents (TARGET_ARCHITECTURE, BACKLOG, schemas, Zakariasson codex source) copied into `references/`.
 
-**Next session:** elicit-needs run with the user as stakeholder, producing `needs.md` for `vmodel-core` scope. The phase-4 PD (`seed/product_description.md`) is the seed input — it represents prior thinking on `vmodel-core` and is the artefact the elicit-needs skill should refine and surface gaps against. This run is also the first decision γ data point for elicit-needs `needs.md` lifecycle (promote / merge / stay-transient).
+**2026-05-01 — `specs/needs.md` authored** (elicit-needs session 1, see `issues_found.md` 2026-05-01 entries for framework gaps surfaced).
+
+**2026-05-03 — `specs/requirements.md` authored** (vmodel-skill-author-requirements run; `status: draft`). Adversarial review by `vmodel-skill-review-requirements` returned APPROVED on second pass after one revision cycle. Document is at root scope (`scope: ""`); ~30 atomic requirements across functional / quality-attribute / interface / data sections; 12 inherited constraints; full glossary; explicit *Open gaps* section with named owners and actions. Framework gaps surfaced this session are appended to `issues_found.md` (2026-05-03 entries).
+
+**Next session:** likely candidates, in priority order — (a) architecture authoring at root scope (`vmodel-skill-author-architecture`) — most of `requirements.md` is committed; pending items (NFR target numbers, deprecation ADR, licence ADR) do not block architectural decomposition; (b) framework-level (VModelWorkflow-scope) elicitation pass to address `issues_found.md` Issue 2 (no parent-scope upstream); (c) author a vmodel-core Product Brief to retire the `[NEEDS-vmodel-core]` placeholder per `issues_found.md` Issue 1 / decision γ. Choose at session start.
 
 ## Repo layout
 
@@ -44,6 +48,10 @@ vmodel-core/
 │   ├── schemas/                    (full schemas tree — vmodel-core's runtime input data)
 │   └── codex/
 │       └── src-zakariasson-clis-for-agents-2026.md  (CLI-for-AI rationale)
+├── specs/
+│   ├── needs.md                (root-scope stakeholder needs; elicit-needs output)
+│   └── requirements.md         (root-scope requirements; status: draft)
+├── issues_found.md             (living: framework gaps surfaced during pilot)
 ├── CLAUDE.md
 └── .gitignore
 ```
