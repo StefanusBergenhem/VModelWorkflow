@@ -186,3 +186,154 @@ All three are author-side gates that `vmodel-skill-author-requirements` would ha
 - **My lean.** Option B with Option C as fallback. Option A's recursive invocation is cleaner but the framework's per-skill autonomy makes it cumbersome. Option B keeps the discipline visible without coupling skills. Option C catches what B misses.
 
 **Pairs with.** Issue 6 (skill template field-name divergence from schema) and Issue 9 (no protocol for missing canonical upstream) — all three suggest the same underlying pattern: per-skill autonomy without explicit cross-skill discipline produces silent-divergence failures that adversarial review catches but author-time gates would prevent.
+
+### Issue 12 — No clean list of "which artifacts are left to derive"
+
+**Where surfaced.** Architecture authoring session (2026-05-03). After authoring `specs/architecture.md` with 8 `[NEEDS-DD: ...]` markers and 1 `[NEEDS-ADR: ...]` marker, there was no canonical, structured place where these open items were aggregated for downstream consumption. The markers lived inline at the spot of deferral and were re-mentioned in prose form in the artifact's *Notes / Self-attestation* section. This made it hard for:
+
+1. **Downstream DD authors** — to know which DDs are pending and at which scope.
+2. **An orchestrator skill** — to compute "what's left to do" in the spec tree.
+3. **Status reporting** — to derive a "% complete" or "next-steps" view without re-parsing every artifact's prose.
+
+The session's mitigation was to add a structured *Open follow-ups* section to `specs/architecture.md` (per stakeholder request), modelled on the *Open gaps and follow-ups* section in `specs/requirements.md`. That mitigation works for one artifact at a time but does not generalise to the framework.
+
+**The gap.**
+
+1. The author skills' templates (`vmodel-skill-author-architecture`, `vmodel-skill-author-detailed-design`, `vmodel-skill-author-testspec`, `vmodel-skill-author-adr`) do not mandate or even suggest an *Open follow-ups* section. `vmodel-skill-author-requirements` has it organically; the others do not.
+2. There is no canonical machine-readable index across the spec tree that aggregates `[NEEDS-DD: ...]` and `[NEEDS-ADR: ...]` markers from every artifact. Each artifact's deferrals live in its own prose; building a tree-level index requires regex over all `.md` files plus trust that markers were spelled consistently.
+3. vmodel-core (the tool product being built in this pilot) does not yet have a "list-pending" capability in its v1 functional scope. The four reporting outputs (coverage / completeness / inventory / impact-analysis per REQ-018..021) do not include "open follow-ups" as a category.
+
+**Suggested resolution.**
+
+- **Author-skill templates.** Add an *Open follow-ups* section to every author-skill's artifact template (architecture, DD, TestSpec, ADR). Make it structurally identical to the requirements artefact's existing one: bullet list with title, owner, action, citation locations.
+- **Marker syntax canonicalisation.** Standardise the inline marker syntax to one form (e.g., `[NEEDS-DD: <scope> — <description>]`) across all author skills, so a tree-level grep produces clean results.
+- **vmodel-core capability (v1.x candidate).** Consider adding a fifth reporting output type — *open-follow-ups report* — that aggregates pending items across the spec tree by scope, type, and owner. Would require lifting the marker syntax into a parsable form (or extracting from per-artifact *Open follow-ups* sections directly).
+- **Until the canonical index exists**, the per-artifact *Open follow-ups* section is the workaround. Apply it consistently across every artifact authored.
+
+**Pairs with.** Issue 11 (per-skill discipline gaps caught at review only); both surface the same shape of "the framework has the right gate — it just isn't invoked / present uniformly across skills".
+
+---
+
+### Issue 13 — Handover between author and review skills should be file-based, not direct chat
+
+**Where surfaced.** Architecture review (2026-05-03). The session ran `vmodel-skill-author-architecture` to produce `specs/architecture.md`, then dispatched a sub-agent with `vmodel-skill-review-architecture` to produce a verdict. The review's findings (verdict + 6 specific findings with severity, location, evidence, recommended action) returned via the sub-agent's natural-language summary to the parent session. The findings were ephemeral — neither the parent session nor any downstream consumer could re-read them later without re-running the review or scrolling back through the conversation log.
+
+This pattern repeated across every author-review cycle this session (architecture authored / reviewed; previously, requirements authored / reviewed twice; ADRs authored / reviewed).
+
+**The gap.**
+
+1. **Findings are not durable.** A review's verdict + findings exist only in the conversation transcript that produced them. If a stakeholder wants to revisit the review days or weeks later, the only durable record is the after-the-fact CLAUDE.md status summary or commit message — both prose, both lossy.
+2. **Findings are not consumable by tooling.** A future orchestrator skill (or vmodel-core itself) cannot read review findings programmatically — there is no canonical YAML / JSON shape on disk for review output.
+3. **The framework already has the file-based handover idiom for build-side workflow** (per global `~/.claude/CLAUDE.md` *Workflow Rules* — `.workflow/current_task.yaml`, `review_ready.yaml`, `feedback.yaml`). The spec-side workflow does not yet use this idiom.
+4. **Review-side authoring discipline is silent on output durability.** The review skills (`vmodel-skill-review-*`) emit verdicts and findings via the conversation channel only. None of them write to a canonical file path.
+
+**Suggested resolution.**
+
+- **Define a canonical review-output file format.** YAML at a known path under `specs/` (or a new `specs/.reviews/` directory): one file per review run, named `<artifact-id>-review-<date>.yaml`, carrying verdict (APPROVED / REJECTED / DESIGN_ISSUE), findings (id, location, check_failed, severity, evidence, recommended_action), reviewer skill name + version, parent artifact id + version.
+- **Update every `vmodel-skill-review-*`** to write its verdict + findings to the canonical path before emitting the conversation summary. The conversation summary becomes a human-friendly rendering of the file; the file is the source of truth.
+- **Update every `vmodel-skill-author-*`** to read any prior review file for the artifact under authoring, so revision passes can address prior findings explicitly rather than re-eliciting them through conversation.
+- **Align with the framework's `.workflow/` state directory pattern** for build workflow. Spec-side may not need every file the build pattern uses, but `review_ready.yaml` / `feedback.yaml` map cleanly to "review request" / "review verdict" for the spec workflow.
+
+**Pairs with.** Issue 12 (no canonical machine-readable index of pending items); both move the framework toward file-based, tooling-consumable state rather than per-session natural-language artefacts.
+
+---
+
+### Issue 14 — No specs-global "definitions" / glossary document
+
+The DDD definitions are saved in the root-level `requirements.md`. But that is a somewhat hidden place, and those definitions should be "specs-global" and enforced in all artifacts.
+
+**Where surfaced.** Architecture authoring session (2026-05-03). The architecture introduced multiple typed concepts in interface contracts — `ArtifactSet`, `TraceabilityGraph`, `ArtifactTarget`, `ValidationMode`, `OutputFormat`, `Verdict`, `Finding`, `RuleCatalog`, `Schema`, `QBChecklist`, `VersionManifest`, `HTMLDocument`, `ReportRequest` — but none of these were added to a glossary. Some are defined inline in the interface entry's `operation` or `preconditions` fields; others (e.g., `ArtifactSet`) are used without explicit definition, relying on the reader's intuition.
+
+The DDD-style glossary committed earlier in the session lives inside `specs/requirements.md` as a *Glossary* section. Terms there are scoped to that artifact's own usage. As the spec tree grows beyond requirements (architecture authored this session; DDs and TestSpecs to come), every artifact may use these terms and may need new ones, but:
+
+1. The glossary is not "specs-global" — it is owned by `requirements.md` and any other artifact that wants to reference it must do so by ID lookup into a sibling file.
+2. New typed concepts introduced in `architecture.md` (the architecture-introduced types listed above) have no canonical definition home. They live in interface contract prose.
+3. There is no enforcement that a term used in a child artifact resolves to a definition somewhere upstream. vmodel-core's rule catalog (per REQ-010..014) does not include a "term-resolves" rule.
+
+The risk this session: future DD authors may redefine `ArtifactSet` (or a similarly-loaded term) inconsistently from the architecture's intent, and there is no mechanical check to catch the divergence.
+
+**The gap.**
+
+1. **Glossary placement.** `TARGET_ARCHITECTURE §5` directory layout does not name a canonical location for a tree-wide glossary. Putting it in requirements.md makes it look root-scoped to that artifact rather than tree-global.
+2. **Author-skill templates.** None of the author-skill templates (`-architecture`, `-detailed-design`, `-testspec`) instruct the author to register new terms in a tree-global glossary. The architecture-author skill in particular allows interfaces to introduce typed concepts without traceback.
+3. **Validation-rule catalog.** The framework's traceability rule catalog (`references/schemas/traceability/validation-rules.catalog.json`) has no rule for term consistency. A "term defined in N artifacts with N distinct definitions" is not currently a finding.
+4. **Phase-5 review-skill scope.** Per-artifact review skills check craft and structural rigor but do not cross-reference term usage against a global definition source.
+
+**Suggested resolution.**
+
+- **Tree-global glossary file.** Define a canonical `specs/glossary.md` (or a per-scope variant under each non-leaf scope) carrying authoritative term definitions. Add to `TARGET_ARCHITECTURE §5` as a first-class artifact location.
+- **Author-skill discipline.** Update author-skill templates to instruct: when introducing a new typed concept (in an interface signature, a data structure, or a test fixture name), register it in the tree-global glossary or add to the local artifact's glossary section with explicit "promote to global if reused" criteria.
+- **Validation rule (vmodel-core capability).** Consider adding a `terminology` rule class to the framework's canonical rule catalog: term resolution (every used term resolves to a glossary entry), consistency (one definition per term across the tree), drift detection (term redefined in a child artifact differently from the parent).
+- **Until the canonical glossary exists**, every author skill should reference the existing `requirements.md` *Glossary* section by ID and surface "this term lacks a definition" as a `[NEEDS-GLOSSARY: <term>]` marker (analogous to `[NEEDS-DD: ...]`). Adopters can then resolve markers explicitly.
+
+**Pairs with.** Issue 12 (no canonical index of pending items) — both stem from the framework not having tree-global indexable artefacts.
+
+---
+
+### Issue 15 — Author-architecture skill's Mermaid diagram templates are silent on parser-breaking characters
+
+**Where surfaced.** Architecture rendering verification (2026-05-03). After authoring `specs/architecture.md` and having the matched review skill return APPROVED-after-fix on the architectural craft, the stakeholder attempted to render the document and reported that both Mermaid sequence diagrams failed to parse with errors:
+
+- *"Parse error on line 24: ...embed.FS; REQ-030 + REQ-031) Val-> ... Expecting NEWLINE / AS / ... got '+'"*
+- *"Parse error on line 12: ...read artifact 1 bytes FS-->>Load: byt ... Expecting SOLID_OPEN_ARROW / ... got NEWLINE"*
+
+Three classes of breakage were diagnosed in the session's draft:
+
+1. **Semicolons in message text.** Mermaid sequence diagrams treat `;` as a statement terminator inside message bodies, splitting the line. The parser then sees the orphan tail as a new statement and fails on the next token. Five occurrences in the draft (e.g., `Res-->>Val: bundled content (per ADR-002 embed.FS; REQ-030 + REQ-031)`).
+2. **Angle brackets in message text.** Some Mermaid renderers interpret `<...>` as HTML and either escape the content or break parsing. Two patterns in the draft (`<path>` and `<root>` used as argument placeholders, four occurrences total).
+3. **Forward slashes in unquoted participant aliases.** `participant Caller as AI-caller / CI / human` failed in some renderers; quoting the alias (`as "AI caller, CI, or human"`) fixed it.
+
+All three were fixed in the session by simple substitutions (`;` → `—`, `<X>` → literal placeholder, unquoted alias → quoted). None changed the architectural content.
+
+**The gap.**
+
+1. **Skill template silence.** `vmodel-skill-author-architecture/templates/sequence-diagram.mmd.tmpl` and `templates/structure-diagram.mmd.tmpl` provide diagram skeletons but do not list known parser-breaking characters in message text or aliases. The author skill emitted multiple syntax errors that were only discoverable at render time, not at author time.
+2. **Skill review silence.** `vmodel-skill-review-architecture` evaluates Quality Bar items, anti-patterns, and traceability — it does not invoke a Mermaid parser to verify diagram syntax. Diagrams that fail to render can pass review.
+3. **Cross-skill recurrence likely.** Every author skill that emits Mermaid (`-architecture`, plus `-detailed-design` for state diagrams) has the same template-silence risk.
+
+**Suggested resolution.**
+
+- **Author-skill template.** Add a comment block to `templates/sequence-diagram.mmd.tmpl` (and `templates/structure-diagram.mmd.tmpl`, and any state-diagram template in `vmodel-skill-author-detailed-design`) listing parser-breaking characters and their canonical replacements:
+  - `;` in message text → use `—` (em-dash) or `,`.
+  - `<...>` in message text → use a literal placeholder (e.g., `PATH` not `<path>`) or square brackets `[...]`.
+  - Special characters in unquoted aliases (`/`, `:`, `,`, etc.) → quote the alias with double quotes.
+- **Review-skill check.** Add a `check.mermaid.parser-breaking-chars` to `vmodel-skill-review-architecture` (and the DD review) that flags the three classes mechanically. This is purely structural — no Mermaid parser invocation required; regex-detect the patterns.
+- **Optional v1.x: canonical render verification.** Candidate for vmodel-core: add a Mermaid parse step to validation, producing a structural finding when a diagram fails. Lifts the gap from "stakeholder discovers at render time" to "validation catches before commit". Parser availability in Go is the gating concern.
+
+**Pairs with.** Issue 11 / Issue 16 (per-skill discipline catches certain shapes only at review or render time); same pattern of "the failure mode is mechanically detectable but no skill-side gate currently invokes the detection".
+
+---
+
+### Issue 16 — Architecture skill: where do ADR-bound library / protocol bindings land in the architecture artifact?
+
+**Where surfaced.** Architecture review (2026-05-03). `vmodel-skill-review-architecture` returned **REJECTED** on first pass with two hard-reject findings (F-001 and F-002, both same root cause):
+
+> Decomposition entry `reporter`, responsibility 2: *"Render the aggregate to a self-contained HTML document **using Go's stdlib html/template per ADR-001**."* — fires `check.responsibility.implementation-prescription` and `anti-pattern.dd-content-in-architecture`.
+
+The author had named the specific library `html/template` inside a Decomposition responsibility statement. The library choice was correctly mandated by ADR-001's *Propagation* section ("HTML reporting uses Go's `html/template` stdlib package"), so the author placed the library name in the responsibility because that is where the consequence visibly applies. The review correctly rejected: library names belong in the rationale field (which already carried the ADR citation).
+
+The fix was a single-edit removal (delete "using Go's stdlib html/template" from the responsibility line; the library name remains correctly in `rationale` and in the ADR). But the failure mode is structural, not local.
+
+**The gap.**
+
+1. **The author-architecture skill's discipline is silent on landing rules for ADR-bound consequences.** When ADR-001's *Propagation* section says "HTML reporting uses Go's `html/template`" and "YAML 1.2 parsing uses `goccy/go-yaml`" with the route "governing_adrs from child architecture", the architecture author needs to know **where in the child entry** the library binding lands. Three plausible locations, only one of which is correct:
+   - `purpose` — a one-sentence statement; library would smuggle implementation prescription. **Wrong.**
+   - `responsibilities` — what the component does; library binding is *mechanism*, not architectural responsibility. **Wrong** (review rejects).
+   - `rationale` — why the component is shaped this way and which constraints bind; library binding cited from the governing ADR is correct. **Right.**
+
+   The skill's `references/decomposition-discipline.md` and `references/interface-contracts.md` do not state this landing rule explicitly. The author defaulted to responsibility because that is where the library is "used", not where its choice is justified.
+
+2. **The author-architecture skill's anti-pattern catalog (`anti-patterns.md` #10 DD-content-in-architecture) catches the failure but doesn't redirect the author.** The catalog's "Fix" guidance says to name the runtime pattern from `composition-patterns.md` — that is the right fix for a missing-pattern case, not for a library-in-responsibility case. The author needs a different redirect: "library bindings from ADR Propagation land in `rationale`, not in `responsibilities`, `purpose`, or interface signatures".
+
+3. **The review-architecture skill caught it correctly at review time, but the author-time gate was missing.** Same shape as Issue 11 / Issue 15 — discipline that exists at review level but not at author template level.
+
+**Empirical signal.** This session, two ADR-propagated library bindings (`goccy/go-yaml` for parsing, `html/template` for templating) needed to land in two child entries (`artifact-loader`, `reporter`). The author got `goccy/go-yaml` correct (it landed in `artifact-loader.rationale`) and got `html/template` wrong (it landed in `reporter.responsibilities`). One out of two is a 50% defect rate at the propagation interface — not a fluke, especially given that ADR-001 used near-identical Propagation language for both bindings.
+
+**Suggested resolution.**
+
+- **Add a landing-rules reference to `vmodel-skill-author-architecture`.** Either a new file (`references/adr-propagation-landing-rules.md`) or an additional section in `references/decomposition-discipline.md` and `references/interface-contracts.md`:
+  > *When a governing ADR's Propagation section binds a specific library, protocol, or framework to a child or interface in this scope, the binding lands in the **rationale** field of the relevant Decomposition entry / Interface entry, citing the ADR by id. The binding does NOT land in `purpose`, `responsibilities`, the interface `operation` signature, or any other field that names the component's architectural ownership. Architecture states what the component owns (renders HTML); the ADR-cited rationale states which mechanism satisfies that ownership.*
+- **Update the architecture template's decomposition entry stub** (`templates/decomposition-entry.yaml.tmpl`) with a comment near the `rationale` field: `# ADR-bound library / protocol / framework choices land here, not in purpose/responsibilities`.
+- **Add a review-side check** `check.responsibility.adr-bound-mechanism-leaked` that fires when a responsibility or purpose names content that the artifact's `governing_adrs` Propagation section binds. Pairs with the existing `check.responsibility.implementation-prescription`.
+
+**Pairs with.** Issue 11 (per-skill discipline gaps caught at review only) and Issue 15 (Mermaid syntax pitfalls); all three are the same shape — a mechanically-detectable failure mode that the review skill catches but the author skill emits without a gate.
