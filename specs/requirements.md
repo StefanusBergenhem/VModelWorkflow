@@ -689,6 +689,121 @@ inherited_constraints:
   derived_from: [NEEDS-vmodel-core]
 ```
 
+### Output stability (derived from ADR-001)
+
+```yaml
+- id: REQ-029
+  type: functional
+  derivation: derived
+  statement: |
+    The system shall emit byte-identical output across any two invocations
+    against byte-identical input, for all output categories produced
+    during validation or reporting runs (finding-records, verdict-records,
+    and report content).
+  rationale: |
+    ADR-001 records that vmodel-core is implemented in Go, whose map
+    iteration is randomised by language design. To preserve IC-001
+    (determinism — same input produces same output) at the output
+    boundary, every emit point that traverses a collection must apply a
+    stable order. The requirement is stated at the output level (not as
+    an internal sorting discipline) so it is testable at the vmodel-core
+    CLI boundary by re-run-and-diff, without inspecting internal
+    traversal.
+  acceptance: |
+    Given any input producing a non-empty output, when vmodel-core is
+    invoked twice on byte-identical input, then the two emitted outputs
+    are byte-identical.
+  derived_from: [ADR-001-implement-vmodel-core-in-go, IC-001]
+```
+
+### Schema embedding (derived from ADR-002)
+
+```yaml
+- id: REQ-030
+  type: functional
+  derivation: derived
+  statement: |
+    The system shall, during any validation or reporting run, use the
+    exact versions of the framework canonical rule catalog, framework
+    canonical schema set, and framework canonical Quality Bar checklist
+    set bundled with the binary at the binary's build time.
+  rationale: |
+    ADR-002 records that the three canonical input sets are embedded in
+    the binary at compile time via Go's embed package, with no runtime
+    override. Pinning the enforced versions to those bundled at build
+    time ensures version-skew between validator and schemas is
+    structurally impossible (an adopter cannot run binary-vN against
+    schemas-vM), supporting reproducibility and IC-005's re-download-
+    and-replace update model. Queryability of the bundled versions is
+    a separate atomic property addressed by REQ-032.
+  acceptance: |
+    Given any validation or reporting run on any vmodel-core binary,
+    when the run completes, then the framework canonical rule catalog
+    version, schema set version, and Quality Bar checklist set version
+    used by the run are identical to the versions compiled into the
+    binary at its build time.
+  derived_from: [ADR-002-embed-canonical-schemas-in-binary, IC-005, IC-009, IC-010, IC-011]
+```
+
+```yaml
+- id: REQ-031
+  type: functional
+  derivation: derived
+  statement: |
+    When the system runs a validation or a reporting operation, the
+    system shall obtain the framework canonical rule catalog, framework
+    canonical schema set, and framework canonical Quality Bar checklist
+    set without performing any filesystem read outside the binary
+    itself and without performing any network access.
+  rationale: |
+    ADR-002 records that the three canonical input sets are embedded in
+    the binary at compile time. Stating the no-external-access property
+    at vmodel-core's external boundary makes it testable by sandbox
+    isolation rather than by inspecting internal call graphs. This is
+    the load-bearing mechanism by which IC-002 (stateless cold-start)
+    is satisfied for catalog and schema availability and by which IC-007
+    (no relaxation modes) is enforced for catalog and schema content —
+    an adopter cannot substitute a relaxed schema set without rebuilding
+    the binary from source.
+  acceptance: |
+    Given a sandbox with no network access and no readable filesystem
+    outside the vmodel-core binary's own path, when the binary is
+    invoked for any validation or reporting operation supplied with
+    inputs reachable inside the sandbox, then the operation completes
+    without filesystem-not-found or network-error conditions on
+    framework canonical inputs and produces its expected verdict or
+    report.
+  derived_from: [ADR-002-embed-canonical-schemas-in-binary, IC-002, IC-007]
+```
+
+```yaml
+- id: REQ-032
+  type: functional
+  derivation: derived
+  statement: |
+    When the system is queried for the bundled versions of the framework
+    canonical rule catalog, framework canonical schema set, and framework
+    canonical Quality Bar checklist set, the system shall return version
+    identifiers identifying the exact versions compiled into the binary
+    at the binary's build time.
+  rationale: |
+    ADR-002 records that the three canonical input sets are embedded in
+    the binary at compile time. Making the bundled versions queryable
+    lets callers (CI gates, AI orchestrators, direct human callers)
+    verify the validator's bundled versions match their expected
+    framework versions before relying on validation output, supporting
+    supply-chain traceability and reproducibility audits. The query
+    surface (which command, which output format) is decided by
+    architecture and detailed design; this requirement constrains only
+    what is queryable.
+  acceptance: |
+    Given any vmodel-core binary, when the binary is queried for the
+    bundled versions of the canonical rule catalog, schema set, and
+    Quality Bar checklist set, then the response identifies the exact
+    versions compiled into the binary at its build time.
+  derived_from: [ADR-002-embed-canonical-schemas-in-binary, IC-005, IC-009, IC-010, IC-011]
+```
+
 ## Quality Attributes (NFRs)
 
 ```yaml

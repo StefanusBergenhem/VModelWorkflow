@@ -32,7 +32,9 @@ If a skill bug surfaces during the pilot, the fix goes to the framework repo fir
 
 **2026-05-03 — `specs/requirements.md` authored** (vmodel-skill-author-requirements run; `status: draft`). Adversarial review by `vmodel-skill-review-requirements` returned APPROVED on second pass after one revision cycle. Document is at root scope (`scope: ""`); ~30 atomic requirements across functional / quality-attribute / interface / data sections; 12 inherited constraints; full glossary; explicit *Open gaps* section with named owners and actions. Framework gaps surfaced this session are appended to `issues_found.md` (2026-05-03 entries).
 
-**Next session:** likely candidates, in priority order — (a) architecture authoring at root scope (`vmodel-skill-author-architecture`) — most of `requirements.md` is committed; pending items (NFR target numbers, deprecation ADR, licence ADR) do not block architectural decomposition; (b) framework-level (VModelWorkflow-scope) elicitation pass to address `issues_found.md` Issue 2 (no parent-scope upstream); (c) author a vmodel-core Product Brief to retire the `[NEEDS-vmodel-core]` placeholder per `issues_found.md` Issue 1 / decision γ. Choose at session start.
+**2026-05-03 (later) — Two foundational ADRs authored and accepted.** **ADR-001** (`specs/adrs/adr-001-implement-vmodel-core-in-go.md`) commits Go as implementation language (drivers: AI-coding-agent corpus density, YAML 1.2 ecosystem maturity via `goccy/go-yaml`, stdlib HTML templating). **ADR-002** (`specs/adrs/adr-002-embed-canonical-schemas-in-binary.md`) commits compile-time `embed.FS` for the framework canonical rule catalog / schema set / Quality Bar checklist set, with no runtime override (drivers: IC-007 no-relaxation, IC-002 stateless cold-start, IC-005 re-download-and-replace update). Both adversarially reviewed by `vmodel-skill-review-adr`; APPROVED on second pass after one revision cycle (ADR-001's Alternatives section was restructured to surface ≥2 real rejected entries — Rust, Zig, C++, Java/.NET-with-AOT — rather than dismiss four candidates inline in Context). Propagation added four derived requirements to `specs/requirements.md` (REQ-029 output stability; REQ-030 schema-version pinning; REQ-031 no-external-schema-access; REQ-032 version queryability); requirements doc re-reviewed by `vmodel-skill-review-requirements` and APPROVED on second pass (REQ-029 had implementation-prescription rewritten to state byte-identical-output property only; REQ-030 was split into atomic statements with EARS conformance, with REQ-032 created from the split). `specs/requirements.md` now carries 32 atomic requirements (REQ-001..REQ-032). Framework gap surfaced this session: `issues_found.md` Issue 11 (ADR and architecture author skills materialise new requirements without invoking the requirements-author skill's discipline).
+
+**Next session:** likely candidates, in priority order — (a) architecture authoring at root scope (`vmodel-skill-author-architecture`) — `requirements.md` is at REQ-001..REQ-032 with two foundational ADRs (ADR-001 Go, ADR-002 schema embedding) accepted; pending items (NFR target numbers, deprecation-policy ADR, licence ADR) do not block architectural decomposition; (b) framework-level (VModelWorkflow-scope) elicitation pass to address `issues_found.md` Issue 2 (no parent-scope upstream); (c) author a vmodel-core Product Brief to retire the `[NEEDS-vmodel-core]` placeholder per `issues_found.md` Issue 1 / decision γ. Choose at session start.
 
 ## Repo layout
 
@@ -50,7 +52,10 @@ vmodel-core/
 │       └── src-zakariasson-clis-for-agents-2026.md  (CLI-for-AI rationale)
 ├── specs/
 │   ├── needs.md                (root-scope stakeholder needs; elicit-needs output)
-│   └── requirements.md         (root-scope requirements; status: draft)
+│   ├── requirements.md         (root-scope requirements; status: draft; REQ-001..REQ-032)
+│   └── adrs/                   (architecture decision records; flat layout, scope_tags-keyed)
+│       ├── adr-001-implement-vmodel-core-in-go.md
+│       └── adr-002-embed-canonical-schemas-in-binary.md
 ├── issues_found.md             (living: framework gaps surfaced during pilot)
 ├── CLAUDE.md
 └── .gitignore
