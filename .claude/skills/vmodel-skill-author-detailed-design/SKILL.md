@@ -36,6 +36,7 @@ Expected upstream context (ask if missing):
 - **Derived-from set** — at least one Requirement (REQ-…) plus optionally sibling DDs, ARCH interfaces, or ADRs that shape the contract; an empty `derived_from` is an orphan design
 - **Governing ADRs** — cross-cutting decisions that constrain choices at this leaf (often inherited from the parent Architecture's `governing_adrs`)
 - **Recovery posture** — greenfield (omit `recovery_status`) or retrofit (declare `recovery_status` and supply source-code references)
+- **Prior review files** (optional, consumed when present) — on a revision pass, the latest review at `specs/.reviews/<artifact-id>-*.yaml` (lexically last) is read and findings are addressed. Per TARGET_ARCHITECTURE §5.6 review output convention.
 
 If the parent Architecture is not provided, **HALT** (see HALT condition #1) — refusal B fires when DD authoring proceeds without a parent allocation.
 
@@ -52,6 +53,16 @@ Apply the six rules in `references/authoring-discipline.md` across every authori
 ## Authoring procedure
 
 Author the document in this order. Each step has its own reference file with the craft rules. Treat the references as the source of truth; this section is a checklist.
+
+### Step 0 — Read prior review (revision pass only)
+
+If `specs/.reviews/<artifact-id>-*.yaml` contains review files for this artifact:
+1. Pick the lexically last (latest review run by date + sequence).
+2. Walk every finding.
+3. For each finding, decide: apply (revise this artifact), push back with rationale (finding is wrong), or defer with explicit marker (out of scope here, named follow-up).
+4. Address findings in the revision. The revision narrative names which findings were addressed and how.
+
+Skip this step on greenfield (first author pass) — no review files yet.
 
 ### Step 1 — Locate the leaf in the parent Architecture
 

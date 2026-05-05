@@ -33,13 +33,14 @@ Expected upstream context (ask if missing):
 
 - **Scope identifier** — the path and name of the scope this TestSpec covers (e.g., `session-store/expiry-calculator`, or `cart-service` for a branch, or `/` for root)
 - **Layer** — leaf / branch / root. Determines the parent spec type and the case shape.
-- **Parent spec artifact(s)** —
+- **Parent spec artifact(s)** — **Position C: at non-leaf scopes the layer has two upstream derivation sources, not one.** See "Verification targets per scope" in TARGET_ARCHITECTURE §5.3.
   - *Leaf:* the parent Detailed Design (its Public Interface contracts, Data Structure invariants, error-handling matrix, state machine).
-  - *Branch:* the parent Architecture (its interface contracts, composition invariants, allocated requirements, quality-attribute allocations).
-  - *Root:* the root Requirements artifact + the Product Brief.
+  - *Branch:* **both** the parent Architecture (Composition section, interface contracts, QA allocations, resilience strategies) **and** the branch's own Requirements (behavioural intent). Behavioural cases cite `REQ-{scope}-*`; composition cases cite `ARCH-{scope}` composition entries.
+  - *Root:* the Product Brief + root Requirements + root Architecture Composition. Behavioural cases cite `REQ-*` or `PB`; composition cases cite `ARCH` composition entries.
 - **Governing ADRs** — cross-cutting decisions that constrain testing approach (e.g., environment shape, fixture strategy)
 - **Recovery posture** — greenfield (omit `recovery_status`) or retrofit (declare `recovery_status` on reconstructed `verifies`)
 - **Project policy on coverage / mutation thresholds** — if the project has named values, capture them; otherwise the bar is populated with placeholder values and a note that policy will fix them
+- **Prior review files** (optional, consumed when present) — on a revision pass, the latest review at `specs/.reviews/<artifact-id>-*.yaml` (lexically last) is read and findings are addressed. Per TARGET_ARCHITECTURE §5.6 review output convention.
 
 If the parent spec is not provided, **HALT** (see HALT condition #1) — refusal B fires when TestSpec authoring proceeds without an upstream artifact.
 
@@ -57,6 +58,16 @@ Apply the six rules in `references/authoring-discipline.md` across every authori
 
 Author the document in this order. Each step has its own reference file with the craft rules. Treat the references as the source of truth; this section is a checklist.
 
+### Step 0 — Read prior review (revision pass only)
+
+If `specs/.reviews/<artifact-id>-*.yaml` contains review files for this artifact:
+1. Pick the lexically last (latest review run by date + sequence).
+2. Walk every finding.
+3. For each finding, decide: apply (revise this artifact), push back with rationale (finding is wrong), or defer with explicit marker (out of scope here, named follow-up).
+4. Address findings in the revision. The revision narrative names which findings were addressed and how.
+
+Skip this step on greenfield (first author pass) — no review files yet.
+
 ### Step 1 — Locate the layer and parent spec
 
 Determine which layer this TestSpec serves (leaf / branch / root). Identify the parent spec artifact. Note its derivation surface — the elements that will seed cases.
@@ -67,7 +78,7 @@ Determine which layer this TestSpec serves (leaf / branch / root). Identify the 
 
 Walk the parent spec end-to-end and list the elements that demand a case. The element type depends on layer; use the upstream-seam reference for the layer.
 
-→ See `references/dd-traceability-cues.md` (leaf), `references/architecture-traceability-cues.md` (branch), `references/requirements-traceability-cues.md` (root)
+→ See `references/dd-traceability-cues.md` (leaf), `references/architecture-traceability-cues.md` AND `references/requirements-traceability-cues.md` (branch — load both), `references/requirements-traceability-cues.md` AND `references/architecture-traceability-cues.md` (root — load both, plus PB outcomes covered in the requirements file)
 
 ### Step 3 — Apply derivation strategies
 
@@ -177,7 +188,7 @@ When halting, produce a structured handover: what was authored so far, what is m
 
 Two orthogonal flags drive which references load and which case template applies:
 
-- **Layer.** Leaf → load `dd-traceability-cues.md`, use `case-leaf.yaml.tmpl`. Branch → load `architecture-traceability-cues.md`, use `case-branch.yaml.tmpl`. Root → load `requirements-traceability-cues.md`, use `case-root.yaml.tmpl`.
+- **Layer.** Leaf → load `dd-traceability-cues.md`, use `case-leaf.yaml.tmpl`. Branch → load BOTH `architecture-traceability-cues.md` (Composition + interface seam) AND `requirements-traceability-cues.md` (behavioural seam against branch Requirements), use `case-branch.yaml.tmpl`. Root → load BOTH `requirements-traceability-cues.md` (Requirements + PB outcomes seam) AND `architecture-traceability-cues.md` (root Composition seam), use `case-root.yaml.tmpl`.
 
 - **Greenfield vs Retrofit.** Greenfield → omit `recovery_status` from front-matter; skip Step 9; cases derived from spec only. Retrofit → declare `recovery_status` (per `verifies` link); apply Step 9; pair every reconstructed `verifies` with `recovery_status: unknown` and every `unknown` with a follow-up owner.
 
@@ -206,8 +217,8 @@ That's it — one file. The skill does not create directories, schemas, validato
 - `references/integration-and-system-specifics.md` — contract testing, environment shapes, specialised cases (perf/sec/a11y), version pinning
 - `references/retrofit-discipline.md` — honest posture; spec-first then map existing; `recovery_status: unknown` on reconstruction; gap report
 - `references/dd-traceability-cues.md` — leaf seam: error matrix → robustness, postcondition → contract, invariant → property, state machine → state-transition, `[NEEDS-TEST: ...]` markers
-- `references/architecture-traceability-cues.md` — branch seam: interfaces → integration, composition invariants → cross-child, allocated requirements → traceable cases, QA allocations → specialised
-- `references/requirements-traceability-cues.md` — root seam: requirements → ≥1 case, NFR five-element → measurable specialised, interface five-dimension → contract or integration, PB outcomes → user-journey
+- `references/architecture-traceability-cues.md` — Architecture-Composition seam: interfaces → integration, composition invariants → cross-child property, QA allocations → specialised, resilience strategies → fault-injection. Loaded at branch (alongside requirements-traceability-cues.md) and at root (alongside requirements-traceability-cues.md, for root Composition coverage).
+- `references/requirements-traceability-cues.md` — Requirements + PB seam: functional REQ → ≥1 case, NFR five-element → measurable specialised, interface five-dimension → contract or integration, PB outcomes (root only) → user-journey. Loaded at branch (against branch Requirements) and at root (against root Requirements + PB).
 - `references/anti-patterns.md` — 13 anti-patterns with name + tells + fix; hard-rejects marked
 - `references/quality-bar-checklist.md` — eight QB groups + SAT meta-gate Yes/No checklist
 - `templates/test-spec.md.tmpl` — full document scaffold

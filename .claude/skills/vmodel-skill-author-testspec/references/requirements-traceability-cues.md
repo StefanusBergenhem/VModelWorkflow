@@ -1,6 +1,8 @@
-# Requirements + PB ↔ root TestSpec traceability cues
+# Requirements (+ PB at root) ↔ TestSpec traceability cues (branch and root)
 
-When authoring a root TestSpec, the parent specs are root Requirements + the Product Brief. Walk both end-to-end. Root cases verify requirements at the system level using PB vocabulary in `expected:`.
+When authoring a non-leaf TestSpec, layer Requirements is **one of two derivation sources** at this layer (the other is layer Architecture's Composition — see `architecture-traceability-cues.md`). Walk Requirements end-to-end. Cases derived from this seam are **behavioural cases** (functional / boundary / error / state-transition) and cite `REQ-{scope}-*` (or `REQ-001`-style at root). At root scope, also walk the Product Brief — root cases additionally verify PB outcomes at the system level using PB vocabulary in `expected:`.
+
+This file is loaded at branch (against branch Requirements) AND at root (against root Requirements + the Product Brief). The closed-correspondence mappings below apply at both layers; PB-specific rows apply only at root.
 
 ## Table of contents
 

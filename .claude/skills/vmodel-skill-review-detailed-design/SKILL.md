@@ -42,22 +42,15 @@ Do **not** activate this skill for:
 
 ## Output
 
-A single review block. Schema:
+A YAML file written to:
 
-```yaml
-review:
-  document: <document identifier or path>
-  reviewer: vmodel-skill-review-detailed-design
-  date: <YYYY-MM-DD>
-  verdict: APPROVED | REJECTED | DESIGN_ISSUE
-  findings:
-    - <finding>
-    ...
-  summary: |
-    <2-4 sentence summary; verdict justification>
-```
+    specs/.reviews/<artifact-id>-YYYY-MM-DD-NN.yaml
 
-Each finding follows `templates/finding.yaml.tmpl`. The full verdict template is in `templates/verdict.md.tmpl`.
+(per TARGET_ARCHITECTURE §5.6 review output convention) plus a short Markdown summary in chat that references the file path.
+
+The YAML shape is `templates/verdict.md.tmpl` (skill self-contained). Each finding follows `templates/finding.yaml.tmpl`. The chat summary is human-friendly rendering — the file is the source of truth.
+
+**Naming.** `<artifact-id>` is the reviewed artifact's id from its front-matter. `NN` is a zero-padded 2-digit sequence; pick the next available sequence for the date by listing existing files in `specs/.reviews/` and incrementing.
 
 ## Cross-cutting authoring discipline
 
@@ -251,6 +244,8 @@ Several checks apply only under stated conditions:
 - [ ] If meta-gate fires, the upstream-traceability question is answered explicitly (DESIGN_ISSUE vs REJECTED)
 - [ ] If `governing_adrs:` non-empty, every entry was checked for resolution and body-citation
 - [ ] If retrofit mode, the Overview-narrowing schema rule was checked
+- [ ] Verdict file written to `specs/.reviews/<artifact-id>-YYYY-MM-DD-NN.yaml` with the correct next-available sequence for the date
+- [ ] Chat summary references the file path
 
 ## Pointers
 

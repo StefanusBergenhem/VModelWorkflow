@@ -47,23 +47,15 @@ Do **not** activate this skill for:
 
 ## Output
 
-A single review block in this shape:
+A YAML file written to:
 
-```yaml
-review:
-  document: <document identifier or path>
-  reviewer: vmodel-skill-review-requirements
-  date: <YYYY-MM-DD>
-  verdict: APPROVED | REJECTED | DESIGN_ISSUE
-  findings:
-    - <finding>
-    - <finding>
-    ...
-  summary: |
-    <2-4 sentence summary; verdict justification>
-```
+    specs/.reviews/<artifact-id>-YYYY-MM-DD-NN.yaml
 
-Each finding follows the schema in `templates/finding.yaml.tmpl`. The full verdict template is in `templates/verdict.md.tmpl`.
+(per TARGET_ARCHITECTURE §5.6 review output convention) plus a short Markdown summary in chat that references the file path.
+
+The YAML shape is `templates/verdict.md.tmpl` (skill self-contained). Each finding follows `templates/finding.yaml.tmpl`. The chat summary is human-friendly rendering — the file is the source of truth.
+
+**Naming.** `<artifact-id>` is the reviewed artifact's id from its front-matter. `NN` is a zero-padded 2-digit sequence; pick the next available sequence for the date by listing existing files in `specs/.reviews/` and incrementing.
 
 ## Cross-cutting authoring discipline
 
@@ -211,6 +203,8 @@ Before emitting:
 - [ ] Verdict matches the decision table (no manual overrides).
 - [ ] No `recommended_action` field contains specific replacement wording.
 - [ ] The `summary` field cites every `hard_reject` finding; soft-rejects only when they cluster (≥3 in one category).
+- [ ] Verdict file written to `specs/.reviews/<artifact-id>-YYYY-MM-DD-NN.yaml` with the correct next-available sequence for the date
+- [ ] Chat summary references the file path
 
 ## Pointers
 

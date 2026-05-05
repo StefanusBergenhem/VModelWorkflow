@@ -35,32 +35,25 @@ Do **not** activate this skill for:
 ## Inputs
 
 - **Required**: the TestSpec document under review (Markdown with YAML front-matter and embedded YAML case blocks).
-- **Required for `verifies` resolution**: the parent spec for the layer.
+- **Required for `verifies` resolution**: the parent spec(s) for the layer. **Position C: at non-leaf scopes there are two upstream derivation sources, not one** (per TARGET_ARCHITECTURE §5.3 "Verification targets per scope").
   - **Leaf TestSpec** → parent Detailed Design.
-  - **Branch TestSpec** → parent Architecture.
-  - **Root TestSpec** → root Requirements + Product Brief.
-  - If the parent spec for the layer is absent, halt with `missing-inputs` rather than approve blind.
+  - **Branch TestSpec** → parent Architecture (Composition + interface contracts) AND branch Requirements (behavioural intent). Both required.
+  - **Root TestSpec** → root Requirements + root Architecture (Composition) + Product Brief. All three required.
+  - If any required parent spec for the layer is absent, halt with `missing-inputs` rather than approve blind.
 - **Required for ADR resolution**: any ADRs cited in `governing_adrs:` front-matter. If a `governing_adrs:` entry does not resolve, halt with `missing-inputs`.
 - **Optional**: existing test-code references for retrofit-mode documents (so observed-evidence claims can be spot-checked).
 
 ## Output
 
-A single review block. Schema:
+A YAML file written to:
 
-```yaml
-review:
-  document: <document identifier or path>
-  reviewer: vmodel-skill-review-testspec
-  date: <YYYY-MM-DD>
-  verdict: APPROVED | REJECTED | DESIGN_ISSUE
-  findings:
-    - <finding>
-    ...
-  summary: |
-    <2-4 sentence summary; verdict justification>
-```
+    specs/.reviews/<artifact-id>-YYYY-MM-DD-NN.yaml
 
-Each finding follows `templates/finding.yaml.tmpl`. The full verdict template is in `templates/verdict.md.tmpl`.
+(per TARGET_ARCHITECTURE §5.6 review output convention) plus a short Markdown summary in chat that references the file path.
+
+The YAML shape is `templates/verdict.md.tmpl` (skill self-contained). Each finding follows `templates/finding.yaml.tmpl`. The chat summary is human-friendly rendering — the file is the source of truth.
+
+**Naming.** `<artifact-id>` is the reviewed artifact's id from its front-matter. `NN` is a zero-padded 2-digit sequence; pick the next available sequence for the date by listing existing files in `specs/.reviews/` and incrementing.
 
 ## Cross-cutting authoring discipline
 
@@ -181,7 +174,10 @@ Coverage-mutation section present (HARD if absent). Structural threshold, mutati
 
 ### Step 7 — Retrofit discipline + cross-artifact traceability sweep
 
-Retrofit posture honest: `recovery_status` declared on every reconstructed link; no intent on `title` or `notes` (refusal A); gap report present. Cross-artifact seam coverage: DD error-matrix rows / postconditions / invariants / `[NEEDS-TEST: ...]` markers covered (leaf); Architecture interfaces / composition invariants / quality-attribute allocations covered (branch); Requirements + Product Brief outcomes covered (root).
+Retrofit posture honest: `recovery_status` declared on every reconstructed link; no intent on `title` or `notes` (refusal A); gap report present. Cross-artifact seam coverage (Position C — non-leaf scopes have TWO upstream seams):
+- **Leaf:** DD error-matrix rows / postconditions / invariants / `[NEEDS-TEST: ...]` markers covered.
+- **Branch:** Architecture Composition entries / interface contracts / QA allocations / resilience strategies covered (architecture seam) AND branch Requirements covered (requirements seam) — both required for branch APPROVED.
+- **Root:** root Architecture Composition + root Requirements + Product Brief outcomes covered — all three seams required for root APPROVED.
 
 → See `references/retrofit-discipline-checks.md`, `references/dd-traceability-checks.md`, `references/architecture-traceability-checks.md`, `references/requirements-traceability-checks.md`
 
@@ -241,8 +237,8 @@ Several checks apply only under stated conditions:
 - All `check.retrofit.*` identifiers apply only when front-matter declares `recovery_status:`
 - `check.adr.governing-not-resolved` applies only when `governing_adrs:` is non-empty
 - `check.dd-traceability.*` applies only at leaf scope
-- `check.architecture-traceability.*` applies only at branch (non-leaf, non-root) scope
-- `check.requirements-traceability.*` applies only at root scope
+- `check.architecture-traceability.*` applies at branch AND at root (Position C — Architecture Composition is a verification target at both layers)
+- `check.requirements-traceability.*` applies at branch AND at root (Position C — branch Requirements and root Requirements + PB are verification targets at their respective layers)
 - `check.test-doubles.*` applies only when preconditions declare doubles
 
 `references/quality-bar-gate.md` records gating per id.
@@ -257,6 +253,8 @@ Several checks apply only under stated conditions:
 - [ ] If meta-gate fires, the upstream-traceability question is answered explicitly (DESIGN_ISSUE vs REJECTED)
 - [ ] If `governing_adrs:` non-empty, every entry was checked for resolution
 - [ ] If retrofit mode, `recovery_status` discipline was applied per layer
+- [ ] Verdict file written to `specs/.reviews/<artifact-id>-YYYY-MM-DD-NN.yaml` with the correct next-available sequence for the date
+- [ ] Chat summary references the file path
 
 ## Pointers
 
@@ -272,8 +270,8 @@ Several checks apply only under stated conditions:
 - `references/integration-and-system-checks.md` — contract testing, environment shape, specialised QA cases
 - `references/retrofit-discipline-checks.md` — refusal A enforcement, recovery_status narrowing, gap report
 - `references/dd-traceability-checks.md` — leaf seam against parent DD
-- `references/architecture-traceability-checks.md` — branch seam against parent Architecture
-- `references/requirements-traceability-checks.md` — root seam against Requirements + Product Brief
+- `references/architecture-traceability-checks.md` — Architecture-Composition seam at branch AND at root (Position C — root Composition is also a verification target)
+- `references/requirements-traceability-checks.md` — Requirements seam at branch AND at root (Position C); + Product Brief seam at root only
 - `references/anti-patterns-catalog.md` — 13 anti-patterns with tells, identifiers, severities
 - `references/quality-bar-gate.md` — canonical Yes/No gate + full identifier catalog
 - `templates/verdict.md.tmpl` — APPROVED / REJECTED / DESIGN_ISSUE structured form

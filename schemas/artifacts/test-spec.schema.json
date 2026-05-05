@@ -45,7 +45,7 @@
         },
 
         "verifies": {
-          "description": "Upstream spec artifact ids this TestSpec verifies at the artifact level. MANDATORY non-empty — a TestSpec that verifies nothing is either misplaced or testing unspecified behaviour (anti-pattern 12 'Orphan tests'). Points at the spec artifact(s) this layer is derived from — a leaf TestSpec typically verifies one DD, a branch TestSpec verifies its Architecture and allocated Requirements, a root TestSpec verifies the Product Brief plus root Requirements.",
+          "description": "Upstream spec artifact ids this TestSpec verifies at the artifact level. MANDATORY non-empty — a TestSpec that verifies nothing is either misplaced or testing unspecified behaviour (anti-pattern 12 'Orphan tests'). Points at the spec artifact(s) this layer derives from. Per Position C (TARGET_ARCHITECTURE §5.3 'Verification targets per scope'): a leaf TestSpec typically verifies one DD; a branch TestSpec verifies BOTH its branch Requirements AND its branch Architecture (Composition entries + interface contract clauses); a root TestSpec additionally verifies the Product Brief.",
           "type": "array",
           "items": {
             "$ref": "https://vmodelworkflow.dev/schemas/artifacts/common-defs/v1#/$defs/artifact_id_ref"
@@ -129,7 +129,7 @@
         },
 
         "verifies": {
-          "description": "Spec artifact IDs this case verifies. MANDATORY non-empty — the anti-orphan rule (anti-pattern 12 'Orphan tests'). References target the layer's own spec: at leaf, a DD function / contract / error / invariant; at branch, an Architecture interface / composition invariant / allocated requirement; at root, a Product Brief outcome or root Requirements quality attribute. Field-level qualification is permitted (e.g., 'DD-session-store-expiry-calculator.behavior.earliest_of_idle_and_absolute', 'ARCH-session-store.composition.cleanup-api-coordination') — common-defs artifact_id_ref accepts dot-qualified forms; traceability tooling resolves the qualified target.",
+          "description": "Spec artifact IDs this case verifies. MANDATORY non-empty — the anti-orphan rule (anti-pattern 12 'Orphan tests'). References target the layer's own spec per Position C (TARGET_ARCHITECTURE §5.3): at leaf, a DD function / contract / error / invariant; at branch, branch Requirements (behavioural) OR branch Architecture (Composition entry / interface contract clause); at root, root Requirements OR root Architecture OR Product Brief outcome. Decomposition entries are NOT valid targets at any layer (they are structural, not behavioural). Field-level qualification is permitted (e.g., 'DD-session-store-expiry-calculator.behavior.earliest_of_idle_and_absolute', 'ARCH-session-store.composition.cleanup-api-coordination', 'ARCH-session-store.interface.ICleanup.postcondition.on_success') — common-defs artifact_id_ref accepts dot-qualified forms; traceability tooling resolves the qualified target.",
           "type": "array",
           "items": {
             "$ref": "https://vmodelworkflow.dev/schemas/artifacts/common-defs/v1#/$defs/artifact_id_ref"

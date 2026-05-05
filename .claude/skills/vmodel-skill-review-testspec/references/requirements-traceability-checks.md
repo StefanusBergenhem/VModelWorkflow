@@ -1,6 +1,6 @@
-# Requirements traceability checks (TestSpec ↔ Requirements + Product Brief seam, root only)
+# Requirements traceability checks (TestSpec ↔ Requirements seam at branch and root; + Product Brief at root)
 
-When the TestSpec is root-scoped, walk the root Requirements and the Product Brief and verify each load-bearing element has at least one corresponding case at root level. Conditional gating: root-scope only.
+When the TestSpec is non-leaf (branch OR root), walk the layer's Requirements document and verify each load-bearing requirement has at least one corresponding case. **Position C: layer Requirements is a verification target at both branch and root** (per TARGET_ARCHITECTURE §5.3 "Verification targets per scope"). At root scope, additionally walk the Product Brief and verify each load-bearing outcome has at least one corresponding case at root level. Conditional gating: branch AND root scope (PB checks: root only).
 
 ## check.requirements-traceability.requirement-unverified (soft)
 

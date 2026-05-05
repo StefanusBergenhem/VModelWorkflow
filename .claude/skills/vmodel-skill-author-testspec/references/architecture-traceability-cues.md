@@ -1,6 +1,8 @@
-# Architecture ↔ branch TestSpec traceability cues
+# Architecture ↔ TestSpec traceability cues (branch and root)
 
-When authoring a branch (non-leaf) TestSpec, the parent Architecture is the derivation source. Walk the Architecture's Decomposition, Interface entries, and Composition section. Branch cases verify cross-child behaviour through interfaces — they do not duplicate leaf-level contract verification.
+When authoring a non-leaf TestSpec, the parent Architecture is **one of two derivation sources** at this layer (the other is layer Requirements — see `requirements-traceability-cues.md`). Walk the Architecture's Decomposition, Interface entries, and Composition section. The cues here cover the **Architecture-Composition seam**: composition cases (integration / contract / property when the property is about wiring) cite `ARCH-{scope}` composition entries; behavioural cases cite Requirements (covered by `requirements-traceability-cues.md`). Cases verify cross-child emergent behaviour through composition surfaces — they do not duplicate leaf-level contract verification.
+
+This file is loaded at branch (against branch Architecture) AND at root (against root Architecture's Composition section, which carries deployment intent and root-level orchestration patterns).
 
 ## Table of contents
 

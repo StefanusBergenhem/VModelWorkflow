@@ -1,6 +1,6 @@
-# Architecture traceability checks (TestSpec ↔ parent Architecture seam, branch only)
+# Architecture traceability checks (TestSpec ↔ parent Architecture seam, branch and root)
 
-When the TestSpec is branch-scoped (non-leaf, non-root), walk the parent Architecture and verify each load-bearing element has at least one corresponding case. Conditional gating: branch-scope only.
+When the TestSpec is non-leaf (branch OR root), walk the parent Architecture's Composition section and interface contracts and verify each load-bearing element has at least one corresponding case. **Position C: Architecture Composition is a verification target at both branch and root** (per TARGET_ARCHITECTURE §5.3 "Verification targets per scope"). Conditional gating: branch AND root scope.
 
 ## check.architecture-traceability.interface-uncovered (soft)
 

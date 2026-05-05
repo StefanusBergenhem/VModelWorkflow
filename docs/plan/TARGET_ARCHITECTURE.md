@@ -62,7 +62,7 @@ Ten load-bearing axioms. Every later section implements one or more.
 
 9. **Components are independent (SOLID).** No forced coupling between Documentation, Templates, Traceability, and Skills. Adopt incrementally.
 
-10. **Tests derive from the layer's artifact, not from the code below.** V-model verification restored: unit tests derive from Detailed Design, integration tests from Architecture, system tests from Product Brief + Requirements at the root.
+10. **Tests derive from the layer's specs, not from the code below.** V-model verification restored: unit tests derive from the leaf's Detailed Design; integration tests at a branch derive from both branch Requirements (intent) and branch Architecture Composition (wiring); system tests at root derive from Product Brief outcomes plus root Requirements and root Architecture Composition.
 
 ---
 
@@ -244,7 +244,7 @@ id: TC-<num>
 title: <one line>
 suite: <optional tag>
 type: functional | boundary | error | fault-injection | property | state-transition | contract | performance | security | accessibility | error-guessing
-verifies: [IDs from this layer's spec — MANDATORY non-empty]
+verifies: [IDs from this layer's specs (per "Verification targets per scope" below) — MANDATORY non-empty]
 preconditions: <state assumed true>
 inputs: <stimuli>
 steps: <ordered actions; omit if trivial>
@@ -252,9 +252,24 @@ expected: <pass criteria>
 notes: <optional>
 ```
 
+**Verification targets per scope.** TestSpec verifies the WHAT (Requirements, Product Brief outcomes) and the composition HOW (Architecture Composition surfaces). Allowed `verifies` targets per scope:
+
+| Scope  | Primary derivation source(s)                                              | Allowed `verifies` targets                                                       |
+|--------|---------------------------------------------------------------------------|----------------------------------------------------------------------------------|
+| Root   | Product Brief outcomes + root Requirements + root Architecture (Composition + interfaces) | `PB`, `REQ-*`, `ARCH` (composition entries OR interface contract clauses)        |
+| Branch | branch Requirements + branch Architecture (Composition + interfaces)       | `REQ-{scope}-*`, `ARCH-{scope}` (composition entries OR interface contract clauses) |
+| Leaf   | leaf Detailed Design                                                       | `DD-{scope}-{name}` (function / contract / invariant / state)                    |
+
+Behavioural cases (functional / boundary / error / state-transition) cite Requirements (or DD at leaf). Integration / composition cases cite Architecture — either a Composition entry (orchestration sequences, retry/fallback, cross-child invariants) or an interface entry's DbC clauses (the boundary contract being exercised). A case MAY cite both Requirements AND Architecture when one test exercises behavioural intent through a specific architectural surface.
+
+**Architecture is a first-class verification target** at root and branch:
+- **Composition entries** — orchestration sequences, retry rules, cross-child invariants — are valid case-level targets; they describe emergent runtime behaviour.
+- **Interface entries' DbC clauses** (preconditions, postconditions, invariants) are valid case-level targets at the integration layer; they describe boundary behaviour observable across children.
+- **Decomposition entries** (children, responsibilities, allocations) are NOT verification targets — they are structural spec elements that propagate intent down to child specs (Requirements at the next level, DD at leaf).
+
 **Per-layer emphasis** (same envelope, different weight):
 - **Root** — system / e2e tests; heavy `steps`, `preconditions`, `expected`; scenarios map to Product Brief outcomes.
-- **Branch** — integration tests; `preconditions` carry fixtures and test doubles; `verifies` crosses children.
+- **Branch** — integration tests; `preconditions` carry fixtures and test doubles; `verifies` cites branch Requirements (behavioural) and branch Architecture (Composition entries for cross-child wiring; interface DbC clauses for boundary behaviour).
 - **Leaf** — unit tests; `inputs` + `expected`; `verifies` → DD function / contract; `steps` often trivial.
 
 **Mandatory non-empty `verifies`** is the anti-orphan rule: tests without traceable intent are either misplaced or testing unspecified behaviour.
@@ -339,6 +354,30 @@ A subdirectory inside a scope is a **child scope** iff its name is **not** in th
 - `[DEFER-ADR: …]` — the gap is a cross-cutting decision-shaped item with at least two named alternatives. The marker reserves the ADR slot; the ADR itself is authored when the decision is taken.
 
 Cross-cutting items **without** named alternatives are not ADR material; they go inline into existing root-Architecture sections (deployment intent, fitness functions, observability + security). Parametric gaps that belong to the artifact being authored use inline `<TBD>` rather than a defer marker.
+
+### 5.6 Review output convention (`specs/.reviews/`)
+
+Author/review skill pairs interoperate via durable, file-based handover — not chat. Every review skill emits a verdict + findings to a YAML file under `specs/.reviews/`; the matched author skill reads the latest review file when revising.
+
+**File path:**
+
+    specs/.reviews/<artifact-id>-YYYY-MM-DD-NN.yaml
+
+- `<artifact-id>` is the reviewed artifact's id (e.g. `ARCH-app-checkout`, `REQS-app`, `DD-session-store-expiry-calculator`, `ADR-014-use-postgres`, `TS-app-checkout`).
+- `YYYY-MM-DD` is the review run's date.
+- `NN` is a zero-padded 2-digit sequence number, always present, incrementing across review runs that share the same date for the same artifact (`...01.yaml`, `...02.yaml`, …).
+
+**Lifecycle.** All review files are kept; none are superseded in metadata. The latest is the lexically-last filename. The author skill picks the latest by file-name sort.
+
+**Visibility / git.** `.reviews/` is committed alongside the artifact tree. Review verdicts are a forensic record of design-time decisions and have lasting value; they are not transient workflow state.
+
+**Cardinality.** One file per review run per artifact. Multiple artifacts under simultaneous review get distinct files keyed on artifact id.
+
+**Schema.** The YAML shape is the per-skill `templates/verdict.md.tmpl` carried by each review skill (skills are self-contained; no central schema). Common core fields across all 5 review skills: `document`, `reviewer`, `date`, `verdict` (APPROVED | REJECTED | DESIGN_ISSUE), `inputs_provided`, `perspectives_applied`, `findings[]` (with `id`, an element identifier whose key name varies per artifact, `check_failed`, `severity`, `category`, `evidence`, `recommended_action`), `summary`, `recommended_next_action`, `counts`. Per-artifact specialisation is permitted on `inputs_provided` keys, `perspectives_applied`, and the element-identifier field name.
+
+**Author consumption (mode B).** When an author skill is invoked on an existing artifact for revision, it reads the latest review file at `specs/.reviews/<artifact-id>-*.yaml` (lexically last). Findings are treated as input. Each finding is addressed in the revision — applied, pushed back with rationale, or deferred via an explicit marker. The revision narrative names which findings were addressed and how.
+
+**Mapping to build-side workflow.** This convention is shape-similar to the build-side `.workflow/{review_ready,feedback}.yaml` pattern (per global `CLAUDE.md`), but the spec workflow is per-artifact (cardinality differs from build's single-active-task model). `.reviews/` is committed; build-side `.workflow/` is gitignored — different lifecycle (forensic vs. transient).
 
 ---
 
@@ -697,7 +736,7 @@ HUMAN-DRIVEN                      AGENT-ORCHESTRATED                HUMAN-DRIVEN
 | Architecture (non-leaf) | Proposes decomposition, checks consistency, drafts Composition | Decides trade-offs; decides technology picks → ADRs | Medium |
 | ADR | Drafts from discussion, enforces reversibility prompt | Owns the decision | Medium drafting / Low decision |
 | Detailed Design (leaf) | Heavy lifting on specification | Validates trade-offs, approves | Medium-High |
-| TestSpec | Derives cases from the layer's spec using derivation strategies | Reviews coverage against intent | Medium-High |
+| TestSpec | Derives cases from the layer's specs (Requirements + Architecture Composition at non-leaf; DD at leaf) using derivation strategies | Reviews coverage against intent | Medium-High |
 | (Build workflow — code + tests) | Autonomous executor given a complete spec | Reviews output | High |
 
 **Upper layers are interactive advisors; lower layers are autonomous executors.** Skill design must match the autonomy level.

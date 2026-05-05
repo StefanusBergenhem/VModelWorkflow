@@ -49,9 +49,9 @@ The single dealbreaker is Cluster 1. Everything else is incremental.
 
 Small-text issues with big-implication ripples. Don't let skill-level cleanup begin until these settle.
 
-**Issue 13 — File-based review handover.** Review verdicts + findings live only in conversation transcripts today. Should be canonical YAML at a known path, mirroring the build-side `.workflow/` idiom. Changes the API of every author/review skill pair.
+**Issue 13 — File-based review handover.** **RESOLVED 2026-05-05.** Pinned in TARGET_ARCHITECTURE §5.6. See "Issue 13 closure" below.
 
-**Issue 23 — What does testspec verify (architecture vs requirements).** A foundational ambiguity in the testspec layer that will compound across every testspec authored. Settle the layering rule once.
+**Issue 23 — What does testspec verify (architecture vs requirements).** **RESOLVED 2026-05-05** — Position C pinned in TARGET_ARCHITECTURE §5.3. See "Issue 23 closure" below.
 
 ---
 
@@ -124,6 +124,26 @@ Skill-flow refinements. Mostly small per-skill updates.
 ## Resolved candidate issues
 
 - **Issue 24 candidate (editorial / negative-space content) — RESOLVED 2026-05-04.** Folded into Rule 0 of `docs/authoring-discipline.md` (Product-shape only). Manifests as `n/a + justification`, "Honest departure from template", and *Notes / Self-attestation* sections; review skills will catch via `check.discipline.product-shape` finding.
+
+- **Issue 13 — RESOLVED 2026-05-05 (file-based review handover).** Pinned in `TARGET_ARCHITECTURE §5.6` with a "Review output convention (`specs/.reviews/`)" sub-section:
+  - File path: `specs/.reviews/<artifact-id>-YYYY-MM-DD-NN.yaml` (zero-padded 2-digit sequence always present, increments for same-date re-runs).
+  - Lifecycle: keep all; latest is lexically last; no `superseded_by` metadata.
+  - Cardinality: per-artifact, not global (differs from build-side single-active-task model).
+  - Visibility: committed (forensic record), not gitignored.
+  - Schema: existing per-skill `templates/verdict.md.tmpl` shape — skills stay self-contained; no central schema.
+  - Author consumption: mode B — when revising, always read latest review file if present and address findings (apply / push back / defer).
+
+  Ten skills updated mechanically: 5 review skills (Output section rewritten + 2 self-check bullets appended) + 5 author skills (Inputs bullet + new Step 0 inserted before Step 1). Files touched: `TARGET_ARCHITECTURE.md`, all 10 SKILL.md files under `.claude/skills/vmodel-skill-{author,review}-{requirements,architecture,detailed-design,testspec,adr}/`. Subagent dispatched for the per-skill mechanical pass; spot-checks confirmed correct application across all 10.
+
+  **Outstanding follow-ups:** `docs/guide/skills-architecture.html` rewrite is still deferred per Phase 5 closeout (the natural home for review-handover-protocol documentation in the human-facing guide). Log entry: review handover protocol section needs adding when the skills-architecture page is rewritten.
+
+- **Issue 23 — RESOLVED 2026-05-05 (Position C).** Pinned in `TARGET_ARCHITECTURE §5.3` with a "Verification targets per scope" table:
+  - Leaf TestSpec verifies leaf DD only.
+  - Branch TestSpec verifies BOTH branch Requirements (behavioural intent) AND branch Architecture (Composition entries + interface DbC clauses).
+  - Root TestSpec verifies root Requirements + root Architecture + Product Brief outcomes.
+  - Decomposition entries are explicitly NOT verification targets (structural, not behavioural).
+
+  Principle 10 sharpened to plural ("the layer's specs"). Schema descriptions tightened (artifact-level + case-level `verifies`). Author + review skill pairs updated: branch now loads BOTH `architecture-traceability-cues.md` AND `requirements-traceability-cues.md`; root loads both as well; conditional-gating widened so `check.architecture-traceability.*` and `check.requirements-traceability.*` apply at branch AND root. **Docs/guide ripple closed same day:** `docs/guide/artifacts/testspec.html` (lead, Position-on-V, Inputs, Granularity-at-branch, QB checklist), `docs/guide/artifacts/architecture.html` (right-hand-ascent paragraph), `docs/guide/artifacts/requirements.html` (right-hand-ascent paragraph) all rewritten to Position C. Files touched: `TARGET_ARCHITECTURE.md`, `schemas/artifacts/test-spec.schema.json`, `vmodel-skill-author-testspec/SKILL.md` (+ 2 reference head-notes), `vmodel-skill-review-testspec/SKILL.md` (+ 2 reference head-notes), `docs/guide/artifacts/{testspec,architecture,requirements}.html`.
 
 ---
 
