@@ -49,6 +49,10 @@ A single Markdown file using the structure in `templates/test-spec.md.tmpl`. Fro
 
 Default output filename: `<scope>/testspec.md`. Follow the project's scope-tree convention when one exists.
 
+## Cross-cutting authoring discipline
+
+Apply the six rules in `references/authoring-discipline.md` across every authoring step. Most relevant here: Rule 0 (no `n/a + justification` for omitted slots, no self-attestation prose — `coverage_mutation_bar` placeholder values are valid product-shape, not template-shape excuses), Rule 3 (rationale on coverage-bar / mutation-bar choices is one line plus citation when a governing ADR fixes the threshold; no re-narration of the policy), Rule 5 (`verifies` is a citation — the case body should not restate what is being verified; cite the upstream DD field / Architecture interface / Requirement by ID and let the reader follow the link). Rule 1 (boundary-only), Rule 2 (small-system collapse), and Rule 4 (diagram-or-prose) apply universally but are less load-bearing for testspec authoring. Review skills enforce all six as `check.discipline.<rule>` findings.
+
 ## Authoring procedure
 
 Author the document in this order. Each step has its own reference file with the craft rules. Treat the references as the source of truth; this section is a checklist.
@@ -191,6 +195,7 @@ That's it — one file. The skill does not create directories, schemas, validato
 
 ## Reference index
 
+- `references/authoring-discipline.md` — 6 cross-cutting rules (product-shape, layering, compression) — applies to all authoring steps
 - `references/testspec-purpose-and-shape.md` — V-model placement, derivation source per layer, pre-code authoring discipline
 - `references/derivation-strategies.md` — eleven strategies (functional / boundary / error / fault-injection / property / state-transition / contract / performance / security / accessibility / error-guessing) plus ECP and decision tables
 - `references/per-layer-weight.md` — three case shapes (thin leaf, fixtures-rich branch, journey-narrative root)

@@ -46,6 +46,10 @@ A single Markdown file using the structure in `templates/architecture.md.tmpl`. 
 
 Default output filename: `<scope>/architecture.md`. If the user has a scope-tree convention (e.g. root at `<root>/architecture.md`, branches at `<scope>/architecture.md`), follow it.
 
+## Cross-cutting authoring discipline
+
+Apply the six rules in `references/authoring-discipline.md` across every authoring step. Most relevant here: Rule 0 (no `n/a + justification` for omitted slots, no self-attestation prose), Rule 1 (boundary-only — no DD content inside Architecture), Rule 2 (small-system collapse: when all children are leaves AND fewer than 5, MAY author a combined `architecture-and-design.md`), Rule 3 (rationale = one line + ADR cite, no re-narration), Rule 4 (diagram OR interface entry per call, not both), Rule 5 (cite upstream IDs, don't restate). Review skills enforce them as `check.discipline.<rule>` findings.
+
 ## Authoring procedure
 
 Author the document in this order. Each step has its own reference file with the craft rules. Treat the references as the source of truth for craft; this section is a checklist.
@@ -199,6 +203,7 @@ That's it — one file. The skill does not create directories, schemas, validato
 
 ## Pointers
 
+- `references/authoring-discipline.md` — 6 cross-cutting rules (product-shape, layering, compression) — applies to all authoring steps
 - `references/decomposition-discipline.md` — info hiding, cohesion+coupling, bounded contexts, context-mapping, Conway-inverse, depth heuristics
 - `references/interface-contracts.md` — syntax-vs-semantics, Design-by-Contract clauses, SEI nine-part template, ISP, versioning + deprecation
 - `references/composition-patterns.md` — protocol families + sync/async + composition patterns catalog + wiring concerns

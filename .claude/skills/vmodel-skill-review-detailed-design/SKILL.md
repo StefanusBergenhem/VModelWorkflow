@@ -59,6 +59,10 @@ review:
 
 Each finding follows `templates/finding.yaml.tmpl`. The full verdict template is in `templates/verdict.md.tmpl`.
 
+## Cross-cutting authoring discipline
+
+Enforce the six rules in `references/authoring-discipline.md` across every review check, emitting `check.discipline.<rule>` findings on violation. Most relevant here: Rule 0 (flag `n/a + justification` on omitted slots and self-attestation prose as `check.discipline.product-shape`), Rule 1 (flag re-statement of the parent Architecture's boundary contract within the DD body — the DD describes leaf internals and references the boundary by ID — as `check.discipline.upstream-restatement`; the DD-leakage direction lives in the Architecture review), Rule 2 (recognise the combined `architecture-and-design.md` mode when present, and flag misapplied collapse as `check.discipline.collapse-eligibility-misapplied`), Rule 3 (flag re-narrated rationale that does not cite a governing ADR as `check.discipline.rationale-narration`), Rule 4 (flag a state diagram plus a transition table that state the same machine as `check.discipline.diagram-prose-duplication`), Rule 5 (flag verbatim restatement of upstream parent-Architecture-interface or governing-ADR content as `check.discipline.upstream-restatement`).
+
 ## Verdict decision table
 
 Walk top to bottom — first match wins:
@@ -250,6 +254,7 @@ Several checks apply only under stated conditions:
 
 ## Pointers
 
+- `references/authoring-discipline.md` — 6 cross-cutting rules (product-shape, layering, compression) — applies to all review checks
 - `references/dd-shape-checks.md` — section presence, metadata, Overview
 - `references/function-contract-checks.md` — DbC clauses, units, postcondition discipline
 - `references/data-and-invariant-checks.md` — invariants, ownership, lifetime, returned-object semantics

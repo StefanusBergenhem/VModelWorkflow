@@ -45,6 +45,10 @@ A single Markdown file using the structure in `templates/detailed-design.md.tmpl
 
 Default output filename: `<scope>/detailed_design.md`. Follow the project's scope-tree convention when one exists.
 
+## Cross-cutting authoring discipline
+
+Apply the six rules in `references/authoring-discipline.md` across every authoring step. Most relevant here: Rule 0 (no `n/a + justification` for omitted slots, no self-attestation prose), Rule 1 inverts at this layer — a DD describes leaf internals (Public Interface, Data Structures, Algorithms, State, Error Handling) and must NOT re-state the parent Architecture's boundary contract; reference it instead, Rule 2 (small-system collapse: when the parent scope has all-leaf children and fewer than 5, recognise the combined `architecture-and-design.md` mode and author the *Detailed Design* sub-section per child rather than a standalone DD file), Rule 3 (rationale = one line + ADR cite when a governing ADR exists, no re-narration), Rule 4 (state diagram OR prose transition table per state machine, not both), Rule 5 (cite parent Architecture interfaces, governing ADRs, and derived requirements by ID, do not restate). Review skills enforce all six as `check.discipline.<rule>` findings.
+
 ## Authoring procedure
 
 Author the document in this order. Each step has its own reference file with the craft rules. Treat the references as the source of truth; this section is a checklist.
@@ -203,6 +207,7 @@ That's it — one file. The skill does not create directories, schemas, validato
 
 ## Pointers
 
+- `references/authoring-discipline.md` — 6 cross-cutting rules (product-shape, layering, compression) — applies to all authoring steps
 - `references/dd-purpose-and-shape.md` — purpose of DD, two rules (no duplication, specific enough), the box mental model, 7-section shape, junior-implementable / language-portable / test-derivable triple, parent-Architecture inputs
 - `references/function-contracts.md` — Design-by-Contract (Hoare / Meyer / Liskov), 9 contract elements, units of measure, defensive programming vs DbC, signature-vs-contract distinction
 - `references/data-structures-by-invariant.md` — fields-by-invariant, ownership, lifetime, returned-object semantics, shared-mutable as contract

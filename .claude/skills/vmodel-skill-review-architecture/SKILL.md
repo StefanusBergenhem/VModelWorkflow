@@ -69,6 +69,10 @@ review:
 
 Each finding follows `templates/finding.yaml.tmpl`. The full verdict template is in `templates/verdict.md.tmpl`.
 
+## Cross-cutting authoring discipline
+
+Enforce the six rules in `references/authoring-discipline.md` across every review check, emitting `check.discipline.<rule>` findings on violation. Most relevant here: Rule 0 (flag `n/a + justification` for omitted slots and self-attestation prose as `check.discipline.product-shape`), Rule 1 (flag DD content inside Architecture — internal data structures, algorithms, library names in responsibility/purpose — as `check.discipline.dd-leakage-into-architecture`), Rule 2 (when all children are leaves AND fewer than 5, the document MAY have been authored as a combined `architecture-and-design.md`; flag misapplied collapse as `check.discipline.collapse-eligibility-misapplied`), Rule 3 (flag re-narrated rationale that does not cite a governing ADR as `check.discipline.rationale-narration`), Rule 4 (flag a sequence diagram and an interface entry stating the same call flow as `check.discipline.diagram-prose-duplication`), Rule 5 (flag verbatim restatement of upstream parent-requirement / ADR content as `check.discipline.upstream-restatement`).
+
 ## Verdict decision table
 
 Walk top to bottom — first match wins:
@@ -253,6 +257,7 @@ Before emitting:
 
 ## Pointers
 
+- `references/authoring-discipline.md` — 6 cross-cutting rules (product-shape, layering, compression) — applies to all review checks
 - `references/decomposition-checks.md` — purpose / responsibility / allocation / boundary checks
 - `references/interface-contract-checks.md` — DbC clauses, ISP, authn/authz, versioning, protocol-citation
 - `references/composition-patterns-checks.md` — runtime pattern named, wiring, sequence diagrams

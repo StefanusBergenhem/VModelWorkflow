@@ -50,6 +50,10 @@ A single Markdown file using the structure in `templates/adr.md.tmpl`. Front-mat
 
 Default output filename: `<repo>/specs/adrs/adr-NNN-<slug>.md`. ADRs live flat regardless of which scopes they apply to — `scope_tags` names the scope(s).
 
+## Cross-cutting authoring discipline
+
+Apply the six rules in `references/authoring-discipline.md` across every authoring step. Most relevant here: Rule 0 (no `n/a + justification` for omitted slots, no self-attestation prose — an ADR's body is the product-shape decision record, not a meta-narrative about its own authoring). Rule 3 is meta-relevant — an ADR is the canonical place where rationale is captured at length; subsequent artifacts reference *this* ADR per Rule 3 rather than re-narrating the decision. Rule 5 (cite upstream / governing ADRs and parent Architecture stub by ID; do not restate the originating context). Rule 1 (boundary-only), Rule 2 (small-system collapse), and Rule 4 (diagram-or-prose) apply universally but are less load-bearing for ADR authoring. Review skills enforce all six as `check.discipline.<rule>` findings.
+
 ## Authoring procedure
 
 Author the document in this order. Each step has its own reference file with the craft rules. Treat the references as the source of truth; this section is a checklist.
@@ -197,6 +201,7 @@ That's it — one file. The skill does not create directories, schemas, validato
 
 ## Reference index
 
+- `references/authoring-discipline.md` — 6 cross-cutting rules (product-shape, layering, compression) — applies to all authoring steps
 - `references/adr-purpose-and-shape.md` — cross-cutting role; three-condition threshold; capture-then-design flow; Y-statement compact form
 - `references/canonical-fields-and-body.md` — front-matter required fields; status lifecycle; body section ordering
 - `references/context-and-drivers.md` — forces vs problem domain; named drivers; assumptions enumeration
