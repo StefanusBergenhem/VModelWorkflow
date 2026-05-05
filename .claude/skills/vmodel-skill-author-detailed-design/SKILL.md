@@ -45,6 +45,10 @@ A single Markdown file using the structure in `templates/detailed-design.md.tmpl
 
 Default output filename: `<scope>/detailed_design.md`. Follow the project's scope-tree convention when one exists.
 
+## Cross-cutting authoring discipline
+
+Apply the six rules in `references/authoring-discipline.md` across every authoring step. Most relevant here: Rule 0 (no `n/a + justification` for omitted slots, no self-attestation prose), Rule 1 inverts at this layer — a DD describes leaf internals (Public Interface, Data Structures, Algorithms, State, Error Handling) and must NOT re-state the parent Architecture's boundary contract; reference it instead, Rule 2 (small-system collapse: when the parent scope has all-leaf children and fewer than 5, recognise the combined `architecture-and-design.md` mode and author the *Detailed Design* sub-section per child rather than a standalone DD file), Rule 3 (rationale = one line + ADR cite when a governing ADR exists, no re-narration), Rule 4 (state diagram OR prose transition table per state machine, not both), Rule 5 (cite parent Architecture interfaces, governing ADRs, and derived requirements by ID, do not restate). Review skills enforce all six as `check.discipline.<rule>` findings.
+
 ## Authoring procedure
 
 Author the document in this order. Each step has its own reference file with the craft rules. Treat the references as the source of truth; this section is a checklist.
@@ -104,7 +108,7 @@ For each error class, answer the six questions: what can fail, how is it detecte
 
 ### Step 9 — Capture rationale at decision time
 
-Inline rationale at the site of every non-obvious decision (one or two sentences naming the forcing constraint — external standard, architectural choice, resource budget, temporal constraint). Load-bearing decisions that meet the ADR threshold (load-bearing AND cross-cutting AND hard-to-reverse) belong in a sibling ADR — emit `[NEEDS-ADR: <decision> — extract before finalising]` markers and reference them via `governing_adrs` once authored. Do not inline rationale that obviously meets the three ADR criteria.
+Inline rationale at the site of every non-obvious decision (one or two sentences naming the forcing constraint — external standard, architectural choice, resource budget, temporal constraint). Load-bearing decisions that meet the ADR threshold (load-bearing AND cross-cutting AND hard-to-reverse) belong in a sibling ADR — emit `[DEFER-ADR: <decision>]` markers and reference them via `governing_adrs` once authored. Do not inline rationale that obviously meets the three ADR criteria.
 
 → See `references/rationale-capture.md`, `references/adr-extraction-cues.md`
 → Template: `templates/governing-adr-reference.yaml.tmpl`
@@ -170,7 +174,7 @@ Stop and hand back to the user when:
 
 1. **Missing parent Architecture** — without it, refusal B fires; do not invent leaf responsibilities or sibling interfaces. Ask for the parent Architecture artifact.
 2. **Missing derived requirements** — `derived_from` cannot be empty (orphan design). Ask which requirements this leaf realises before proceeding.
-3. **Scope creep beyond one artifact** — request expands to also author Architecture / ADR / TestSpec / code. Decline; emit `[NEEDS-ADR: ...]`, `[NEEDS-TEST: ...]`, or scope-creep stub markers and name the right artifact for the expanded ask.
+3. **Scope creep beyond one artifact** — request expands to also author Architecture / ADR / TestSpec / code. Decline; emit `[DEFER-ADR: ...]`, `[NEEDS-TEST: ...]`, or scope-creep marker and name the right artifact for the expanded ask.
 4. **Locked-refusal override request** — user asks to fabricate rationale, write code paraphrase, write algorithmic postconditions, mark Overview as `reconstructed`, or skip the Spec Ambiguity Test. Halt and explain.
 5. **Retrofit posture conflict** — `recovery_status:` declared but no source-code references provided, or source-code references provided but no `recovery_status:` declaration. Halt and ask which posture applies.
 6. **Irresolvable contradiction in input** — for example, a parent Architecture interface invariant that contradicts a derived requirement; do not pick a side. After two clarification turns without resolution, halt.
@@ -203,6 +207,7 @@ That's it — one file. The skill does not create directories, schemas, validato
 
 ## Pointers
 
+- `references/authoring-discipline.md` — 6 cross-cutting rules (product-shape, layering, compression) — applies to all authoring steps
 - `references/dd-purpose-and-shape.md` — purpose of DD, two rules (no duplication, specific enough), the box mental model, 7-section shape, junior-implementable / language-portable / test-derivable triple, parent-Architecture inputs
 - `references/function-contracts.md` — Design-by-Contract (Hoare / Meyer / Liskov), 9 contract elements, units of measure, defensive programming vs DbC, signature-vs-contract distinction
 - `references/data-structures-by-invariant.md` — fields-by-invariant, ownership, lifetime, returned-object semantics, shared-mutable as contract
@@ -211,7 +216,7 @@ That's it — one file. The skill does not create directories, schemas, validato
 - `references/error-handling.md` — six questions, error-handling matrix, checked-vs-unchecked as contract, five strategies (fail-fast, retry, fallback, compensate, propagate)
 - `references/rationale-capture.md` — inline rationale, ADR threshold, four constraint kinds (external, architectural, resource, temporal)
 - `references/retrofit-discipline.md` — DD-specific retrofit (Overview narrowed to verified|unknown — schema-enforced), no-fabrication, observable-vs-inferred markings
-- `references/adr-extraction-cues.md` — DD ↔ ADR seam: when DD-level decisions become ADRs, [NEEDS-ADR] stub, governing_adrs reference pattern
+- `references/adr-extraction-cues.md` — DD ↔ ADR seam: when DD-level decisions become ADRs, [DEFER-ADR] marker, governing_adrs reference pattern
 - `references/testspec-traceability-cues.md` — DD ↔ TestSpec seam: error matrix → robustness tests, postconditions → contract tests, invariants → property tests
 - `references/anti-patterns.md` — 16 anti-patterns (5 interface/contract, 3 error, 3 state/concurrency, 5 AI-era)
 - `references/quality-bar-checklist.md` — 8 Quality Bar cards + Spec Ambiguity Test meta-gate

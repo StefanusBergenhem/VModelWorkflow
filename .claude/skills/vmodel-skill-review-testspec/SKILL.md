@@ -62,6 +62,10 @@ review:
 
 Each finding follows `templates/finding.yaml.tmpl`. The full verdict template is in `templates/verdict.md.tmpl`.
 
+## Cross-cutting authoring discipline
+
+Enforce the six rules in `references/authoring-discipline.md` across every review check, emitting `check.discipline.<rule>` findings on violation. Most relevant here: Rule 0 (flag `n/a + justification` on omitted slots and self-attestation prose as `check.discipline.product-shape` — `coverage_mutation_bar` placeholders are valid product-shape, not template-shape excuses), Rule 3 (flag re-narrated rationale on coverage-bar / mutation-bar choices that does not cite a governing ADR as `check.discipline.rationale-narration`), Rule 5 (flag a case body that restates what is being verified — `verifies` is a citation; the case should not redundantly restate the upstream DD field / Architecture interface / Requirement — as `check.discipline.upstream-restatement`). Rule 1 (boundary-only), Rule 2 (collapse-eligibility), and Rule 4 (diagram-or-prose) apply universally but are less load-bearing for testspec review.
+
 ## Verdict decision table
 
 Walk top to bottom — first match wins:
@@ -256,6 +260,7 @@ Several checks apply only under stated conditions:
 
 ## Pointers
 
+- `references/authoring-discipline.md` — 6 cross-cutting rules (product-shape, layering, compression) — applies to all review checks
 - `references/testspec-shape-checks.md` — front-matter, id pattern, level-scope alignment
 - `references/derivation-strategy-checks.md` — per-strategy coverage, type enum, uncovered-rule detection
 - `references/per-layer-weight-checks.md` — leaf / branch / root case shape

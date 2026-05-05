@@ -60,6 +60,10 @@ review:
 
 Each finding follows `templates/finding.yaml.tmpl`. The full verdict template is in `templates/verdict.md.tmpl`.
 
+## Cross-cutting authoring discipline
+
+Enforce the six rules in `references/authoring-discipline.md` across every review check, emitting `check.discipline.<rule>` findings on violation. Most relevant here: Rule 0 (flag `n/a + justification` on omitted slots and self-attestation prose as `check.discipline.product-shape` — the ADR body is the product-shape decision record, not a meta-narrative). Rule 3 is meta-relevant — an ADR is the canonical place where rationale lives; flag downstream-style "see ADR" deferrals *within* the ADR's own Rationale section as `check.discipline.rationale-narration` only when the section punts rather than answering. Rule 5 (flag verbatim restatement of the parent Architecture stub or governing organisational policy that should be cited by ID instead as `check.discipline.upstream-restatement`). Rule 1 (boundary-only), Rule 2 (collapse-eligibility), and Rule 4 (diagram-or-prose) apply universally but are less load-bearing for ADR review.
+
 ## Verdict decision table
 
 Walk top to bottom — first match wins:
@@ -262,6 +266,7 @@ Several checks apply only under stated conditions:
 
 ## Pointers
 
+- `references/authoring-discipline.md` — 6 cross-cutting rules (product-shape, layering, compression) — applies to all review checks
 - `references/adr-purpose-and-shape-checks.md` — threshold, orphan-ADR, routine-choice rejection
 - `references/front-matter-and-body-checks.md` — required fields, id pattern, status enum, body section presence/order
 - `references/context-and-drivers-checks.md` — context-completeness QB group + buried-assumptions tells

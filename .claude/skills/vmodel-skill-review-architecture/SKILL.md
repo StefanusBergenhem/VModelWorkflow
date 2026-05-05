@@ -69,6 +69,10 @@ review:
 
 Each finding follows `templates/finding.yaml.tmpl`. The full verdict template is in `templates/verdict.md.tmpl`.
 
+## Cross-cutting authoring discipline
+
+Enforce the nine rules in `references/authoring-discipline.md` across every review check, emitting `check.discipline.<rule>` findings on violation. Most relevant here: Rule 0 (flag `n/a + justification` for omitted slots and self-attestation prose as `check.discipline.product-shape`), Rule 1 (flag DD content inside Architecture — internal data structures, algorithms, library names in responsibility/purpose — as `check.discipline.dd-leakage-into-architecture`), Rule 2 (when all children are leaves AND fewer than 5, the document MAY have been authored as a combined `architecture-and-design.md`; flag misapplied collapse as `check.discipline.collapse-eligibility-misapplied`), Rule 3 (flag re-narrated rationale that does not cite a governing ADR as `check.discipline.rationale-narration`), Rule 4 (flag a sequence diagram and an interface entry stating the same call flow as `check.discipline.diagram-prose-duplication`), Rule 5 (flag verbatim restatement of upstream parent-requirement / ADR content as `check.discipline.upstream-restatement`), Rule 7 (flag a child scope ID matching a reserved subdirectory name as `check.discipline.scope-tree-shape`), Rule 8 (flag a Decomposition entry containing `bounded_context_line`, `owning_team_type`, or `test_seam` — including any `driving_ports` / `driven_ports` / `fake_strategy` sub-fields — as `check.discipline.architecture-bundle-shape`; flag any helicopter interface entry that has `detail:` set but lacks `summary_postcondition` or `key_invariants`, or whose `detail:` path does not resolve to a valid `architecture-interface-detail.md` file with matching `belongs_to` and `subject`, as `check.discipline.architecture-bundle-shape`).
+
 ## Verdict decision table
 
 Walk top to bottom — first match wins:
@@ -144,11 +148,15 @@ The author skill authors in 13 steps; the review skill condenses to 8 sweeps. Re
 
 For every Decomposition entry: one-sentence purpose without conjunctions; ≤3 architectural-level responsibilities; non-empty `allocates`; every parent-allocated requirement landed in some child; depth/cognitive-load/change-blast trio recorded if revision happened; bounded-context line drawn at language fractures.
 
+Verify Rule 8 banned fields are absent: emit `check.discipline.architecture-bundle-shape` if any Decomposition entry carries `bounded_context_line`, `owning_team_type`, or `test_seam`.
+
 → See `references/decomposition-checks.md`
 
 ### Step 2 — Interface contract sweep
 
 For every Interface entry: preconditions; postconditions for {success, precondition_failure, downstream_failure}; invariants; typed error enum; quality-attribute budget; authn/authz at externally callable interfaces; ISP segregation (no fat god-interfaces); versioning + deprecation policy; rationale tying choice to requirement / ADR / constraint; externally-imposed protocols cited by RFC/spec id.
+
+When the helicopter form is in use (any interface carries `detail:`), verify each detail file resolves, validates as `architecture-interface-detail`, carries `belongs_to` pointing back at this artifact, and has `subject` matching the helicopter interface name; emit `check.discipline.architecture-bundle-shape` on mismatch. The full preconditions / postconditions / invariants / errors / quality_attributes / authentication / authorisation / version / deprecation_policy completeness check (above) is evaluated against the helicopter slim form merged with its detail file as one logical artifact.
 
 → See `references/interface-contract-checks.md`
 
@@ -253,6 +261,7 @@ Before emitting:
 
 ## Pointers
 
+- `references/authoring-discipline.md` — 9 cross-cutting rules (product-shape, layering, compression) — applies to all review checks
 - `references/decomposition-checks.md` — purpose / responsibility / allocation / boundary checks
 - `references/interface-contract-checks.md` — DbC clauses, ISP, authn/authz, versioning, protocol-citation
 - `references/composition-patterns-checks.md` — runtime pattern named, wiring, sequence diagrams

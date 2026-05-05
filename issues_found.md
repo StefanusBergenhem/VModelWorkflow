@@ -293,6 +293,7 @@ All three were fixed in the session by simple substitutions (`;` → `—`, `<X>
 
 **Suggested resolution.**
 
+- Add a script for checking format. 
 - **Author-skill template.** Add a comment block to `templates/sequence-diagram.mmd.tmpl` (and `templates/structure-diagram.mmd.tmpl`, and any state-diagram template in `vmodel-skill-author-detailed-design`) listing parser-breaking characters and their canonical replacements:
   - `;` in message text → use `—` (em-dash) or `,`.
   - `<...>` in message text → use a literal placeholder (e.g., `PATH` not `<path>`) or square brackets `[...]`.
@@ -337,3 +338,159 @@ The fix was a single-edit removal (delete "using Go's stdlib html/template" from
 - **Add a review-side check** `check.responsibility.adr-bound-mechanism-leaked` that fires when a responsibility or purpose names content that the artifact's `governing_adrs` Propagation section binds. Pairs with the existing `check.responsibility.implementation-prescription`.
 
 **Pairs with.** Issue 11 (per-skill discipline gaps caught at review only) and Issue 15 (Mermaid syntax pitfalls); all three are the same shape — a mechanically-detectable failure mode that the review skill catches but the author skill emits without a gate.
+
+---
+
+## 2026-05-04
+
+### Issue 17 — Empty-scope ID encoding is undefined for `id:`, `verifies:`, and dotted-path references
+
+**Where surfaced.** `vmodel-skill-author-testspec` pilot run on `specs/testspec.md` (2026-05-03) and adversarial review by `vmodel-skill-review-testspec` (2026-05-04). vmodel-core operates at root scope (`scope: ""`). Three encoding decisions had to be improvised because the skill's templates and references degenerate ungracefully when the scope segment is the empty string:
+
+1. **TestSpec front-matter `id:`.** Template `vmodel-skill-author-testspec/templates/test-spec.md.tmpl` line 1 says `id: TS-<<scope-flattened>>`. With `scope: ""`, this resolves to `TS-` (trailing-hyphen) or `TS` (suffix dropped). The author improvised `id: TS` (no suffix) by analogy with the architecture artifact's `id: ARCH` and requirements artifact's `id: REQS`. No skill rule sanctions this.
+
+2. **Per-case `id:`.** Template `case-branch.yaml.tmpl` and `case-leaf.yaml.tmpl` say `id: TC-<<scope>>-NNN`. With empty scope this gives `TC--NNN` (double-hyphen) or `TC-NNN` (segment dropped). Author improvised `TC-NNN`. No skill rule sanctions this either.
+
+3. **`verifies:` dotted-path references to architecture interfaces.** `references/architecture-traceability-cues.md` shows the canonical form as `ARCH-<scope>.interfaces.<name>`. With empty scope this becomes `ARCH-.interfaces.<name>` — a syntactically odd string with a stranded hyphen before the dot. Author improvised `ARCH.interfaces.<name>` (the plain prefix, since the architecture's `id` is plain `ARCH`). The adversarial review on 2026-05-04 confirmed the improvised form resolves correctly against the architecture document and accepted it explicitly, but the framework convention is undocumented and a non-improvising author could:
+   - Hard-fail on `ARCH-.interfaces.<name>` because the resolver does not strip the trailing-hyphen,
+   - Silently drift to inconsistent forms across artifacts (`ARCH.interfaces.X` in one testspec, `ARCH-.interfaces.X` in another), or
+   - HALT in confusion with no deterministic rule to apply.
+
+**The gap.**
+
+1. **Template silence on empty-scope degeneration.** The three templates (`test-spec.md.tmpl`, `case-branch.yaml.tmpl`, `case-leaf.yaml.tmpl`) use `<<scope>>` and `<<scope-flattened>>` placeholders without specifying behaviour when the placeholder is empty. The same gap likely exists in author-architecture, author-detailed-design, and author-adr templates.
+2. **Reference-example silence.** `references/architecture-traceability-cues.md` shows worked examples at non-empty scopes only (e.g., `ARCH-cart-service.interfaces.OrderPlacement`). The empty-scope case never appears in any example across any reference file.
+3. **No canonical resolver behaviour.** Whether a hyphen-suffix form (`ARCH-`) is equivalent to the plain form (`ARCH`) at empty scope is a resolver-implementation decision that vmodel-core itself will eventually face. The framework needs a single canonical rule.
+
+**Suggested resolution.**
+
+- **Pin the empty-scope rule explicitly.** Add to `references/scope-tree-conventions.md` (or wherever the framework's scope-naming convention lives): *"At root scope (`scope: ""`), the scope segment is omitted from all derived identifiers. The artifact id is the bare type prefix (`TS`, `ARCH`, `REQS`, `DD`, `PB`); per-case ids are `TC-NNN`; dotted-path references use the bare artifact id as prefix (`ARCH.interfaces.<name>`, not `ARCH-.interfaces.<name>`). Resolvers MUST treat the bare-prefix form as canonical at empty scope and SHOULD reject the trailing-hyphen form to prevent silent drift."*
+- **Update template placeholders** in every author skill to use a conditional substitution rule (e.g., `<<scope-suffix?>>` that expands to `-<<scope>>` for non-empty scope and to empty string for root). Surface the rule in each template's leading comment block.
+- **Add a worked empty-scope example** to `references/architecture-traceability-cues.md`, `references/dd-traceability-cues.md`, and `references/requirements-traceability-cues.md` so the convention is visible to authors.
+- **Add a vmodel-core validation rule (v1.x candidate).** Once vmodel-core implements the resolver, add a `terminology` or `reference_integrity` rule that flags trailing-hyphen forms (`ARCH-.X`, `TC--NNN`, `TS-`) as malformed, surfacing silent drift mechanically.
+
+**Pairs with.** Issue 6 (skill template field-name divergence from schema — same family of "template / framework convention not aligned") and Issue 12 (no canonical machine-readable index — both surface that the framework's identifier conventions need tighter machine-readability).
+
+---
+
+### Issue 18 — Author-testspec skill has no protocol when canonical root-layer parent is partially missing (Product Brief absent)
+
+**Where surfaced.** `vmodel-skill-author-testspec` pilot run on `specs/testspec.md` (2026-05-03). The skill's `## Inputs` section names the parent spec for each layer:
+- Leaf: parent Detailed Design.
+- Branch: parent Architecture.
+- Root: Requirements + Product Brief.
+
+vmodel-core has Requirements (`specs/requirements.md`) but no Product Brief (the gap formalised in Issue 1 / decision γ). Three coherent paths were available at session start, none sanctioned by the skill:
+
+- **(a)** HALT and demand the Product Brief be authored first. Defensible per HALT condition #1 ("missing parent spec"), but the upstream gap is structural (decision γ unresolved) and can't be closed at testspec authoring time.
+- **(b)** Author a *branch-layer* TestSpec at root scope, deriving from Architecture only. Mismatches `references/per-layer-weight.md` which says root scope → `level: system`, not `level: integration`.
+- **(c)** Author a hybrid: `level: system` (matches scope position) with branch-shape cases (because the only available parent is Architecture). Documented as deviation in Overview.
+
+**Resolution improvised this session.** Path (c) — `level: system`, branch-shape cases, hybrid posture explicitly declared in Overview, with a "replacement on Product Brief authoring" follow-up. The matched review skill on 2026-05-04 accepted the hybrid as a documented deviation (not a refusal trip), with one specific point-finding (TC-024 named an internal Go interface method in `expected:`, fixed in revision).
+
+**The gap.**
+
+1. **SKILL.md HALT condition #1 is too coarse for partial-parent cases.** The skill says: *"missing parent spec — leaf without parent DD; branch without parent Architecture; root without Requirements + Product Brief"* → HALT. But the root case is more nuanced: Requirements exists, Product Brief does not. The skill doesn't distinguish "no parent at all" from "one of two canonical parents present, the other missing for a documented upstream-traceable reason".
+2. **`references/per-layer-weight.md` table forces a level-vs-shape contradiction.** Root scope → `level: system`. But case shape comes from the parent spec type: Requirements + PB → root-shape (user-journey narrative); Architecture → branch-shape (fixtures-rich preconditions). With Product Brief absent, the level-vs-shape pairing breaks and the skill provides no fallback rule.
+3. **Generalises across artifact-types.** The same shape applies elsewhere — leaf TestSpec without DD but with Architecture (the parent's parent); branch testspec without Architecture but with Requirements. The author-testspec skill needs a framework-level rule for "next-best parent" with explicit shape-vs-level acceptance criteria.
+
+**Suggested resolution.**
+
+- **Add a partial-parent fallback section** to `vmodel-skill-author-testspec/SKILL.md`: *"When the canonical parent for a layer is partially missing (one of multiple required parents absent for a documented upstream-traceable reason), three paths are acceptable — choose explicitly: (a) HALT and request the missing parent be authored first (default unless the upstream gap is structurally deferred); (b) author from the next-best available parent and document the deviation in Overview, surfacing the hybrid layer/level posture; (c) author against framework-reference content as upstream only when the framework reference is itself a canonical artifact in the framework scope tree. The hybrid (b) path requires: declared `level:` follows scope position; declared case shape follows the actual parent spec type; deviation explicitly documented in Overview with a 'replacement on canonical-parent authoring' follow-up."*
+- **Add a row to `references/per-layer-weight.md`** for the hybrid case: *"Root scope, derived from Architecture only (Product Brief absent for documented reason): `level: system` + branch case shape; expected: in user-vocabulary-equivalent terms (verdict, findings, exit codes, HTML), not internal API names."*
+- **Cross-link to Issue 9.** The same upstream-missing pattern affects every author skill; the testspec-specific instance should be unified with the generalised protocol from Issue 9.
+
+**Pairs with.** Issue 9 (no protocol for downstream artifacts with no canonical upstream — same family, generalised) and Issue 1 (Product Brief absence is the specific upstream gap that triggered this session's hybrid).
+
+---
+
+### Issue 19 — Author-testspec refusal-C boundary is unclear for upstream-pending NFR thresholds
+
+**Where surfaced.** `vmodel-skill-author-testspec` authoring of TC-023 (REQ-022 latency NFR) and review by `vmodel-skill-review-testspec` (2026-05-04). The case carried `expected.threshold: "TBD-by-REQ-022-pilot-calibration"` because REQ-022 in the parent requirements artifact carries an explicit follow-up to set fail/goal/stretch/wish from pilot calibration (the resolution Issue 7 documented).
+
+The author self-flagged `[QB-FAIL: oracle-specificity]` in the case's notes. On adversarial review, the reviewer judged this NOT to be a refusal-C trip on the grounds that:
+
+- Refusal-C tells (per `references/case-quality.md`) are qualitative phrases: "verifies behaviour", "works correctly", "does not throw" alone, "non-null" alone, "instance of X" alone.
+- A structured placeholder string (`"TBD-by-REQ-022-pilot-calibration"`) with named upstream owner and resolution path is structurally different from a qualitative phrase.
+- The skill's own template (`templates/coverage-mutation-bar.yaml.tmpl`) explicitly permits `"TBD-by-project-policy"` placeholders in coverage thresholds; same logic should apply to performance thresholds with documented upstream-pending resolution.
+
+The reviewer captured the case as `info` (downstream-pending), not soft-reject.
+
+**The gap.**
+
+1. **Skill silence on the placeholder pattern.** `references/case-quality.md` enumerates refusal-C tells but does not address structured placeholders. An author following the rules strictly might either (a) refuse to author the case at all (HALT), or (b) hard-reject themselves at draft time (refusal-C self-trip) — both wrong outcomes when the upstream NFR is legitimately pending and the case shape is fully specified.
+2. **Reviewer judgment is precedent, not rule.** The 2026-05-04 review's "info, not refusal-C" call was the reviewer's independent reasoning, not a written rule. A different reviewer (or autonomous review run) might trip refusal-C on the same case.
+3. **Pattern applies beyond performance.** The same pattern surfaces wherever an oracle's literal value depends on a downstream-pending decision: TC-007's "or equivalent locale-stable phrasing decided by reporter DD" (HTML literal strings deferred to reporter DD), TC-022's abstract subcommand description (CLI surface deferred to cli-adapter DD).
+
+**Suggested resolution.**
+
+- **Add a placeholder-oracle subsection** to `references/case-quality.md`: *"A structured placeholder oracle is permissible when (a) the placeholder string is explicitly typed (e.g., `\"TBD-by-REQ-022-pilot-calibration\"`, not `\"TBD\"`), (b) the resolution path is named (a specific upstream artifact, requirement, or DD), (c) a named owner is identified for closing the gap, and (d) the case's surrounding oracle elements (metric, sample size, environment) are fully specified. Such cases are not refusal-C trips and are captured as `info` rather than soft-reject. They are NOT executable as CI gates until the placeholder resolves; the artifact's Open follow-ups section tracks the resolution. Distinct from qualitative phrases ('works correctly', 'does not throw' alone) which are refusal-C."*
+- **Mirror the rule in review skills.** Update `vmodel-skill-review-testspec/references/case-quality-checks.md` to explicitly distinguish placeholder oracles from weak assertions, citing the four conditions above. Add a `check.oracle.deferred-placeholder` `info` finding for cases that meet the criteria; reserve `check.oracle.weak-assertion` for the genuinely qualitative cases.
+- **Document the pattern at template level.** Add an example placeholder oracle to `templates/case-branch.yaml.tmpl` (and case-root.yaml.tmpl) showing the four-condition shape, distinguishing it from a weak assertion in a leading comment.
+
+**Pairs with.** Issue 4 (no-design-language discipline silent on premature numerical commitments) and Issue 7 (NFR five-element rule has no protocol for explicitly deferred numerical targets) — all three concern the same gap: the framework's no-fabrication discipline is specified for vocabulary and numbers at *requirements* time, but its downstream consequences at *testspec* time are not articulated.
+
+---
+
+### Issue 20 — Author-testspec skill does not explicitly mandate per-typed-error case coverage
+
+**Where surfaced.** `vmodel-skill-author-testspec` first-draft authoring of `specs/testspec.md` (2026-05-03). The architecture's IArtifactLoad interface declares four typed errors:
+
+```yaml
+errors:
+  - { code: "ErrTargetUnreadable", meaning: "..." }
+  - { code: "ErrTargetNotFound",   meaning: "..." }
+  - { code: "ErrParseFailure",     meaning: "..." }
+  - { code: "ErrIOFailure",        meaning: "..." }
+```
+
+The first draft covered three: ErrParseFailure (TC-004), ErrTargetUnreadable (TC-005). ErrTargetNotFound was missed; ErrIOFailure was rolled into ErrParseFailure's halt-and-report case (TC-004) without an isolating case. The 2026-05-04 review caught ErrTargetNotFound as F-002 (`check.derivation.error-path-uncovered`); ErrIOFailure remains unverified.
+
+**The gap.**
+
+1. **`references/architecture-traceability-cues.md` says only:** *"Interface entry — precondition → Error case forcing precondition violation across the boundary"*. That instructs on preconditions, not on the `errors:` enum's exhaustiveness. An author who derives cases from preconditions only (rather than from the typed-error enum) will miss errors that don't correspond to a precondition.
+2. **`references/derivation-strategies.md` for the `error` strategy says:** *"One case per detection condition asserting typed error + state guarantee"*. This is closer but still ambiguous — "detection condition" can be read as "precondition violation", which is a subset of typed-error enum entries.
+3. **Empirical signal.** This session, IArtifactLoad declared 4 typed errors; the first draft covered 2 of 4 (50% coverage at draft time). Pairs with Issue 11's empirical signal (75% defect rate at the propagation interface for ADR-author skill); both indicate that "the right discipline exists at review time but not at author time" pattern is a recurring framework gap.
+
+**Suggested resolution.**
+
+- **Add explicit typed-error-enum coverage rule** to `references/architecture-traceability-cues.md`:
+  > *"Every entry in an interface's `errors:` enum requires at least one case under the `error` or `fault-injection` strategy. The case's `verifies:` resolves to `ARCH.interfaces.<name>.errors.<code>`. Roll-up cases (one case covering multiple errors via shared halt-and-report path) are permissible when the parent interface contract treats them uniformly, but each rolled-up error code MUST be cited explicitly in the case's `verifies:` list. Missing-error coverage is a soft-reject (`check.derivation.error-path-uncovered`), not refusal."*
+- **Add a per-case `verifies:` granularity hint** to the slot-fill examples in `architecture-traceability-cues.md` showing typed-error-enum-level qualification (e.g., `ARCH.interfaces.IArtifactLoad.errors.ErrTargetNotFound`).
+- **Mirror the rule in `vmodel-skill-review-testspec`** so the review skill enumerates the parent's typed-error enum and lists missing-coverage by code, rather than catching only the most visible omission.
+
+**Pairs with.** Issue 11 (per-skill discipline gap) and Issue 16 (architecture-author skill landing rules) — same shape: mechanically-detectable failure mode where the review skill catches what the author skill emits without a gate.
+
+---
+
+### Issue 21 — Implicit-`verifies` pattern: REQs exercised by precondition or expected text but not listed in case-level `verifies:`
+
+**Where surfaced.** `vmodel-skill-review-testspec` adversarial review of `specs/testspec.md` (2026-05-04), finding F-005. Multiple cases referenced specific REQ-NNN content in their `preconditions:` or `expected:` text without listing the REQ in their `verifies:` list:
+
+- **TC-001** preconditions: `"Output format: JSON (the AI-caller default per REQ-024)"` — exercises REQ-024 (validation CLI surface), but `verifies:` did not include REQ-024.
+- **TC-001 / TC-002 / TC-004** expected: assert verdict-record values from the closed set `{pass, fail, system-error}` (REQ-027's enum), but `verifies:` did not include REQ-027.
+- **TC-006 / TC-007 / TC-008 / TC-009** all assert HTML output per REQ-025, but only one (TC-006 after revision) cites REQ-025.
+- **TC-022** uses the version manifest mechanism per REQ-030 + REQ-032, but the first draft cited only REQ-032.
+
+The review surfaced 4 unlinked REQs across 24 first-draft cases; revisions on 2026-05-04 added the citations. This is structurally similar to F-002 (typed-error enum coverage) but for requirement-level traceability rather than typed-error-level.
+
+**The gap.**
+
+1. **Skill silence on REQ-citation discipline.** `references/verifies-traceability.md` says *"every `verifies:` element must resolve to a live ID in the upstream artifacts"* and discusses granularity per layer, but does not say *"every REQ-NNN whose content the case references in `preconditions:` or `expected:` MUST be listed in `verifies:`"*. The author can implicitly exercise a REQ without citing it.
+2. **Empirical signal.** First-draft testspec implicitly exercised at least 8 REQs (REQ-024, REQ-025, REQ-027, REQ-030 — plus probably others) without citation. Approximately 30% under-citation rate at draft time.
+3. **Knock-on effect: requirement-unverified soft-rejects at review time.** F-005 was the dominant soft-reject in the 2026-05-04 review precisely because of this pattern. Five REQs reported as unverified, four of which were actually exercised but uncited.
+4. **The author-time discipline is mechanically derivable.** A simple text-grep of each case's preconditions + expected for `REQ-NNN` strings, cross-referenced against the case's `verifies:` list, would mechanically catch the gap. Currently no such gate exists.
+
+**Suggested resolution.**
+
+- **Add an implicit-`verifies` rule** to `references/verifies-traceability.md`: *"When a case's `preconditions:` or `expected:` text mentions a specific upstream identifier (REQ-NNN, IC-NNN, ADR-NNN, ARCH.interfaces.X), that identifier MUST appear in the case's `verifies:` list. The text reference is the case's commitment to verifying that upstream content; omitting it from `verifies:` produces a silent traceability gap. Pre-publish self-check: grep each case's preconditions and expected text for upstream-id patterns; cross-reference against the verifies list."*
+- **Add a self-check step** to `vmodel-skill-author-testspec/SKILL.md` Step 6 (Specify each case to the oracle bar): *"Before declaring the case complete, scan its preconditions and expected for any upstream-id pattern (`REQ-\d+`, `IC-\d+`, `ADR-\d+`, `ARCH\.\w+`) and confirm every match appears in the case's `verifies:` list."*
+- **Add a review-side check** `check.verifies.implicit-reference-uncited` to `vmodel-skill-review-testspec`. Mechanically derivable; high signal-to-noise.
+
+**Pairs with.** Issue 20 (typed-error enum coverage discipline), Issue 11 (per-skill discipline caught at review only), Issue 16 (architecture landing rules) — all four concern mechanically-detectable failure modes that should be author-time gates but currently surface only at review.
+
+### Issue 22 - files are growing too large. 
+Even for a project quite small like this one, the architecture.md is above 30k tokens. a session of just running a single author skill have been at around 250-300k tokens, and review at around 100k. This is too large for doing quality work in anything but the high-end models.
+
+### Issue 23 - unclear what the testspec should verify. is it requirements? or is it architecture?
+

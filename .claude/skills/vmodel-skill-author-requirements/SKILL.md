@@ -61,6 +61,10 @@ A single Markdown file using the structure in `templates/requirements.md.tmpl`. 
 
 Default output filename: `requirements.md`. If the project follows a scope-tree convention (e.g. `<scope>/requirements.md`), follow it.
 
+## Cross-cutting authoring discipline
+
+Apply the six rules in `references/authoring-discipline.md` across every authoring step. Most relevant here: Rule 0 (no `n/a + justification` for omitted slots, no self-attestation prose), Rule 3 (rationale = one line + ADR cite when a governing ADR exists, no re-narration), Rule 5 (cite upstream IDs by reference, do not restate parent-requirement or product-brief content verbatim). Rule 1 (boundary-only), Rule 2 (small-system collapse), and Rule 4 (diagram-or-prose) apply universally but are less load-bearing for requirements authoring. Review skills enforce all six as `check.discipline.<rule>` findings.
+
 ## Orchestration
 
 Author the document in this order. Each step has its own reference file with the craft rules. Treat the references as the source of truth for craft; this section is a checklist.
@@ -186,6 +190,7 @@ That's it — one file. The skill does not create directories, schemas, validato
 
 ## Pointers
 
+- `references/authoring-discipline.md` — 6 cross-cutting rules (product-shape, layering, compression) — applies to all authoring steps
 - `references/ears-templates.md` — five EARS patterns + compound rules + the cargo-culting trap
 - `references/requirement-types.md` — five-type taxonomy + decision table for classification
 - `references/statement-quality.md` — atomic / testable / solution-free + box test + complementary-pair rule

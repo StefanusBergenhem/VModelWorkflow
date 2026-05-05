@@ -1,6 +1,6 @@
 ---
 name: vmodel-skill-author-adr
-description: Author one Architecture Decision Record (ADR — Markdown with YAML front-matter, immutable once accepted) for one load-bearing decision that meets the three-condition threshold (load-bearing AND ≥2 real options AND contingent on assumptions that may change). Use when capturing a decision exposed during architecture authoring (consuming a `[NEEDS-ADR: <decision>]` stub), recording an external policy decision before its consuming architecture, drafting a Reversibility answer with rollback path or named sign-off, propagating consequences via a new requirement at the ADR's scope or `governing_adrs` from child artifacts, superseding an older ADR, or retrofitting from existing code with `recovery_status: unknown` on human-only fields. Refuses fabricated rationale, missing Reversibility answer, single-option alternatives, routine-choice ADRs, and Spec-Ambiguity-Test failure. Triggers — write ADR, draft adr-NNN.md, capture decision, externalise NEEDS-ADR stub, supersede ADR, retrofit ADR from code.
+description: Author one Architecture Decision Record (ADR — Markdown with YAML front-matter, immutable once accepted) for one load-bearing decision that meets the three-condition threshold (load-bearing AND ≥2 real options AND contingent on assumptions that may change). Use when capturing a decision exposed during architecture authoring (consuming a `[DEFER-ADR: <decision>]` marker), recording an external policy decision before its consuming architecture, drafting a Reversibility answer with rollback path or named sign-off, propagating consequences via a new requirement at the ADR's scope or `governing_adrs` from child artifacts, superseding an older ADR, or retrofitting from existing code with `recovery_status: unknown` on human-only fields. Refuses fabricated rationale, missing Reversibility answer, single-option alternatives, routine-choice ADRs, and Spec-Ambiguity-Test failure. Triggers — write ADR, draft adr-NNN.md, capture decision, externalise DEFER-ADR marker, supersede ADR, retrofit ADR from code.
 type: skill
 ---
 
@@ -15,7 +15,7 @@ The skill is self-contained. Every reference, template, anti-pattern catalog, an
 Activate this skill when the user asks to:
 
 - Write or draft an ADR for one load-bearing decision
-- Capture a decision exposed during architecture authoring (consume a `[NEEDS-ADR: <decision>]` stub)
+- Capture a decision exposed during architecture authoring (consume a `[DEFER-ADR: <decision>]` marker)
 - Record an externally-imposed policy decision before its consuming architecture
 - Draft the Reversibility analysis (rollback path or named sign-off) for a decision
 - Propagate ADR consequences via a new requirement at the ADR's scope or `governing_adrs` from child artifacts
@@ -49,6 +49,10 @@ If the threshold is not met, **HALT** (HALT condition #2) — refusal E fires; o
 A single Markdown file using the structure in `templates/adr.md.tmpl`. Front-matter carries the required fields plus optional supersession and retrofit fields. The body carries the canonical sections in order (Context → Decision → Alternatives → Rationale → Consequences) with the Reversibility sub-prompt as the last paragraph of Consequences, plus a Propagation block listing each consequence's downstream route.
 
 Default output filename: `<repo>/specs/adrs/adr-NNN-<slug>.md`. ADRs live flat regardless of which scopes they apply to — `scope_tags` names the scope(s).
+
+## Cross-cutting authoring discipline
+
+Apply the six rules in `references/authoring-discipline.md` across every authoring step. Most relevant here: Rule 0 (no `n/a + justification` for omitted slots, no self-attestation prose — an ADR's body is the product-shape decision record, not a meta-narrative about its own authoring). Rule 3 is meta-relevant — an ADR is the canonical place where rationale is captured at length; subsequent artifacts reference *this* ADR per Rule 3 rather than re-narrating the decision. Rule 5 (cite upstream / governing ADRs and parent Architecture stub by ID; do not restate the originating context). Rule 1 (boundary-only), Rule 2 (small-system collapse), and Rule 4 (diagram-or-prose) apply universally but are less load-bearing for ADR authoring. Review skills enforce all six as `check.discipline.<rule>` findings.
 
 ## Authoring procedure
 
@@ -180,7 +184,7 @@ When halting, produce a structured handover: what was authored so far, what is m
 
 Two orthogonal flags drive which references load and which template applies:
 
-- **Origin.** Extraction-from-stub → consume the parent Architecture's `[NEEDS-ADR: ...]` stub; load `extraction-cues.md`. Pre-existing-policy → ADR is written first, consuming Architecture references it via `governing_adrs:` from the start.
+- **Origin.** Extraction-from-marker → consume the parent Architecture's `[DEFER-ADR: ...]` marker; load `extraction-cues.md`. Pre-existing-policy → ADR is written first, consuming Architecture references it via `governing_adrs:` from the start.
 - **Greenfield vs Retrofit.** Greenfield → omit `recovery_status` from front-matter; skip Step 9; cases derived from the live conversation. Retrofit → declare `recovery_status` on human-only fields (`unknown` is the default); apply Step 9; use `templates/retrofit-stub.md.tmpl`.
 
 ## Self-check before delivering
@@ -197,6 +201,7 @@ That's it — one file. The skill does not create directories, schemas, validato
 
 ## Reference index
 
+- `references/authoring-discipline.md` — 6 cross-cutting rules (product-shape, layering, compression) — applies to all authoring steps
 - `references/adr-purpose-and-shape.md` — cross-cutting role; three-condition threshold; capture-then-design flow; Y-statement compact form
 - `references/canonical-fields-and-body.md` — front-matter required fields; status lifecycle; body section ordering
 - `references/context-and-drivers.md` — forces vs problem domain; named drivers; assumptions enumeration
@@ -205,7 +210,7 @@ That's it — one file. The skill does not create directories, schemas, validato
 - `references/consequences-and-reversibility.md` — load-bearing — positives and negatives; Reversibility sub-prompt grammar; reversible vs irreversible answer shapes
 - `references/propagation-and-completeness.md` — hybrid rule (new req at scope OR governing_adrs from child); completeness rule
 - `references/immutability-and-supersession.md` — immutable bodies; supersession dance; the historical graph
-- `references/extraction-cues.md` — when an upstream `[NEEDS-ADR: ...]` stub fires; consuming the stub; pre-existing policy as alternative origin
+- `references/extraction-cues.md` — when an upstream `[DEFER-ADR: ...]` marker fires; consuming the marker; pre-existing policy as alternative origin
 - `references/retrofit-discipline.md` — four human-only fields; recovery_status states; honest-unknown ADR shape
 - `references/anti-patterns.md` — 11 anti-patterns + QB self-checklist + the 46-ID catalog (single source of truth on the author side)
 - `templates/adr.md.tmpl` — full document scaffold with all five body sections + Reversibility prompt verbatim
