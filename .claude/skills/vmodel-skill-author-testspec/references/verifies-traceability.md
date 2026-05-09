@@ -38,6 +38,45 @@ verifies:
     - "<upstream-ID-2>"      # multiple permitted when one case asserts a property over multiple upstream elements
 ```
 
+## Empty-scope worked example
+
+Per the empty-scope ID rule (TARGET_ARCHITECTURE §5.4), at root scope (`scope: ""`) the scope segment is omitted from derived identifiers — so `verifies:` entries pointing at root-scope artifacts use the bare prefix. Never emit `DD-.field`, `ARCH-.interfaces.X`, or `TC--001`.
+
+```yaml
+# Root scope (scope: "") — verifies entries against root-scope artifacts.
+# Bare `DD`, `ARCH` prefixes; `REQ-NNN` and `PB-outcome-X` carry no scope at any layer.
+
+# Artifact-level (front-matter)
+verifies:
+  - "REQ-007"
+  - "PB-outcome-collaboration-onboarding"
+  - "ARCH.interfaces.OrderPlacement"
+
+# Per-case
+- id: TC-001
+  verifies:
+    - "REQ-007"
+- id: TC-002
+  verifies:
+    - "DD.public_interface.sort.postconditions.on_success"
+```
+
+```yaml
+# Branch / leaf scope (scope: "cart-service" or "session-store/expiry-calculator") — suffix appears.
+
+# Artifact-level (front-matter)
+verifies:
+  - "ARCH-cart-service.interfaces.OrderPlacement"
+
+# Per-case
+- id: TC-cart-service-001
+  verifies:
+    - "ARCH-cart-service.interfaces.OrderPlacement.postconditions.on_accept"
+- id: TC-session-store-expiry-calculator-001
+  verifies:
+    - "DD-session-store-expiry-calculator.public_interface.sort.postconditions.on_success"
+```
+
 ## Resolution check
 
 When authoring → for each `verifies:` element, confirm the ID exists in the upstream spec being read (DD / Architecture / Requirements / PB). When the ID does not exist:
@@ -60,6 +99,12 @@ When the count grows beyond ~4 upstream elements per case → the case is doing 
 - **Orphan tests** — cases with no upstream link cannot be verified for coverage; deletion has no effect on derivation traceability.
 - **Granularity-mismatched cases** — a leaf case pointing at `REQ-001` reveals that the leaf author skipped the DD layer's contract.
 - **`verifies` as path or filename** — paths point at code/test files; the TestSpec verifies *spec elements*, not files.
+
+## Implicit-verifies rule
+
+When a case's `preconditions:` or `expected:` text mentions a specific upstream identifier (`REQ-\d+`, `IC-\d+`, `ADR-\d+`, `ARCH\.\w+`), that identifier MUST appear in the case's `verifies:` list. The text reference is the case's commitment to verifying that upstream content; omitting it from `verifies:` produces a silent traceability gap. Pre-publish self-check: `scripts/check-implicit-verifies.py` greps each case for upstream-id patterns and cross-references against `verifies:`.
+
+Granularity convention: a parent ID in `verifies:` covers any sub-path mentioned in prose (`ARCH.interfaces.IValidate` covers `ARCH.interfaces.IValidate.errors.ErrInvalidVerdict`). A specific sub-path in `verifies:` covers itself only.
 
 ## Cross-link
 

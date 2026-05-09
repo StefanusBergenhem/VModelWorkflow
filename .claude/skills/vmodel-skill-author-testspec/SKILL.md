@@ -33,13 +33,15 @@ Expected upstream context (ask if missing):
 
 - **Scope identifier** — the path and name of the scope this TestSpec covers (e.g., `session-store/expiry-calculator`, or `cart-service` for a branch, or `/` for root)
 - **Layer** — leaf / branch / root. Determines the parent spec type and the case shape.
-- **Parent spec artifact(s)** —
+- **Parent spec artifact(s)** — **Position C: at non-leaf scopes the layer has two upstream derivation sources, not one.** See "Verification targets per scope" in TARGET_ARCHITECTURE §5.3.
   - *Leaf:* the parent Detailed Design (its Public Interface contracts, Data Structure invariants, error-handling matrix, state machine).
-  - *Branch:* the parent Architecture (its interface contracts, composition invariants, allocated requirements, quality-attribute allocations).
-  - *Root:* the root Requirements artifact + the Product Brief.
+  - *Branch:* **both** the parent Architecture (Composition section, interface contracts, QA allocations, resilience strategies) **and** the branch's own Requirements (behavioural intent). Behavioural cases cite `REQ-{scope}-*`; composition cases cite `ARCH-{scope}` composition entries.
+  - *Root:* the Product Brief + root Requirements + root Architecture Composition. Behavioural cases cite `REQ-*` or `PB`; composition cases cite `ARCH` composition entries.
 - **Governing ADRs** — cross-cutting decisions that constrain testing approach (e.g., environment shape, fixture strategy)
 - **Recovery posture** — greenfield (omit `recovery_status`) or retrofit (declare `recovery_status` on reconstructed `verifies`)
 - **Project policy on coverage / mutation thresholds** — if the project has named values, capture them; otherwise the bar is populated with placeholder values and a note that policy will fix them
+- **Prior review files** (optional, consumed when present) — on a revision pass, the latest review at `specs/.reviews/<artifact-id>-*.yaml` (lexically last) is read and findings are addressed. Per TARGET_ARCHITECTURE §5.6 review output convention.
+- **`references/partial-parent-protocol.md`** — partial-parent and no-canonical-upstream protocol — three permitted paths when canonical upstream is missing or partial. Required reading whenever any canonical parent for the layer is absent or partial — leaf without DD; branch missing Architecture or Requirements; root missing Product Brief, Requirements, or Architecture Composition. Multi-parent scopes (branch, root) trigger this protocol on partial absence even when one parent is present.
 
 If the parent spec is not provided, **HALT** (see HALT condition #1) — refusal B fires when TestSpec authoring proceeds without an upstream artifact.
 
@@ -57,6 +59,39 @@ Apply the six rules in `references/authoring-discipline.md` across every authori
 
 Author the document in this order. Each step has its own reference file with the craft rules. Treat the references as the source of truth; this section is a checklist.
 
+### Step 0 — Read prior review (revision pass only)
+
+If `specs/.reviews/<artifact-id>-*.yaml` contains review files for this artifact:
+1. Pick the lexically last (latest review run by date + sequence).
+2. Walk every finding.
+3. For each finding, decide: apply (revise this artifact), push back with rationale (finding is wrong), or defer with explicit marker (out of scope here, named follow-up).
+4. Address findings in the revision. The revision narrative names which findings were addressed and how.
+
+Skip this step on greenfield (first author pass) — no review files yet.
+
+### Step 0.5 — Canonical-upstream check (every run)
+
+Before walking the parent spec for derivation seeds, verify whether the canonical upstream is fully present, partially present, or fully absent. Canonical upstream depends on layer:
+
+- *Leaf:* parent Detailed Design.
+- *Branch:* parent Architecture **AND** branch Requirements (both canonical — Position C, multi-parent).
+- *Root:* Product Brief + root Requirements + root Architecture Composition (all three canonical — multi-parent).
+
+For multi-parent layers (branch, root), the protocol fires on **partial** absence — even when one canonical parent is present, a missing other parent is a real gap.
+
+If the canonical upstream is missing or partial:
+
+1. Load `references/partial-parent-protocol.md`.
+2. Pick path **(a) HALT**, **(b) author from next-best parent + documented deviation**, or **(c) cite a framework artifact as upstream** — explicitly. Silent choice is a hard violation.
+3. Document the choice in this artifact's *Overview* section in 1–2 sentences naming the path and why it was chosen (which canonical parent is missing, which deferral applies, what was used in its place).
+4. Under path (b) for TestSpec: **`level:` follows scope position** (root → `system`, branch → `integration`, leaf → `unit`). Level does NOT shift just because a parent is missing. **Case shape follows the *actual* parent type** — if branch TestSpec is authored from Architecture only because Requirements is missing, cases carry branch-Architecture shape (fixtures-rich preconditions, interface DbC oracle), not requirements shape.
+5. `derived_from` and `verifies` cite only existing, resolvable artifact ids — never the missing parent, never a fabricated placeholder id.
+6. Under path (b), add an *Open follow-ups* entry that owns "replacement on canonical-parent authoring" with title, owner, action, and citation.
+
+If the canonical upstream is fully present (all parents for the layer), *Overview* says so in one short clause ("(canonical parents present)") and the protocol is satisfied without further action.
+
+→ See `references/partial-parent-protocol.md`
+
 ### Step 1 — Locate the layer and parent spec
 
 Determine which layer this TestSpec serves (leaf / branch / root). Identify the parent spec artifact. Note its derivation surface — the elements that will seed cases.
@@ -67,7 +102,7 @@ Determine which layer this TestSpec serves (leaf / branch / root). Identify the 
 
 Walk the parent spec end-to-end and list the elements that demand a case. The element type depends on layer; use the upstream-seam reference for the layer.
 
-→ See `references/dd-traceability-cues.md` (leaf), `references/architecture-traceability-cues.md` (branch), `references/requirements-traceability-cues.md` (root)
+→ See `references/dd-traceability-cues.md` (leaf), `references/architecture-traceability-cues.md` AND `references/requirements-traceability-cues.md` (branch — load both), `references/requirements-traceability-cues.md` AND `references/architecture-traceability-cues.md` (root — load both, plus PB outcomes covered in the requirements file)
 
 ### Step 3 — Apply derivation strategies
 
@@ -96,6 +131,13 @@ For every case: the title is a scenario (not a method name); the type is from th
 
 → See `references/case-quality.md` (F.I.R.S.T., AAA, oracle specificity), `references/verifies-traceability.md`
 
+Implicit-verifies self-check: when a case mentions an upstream identifier (REQ-NNN, IC-NNN, ADR-NNN, ARCH.<path>) in `preconditions:` or `expected:` text, that identifier MUST appear in the case's `verifies:` list. Mechanically detected by `scripts/check-implicit-verifies.py` at Step 11.
+
+Typed-error enum coverage: every entry in a parent interface's `errors:` enum requires at least one case under the `error` or `fault-injection` strategy. Roll-up cases (one case covering multiple errors via shared halt-and-report path) are permissible when the parent contract treats them uniformly, but each rolled-up code MUST be cited in the case's `verifies:` list. Mechanically detected by `scripts/check-typed-error-coverage.py` at Step 11.
+
+→ See `references/verifies-traceability.md`
+→ See `references/architecture-traceability-cues.md`
+
 ### Step 7 — Apply test-double discipline (branch and leaf cases involving doubles)
 
 When a case names a test double in preconditions, name the type (dummy / stub / spy / mock / fake). Fakes require a contract test against the real implementation. Cap of two doubles per leaf case; over-threshold flags a design issue. Reserve interaction verification for cases where the interaction itself is the observable behaviour.
@@ -120,7 +162,21 @@ Sweep the document against the thirteen anti-patterns (code-to-test derivation, 
 
 → See `references/anti-patterns.md`
 
-### Step 11 — Run Quality Bar checklist + Spec Ambiguity Test
+### Step 11 — Pre-publish mechanical self-check
+
+Run the skill's mechanical check scripts before the Quality Bar gate. Each finding must be addressed (fix the artifact, defend with inline rationale, or escalate if the script appears wrong) — never silently ignored. Scripts emit `<file>:<line>:<rule-id>:<message>` on stdout; exit 0 = clean, 1 = findings, 2 = script error.
+
+Scripts for this skill:
+
+- `scripts/check-implicit-verifies.py <specs-root>` — case-level upstream-id citation completeness (every REQ/IC/ADR/ARCH ID mentioned in `preconditions:` or `expected:` text must appear in the case's `verifies:`)
+- `scripts/check-typed-error-coverage.py <specs-root>` — typed-error enum coverage from parent interfaces (every `errors:` enum entry has at least one covering case)
+- `scripts/check-id-encoding.py <specs-root>` — detects malformed empty-scope id forms (`TS-`, `TC--NNN`, `ARCH-.interfaces.X`) per TARGET §5.4 empty-scope rule
+
+Verify also: when the partial-parent protocol fired (Step 0.5), *Overview* explicitly names the chosen path (a/b/c); under path (b), an *Open follow-ups* entry owns the canonical-parent-replacement; declared `level:` matches scope position; case shape matches the actual parent type used; no fabricated upstream ids in `derived_from` or `verifies`.
+
+→ See `/home/stefanus/repos/VModelWorkflow/docs/authoring-self-check.md`
+
+### Step 12 — Run Quality Bar checklist + Spec Ambiguity Test
 
 Run the Yes/No checklist (eight QB groups + the SAT meta-gate). Flag any No inline; do not silently pass. The SAT is the override: a junior engineer reading only this TestSpec (plus the parent spec and governing ADRs) must be able to write the test code, and a reviewer must be able to tell whether every equivalence class, every boundary, every error path was considered.
 
@@ -177,7 +233,7 @@ When halting, produce a structured handover: what was authored so far, what is m
 
 Two orthogonal flags drive which references load and which case template applies:
 
-- **Layer.** Leaf → load `dd-traceability-cues.md`, use `case-leaf.yaml.tmpl`. Branch → load `architecture-traceability-cues.md`, use `case-branch.yaml.tmpl`. Root → load `requirements-traceability-cues.md`, use `case-root.yaml.tmpl`.
+- **Layer.** Leaf → load `dd-traceability-cues.md`, use `case-leaf.yaml.tmpl`. Branch → load BOTH `architecture-traceability-cues.md` (Composition + interface seam) AND `requirements-traceability-cues.md` (behavioural seam against branch Requirements), use `case-branch.yaml.tmpl`. Root → load BOTH `requirements-traceability-cues.md` (Requirements + PB outcomes seam) AND `architecture-traceability-cues.md` (root Composition seam), use `case-root.yaml.tmpl`.
 
 - **Greenfield vs Retrofit.** Greenfield → omit `recovery_status` from front-matter; skip Step 9; cases derived from spec only. Retrofit → declare `recovery_status` (per `verifies` link); apply Step 9; pair every reconstructed `verifies` with `recovery_status: unknown` and every `unknown` with a follow-up owner.
 
@@ -196,6 +252,7 @@ That's it — one file. The skill does not create directories, schemas, validato
 ## Reference index
 
 - `references/authoring-discipline.md` — 6 cross-cutting rules (product-shape, layering, compression) — applies to all authoring steps
+- `references/partial-parent-protocol.md` — partial-parent and no-canonical-upstream protocol — three permitted paths when canonical upstream is missing or partial
 - `references/testspec-purpose-and-shape.md` — V-model placement, derivation source per layer, pre-code authoring discipline
 - `references/derivation-strategies.md` — eleven strategies (functional / boundary / error / fault-injection / property / state-transition / contract / performance / security / accessibility / error-guessing) plus ECP and decision tables
 - `references/per-layer-weight.md` — three case shapes (thin leaf, fixtures-rich branch, journey-narrative root)
@@ -206,8 +263,8 @@ That's it — one file. The skill does not create directories, schemas, validato
 - `references/integration-and-system-specifics.md` — contract testing, environment shapes, specialised cases (perf/sec/a11y), version pinning
 - `references/retrofit-discipline.md` — honest posture; spec-first then map existing; `recovery_status: unknown` on reconstruction; gap report
 - `references/dd-traceability-cues.md` — leaf seam: error matrix → robustness, postcondition → contract, invariant → property, state machine → state-transition, `[NEEDS-TEST: ...]` markers
-- `references/architecture-traceability-cues.md` — branch seam: interfaces → integration, composition invariants → cross-child, allocated requirements → traceable cases, QA allocations → specialised
-- `references/requirements-traceability-cues.md` — root seam: requirements → ≥1 case, NFR five-element → measurable specialised, interface five-dimension → contract or integration, PB outcomes → user-journey
+- `references/architecture-traceability-cues.md` — Architecture-Composition seam: interfaces → integration, composition invariants → cross-child property, QA allocations → specialised, resilience strategies → fault-injection. Loaded at branch (alongside requirements-traceability-cues.md) and at root (alongside requirements-traceability-cues.md, for root Composition coverage).
+- `references/requirements-traceability-cues.md` — Requirements + PB seam: functional REQ → ≥1 case, NFR five-element → measurable specialised, interface five-dimension → contract or integration, PB outcomes (root only) → user-journey. Loaded at branch (against branch Requirements) and at root (against root Requirements + PB).
 - `references/anti-patterns.md` — 13 anti-patterns with name + tells + fix; hard-rejects marked
 - `references/quality-bar-checklist.md` — eight QB groups + SAT meta-gate Yes/No checklist
 - `templates/test-spec.md.tmpl` — full document scaffold
@@ -218,3 +275,4 @@ That's it — one file. The skill does not create directories, schemas, validato
 - `templates/retrofit-stub.yaml.tmpl` — retrofit case scaffold with `# HUMAN-ONLY` markers
 - `examples/good-leaf-expiry-calculator.md` — worked example, leaf scope, eight cases across strategies, populated bar
 - `examples/bad-orphan-and-fabricated.md` — counter-example with annotated refusal trips
+- `scripts/index-deferred-items.py` — informational cross-artifact deferred-items index for the spec tree (Phase 6 Cluster 4)

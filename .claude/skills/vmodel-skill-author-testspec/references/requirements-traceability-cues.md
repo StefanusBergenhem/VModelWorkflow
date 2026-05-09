@@ -1,6 +1,8 @@
-# Requirements + PB ↔ root TestSpec traceability cues
+# Requirements (+ PB at root) ↔ TestSpec traceability cues (branch and root)
 
-When authoring a root TestSpec, the parent specs are root Requirements + the Product Brief. Walk both end-to-end. Root cases verify requirements at the system level using PB vocabulary in `expected:`.
+When authoring a non-leaf TestSpec, layer Requirements is **one of two derivation sources** at this layer (the other is layer Architecture's Composition — see `architecture-traceability-cues.md`). Walk Requirements end-to-end. Cases derived from this seam are **behavioural cases** (functional / boundary / error / state-transition) and cite `REQ-{scope}-*` (or `REQ-001`-style at root). At root scope, also walk the Product Brief — root cases additionally verify PB outcomes at the system level using PB vocabulary in `expected:`.
+
+This file is loaded at branch (against branch Requirements) AND at root (against root Requirements + the Product Brief). The closed-correspondence mappings below apply at both layers; PB-specific rows apply only at root.
 
 ## Table of contents
 
@@ -140,6 +142,43 @@ The interface five-dimension form maps one-to-one to cases per dimension. Skippi
 | Internal API responses as `expected:` | Lower layers — root uses PB vocabulary |
 
 Mistargeting these at root produces ice-cream-cone coverage (many e2e, few lower-level cases) and is flagged.
+
+## Empty-scope worked example
+
+The Requirements + PB seam is the *typical* root case (root scope is empty by definition for most projects). Per the empty-scope ID rule (TARGET_ARCHITECTURE §5.4), case ids drop the scope segment — `TC-001`, not `TC--001`. `REQ-NNN` and `PB-outcome-X` ids carry no scope segment at any layer.
+
+```yaml
+# Root scope (scope: "") — typical: REQ + PB outcomes are root-scope content.
+# Bare `TC-NNN` for the case id; `REQ-007`, `PB-outcome-...` unchanged.
+
+- id: TC-001
+  title: "tenant admin invites teammate; teammate accepts within 7 days; gains Editor role"
+  type: functional
+  verifies:
+    - "REQ-007"
+    - "PB-outcome-collaboration-onboarding"
+  preconditions:
+    - "Environment: production-like"
+    - "Tenant: 'acme-corp'"
+  expected:
+    - "After teammate accepts: tenant 'acme-corp' has the teammate as a member with Editor role"
+```
+
+```yaml
+# Branch scope (scope: "platform-billing") — Requirements at this scope.
+# `TC-platform-billing-NNN` for the case id; `REQ-NFR-002` unchanged.
+
+- id: TC-platform-billing-001
+  title: "billing API p95 latency <= 250ms at 100 RPS"
+  type: performance
+  verifies:
+    - "REQ-NFR-002"
+  preconditions:
+    - "Load: 100 RPS sustained, 5-min ramp, 10-min steady"
+  expected:
+    metric: p95
+    threshold: "<= 250 ms"
+```
 
 ## Cross-link
 

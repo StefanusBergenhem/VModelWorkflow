@@ -1,13 +1,23 @@
+# Empty-scope rule (TARGET_ARCHITECTURE §5.4):
+#   `<<scope-suffix?>>` is a conditional placeholder:
+#     - At root scope (scope: ""), `<<scope-suffix?>>` expands to `` (empty string).
+#     - At non-empty scope (e.g. scope: "app-checkout"), expands to `-app-checkout`.
+#   Concretely:
+#     Per-case id:      `TC<<scope-suffix?>>-NNN` → `TC-001`         at root  /  `TC-app-checkout-001` at branch
+#     Dotted-path ref:  `DD<<scope-suffix?>>.field`
+#                                                  → `DD.field`     at root  /  `DD-app-checkout.field` at branch
+#   Never emit `TC--001` or `DD-.field`.
+#
 # Leaf case (level: unit) — thin shape
 # Use for cases at leaf scope where the parent spec is a Detailed Design.
 # Cases call directly into the public interface; max 2 test doubles.
 
-- id: TC-<<scope>>-NNN
+- id: TC<<scope-suffix?>>-NNN
   title: "<<scenario, not method name. e.g., 'returns earliest of idle and absolute thresholds'>>"
   suite: "<<optional logical grouping, e.g., 'expiry-calculation'>>"
   type: <<functional | boundary | error | property | state-transition | error-guessing>>
   verifies:
-    - "DD-<<scope>>.<<field-or-subfield>>"     # field-level qualification permitted
+    - "DD<<scope-suffix?>>.<<field-or-subfield>>"     # field-level qualification permitted
     # additional upstream IDs only when one case verifies multiple elements
   inputs:
     <<param_a>>: <<value>>

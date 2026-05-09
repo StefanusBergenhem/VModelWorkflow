@@ -36,6 +36,8 @@ Expected upstream context (ask if missing):
 - **Derived-from set** — at least one Requirement (REQ-…) plus optionally sibling DDs, ARCH interfaces, or ADRs that shape the contract; an empty `derived_from` is an orphan design
 - **Governing ADRs** — cross-cutting decisions that constrain choices at this leaf (often inherited from the parent Architecture's `governing_adrs`)
 - **Recovery posture** — greenfield (omit `recovery_status`) or retrofit (declare `recovery_status` and supply source-code references)
+- **Prior review files** (optional, consumed when present) — on a revision pass, the latest review at `specs/.reviews/<artifact-id>-*.yaml` (lexically last) is read and findings are addressed. Per TARGET_ARCHITECTURE §5.6 review output convention.
+- **`references/partial-parent-protocol.md`** — partial-parent and no-canonical-upstream protocol — three permitted paths when canonical upstream is missing or partial. Required reading whenever the canonical upstream (parent Architecture) is absent or only partially present.
 
 If the parent Architecture is not provided, **HALT** (see HALT condition #1) — refusal B fires when DD authoring proceeds without a parent allocation.
 
@@ -52,6 +54,32 @@ Apply the six rules in `references/authoring-discipline.md` across every authori
 ## Authoring procedure
 
 Author the document in this order. Each step has its own reference file with the craft rules. Treat the references as the source of truth; this section is a checklist.
+
+### Step 0 — Read prior review (revision pass only)
+
+If `specs/.reviews/<artifact-id>-*.yaml` contains review files for this artifact:
+1. Pick the lexically last (latest review run by date + sequence).
+2. Walk every finding.
+3. For each finding, decide: apply (revise this artifact), push back with rationale (finding is wrong), or defer with explicit marker (out of scope here, named follow-up).
+4. Address findings in the revision. The revision narrative names which findings were addressed and how.
+
+Skip this step on greenfield (first author pass) — no review files yet.
+
+### Step 0.5 — Canonical-upstream check (every run)
+
+Before locating the leaf in any upstream document, verify whether the canonical upstream is fully present, partially present, or fully absent. Canonical upstream for DD: the parent Architecture artifact (its Decomposition entry for this leaf, its sibling-interface contracts, and inherited governing ADRs). Refusal B (DD-without-parent-Architecture is incomplete) makes path (a) HALT the strong default for DD; (b) and (c) are tightly bounded.
+
+If the canonical upstream is missing or partial:
+
+1. Load `references/partial-parent-protocol.md`.
+2. Pick path **(a) HALT**, **(b) author from next-best parent + documented deviation**, or **(c) cite a framework artifact as upstream** — explicitly. Silent choice is a hard violation. Refusal B already pushes hard toward (a) — pick (b) or (c) only when a structural deferral is documented and the stakeholder explicitly accepts the orphan posture.
+3. Document the choice in this artifact's *Overview* section in 1–2 sentences naming the path and why it was chosen (which canonical parent is missing, which deferral applies, what was used in its place).
+4. `derived_from` cites only existing, resolvable artifact ids — never the missing parent, never a fabricated placeholder id.
+5. Under path (b), add an *Open follow-ups* entry that owns "replacement on canonical-parent authoring" with title, owner, action, and citation.
+
+If the canonical upstream is fully present, *Overview* says so in one short clause ("(canonical parent present)") and the protocol is satisfied without further action.
+
+→ See `references/partial-parent-protocol.md`
 
 ### Step 1 — Locate the leaf in the parent Architecture
 
@@ -131,7 +159,20 @@ Sweep the document against the sixteen anti-patterns: five interface/contract (u
 
 → See `references/anti-patterns.md`
 
-### Step 13 — Run Quality Bar checklist + Spec Ambiguity Test
+### Step 13 — Pre-publish mechanical self-check
+
+Run the skill's mechanical check scripts before the Quality Bar gate. Each finding must be addressed (fix the artifact, defend with inline rationale, or escalate if the script appears wrong) — never silently ignored. Scripts emit `<file>:<line>:<rule-id>:<message>` on stdout; exit 0 = clean, 1 = findings, 2 = script error.
+
+Scripts for this skill:
+
+- `scripts/check-mermaid.py <specs-root>` — state diagram syntax (when state machines are authored)
+- `scripts/check-id-encoding.py <specs-root>` — detects malformed empty-scope id forms (`TS-`, `TC--NNN`, `ARCH-.interfaces.X`) per TARGET §5.4 empty-scope rule
+
+Verify also: when the partial-parent protocol fired (Step 0.5), *Overview* explicitly names the chosen path (a/b/c); under path (b), an *Open follow-ups* entry owns the canonical-parent-replacement; no fabricated upstream ids in `derived_from` or `parent_architecture`.
+
+→ See `/home/stefanus/repos/VModelWorkflow/docs/authoring-self-check.md`
+
+### Step 14 — Run Quality Bar checklist + Spec Ambiguity Test
 
 Run the Yes/No checklist. Items that cannot be answered Yes are flagged inline in the output, not silently passed. Apply the Spec Ambiguity Test as the meta-gate (override): a junior engineer must produce a correct implementation from the DD alone; a test engineer must derive unit tests without seeing the code; an equivalent implementation in a different language must satisfy the same DD.
 
@@ -208,6 +249,7 @@ That's it — one file. The skill does not create directories, schemas, validato
 ## Pointers
 
 - `references/authoring-discipline.md` — 6 cross-cutting rules (product-shape, layering, compression) — applies to all authoring steps
+- `references/partial-parent-protocol.md` — partial-parent and no-canonical-upstream protocol — three permitted paths when canonical upstream is missing or partial
 - `references/dd-purpose-and-shape.md` — purpose of DD, two rules (no duplication, specific enough), the box mental model, 7-section shape, junior-implementable / language-portable / test-derivable triple, parent-Architecture inputs
 - `references/function-contracts.md` — Design-by-Contract (Hoare / Meyer / Liskov), 9 contract elements, units of measure, defensive programming vs DbC, signature-vs-contract distinction
 - `references/data-structures-by-invariant.md` — fields-by-invariant, ownership, lifetime, returned-object semantics, shared-mutable as contract
@@ -229,3 +271,4 @@ That's it — one file. The skill does not create directories, schemas, validato
 - `templates/governing-adr-reference.yaml.tmpl` — front-matter list + body-citation pattern
 - `examples/good-dequeue-service.md` — worked example, all seven sections, greenfield, governing ADR
 - `examples/bad-fabricated-retrofit.md` — counter-example, fabricated retrofit on a session-token validator with annotated tells
+- `scripts/index-deferred-items.py` — informational cross-artifact deferred-items index for the spec tree (Phase 6 Cluster 4)

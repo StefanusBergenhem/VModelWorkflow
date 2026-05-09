@@ -57,7 +57,7 @@ Stakeholder availability for the readback handshake is mandatory regardless of t
 
 A single Markdown file using the structure in `templates/needs.md.tmpl`. The file has YAML front-matter, a stakeholder-voice intent paragraph, typed need sections (functional, quality, constraints, interfaces), a gap section, and success metrics. Every entry carries an explicit `*Confirmed: yes/no.*` flag traced to a readback turn.
 
-Default output filename: `needs.md`. If the user has a scope-tree convention (e.g. `/specs/needs.md`), follow it.
+**Default output path: `specs/needs.md`** — consistent with the framework's scope-tree convention that root-scope artifacts live directly at `/specs/`. If the project provides a non-default specs root, write to `<specs-root>/needs.md`. If the immediate parent directory does not exist, create it via `mkdir -p` as a one-time operational concession to make the path resolvable; the skill does not create deeper structure or sibling artifacts. This rule is deterministic and applies in both interactive and non-interactive use; do not negotiate placement with the user.
 
 ## Orchestration
 
@@ -141,10 +141,10 @@ Before declaring `needs.md` complete, verify:
 ## File layout produced by this skill
 
 ```
-{output-path}/needs.md
+specs/needs.md
 ```
 
-That's it — one file. The skill does not create directories, schemas, validators, or sibling artifacts.
+That's it — one file. Apart from `mkdir -p` of the immediate parent directory when absent (per the path-resolution rule in *Output*), the skill does not create deeper structure, schemas, validators, or sibling artifacts.
 
 ## Pointers
 

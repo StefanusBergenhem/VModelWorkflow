@@ -1,6 +1,8 @@
-# Architecture ↔ branch TestSpec traceability cues
+# Architecture ↔ TestSpec traceability cues (branch and root)
 
-When authoring a branch (non-leaf) TestSpec, the parent Architecture is the derivation source. Walk the Architecture's Decomposition, Interface entries, and Composition section. Branch cases verify cross-child behaviour through interfaces — they do not duplicate leaf-level contract verification.
+When authoring a non-leaf TestSpec, the parent Architecture is **one of two derivation sources** at this layer (the other is layer Requirements — see `requirements-traceability-cues.md`). Walk the Architecture's Decomposition, Interface entries, and Composition section. The cues here cover the **Architecture-Composition seam**: composition cases (integration / contract / property when the property is about wiring) cite `ARCH-{scope}` composition entries; behavioural cases cite Requirements (covered by `requirements-traceability-cues.md`). Cases verify cross-child emergent behaviour through composition surfaces — they do not duplicate leaf-level contract verification.
+
+This file is loaded at branch (against branch Architecture) AND at root (against root Architecture's Composition section, which carries deployment intent and root-level orchestration patterns).
 
 ## Table of contents
 
@@ -123,6 +125,47 @@ When an Architecture interface has no corresponding branch case → finding `che
 | Performance of a single function in isolation | Leaf TestSpec — branch performance cases verify cross-child paths |
 
 Mistargeting these at the branch is over-coverage; the leaf already has them. Branch cases are about the seam, not the leaves.
+
+## Typed-error enum coverage rule
+
+Every entry in a parent interface's `errors:` enum requires at least one case under the `error` or `fault-injection` strategy. The case's `verifies:` resolves to `ARCH.interfaces.<name>.errors.<code>`. Roll-up cases (one case covering multiple errors via shared halt-and-report path) are permissible when the parent interface contract treats them uniformly, but each rolled-up error code MUST be cited explicitly in the case's `verifies:` list.
+
+Missing-error coverage is a soft-reject (`testspec.typed-error-uncovered`), not refusal. Mechanical detection: `scripts/check-typed-error-coverage.py` enumerates the parent's `errors:` enum and lists every code with no covering case.
+
+## Empty-scope worked example
+
+The same Architecture-seam mapping applies at root scope (`scope: ""`). Per the empty-scope ID rule (TARGET_ARCHITECTURE §5.4), the scope segment is omitted from derived identifiers — never emit a trailing dash like `ARCH-.interfaces.X` or `TC--001`.
+
+```yaml
+# Root scope (scope: "") — verifying the root Architecture's Composition section
+# (deployment intent + root-level orchestration). Bare `ARCH` prefix; bare `TC-NNN`.
+
+- id: TC-001
+  title: "OrderPlacement.accept publishes OrderPlaced with matching payload"
+  type: contract
+  verifies:
+    - "ARCH.interfaces.OrderPlacement.postconditions.on_accept"
+    - "ARCH.composition.event_propagation"
+  preconditions:
+    - "Environment: test-containers (Postgres 16, Kafka 3.6)"
+  expected:
+    - "Subscriber on 'orders.placed' receives OrderPlaced event within 500ms"
+```
+
+```yaml
+# Branch scope (scope: "cart-service") — same mapping; suffix appears.
+
+- id: TC-cart-service-001
+  title: "OrderPlacement.accept publishes OrderPlaced with matching payload"
+  type: contract
+  verifies:
+    - "ARCH-cart-service.interfaces.OrderPlacement.postconditions.on_accept"
+    - "ARCH-cart-service.composition.event_propagation"
+  preconditions:
+    - "Environment: test-containers (Postgres 16, Kafka 3.6)"
+  expected:
+    - "Subscriber on 'orders.placed' receives OrderPlaced event within 500ms"
+```
 
 ## Cross-link
 

@@ -1,14 +1,26 @@
+# Empty-scope rule (TARGET_ARCHITECTURE §5.4):
+#   `<<scope-suffix?>>` is a conditional placeholder:
+#     - At root scope (scope: ""), `<<scope-suffix?>>` expands to `` (empty string).
+#     - At non-empty scope (e.g. scope: "app-checkout"), expands to `-app-checkout`.
+#   Concretely:
+#     Per-case id:      `TC<<scope-suffix?>>-NNN`         → `TC-001`               at root  /  `TC-app-checkout-001` at branch
+#     Dotted-path ref:  `ARCH<<scope-suffix?>>.interfaces.X`
+#                                                         → `ARCH.interfaces.X`   at root  /  `ARCH-app-checkout.interfaces.X` at branch
+#     Dotted-path ref:  `ARCH<<scope-suffix?>>.composition.X`
+#                                                         → `ARCH.composition.X`  at root  /  `ARCH-app-checkout.composition.X` at branch
+#   Never emit `TC--001`, `ARCH-.interfaces.X`, or `ARCH-.composition.X`.
+#
 # Branch case (level: integration) — fixtures-rich shape
 # Use for cases at non-leaf scope where the parent spec is an Architecture.
 # Cases drive composition through published interfaces; observe cross-child state.
 
-- id: TC-<<scope>>-NNN
+- id: TC<<scope-suffix?>>-NNN
   title: "<<scenario describing cross-child interaction>>"
   type: <<functional | error | fault-injection | contract | state-transition | property | performance | security | accessibility>>
   verifies:
-    - "ARCH-<<scope>>.interfaces.<<name>>"        # interface contract
+    - "ARCH<<scope-suffix?>>.interfaces.<<name>>"        # interface contract
     # OR
-    - "ARCH-<<scope>>.composition.<<invariant>>"  # composition invariant
+    - "ARCH<<scope-suffix?>>.composition.<<invariant>>"  # composition invariant
     # additional upstream IDs as needed
   preconditions:
     - "Environment: <<in-process | test-containers (Postgres 16, Kafka 3.6, ...) | shared-staging | production-like>>"

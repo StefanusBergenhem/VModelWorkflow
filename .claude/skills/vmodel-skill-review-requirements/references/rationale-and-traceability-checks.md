@@ -110,7 +110,7 @@ Tells:
 
 ### Check 10 — Governing decisions referenced
 
-Every governing ADR (or governing decision) listed in the document's frontmatter `governing_decisions` should be referenced by at least one requirement's `derived_from` or `rationale`. A governing decision listed but unused suggests either dead context or missed derivation.
+Every governing ADR listed in the document's frontmatter `governing_adrs` should be referenced by at least one requirement's `derived_from` or `rationale`. A governing ADR listed but unused suggests either dead context or missed derivation.
 
 - **check_failed**: `check.traceability.governing-decision-not-referenced`
 - **severity**: `info` (when no requirement clearly *should* derive from it) or `soft_reject` (when at least one requirement evidently derives from it but doesn't cite it)

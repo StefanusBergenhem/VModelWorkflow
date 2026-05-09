@@ -52,6 +52,8 @@ Expected upstream context (the user provides at least one):
 - Governing architectural decisions (ADRs) that constrain this scope
 - A glossary in flight (or an empty glossary that this skill will seed)
 - Inherited constraints (regulatory, contractual, organisational, technical)
+- **Prior review files** (optional, consumed when present) — on a revision pass, the latest review at `specs/.reviews/<artifact-id>-*.yaml` (lexically last) is read and findings are addressed. Per TARGET_ARCHITECTURE §5.6 review output convention.
+- **`references/partial-parent-protocol.md`** — partial-parent and no-canonical-upstream protocol — three permitted paths when canonical upstream is missing or partial. Required reading whenever the canonical upstream (Product Brief at root, or parent Requirements at branch / leaf-allocated scope) is absent or only partially present.
 
 If none of these are provided, **ask the user** what the upstream specification is. Do not invent one.
 
@@ -68,6 +70,32 @@ Apply the six rules in `references/authoring-discipline.md` across every authori
 ## Orchestration
 
 Author the document in this order. Each step has its own reference file with the craft rules. Treat the references as the source of truth for craft; this section is a checklist.
+
+### Step 0 — Read prior review (revision pass only)
+
+If `specs/.reviews/<artifact-id>-*.yaml` contains review files for this artifact:
+1. Pick the lexically last (latest review run by date + sequence).
+2. Walk every finding.
+3. For each finding, decide: apply (revise this artifact), push back with rationale (finding is wrong), or defer with explicit marker (out of scope here, named follow-up).
+4. Address findings in the revision. The revision narrative names which findings were addressed and how.
+
+Skip this step on greenfield (first author pass) — no review files yet.
+
+### Step 0.5 — Canonical-upstream check (every run)
+
+Before drafting any requirement, verify whether the canonical upstream is fully present, partially present, or fully absent. Canonical upstream for requirements: the Product Brief (at root scope) or the parent Requirements artifact (at branch / leaf-allocated scope). A pre-canonical input (e.g. `needs.md` from elicit-needs) is **not** canonical upstream — its presence triggers this check, not satisfies it.
+
+If the canonical upstream is missing or partial:
+
+1. Load `references/partial-parent-protocol.md`.
+2. Pick path **(a) HALT**, **(b) author from next-best parent + documented deviation**, or **(c) cite a framework artifact as upstream** — explicitly. Silent choice is a hard violation.
+3. Document the choice in this artifact's *Overview* section in 1–2 sentences naming the path and why it was chosen (which canonical parent is missing, which deferral applies, what was used in its place).
+4. `derived_from` cites only existing, resolvable artifact ids — never the missing parent, never a fabricated placeholder id.
+5. Under path (b), add an *Open follow-ups* entry that owns "replacement on canonical-parent authoring" with title, owner, action, and citation.
+
+If the canonical upstream is fully present, *Overview* says so in one short clause ("(canonical parent present)") and the protocol is satisfied without further action.
+
+→ See `references/partial-parent-protocol.md`
 
 ### Step 1 — Glossary first
 
@@ -151,7 +179,20 @@ Before delivering, sweep the document for the universal nine and AI-era seven an
 
 → See `references/anti-patterns.md`
 
-### Step 9 — Quality Bar self-check
+### Step 9 — Pre-publish mechanical self-check
+
+Run the skill's mechanical check scripts before the Quality Bar gate. Each finding must be addressed (fix the artifact, defend with inline rationale, or escalate if the script appears wrong) — never silently ignored. Scripts emit `<file>:<line>:<rule-id>:<message>` on stdout; exit 0 = clean, 1 = findings, 2 = script error.
+
+Scripts for this skill:
+
+- `scripts/check-requirement-shape.py <path-to-requirements.md>` — checks atomicity (compound `shall`/`must`), EARS shape, and the implementation-prescription vocabulary heuristic.
+- `scripts/check-id-encoding.py <path-to-requirements.md>` — detects malformed empty-scope id forms (`TS-`, `TC--NNN`, `ARCH-.interfaces.X`) per TARGET §5.4 empty-scope rule.
+
+Verify also: when the partial-parent protocol fired (Step 0.5), *Overview* explicitly names the chosen path (a/b/c); under path (b), an *Open follow-ups* entry owns the canonical-parent-replacement; no fabricated upstream ids in `derived_from`.
+
+→ See `/home/stefanus/repos/VModelWorkflow/docs/authoring-self-check.md`
+
+### Step 10 — Quality Bar self-check
 
 Run the self-check checklist before delivering. Every applicable item must be answered Yes. The Spec Ambiguity Test is the meta-gate: a junior engineer or mid-tier AI must be able to derive a defensible architecture allocation, detailed design, and test specification from this document alone, without asking clarifying questions.
 
@@ -191,6 +232,7 @@ That's it — one file. The skill does not create directories, schemas, validato
 ## Pointers
 
 - `references/authoring-discipline.md` — 6 cross-cutting rules (product-shape, layering, compression) — applies to all authoring steps
+- `references/partial-parent-protocol.md` — partial-parent and no-canonical-upstream protocol — three permitted paths when canonical upstream is missing or partial
 - `references/ears-templates.md` — five EARS patterns + compound rules + the cargo-culting trap
 - `references/requirement-types.md` — five-type taxonomy + decision table for classification
 - `references/statement-quality.md` — atomic / testable / solution-free + box test + complementary-pair rule
@@ -203,3 +245,4 @@ That's it — one file. The skill does not create directories, schemas, validato
 - `templates/*.tmpl` — fill-in-the-blank scaffolds for the artifact and each requirement type
 - `examples/good-session-service.md` — worked example, honest
 - `examples/bad-fabricated-rationale.md` — counter-example with annotations
+- `scripts/index-deferred-items.py` — informational cross-artifact deferred-items index for the spec tree (Phase 6 Cluster 4)

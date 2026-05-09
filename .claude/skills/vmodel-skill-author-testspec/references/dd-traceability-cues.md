@@ -126,6 +126,41 @@ Examples:
 - "completes in a reasonable time" → upstream DD does not specify the bound; HALT and ask.
 - "log the failure" → upstream DD does not specify what the log entry must contain; HALT and ask.
 
+## Empty-scope worked example
+
+The DD-seam mapping holds at empty scope (`scope: ""`). Per the empty-scope ID rule (TARGET_ARCHITECTURE §5.4), the scope segment is omitted from derived identifiers — never emit `DD-.field` or `TC--001`.
+
+```yaml
+# Empty scope (scope: "") — DD lives at the same scope as the TestSpec.
+# Bare `DD` prefix in `verifies:`; bare `TC-NNN` for case ids.
+
+- id: TC-001
+  title: "sort returns ordered permutation of input"
+  type: functional
+  verifies:
+    - "DD.public_interface.sort.postconditions.on_success"
+  inputs:
+    list: [3, 1, 4, 1, 5, 9, 2, 6]
+  expected:
+    - "result == [1, 1, 2, 3, 4, 5, 6, 9]"
+    - "result is a permutation of input"
+```
+
+```yaml
+# Leaf scope (scope: "session-store/expiry-calculator") — same mapping; suffix appears.
+
+- id: TC-session-store-expiry-calculator-001
+  title: "sort returns ordered permutation of input"
+  type: functional
+  verifies:
+    - "DD-session-store-expiry-calculator.public_interface.sort.postconditions.on_success"
+  inputs:
+    list: [3, 1, 4, 1, 5, 9, 2, 6]
+  expected:
+    - "result == [1, 1, 2, 3, 4, 5, 6, 9]"
+    - "result is a permutation of input"
+```
+
 ## Cross-link
 
 `derivation-strategies.md` (the strategy enum) · `verifies-traceability.md` (granularity for leaf cases) · `case-quality.md` (oracle specificity for the `expected:` field) · `retrofit-discipline.md` (when retrofit, the DD is reconstructed alongside the TestSpec)
