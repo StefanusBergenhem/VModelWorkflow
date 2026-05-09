@@ -1,0 +1,55 @@
+# escalation.yaml template
+# Written when verdict is ESCALATE.
+# Write to: .vmodel/.build/tasks/<task-id>/ESC-NNN.yaml
+# Also copy to: .vmodel/.build/escalations/ESC-NNN.yaml (orchestrator reads from here)
+# NNN: next available 3-digit zero-padded sequence from .vmodel/.build/escalations/
+
+escalation_id: ESC-<NNN>             # e.g. ESC-001
+build_run_id: <run-id>               # from pipeline-state.yaml or config
+task_id: <task-id>                   # from current-task.yaml
+scope: <scope-path>                  # e.g. auth/token-validator
+layer: <leaf|branch|root>            # layer at which the escalation was detected
+detected_by: review-execution        # always this value
+
+# target_layer: the spec layer responsible for the fix
+# Valid values: detailed-design | testspec | architecture | adr | requirements | product
+target_layer: <target_layer>
+
+# target_artifact: the artifact id from front-matter, or "new" if a new artifact is needed
+target_artifact: <artifact-id|new>
+
+# issue_type: the category of spec problem
+# Valid values: ambiguity | gap | contradiction | new-decision-needed | contract-violation | wrong-assertion
+issue_type: <issue_type>
+
+# confidence: how certain the routing is
+# Valid values: low | medium | high
+# high: one decision-tree row matches cleanly
+# medium: one row matches but evidence is indirect
+# low: ambiguous; multiple rows partially match; surface to human
+confidence: <high|medium|low>
+
+# summary: one-line human-readable description of the issue
+summary: <one-line summary>
+
+# evidence: one or more file:line + verbatim quotes from the spec (REQUIRED — no escalation without evidence)
+evidence:
+  - file: <path:line>                # e.g. specs/auth/token-validator/detailed_design.md:57
+    quote: |
+      <verbatim excerpt from the spec artifact — the exact text that demonstrates the issue>
+  # Add more entries if the issue spans multiple locations
+
+# required_action: what the target_layer's author skill must do to resolve this escalation
+required_action: |
+  <Concrete description of the revision needed at the target layer. Must be specific enough
+  that the author skill can act without further investigation. Name the section, function,
+  postcondition, or constraint that needs to change and what the change should achieve.>
+
+# status: always "open" when written by review-execution; updated by orchestrator/human
+status: open
+
+# attempt: the review attempt count at the time of escalation (from current-task.yaml)
+attempt: <N>
+
+# escalated_at: ISO-8601 datetime
+escalated_at: <ISO-8601-datetime>    # e.g. 2026-05-09T14:32:00Z

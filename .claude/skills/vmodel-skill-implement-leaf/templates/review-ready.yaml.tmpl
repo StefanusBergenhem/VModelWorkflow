@@ -1,0 +1,49 @@
+# review-ready.yaml — emitted by vmodel-skill-implement-leaf
+# Written to: .vmodel/.build/<task-id>/review-ready.yaml
+# Consumed by: vmodel-skill-review-execution (or human reviewer)
+#
+# Instructions:
+#   Replace <...> placeholders with actual values.
+#   Remove comment lines in the emitted file.
+#   coverage block: omit entirely if coverage is not configured.
+#   contracts_implemented: one entry per Public Interface entry in the DD.
+#   notes: required; use "none" only if truly nothing to note.
+
+task_id: build-<scope>                     # matches tasks.yaml task id
+build_run_id: <from pipeline state>        # from .vmodel/.build/pipeline-state.yaml
+status: ready_for_review
+mode: greenfield                           # or: fix
+
+files_changed:
+  - <relative/path/to/source.java>
+  # add more as needed
+
+tests_passing: true
+test_count: <N>                            # total tests run (all must pass)
+
+coverage:                                  # omit block if coverage not configured
+  lines: 0.00                              # e.g. 0.92 for 92%
+  branches: 0.00                           # e.g. 0.85 for 85%
+
+lint_status: clean                         # or: warnings (list below); never: errors
+
+contracts_implemented:
+  - id: DD-<scope>.<function-name>
+    preconditions: yes                     # yes | partial (describe in notes) | no (HALT condition)
+    postconditions: yes                    # yes | partial | no
+    invariants: yes                        # yes | partial | no | n/a (no invariants in DD)
+    errors: typed                          # typed | partial | none (HALT condition)
+  # repeat for each Public Interface entry in the DD
+
+notes: >
+  <Required. State any deviations from the DD with rationale, escalations from
+  fix mode (finding IDs addressed or escalated), or "none" if nothing to note.>
+
+# Fix mode only — add this block when mode: fix
+# feedback_addressed:
+#   - finding_id: F-001
+#     type: contract-violation
+#     action: rewrote <function-name> postcondition on_failure path
+#   - finding_id: F-003
+#     type: wrong-assertion
+#     action: escalated to vmodel-skill-render-tests; not modified

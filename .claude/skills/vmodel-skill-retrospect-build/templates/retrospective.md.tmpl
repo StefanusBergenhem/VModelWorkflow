@@ -1,0 +1,63 @@
+# Build run {{run_id}} retrospective
+
+## Summary
+
+- Tasks: {{total_tasks}} total — {{completed}} approved, {{escalated}} escalated, {{blocked}} blocked
+- Stages: {{stage_count}}
+- Escalations: {{escalation_count}} (by target_layer: {{escalation_by_layer}})
+- Total retry cycles: {{total_retry_cycles}} ({{thrashing_task_count}} thrashing tasks)
+- Time: {{wall_clock_duration}}   <!-- omit this line if timestamps not available -->
+
+---
+
+## What worked
+
+<!-- Bullets: patterns that paid off. Reference task IDs and common traits. -->
+<!-- Example: "Tasks in payment/ passed on first attempt — DD interfaces were fully specified." -->
+- {{what_worked_bullet_1}}
+
+---
+
+## What failed
+
+<!-- One bullet per failing pattern. Must cite task ID(s) and rejection_type. -->
+<!-- Example: "T-003, T-007: both rejected for scope_violation — files_to_touch did not include the shared config module." -->
+- {{what_failed_bullet_1}}
+
+---
+
+## Escalations
+
+<!-- One entry per ESC-NNN file. Include resolution status. -->
+<!-- Paragraph form for any escalation that surfaced a spec gap. -->
+
+- {{esc_id}}: {{one_line_description}} → {{resolved | unresolved}}
+
+<!-- For escalations surfacing spec gaps, add a paragraph: -->
+<!-- ESC-001 exposed that the auth/session interface was underdefined in the DD. The implementer could not determine whether refresh tokens should be persisted or in-memory — no spec statement covered it. -->
+
+---
+
+## Patterns extracted
+
+<!-- Bullets: candidates that met the evidence threshold from pattern-extraction.md. -->
+<!-- Each bullet maps to a potential lessons.yaml entry (or reinforcement). -->
+<!-- Do not list single-occurrence non-high-impact signals here. -->
+- {{pattern_1}}
+
+---
+
+## Suggested improvements
+
+<!-- Spec authors: changes to artifact content that would have prevented failures. -->
+<!-- Framework: pipeline or skill-level fixes. -->
+<!-- Project-side: conventions, context files, tooling. -->
+
+### Spec authoring
+- {{spec_suggestion_1}}
+
+### Framework
+- {{framework_suggestion_1}}
+
+### Project conventions
+- {{project_suggestion_1}}

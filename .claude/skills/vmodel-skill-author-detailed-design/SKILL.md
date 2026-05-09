@@ -37,7 +37,7 @@ Expected upstream context (ask if missing):
 - **Governing ADRs** — cross-cutting decisions that constrain choices at this leaf (often inherited from the parent Architecture's `governing_adrs`)
 - **Recovery posture** — greenfield (omit `recovery_status`) or retrofit (declare `recovery_status` and supply source-code references)
 - **Prior review files** (optional, consumed when present) — on a revision pass, the latest review at `specs/.reviews/<artifact-id>-*.yaml` (lexically last) is read and findings are addressed. Per TARGET_ARCHITECTURE §5.6 review output convention.
-- **`references/partial-parent-protocol.md`** — partial-parent and no-canonical-upstream protocol — three permitted paths when canonical upstream is missing or partial. Required reading whenever the canonical upstream (parent Architecture) is absent or only partially present.
+- **`.vmodel/references/partial-parent-protocol.md`** — partial-parent and no-canonical-upstream protocol — three permitted paths when canonical upstream is missing or partial. Required reading whenever the canonical upstream (parent Architecture) is absent or only partially present. (Resolved via `.vmodel/config.yaml`; framework default copied there at init.)
 
 If the parent Architecture is not provided, **HALT** (see HALT condition #1) — refusal B fires when DD authoring proceeds without a parent allocation.
 
@@ -49,7 +49,7 @@ Default output filename: `<scope>/detailed_design.md`. Follow the project's scop
 
 ## Cross-cutting authoring discipline
 
-Apply the six rules in `references/authoring-discipline.md` across every authoring step. Most relevant here: Rule 0 (no `n/a + justification` for omitted slots, no self-attestation prose), Rule 1 inverts at this layer — a DD describes leaf internals (Public Interface, Data Structures, Algorithms, State, Error Handling) and must NOT re-state the parent Architecture's boundary contract; reference it instead, Rule 2 (small-system collapse: when the parent scope has all-leaf children and fewer than 5, recognise the combined `architecture-and-design.md` mode and author the *Detailed Design* sub-section per child rather than a standalone DD file), Rule 3 (rationale = one line + ADR cite when a governing ADR exists, no re-narration), Rule 4 (state diagram OR prose transition table per state machine, not both), Rule 5 (cite parent Architecture interfaces, governing ADRs, and derived requirements by ID, do not restate). Review skills enforce all six as `check.discipline.<rule>` findings.
+Apply the six rules in `.vmodel/references/authoring-discipline.md` across every authoring step. Most relevant here: Rule 0 (no `n/a + justification` for omitted slots, no self-attestation prose), Rule 1 inverts at this layer — a DD describes leaf internals (Public Interface, Data Structures, Algorithms, State, Error Handling) and must NOT re-state the parent Architecture's boundary contract; reference it instead, Rule 2 (small-system collapse: when the parent scope has all-leaf children and fewer than 5, recognise the combined `architecture-and-design.md` mode and author the *Detailed Design* sub-section per child rather than a standalone DD file), Rule 3 (rationale = one line + ADR cite when a governing ADR exists, no re-narration), Rule 4 (state diagram OR prose transition table per state machine, not both), Rule 5 (cite parent Architecture interfaces, governing ADRs, and derived requirements by ID, do not restate). Review skills enforce all six as `check.discipline.<rule>` findings.
 
 ## Authoring procedure
 
@@ -71,15 +71,15 @@ Before locating the leaf in any upstream document, verify whether the canonical 
 
 If the canonical upstream is missing or partial:
 
-1. Load `references/partial-parent-protocol.md`.
+1. Load `.vmodel/references/partial-parent-protocol.md`.
 2. Pick path **(a) HALT**, **(b) author from next-best parent + documented deviation**, or **(c) cite a framework artifact as upstream** — explicitly. Silent choice is a hard violation. Refusal B already pushes hard toward (a) — pick (b) or (c) only when a structural deferral is documented and the stakeholder explicitly accepts the orphan posture.
 3. Document the choice in this artifact's *Overview* section in 1–2 sentences naming the path and why it was chosen (which canonical parent is missing, which deferral applies, what was used in its place).
 4. `derived_from` cites only existing, resolvable artifact ids — never the missing parent, never a fabricated placeholder id.
-5. Under path (b), add an *Open follow-ups* entry that owns "replacement on canonical-parent authoring" with title, owner, action, and citation.
+5. Under path (b), emit a `[DEFER-DD: replacement on canonical-parent authoring — <canonical parent id>]` marker inline at the *Overview* section rather than a separate Open follow-ups section entry.
 
 If the canonical upstream is fully present, *Overview* says so in one short clause ("(canonical parent present)") and the protocol is satisfied without further action.
 
-→ See `references/partial-parent-protocol.md`
+→ See `.vmodel/references/partial-parent-protocol.md`
 
 ### Step 1 — Locate the leaf in the parent Architecture
 
@@ -168,9 +168,9 @@ Scripts for this skill:
 - `scripts/check-mermaid.py <specs-root>` — state diagram syntax (when state machines are authored)
 - `scripts/check-id-encoding.py <specs-root>` — detects malformed empty-scope id forms (`TS-`, `TC--NNN`, `ARCH-.interfaces.X`) per TARGET §5.4 empty-scope rule
 
-Verify also: when the partial-parent protocol fired (Step 0.5), *Overview* explicitly names the chosen path (a/b/c); under path (b), an *Open follow-ups* entry owns the canonical-parent-replacement; no fabricated upstream ids in `derived_from` or `parent_architecture`.
+Verify also: when the partial-parent protocol fired (Step 0.5), *Overview* explicitly names the chosen path (a/b/c); under path (b), a `[DEFER-DD: ...]` marker names the canonical-parent replacement inline; no fabricated upstream ids in `derived_from` or `parent_architecture`.
 
-→ See `/home/stefanus/repos/VModelWorkflow/docs/authoring-self-check.md`
+→ See `.vmodel/references/authoring-self-check.md`
 
 ### Step 14 — Run Quality Bar checklist + Spec Ambiguity Test
 
@@ -248,8 +248,8 @@ That's it — one file. The skill does not create directories, schemas, validato
 
 ## Pointers
 
-- `references/authoring-discipline.md` — 6 cross-cutting rules (product-shape, layering, compression) — applies to all authoring steps
-- `references/partial-parent-protocol.md` — partial-parent and no-canonical-upstream protocol — three permitted paths when canonical upstream is missing or partial
+- `.vmodel/references/authoring-discipline.md` — 6 cross-cutting rules (product-shape, layering, compression) — applies to all authoring steps (resolved via `.vmodel/config.yaml`)
+- `.vmodel/references/partial-parent-protocol.md` — partial-parent and no-canonical-upstream protocol — three permitted paths when canonical upstream is missing or partial (resolved via `.vmodel/config.yaml`)
 - `references/dd-purpose-and-shape.md` — purpose of DD, two rules (no duplication, specific enough), the box mental model, 7-section shape, junior-implementable / language-portable / test-derivable triple, parent-Architecture inputs
 - `references/function-contracts.md` — Design-by-Contract (Hoare / Meyer / Liskov), 9 contract elements, units of measure, defensive programming vs DbC, signature-vs-contract distinction
 - `references/data-structures-by-invariant.md` — fields-by-invariant, ownership, lifetime, returned-object semantics, shared-mutable as contract

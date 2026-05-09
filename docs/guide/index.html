@@ -133,7 +133,7 @@
     <h2>Use Cases</h2>
 
     <h3>Greenfield Development</h3>
-    <p>Top-down through the scope tree. Start at the root with a Product Brief. Decompose into branches (Requirements + Architecture + TestSpec at each level). Terminate at leaves with a Detailed Design + TestSpec. Each layer's specification is authored under human steering before any code is written; agents handle the mechanical decomposition work under review.</p>
+    <p>Top-down through the scope tree. Start at the root with a root product artifact (Product Brief, <code>needs.md</code>, or Product Description &mdash; one of, depending on elicitation path). Decompose into branches (Requirements + Architecture + TestSpec at each level). Terminate at leaves with a Detailed Design + TestSpec. Each layer's specification is authored under human steering before any code is written; agents handle the mechanical decomposition work under review.</p>
 
     <h3>Legacy Retrofit (Primary Market Entry)</h3>
     <p>Bottom-up from existing code. Topology discovery proposes a scope tree. Per-leaf recovery drafts Detailed Design and TestSpec from code + tests. Branch and root recovery draft Architecture, Requirements, ADRs from child contracts. Human fills rationale; AI never fabricates it. The retrofit output is an honest floor of documentation &mdash; an artifact set with many <code>recovery_status: unknown</code> fields is the correct outcome when rationale is lost, not a partial failure.</p>
@@ -189,7 +189,7 @@
       </li>
       <li>
         <strong>Tests derive from the layer's artifact, not from the code below.</strong>
-        Unit tests derive from Detailed Design. Integration tests from Architecture. System tests from Product Brief + root Requirements. V-model verification restored.
+        Unit tests derive from Detailed Design. Integration tests from Architecture. System tests from root product (PB / needs / PD) + root Requirements. V-model verification restored.
       </li>
     </ol>
   </section>
@@ -227,7 +227,7 @@
         <tr><th>Layer / Artifact</th><th>Agent Role</th><th>Human Role</th><th>Agent Autonomy</th></tr>
       </thead>
       <tbody>
-        <tr><td>Product Brief</td><td>Proposes structure, checks gaps, drafts candidate outcomes</td><td>Drives all content &mdash; only humans know stakeholders and intent</td><td>Low</td></tr>
+        <tr><td>Root product (PB / needs / PD)</td><td>Proposes structure, checks gaps, drafts candidate outcomes</td><td>Drives all content &mdash; only humans know stakeholders and intent</td><td>Low</td></tr>
         <tr><td>Requirements (non-leaf)</td><td>Structures, checks completeness, suggests EARS, flags ambiguity</td><td>Drives content; validates against parent allocation</td><td>Medium</td></tr>
         <tr><td>Architecture (non-leaf)</td><td>Proposes decomposition, checks consistency, drafts Composition</td><td>Decides trade-offs; decides technology picks &rarr; ADRs</td><td>Medium</td></tr>
         <tr><td>ADR</td><td>Drafts from discussion, enforces reversibility prompt</td><td>Owns the decision</td><td>Medium drafting / Low decision</td></tr>
@@ -251,7 +251,7 @@
       </thead>
       <tbody>
         <tr>
-          <td><strong>Product Brief</strong></td>
+          <td><strong>Root product</strong> (PB / needs / PD &mdash; one of)</td>
           <td>Root only</td>
           <td>Anchor: why, for whom, what problem</td>
           <td>Stakeholder review</td>
@@ -299,7 +299,7 @@
     <p>ADRs are pulled out as first-class artifacts, not inlined in Architecture. They live in a flat <code>/specs/adrs/</code> directory and are referenced by <code>governing_adrs</code> from any spec artifact they bound. Authoring default: <em>during</em> Architecture authoring as the composition exposes a decision.</p>
 
     <h3>TestSpec Has Three Flavors</h3>
-    <p>Same envelope, different weight per layer. <strong>Leaf</strong> tests are unit tests &mdash; thin TestSpec cases; test code carries most of the intent. <strong>Branch</strong> tests are integration tests &mdash; preconditions, fixtures, doubles. <strong>Root</strong> tests are system / e2e scenarios &mdash; heavy steps, preconditions, expected; scenarios map to Product Brief outcomes.</p>
+    <p>Same envelope, different weight per layer. <strong>Leaf</strong> tests are unit tests &mdash; thin TestSpec cases; test code carries most of the intent. <strong>Branch</strong> tests are integration tests &mdash; preconditions, fixtures, doubles. <strong>Root</strong> tests are system / e2e scenarios &mdash; heavy steps, preconditions, expected; scenarios map to root product (PB / needs / PD) outcomes and root Requirements.</p>
 
     <p>The canonical structural reference for all six artifacts is <code>docs/plan/TARGET_ARCHITECTURE.md §5.3</code>. Each sidebar-linked page teaches the craft for one artifact under the five-section structure.</p>
   </section>
@@ -311,7 +311,7 @@
 
     <h3>Abstract Vocabulary</h3>
     <ul>
-      <li><strong>Root</strong> &mdash; the whole product. Exactly one per system. Holds the Product Brief.</li>
+      <li><strong>Root</strong> &mdash; the whole product. Exactly one per system. Holds the root product artifact (Product Brief, <code>needs.md</code>, or Product Description &mdash; one of three options depending on elicitation path).</li>
       <li><strong>Branch</strong> &mdash; any non-leaf scope. Holds its own Requirements, Architecture, TestSpec, and child scopes.</li>
       <li><strong>Leaf</strong> &mdash; where subdivision stops earning its keep. Holds a Detailed Design, TestSpec, and ultimately code.</li>
     </ul>
@@ -361,7 +361,7 @@
         <tr><th>Artifact</th><th>Key dimensions</th></tr>
       </thead>
       <tbody>
-        <tr><td>Product Brief</td><td>Stakeholder completeness, problem evidence, outcome specificity, non-goals explicit, success criteria measurable</td></tr>
+        <tr><td>Root product (PB / needs / PD)</td><td>Stakeholder completeness, problem evidence, outcome specificity, non-goals explicit, success criteria measurable</td></tr>
         <tr><td>Requirements</td><td>EARS where apt, rationale present, QAs measurable, interface contracts, constraint inheritance traced</td></tr>
         <tr><td>Architecture</td><td>Composition section complete (patterns, wiring, deployment intent), every child allocated, every req allocated, ADRs linked, interfaces contracted</td></tr>
         <tr><td>ADR</td><td>Context specific, &ge; 2 alternatives, reversibility sub-prompt answered, affected scopes listed</td></tr>
@@ -406,7 +406,7 @@
         <tr><th>Artifact</th><th>Format</th><th>Example</th></tr>
       </thead>
       <tbody>
-        <tr><td>Product Brief</td><td><code>PB</code></td><td><code>PB</code></td></tr>
+        <tr><td>Root product (PB / needs / PD)</td><td><code>PB</code></td><td><code>PB</code></td></tr>
         <tr><td>Requirement</td><td><code>REQ-{scope}-{seq}</code></td><td><code>REQ-app-checkout-042</code></td></tr>
         <tr><td>Architecture</td><td><code>ARCH-{scope}</code></td><td><code>ARCH-app-checkout</code></td></tr>
         <tr><td>Detailed Design</td><td><code>DD-{scope}-{name}</code></td><td><code>DD-app-checkout-discount-calc</code></td></tr>
@@ -423,7 +423,7 @@
     <p class="lead">Top-down from root scope. Per-layer unified pattern: specify &rarr; (build elsewhere) &rarr; allocate to children &rarr; recurse.</p>
 
     <h3>Per-Layer Pattern</h3>
-    <div class="code-block"><code>Input: parent allocation (or Product Brief at root)
+    <div class="code-block"><code>Input: parent allocation (or root product artifact at root)
         &darr;
    SPECIFY (what)
    &mdash; Non-leaf: Requirements + Architecture
@@ -513,7 +513,7 @@
         <tr><th>Change source</th><th>Entry layer</th></tr>
       </thead>
       <tbody>
-        <tr><td>New stakeholder, outcome, scope expansion</td><td>Product Brief</td></tr>
+        <tr><td>New stakeholder, outcome, scope expansion</td><td>Root product (PB / needs / PD)</td></tr>
         <tr><td>New behavior under an existing outcome</td><td>Requirements (at the scope where it applies)</td></tr>
         <tr><td>Re-allocation of existing behavior to a different component</td><td>Architecture</td></tr>
         <tr><td>Technology swap / pattern change</td><td>ADR + Architecture Composition</td></tr>

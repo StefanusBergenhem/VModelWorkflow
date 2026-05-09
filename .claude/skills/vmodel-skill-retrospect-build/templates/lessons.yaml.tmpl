@@ -1,0 +1,27 @@
+# Cumulative lessons store — managed by vmodel-skill-retrospect-build.
+# Consumed by future build runs as project-level heuristic context.
+# Do not edit manually unless correcting a parse error.
+# Cap enforced by skill; eviction prefers low-confidence + oldest last_seen.
+
+version: 1
+max_lessons: 30   # override via build.retrospect.max_lessons in config.yaml
+
+lessons: []
+
+# --- Single-lesson block template (for reference; not parsed) ---
+#
+# - id: L-001                       # stable; never reuse an evicted ID
+#   category: contract_pattern      # contract_pattern | rejection_pattern |
+#                                   # escalation_pattern | architecture_pattern | other
+#   rule: >-
+#     <One-sentence actionable instruction. Must be specific enough to act on
+#     without reading the evidence. Phrased as "Always X", "When Y, do Z", etc.>
+#   evidence:
+#     - run: <run-id>               # e.g. run-2026-05-09-001
+#       task: <task-id>             # e.g. auth/login — or "run-level" if not task-specific
+#       excerpt: >-
+#         "<Direct quote from rejection_reason, notes, or description field
+#         in feedback.yaml or ESC-NNN.yaml>"
+#   confidence: medium              # low | medium | high
+#   added: YYYY-MM-DD
+#   last_seen: YYYY-MM-DD

@@ -4,9 +4,6 @@ artifact_type: detailed-design
 scope: <<scope-path>>                # e.g., app/jobs/dequeue-service
 parent_scope: <<parent-scope-path>>  # e.g., app/jobs ; null only at single-module root
 parent_architecture: ARCH-<<parent-scope-flattened>>
-derived_from:
-  - <<REQ-NNN>>
-  - <<REQ-NNN-or-other-upstream-id>>
 governing_adrs:
   - <<ADR-NNN-NNN-name>>             # omit list if no governing ADRs apply
 status: draft
@@ -114,19 +111,6 @@ data_structures:
 | Behavioural drift | <<where observed code differs from what tests assert; cite file/line>> |
 | Missing ADRs | <<load-bearing decisions with no preserved record — emit [DEFER-ADR: ...] markers>> |
 | Coverage gaps | <<public functions with no observable test coverage; tests with no DD postcondition>> |
-
-## Open follow-ups
-
-<<Mandatory section. Enumerate deferred items here, mirroring the inline [DEFER-DD: ...]
-   and [DEFER-ADR: ...] markers from the body. Bullet shape: title — owner — action —
-   citation locations. Render `(none)` when the list is empty. Empty header alone is
-   not acceptable.
-
-   Example:
-   - **<title>** — owner: <owner> — action: <action> — citation: <file:line>
->>
-
-(none)
 
 ## Notes
 

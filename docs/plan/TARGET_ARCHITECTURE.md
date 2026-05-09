@@ -31,12 +31,15 @@ A framework that combines four independently usable components — Documentation
 - Tools architecture and tool/skill split.
 - Naming conventions.
 
-**Explicitly deferred** (not in this pivot):
-- **Build workflow** — how spec artifacts are decomposed into TDD tasks and executed. Own design session.
+**Explicitly deferred** (not in this document):
 - **Human guards** — structural reintroduction of human review gates if uniform high rigor proves insufficient.
 - **Rigor tiers** — may be reintroduced if human guards require them; not before.
 - **Web GUI for traceability** — after the framework stabilises.
 - **Plan schemas** — development plan, verification plan, CM, QA.
+
+**Now in scope (Phase 6 additions):**
+- **Central config (`.vmodel/`)** — see §15.
+- **Build workflow** — 6 build-side skills compose into the build flow; see §16.
 
 ---
 
@@ -116,7 +119,7 @@ The system is modelled as a **tree of scopes**, discovered per-system, of variab
 - **Cognitive-load test** — a scope should fit in one R+A pair a reviewer can hold in their head.
 - **Change-blast test** — if subdividing wouldn't let parts change independently, you've gone too deep.
 
-**Deployment and wiring.** Architecture Composition (§5.3) is the authoritative spec for runtime pattern, wiring approach, and deployment intent. IaC artifacts (terraform/k8s/compose) implement that intent rather than sitting under a separate Detailed Design. Whether some imperative composition code (DI containers, middleware stacks, event-bus setup) warrants its own DD is deferred to the Build workflow design (see §8.4, §15). Integration and end-to-end coverage are carried by branch- and root-scope TestSpec tracing to Architecture Composition and child interfaces — not by a redundant DD layer above IaC.
+**Deployment and wiring.** Architecture Composition (§5.3) is the authoritative spec for runtime pattern, wiring approach, and deployment intent. IaC artifacts (terraform/k8s/compose) implement that intent rather than sitting under a separate Detailed Design. Whether some imperative composition code (DI containers, middleware stacks, event-bus setup) warrants its own DD is deferred to the Build workflow design (see §8.4, §17). Integration and end-to-end coverage are carried by branch- and root-scope TestSpec tracing to Architecture Composition and child interfaces — not by a redundant DD layer above IaC.
 
 ### 5.2 Artifact Set
 
@@ -124,7 +127,7 @@ Six artifact types plus one cross-cutting:
 
 | Type | Lives at | Job | Verified by |
 |---|---|---|---|
-| **Product Brief** | Root only | Anchor: why, for whom, what problem | Stakeholder review |
+| **Root product** (one of: `product_brief.md` PB, `needs.md`, `product_description.md` PD) | Root only | Anchor: why, for whom, what problem. PB is heavyweight (stakeholders + NFR matrix); needs.md is interview-derived (elicit-needs output); PD is lightweight (vision only, no enforced stakeholder roster, no NFR matrix, produced by elicit-pd). | Stakeholder review |
 | **Requirements** | Non-leaf scopes | Testable behavior specifications | Acceptance / integration tests |
 | **Architecture** | Non-leaf scopes | Decomposition + composition pattern | Integration tests |
 | **ADR** | Cross-cutting (per scope; lives at the scope where the decision was taken) | Justify individual load-bearing decisions | Review |
@@ -135,7 +138,15 @@ Six artifact types plus one cross-cutting:
 
 ### 5.3 Per-artifact structure
 
-#### Product Brief (root only) — 7 sections
+#### Root product (root only — one of PB / needs / PD)
+
+**Three options; exactly one mandatory at root:**
+
+- **`product_brief.md` (PB)** — heavyweight, business-focused; 7 sections (below). Requires stakeholder roster + NFR matrix.
+- **`needs.md`** — interview-derived from `vmodel-skill-elicit-needs`; rough prototype output; no enforced section structure.
+- **`product_description.md` (PD)** — lightweight, vision-only; produced by `vmodel-skill-elicit-pd`. No enforced stakeholder roster; no NFR matrix.
+
+**Product Brief (PB) — 7 sections:**
 
 1. **Stakeholders** — who has the problem, who pays, who uses, who blocks.
 2. **Problem** — concrete evidence of pain or opportunity.
@@ -206,7 +217,7 @@ ADRs live in a flat `/specs/adrs/` directory, cross-cutting across scopes.
 
 #### Detailed Design (leaf scopes) — 7 sections
 
-1. **Metadata** — scope, parent_scope, parent_architecture, derived_from, governing_adrs.
+1. **Metadata** — scope, parent_scope, parent_architecture, governing_adrs. (`derived_from` was removed from DD; `parent_architecture` is the single structural anchor.)
 2. **Overview** — 2–3 paragraphs.
 3. **Public Interface** — every externally visible function/class/type with contracts.
 4. **Data Structures** — internal data with invariants, ownership, lifetime.
@@ -233,10 +244,11 @@ id: TESTSPEC-<scope>-<level>
 scope: <scope-path>
 parent_scope: <or null at root>
 level: system | integration | unit
-verifies: [list of spec artifact IDs]
-derived_from: <spec artifact this is written from>
+verifies: [list of spec artifact IDs]   # mandatory non-empty at artifact level AND per case
 governing_adrs: [optional]
 ```
+
+(`derived_from` was removed from TestSpec; `verifies` is the sole traceability anchor — mandatory non-empty at the artifact envelope level and at each case. Layer convention enforced by skills: leaf TestSpec verifies DD elements; branch TestSpec verifies Architecture elements; root TestSpec verifies Requirements and root product.)
 
 **Structure:** flat list of cases, each with an optional `suite` tag (not nested). Per case:
 ```yaml
@@ -274,11 +286,9 @@ Behavioural cases (functional / boundary / error / state-transition) cite Requir
 
 **Mandatory non-empty `verifies`** is the anti-orphan rule: tests without traceable intent are either misplaced or testing unspecified behaviour.
 
-#### Open follow-ups (every authoring artifact except Product Brief)
+#### DEFER markers — the single gap mechanism
 
-Every Requirements / Architecture / ADR / Detailed Design / TestSpec artifact ends with an `## Open follow-ups` section enumerating deferred items as bullets in the shape *title — owner — action — citation locations*. Empty list is acceptable; the **section header is mandatory** and rendered as `(none)` when no follow-ups exist. The section mirrors and aggregates the inline `[DEFER-DD: …]` and `[DEFER-ADR: …]` markers (per §5.5) that already exist in the body, providing a known per-artifact location for pending work without forcing a body grep. `scripts/index-deferred-items.py` walks the tree and emits a structured cross-artifact index.
-
-Product Brief carries pending stakeholder questions in its existing structure (Stakeholders, Constraints, Non-Goals); a separate Open follow-ups appendix would duplicate.
+DEFER markers (`[DEFER-DD: …]`, `[DEFER-ADR: …]`, `[NEEDS-TEST: …]`) are the single mechanism for naming product-spec gaps inline in any artifact body. The `## Open follow-ups` section is **no longer authored on any artifact**. The auto-generated aggregate at `.vmodel/defer-index.md` collates all markers tree-wide. `scripts/index-deferred-items.py` walks the tree and emits the structured cross-artifact index that populates `defer-index.md`.
 
 ### 5.4 File shape, directory layout, IDs
 
@@ -286,35 +296,51 @@ Product Brief carries pending stakeholder questions in its existing structure (S
 - YAML front-matter for metadata + outgoing links.
 - Body: prose sections + embedded YAML blocks for repeated structured items (per-req, per-child, per-test-case, per-function) + Mermaid for diagrams.
 
-**Directory layout** — scope tree mirrors directory tree, under a configurable `/specs/` root. ADRs live at the scope where the decision was taken (every scope owns its own `adrs/`). Architecture at any non-leaf scope MAY be authored as a single file or as a helicopter + detail bundle (see Rule 8):
+**Directory layout** — project root holds `.vmodel/` (central config) alongside the spec tree. The spec tree mirrors scope hierarchy, under a configurable `/specs/` root. ADRs live at the scope where the decision was taken (every scope owns its own `adrs/`). Architecture at any non-leaf scope MAY be authored as a single file or as a helicopter + detail bundle (see Rule 8):
 
 ```
-/specs/
-  product_brief.md            # root scope
-  needs.md                    # root scope (optional — elicit-needs prototype output)
-  glossary.md                 # root scope (optional — tree-global definitions, non-artifact reference doc)
-  requirements.md             # root scope
-  architecture.md             # root scope (helicopter)
-  architecture/               # root scope detail bundle (Rule 8, optional)
-    interfaces/
-      ICheckoutFinalise.md    # per-interface DbC detail
-  testspec.md                 # root scope
-  adrs/                       # root-scope ADRs
-    adr-001-use-postgres.md
-  app/                        # branch scope
-    requirements.md
-    architecture.md
-    architecture/             # branch-scope detail bundle (optional)
-      interfaces/
-        ICartReserve.md
-    testspec.md
-    adrs/                     # branch-scope ADRs (only if any decisions taken at this scope)
-    checkout/                 # leaf scope
-      detailed_design.md
-      testspec.md
+project-root/
+├── .vmodel/
+│   ├── config.yaml               # schema: schemas/core/vmodel-config.schema.yaml
+│   ├── references/               # shared reference docs (init copies framework defaults; project may override)
+│   │   ├── authoring-discipline.md
+│   │   ├── partial-parent-protocol.md
+│   │   ├── authoring-self-check.md
+│   │   ├── requirements-shape-checklist.md
+│   │   └── definitions/
+│   ├── defer-index.md            # auto-generated by scripts/index-deferred-items.py
+│   ├── .reviews/                 # spec-side verdict files (committed; forensic record)
+│   └── .build/                   # build flow state (tasks.yaml, pipeline-state.yaml, escalations, retrospectives, lessons.yaml)
+├── specs/
+│   ├── product_brief.md  OR  needs.md  OR  product_description.md   # root scope — exactly one
+│   ├── glossary.md               # optional; tree-global definitions, non-artifact reference doc
+│   ├── requirements.md           # root scope
+│   ├── architecture.md           # root scope (helicopter)
+│   ├── architecture/             # root scope detail bundle (Rule 8, optional)
+│   │   └── interfaces/
+│   │       └── ICheckoutFinalise.md
+│   ├── testspec.md               # root scope
+│   ├── adrs/                     # root-scope ADRs
+│   │   └── adr-001-use-postgres.md
+│   └── app/                      # branch scope
+│       ├── requirements.md
+│       ├── architecture.md
+│       ├── architecture/         # branch-scope detail bundle (optional)
+│       │   └── interfaces/
+│       │       └── ICartReserve.md
+│       ├── testspec.md
+│       ├── adrs/                 # branch-scope ADRs (only if decisions taken at this scope)
+│       └── checkout/             # leaf scope
+│           ├── detailed_design.md
+│           └── testspec.md
+├── src/                          # code (build flow output)
+├── tests/                        # test code (build flow output)
+└── conventions.md                # optional project-side authoring overrides
 ```
 
 Root-scope artifacts live directly at `/specs/`. "Root" is implicit — not a directory name. The full scope-tree rules (reserved directory names, child-vs-bundle disambiguation, ADR placement) are stated in the next section.
+
+**Hard rule:** skills MUST NOT hardcode `docs/*.md` paths. They resolve reference documents via `.vmodel/config.yaml` `paths.references`. `vmodel-init` scaffolds; migrate mode upgrades existing projects.
 
 **Filenames** — snake_case canonical per artifact type: `product_brief.md`, `requirements.md`, `architecture.md`, `detailed_design.md`, `testspec.md`, `adr-NNN-{slug}.md`. **Scope directories** use kebab-case.
 
@@ -359,7 +385,7 @@ A subdirectory inside a scope is a **child scope** iff its name is **not** in th
 
 | Scope role | Mandatory artifacts | Optional artifacts |
 |---|---|---|
-| Root | `product_brief.md`, `requirements.md`, `architecture.md` (+ optional `architecture/` bundle), `testspec.md` | `needs.md` (elicit-needs output), `glossary.md` (tree-global definitions †), `adrs/<adr-files>` |
+| Root | Root product (one of: `product_brief.md` PB / `needs.md` / `product_description.md` PD — exactly one mandatory), `requirements.md`, `architecture.md` (+ optional `architecture/` bundle), `testspec.md` | `glossary.md` (tree-global definitions †), `adrs/<adr-files>` |
 | Branch (non-leaf) | `requirements.md`, `architecture.md` (+ optional `architecture/` bundle), `testspec.md` | `adrs/<adr-files>` |
 | Leaf | `detailed_design.md`, `testspec.md` | `adrs/<adr-files>` |
 
@@ -374,13 +400,13 @@ A subdirectory inside a scope is a **child scope** iff its name is **not** in th
 
 Cross-cutting items **without** named alternatives are not ADR material; they go inline into existing root-Architecture sections (deployment intent, fitness functions, observability + security). Parametric gaps that belong to the artifact being authored use inline `<TBD>` rather than a defer marker.
 
-### 5.6 Review output convention (`specs/.reviews/`)
+### 5.6 Review output convention (`.vmodel/.reviews/`)
 
-Author/review skill pairs interoperate via durable, file-based handover — not chat. Every review skill emits a verdict + findings to a YAML file under `specs/.reviews/`; the matched author skill reads the latest review file when revising.
+Author/review skill pairs interoperate via durable, file-based handover — not chat. Every review skill emits a verdict + findings to a YAML file under `.vmodel/.reviews/`; the matched author skill reads the latest review file when revising.
 
 **File path:**
 
-    specs/.reviews/<artifact-id>-YYYY-MM-DD-NN.yaml
+    .vmodel/.reviews/<artifact-id>-YYYY-MM-DD-NN.yaml
 
 - `<artifact-id>` is the reviewed artifact's id (e.g. `ARCH-app-checkout`, `REQS-app`, `DD-session-store-expiry-calculator`, `ADR-014-use-postgres`, `TS-app-checkout`).
 - `YYYY-MM-DD` is the review run's date.
@@ -388,15 +414,15 @@ Author/review skill pairs interoperate via durable, file-based handover — not 
 
 **Lifecycle.** All review files are kept; none are superseded in metadata. The latest is the lexically-last filename. The author skill picks the latest by file-name sort.
 
-**Visibility / git.** `.reviews/` is committed alongside the artifact tree. Review verdicts are a forensic record of design-time decisions and have lasting value; they are not transient workflow state.
+**Visibility / git.** `.vmodel/.reviews/` is committed alongside the artifact tree. Review verdicts are a forensic record of design-time decisions and have lasting value; they are not transient workflow state.
 
 **Cardinality.** One file per review run per artifact. Multiple artifacts under simultaneous review get distinct files keyed on artifact id.
 
 **Schema.** The YAML shape is the per-skill `templates/verdict.md.tmpl` carried by each review skill (skills are self-contained; no central schema). Common core fields across all 5 review skills: `document`, `reviewer`, `date`, `verdict` (APPROVED | REJECTED | DESIGN_ISSUE), `inputs_provided`, `perspectives_applied`, `findings[]` (with `id`, an element identifier whose key name varies per artifact, `check_failed`, `severity`, `category`, `evidence`, `recommended_action`), `summary`, `recommended_next_action`, `counts`. Per-artifact specialisation is permitted on `inputs_provided` keys, `perspectives_applied`, and the element-identifier field name.
 
-**Author consumption (mode B).** When an author skill is invoked on an existing artifact for revision, it reads the latest review file at `specs/.reviews/<artifact-id>-*.yaml` (lexically last). Findings are treated as input. Each finding is addressed in the revision — applied, pushed back with rationale, or deferred via an explicit marker. The revision narrative names which findings were addressed and how.
+**Author consumption (mode B).** When an author skill is invoked on an existing artifact for revision, it reads the latest review file at `.vmodel/.reviews/<artifact-id>-*.yaml` (lexically last). Findings are treated as input. Each finding is addressed in the revision — applied, pushed back with rationale, or deferred via an explicit marker. The revision narrative names which findings were addressed and how.
 
-**Mapping to build-side workflow.** This convention is shape-similar to the build-side `.workflow/{review_ready,feedback}.yaml` pattern (per global `CLAUDE.md`), but the spec workflow is per-artifact (cardinality differs from build's single-active-task model). `.reviews/` is committed; build-side `.workflow/` is gitignored — different lifecycle (forensic vs. transient).
+**Mapping to build-side workflow.** This convention is shape-similar to the build-side `.vmodel/.build/` pattern, but the spec workflow is per-artifact (cardinality differs from build's single-active-task model). `.vmodel/.reviews/` is committed; build-side `.vmodel/.build/` state is gitignored — different lifecycle (forensic vs. transient).
 
 ### 5.7 Partial-parent / no-canonical-upstream protocol
 
@@ -406,13 +432,13 @@ Three permitted paths — the author chooses **explicitly** and documents the ch
 
 **(a) HALT** — request the missing canonical upstream be authored first. Default for greenfield once the framework is mature.
 
-**(b) Author from next-best-available parent + documented deviation.** Allowed when the upstream gap is structurally deferred (decision unresolved at framework level, stakeholder unavailable, etc.) and the stakeholder explicitly accepts the orphan posture. The artifact's *Overview* names the deviation; declared `level:` follows scope position; case shape (where applicable) follows the *actual* parent type, not the canonical one; an *Open follow-ups* entry owns "replacement on canonical-parent authoring".
+**(b) Author from next-best-available parent + documented deviation.** Allowed when the upstream gap is structurally deferred (decision unresolved at framework level, stakeholder unavailable, etc.) and the stakeholder explicitly accepts the orphan posture. The artifact's *Overview* names the deviation; declared `level:` follows scope position; case shape (where applicable) follows the *actual* parent type, not the canonical one; a `[DEFER-DD: …]` or `[DEFER-ADR: …]` marker records "replacement on canonical-parent authoring".
 
 **(c) Cite a framework reference as upstream.** Permissible only when the framework reference is itself a canonical artifact in the framework's own scope tree (rare — most framework references are documentation, not artifacts).
 
-Silently inventing an upstream id, bypassing the schema's non-empty-`derived_from` requirement, or fabricating a placeholder id without documented rationale are **hard violations**.
+Silently inventing an upstream id, bypassing the schema's non-empty-`derived_from` requirement (on artifacts that carry it: Requirements, Architecture, ADR), or fabricating a placeholder id without documented rationale are **hard violations**.
 
-The canonical operational text for this protocol lives at `docs/partial-parent-protocol.md` and is distributed verbatim into each of the 5 author skills' `references/` by `scripts/sync-partial-parent-protocol.sh` so skills are self-contained at runtime (skills do not read this document directly). This subsection is the architectural record; the operational text is the runtime input.
+The canonical operational text for this protocol lives at `.vmodel/references/partial-parent-protocol.md` (framework default shipped by `vmodel-init`; project may override). Skills read it via the path resolved from `.vmodel/config.yaml` `paths.references` — they never hardcode a path. `scripts/sync-partial-parent-protocol.sh` propagates updates from the framework default into each skill's `references/` so skills remain self-contained at runtime. This subsection is the architectural record; the operational text is the runtime input.
 
 ---
 
@@ -442,8 +468,8 @@ A concrete Yes/No checklist grouped by concern, subject to the **Spec Ambiguity 
 | Requirements | EARS where apt, rationale present, QAs measurable, interface contracts, constraint inheritance traced |
 | Architecture | Composition section complete (runtime patterns have rationale; deployment intent resolves to concrete IaC artifacts; runtime-unit boundaries have integration-test targets), every child allocated, every req allocated, ADRs linked, interfaces contracted (slim helicopter + per-interface detail per Rule 8 when bundle form is used), banned decomposition fields absent, interface contracts not refined downstream |
 | ADR | Context specific, ≥ 2 alternatives, reversibility sub-prompt answered, affected scopes listed |
-| Detailed Design | Junior-implementable, contracts on every public function, state machines explicit, error handling complete, language-portable |
-| TestSpec | Derivation strategies applied (requirement-based, equivalence class, boundary, state transitions, error paths, fault injection), coverage targets declared, every spec element has ≥ 1 test |
+| Detailed Design | Junior-implementable, contracts on every public function, state machines explicit, error handling complete, language-portable; `parent_architecture` present (sole structural anchor; `derived_from` not present) |
+| TestSpec | Derivation strategies applied (requirement-based, equivalence class, boundary, state transitions, error paths, fault injection), coverage targets declared, every spec element has ≥ 1 test; `verifies` non-empty at envelope and per case (`derived_from` not present); layer convention: leaf verifies DD, branch verifies Architecture, root verifies Requirements + root product |
 
 ---
 
@@ -453,9 +479,10 @@ A concrete Yes/No checklist grouped by concern, subject to the **Spec Ambiguity 
 
 | Link | Meaning | Source | Target |
 |---|---|---|---|
-| `derived_from` | Refinement / breakdown lineage | Spec artifact | Parent spec at layer above |
+| `derived_from` | Refinement / breakdown lineage | Requirements, Architecture, ADR (NOT DD, NOT TestSpec) | Parent spec at layer above |
+| `parent_architecture` | Structural anchor | Detailed Design | Parent Architecture artifact |
 | `allocates` | Parent assigns responsibility | Architecture child entry | List of REQ-IDs |
-| `verifies` | Test case / TestSpec verifies spec element | TestSpec case | Req / Architecture child / DD element |
+| `verifies` | Test case / TestSpec verifies spec element | TestSpec case (mandatory non-empty per case and at envelope) | Req / Architecture child / DD element; leaf → DD, branch → Architecture, root → Requirements + root product |
 | `governing_adrs` | Artifact subject to ADR | Any spec artifact | List of ADR IDs |
 | `supersedes` / `superseded_by` | ADR lineage | ADR | ADR |
 | `scope_tags` | ADR's primary scopes | ADR | Scope list |
@@ -608,16 +635,17 @@ The retrofit skill **must refuse** to populate human-only fields with AI inferen
 
 **No Change Set artifact** (for now). Change tracking is process / tooling territory; every team has its own ticketing.
 
-### 8.4 Build workflow (deferred)
+### 8.4 Build workflow
 
-The Build workflow consumes specifications and produces code + tests. It will be designed in its own later session. Points already decided:
+The Build workflow consumes specifications and produces code + tests. See §16 for the full Build Flow section. Foundational decisions:
 
 - Build has no runtime coupling to Specification — artifacts are the sole contract.
 - Build is free to decide what chunk to pick up based on its own context budget and decomposition strategy.
 - Build-side artifacts add `realizes` links to the traceability graph; Spec artifacts are oblivious to them.
 - When Build finds a spec insufficient to implement, the change enters Specification workflow at the appropriate layer (per §8.3).
-- **Build-side rule** (to be encoded when Build is designed): do not hunt external channels for product / design intent. If intent isn't in the spec, the Spec Ambiguity Test failed and the spec updates.
-- **Wiring / IaC spec question** (deferred from §5.1): Architecture Composition is the current authoritative spec for deployment and wiring. Build will decide whether imperative wiring code (DI containers, middleware stacks, event-bus setup) warrants its own Detailed Design, or whether Composition + integration TestSpec is sufficient. Declarative IaC (terraform, k8s, compose) is already decided — no separate DD layer above it.
+- **Build-side rule:** do not hunt external channels for product / design intent. If intent isn't in the spec, the Spec Ambiguity Test failed and the spec updates.
+- **No build-side artifact** — Verification Report was considered and dropped. No current need.
+- **Wiring / IaC:** Architecture Composition is the authoritative spec for deployment and wiring. Declarative IaC (terraform, k8s, compose) gets no separate DD; Architecture Composition is the intent spec, IaC is the implementation. Whether imperative wiring code warrants its own DD remains open (see §17 #8).
 
 ---
 
@@ -727,15 +755,20 @@ Purpose-built tools are the **first customers** of this Specification workflow. 
 
 ## 11. Skills Architecture
 
-Three-layer model, preserved from the pre-pivot design (to be refactored in Phase 5 against the new artifact set — see BACKLOG):
+Three-layer model:
 
 - **Layer 1 — Skills** (atomic units). Craft skills (standalone best practices, derived from documentation; framework-independent). Framework skills (VModelWorkflow-specific: template formats, traceability link creation, orchestration glue).
 - **Layer 2 — Agents** (specialised execution environments). Subagents with isolated contexts, scoped tool access, structured I/O contracts. Compose Layer 1 skills into producer and reviewer roles.
 - **Layer 3 — Orchestration** (pipeline control). Research / plan session, task decomposer, pipeline controller. Document-based handoffs via YAML on disk — any session can crash and restart from the last written artifact.
 
-**Document-based handoffs**, **`vmodel-skill-*` / `vmodel-agent-*` naming**, **model-tier-aware** skill design — all preserved.
+**Document-based handoffs**, **`vmodel-skill-*` / `vmodel-agent-*` naming**, **model-tier-aware** skill design — all apply.
 
-> **Stale reference note.** The detailed skill-architecture HTML at `docs/guide/skills-architecture.html` is **pre-pivot** and does not reflect the new 6-artifact model. It will be rewritten in Phase 5 (see BACKLOG §3.5). Until then, treat the HTML as historical record; this §11 plus memory entries are authoritative.
+**18 active V-model skills** (as of 2026-05-09):
+- **12 spec-side:** 5 author/review pairs (requirements, architecture, detailed-design, testspec, ADR) + `vmodel-skill-elicit-needs` + `vmodel-skill-elicit-pd`.
+- **6 build-side:** `vmodel-skill-plan-build`, `vmodel-skill-orchestrate-build`, `vmodel-skill-render-tests`, `vmodel-skill-implement-leaf`, `vmodel-skill-review-execution`, `vmodel-skill-retrospect-build`.
+- **1 init:** `vmodel-init`.
+
+See §16 for build-side skill details. The detailed skill-architecture HTML at `docs/guide/skills-architecture.html` is pre-pivot and needs rewriting (deferred — see BACKLOG §3.5).
 
 ---
 
@@ -801,18 +834,108 @@ The pre-pivot design positioned generic V-model terminology internally with a **
 1. **Phase 2 content is authored in direct software-engineering English.** No generic/standards translation layer is applied to the text.
 2. **Rationale for removal.** Running the plugin machinery while simultaneously establishing voice, depth, and rigor in new content creates drift risk: the generic surface and the standards-specific rendering can diverge in both directions. Separating the concerns — get the content right first, translation later — protected Phase 2 quality.
 3. **Archival status.** `docs/guide/domains/*.json` has been moved to `archive/pre-pivot-2026-04-18/domains/`. `js/domain.js`, the `.domain-switcher` CSS, and all `data-term` hooks have been removed from the live `docs/guide/`.
-4. **Reintroduction horizon.** The mechanism (or a simpler successor — e.g., manual domain-specific page variants) may be reintroduced when a concrete domain-translation need surfaces. See §15.
+4. **Reintroduction horizon.** The mechanism (or a simpler successor — e.g., manual domain-specific page variants) may be reintroduced when a concrete domain-translation need surfaces. See §17.
 
 ---
 
-## 15. Open Architectural Questions
+## 15. Central Config & Reference Resolution
+
+Every project gets a `.vmodel/` directory at the project root, created by `vmodel-init`.
+
+### `.vmodel/config.yaml`
+
+Schema: `schemas/core/vmodel-config.schema.yaml`. Fields:
+
+- **Project metadata** — name, version, description.
+- **Paths** — `references` (shared reference docs), `reviews`, `build`, `defer_index`, `src`, `tests`; optional per-component path overrides.
+- **`artifacts.root_product`** — one of `product_brief` / `needs` / `product_description`. Declares which root-product type this project uses.
+- **Commands** — CLI invocations for registered tools (vmodel-core, vmodel-author, vmodel-retrofit).
+- **Build flow settings** — parallelism limits, escalation routing policy.
+
+### `.vmodel/references/`
+
+Shared reference documents consumed by skills at runtime. Framework ships defaults; `vmodel-init` copies them into the project; projects may override individual files. Contents:
+
+- `authoring-discipline.md`
+- `partial-parent-protocol.md`
+- `authoring-self-check.md`
+- `requirements-shape-checklist.md`
+- `definitions/` — project-local term definitions.
+
+**Hard rule:** skills MUST resolve reference doc paths via `.vmodel/config.yaml` `paths.references`. Hardcoding any `docs/*.md` path is a violation. Init scaffolds; migrate mode upgrades.
+
+### `.vmodel/.reviews/`
+
+Spec-side review verdict files (see §5.6). Committed to version control — forensic record of design-time decisions.
+
+### `.vmodel/.build/`
+
+Build flow state. Gitignored — transient operational state, not a forensic record. Contents:
+
+- `tasks.yaml` — task DAG emitted by `vmodel-skill-plan-build`.
+- `pipeline-state.yaml` — live pipeline state managed by `vmodel-skill-orchestrate-build`.
+- Escalation files — per-task escalation records routed to appropriate spec layer.
+- Retrospective files — per-run outputs from `vmodel-skill-retrospect-build`.
+- `lessons.yaml` — bounded lessons extracted across runs.
+
+### `.vmodel/defer-index.md`
+
+Auto-generated aggregate of all `[DEFER-DD: …]`, `[DEFER-ADR: …]`, and `[NEEDS-TEST: …]` markers in the spec tree. Produced by `scripts/index-deferred-items.py`. Not hand-authored; regenerated on demand.
+
+---
+
+## 16. Build Flow
+
+The Build workflow is end-to-end: spec artifacts in → code + tests out → retrospective. Six build-side skills compose into the pipeline.
+
+### Skills
+
+| Skill | Role |
+|---|---|
+| `vmodel-skill-plan-build` | Derive task DAG from Architecture artifacts, leaf DDs, and ADRs; emit `.vmodel/.build/tasks.yaml`. |
+| `vmodel-skill-orchestrate-build` | Pipeline state machine; layered execution order; dispatches leaf and branch stages. |
+| `vmodel-skill-render-tests` | Translate TestSpec → executable test code (TDD red phase). Layer-aware: leaf → unit tests; branch → integration tests; root → system/e2e tests. |
+| `vmodel-skill-implement-leaf` | TDD green + refactor for one leaf; greenfield or fix mode. |
+| `vmodel-skill-review-execution` | Verdict at any layer; layer-typed routing with confidence tagging. |
+| `vmodel-skill-retrospect-build` | Bounded lessons extraction after a build flow completes. |
+
+### Pipeline shape
+
+```
+plan-build
+  └─► orchestrate-build
+        ├─► leaf stages (parallel within stage, sequential across stages by dependency)
+        │     render-tests (leaf) → implement-leaf → review-execution (leaf)
+        ├─► branch integration stages (bottom-up by tree depth)
+        │     render-tests (branch) → review-execution (branch)
+        ├─► root system stage
+        │     render-tests (root) → review-execution (root)
+        └─► retrospect-build
+```
+
+### Escalation routing
+
+Escalations are **typed by target spec layer**: DD / TestSpec / Architecture / ADR / Requirements / root product. Each escalation is confidence-tagged:
+
+- **High confidence** — auto-routes to the owning spec author skill; no human interrupt.
+- **Low confidence** — surfaces to human gate before the spec layer is touched.
+
+No spec artifact is silently modified by the build flow. All escalations are filed under `.vmodel/.build/` before routing.
+
+### No build-side artifact
+
+A Verification Report artifact was considered and dropped. The build flow produces code, test results, and retrospective lessons — no new artifact type.
+
+---
+
+## 17. Open Architectural Questions
 
 Genuine architectural uncertainties to revisit as we learn more. (Execution open questions live in BACKLOG §6.)
 
 1. **Rigor tiers — may we need them later?** Current decision: no tiers (§6). Revisit if human guards are reintroduced or if real use shows the uniform bar is mis-priced in some dimension.
 2. **Human guards — what they look like.** Deferred from §2. When the need arises (e.g., regulated domain adoption), a first-class review-gate concept may re-enter the framework.
 3. **Scope-tree depth heuristics — can they be codified?** §5.1 names depth/cognitive-load/change-blast tests as heuristics. Do these admit a more formal statement (e.g., complexity metrics), or do they stay as author judgment?
-4. **Build workflow contract.** Explicitly deferred. When designed: how Build chunks a scope bundle, how `realizes` links are emitted, whether Build publishes a readable structure for coverage queries.
+4. **Build workflow — `realizes` link emission.** How `realizes` links are emitted at scale; whether Build publishes a queryable coverage structure.
 5. **Retrofit completeness threshold.** How many `unknown` fields make a retrofit "not useful" vs "partial but usable"? No principled answer today; real retrofit runs will inform.
 6. **Product Brief for micro-projects.** The 7-section shape fits real products. For internal tools or one-week prototypes a "Product Brief Lite" may be useful — out of scope until we see the need.
 7. **Domain translation reintroduction.** Whether, when, and how to reinstate a domain-vocabulary translation mechanism once Phase 2 content is stable. Options include the pre-pivot JSON-plugin runtime, manual per-domain page variants, or abandoning translation in favor of a single-voice corpus. Deferred until we have stable content to evaluate against.

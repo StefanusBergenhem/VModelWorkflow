@@ -1,0 +1,93 @@
+# .vmodel/.build/pipeline-state.yaml
+# Schema: pipeline-state-v1
+# Written and maintained by vmodel-skill-orchestrate-build.
+# Do not edit manually while a pipeline run is active.
+
+version: 1
+schema: pipeline-state-v1
+build_run_id: <id from tasks.yaml>
+
+# Valid phase values:
+#   idle | loading_tasks
+#   executing_leaf_stage_<N>    (N is a positive integer)
+#   stage_complete
+#   executing_branch_stage_<scope-id>
+#   all_branches_done
+#   executing_root_stage
+#   retrospective
+#   done
+#   halted
+phase: idle
+
+current_stage: 0            # 0 = not started; increments as leaf stages complete
+
+stages:
+  total_leaf: 0             # Total number of leaf stages (set at loading_tasks)
+  current_leaf: 0           # Current leaf stage number (1-indexed)
+  definitions:
+    # Populated at loading_tasks. Each key is a stage number (leaf stages).
+    # 1:
+    #   tasks: [build-app-cart, build-app-pricing]
+    #   status: pending       # pending | in_progress | completed
+    # 2:
+    #   tasks: [build-app-checkout]
+    #   status: pending
+
+task_states:
+  # Per-task state. Populated at loading_tasks.
+  # <task-id>:
+  #   status: pending          # pending | in_progress | completed | rejected | escalated | blocked
+  #   review_attempts: 0       # Increments per implement-leaf → review-execution cycle
+  #   dep_strength_overrides:  # Optional: per-dep overrides (rarely needed; use tasks.yaml)
+  #   started_at: ~            # ISO 8601 UTC; set when dispatch begins
+  #   completed_at: ~          # ISO 8601 UTC; set on terminal status
+  #   worktree: ~              # Path to git worktree; set at worktree creation
+  #   merge_branch: ~          # build/<task-id>; set at worktree creation
+  #   escalation_id: ~         # ESC-NNN if escalated
+
+branch_states:
+  # Per-branch-scope state. Populated when leaf stages are done.
+  # <scope-id>:
+  #   status: pending          # pending | in_progress | completed | escalated
+  #   after_stage: 2           # Leaf stage that must complete before this branch stage runs
+  #   depth: 2                 # Tree depth (deepest runs first)
+  #   escalation_id: ~
+
+root_state:
+  status: pending             # pending | in_progress | completed | escalated
+  escalation_id: ~
+
+escalations: []               # List of ESC-NNN ids written during this run
+
+build_run:
+  branch: ~                   # build/run-<build-run-id>; set at loading_tasks
+  max_review_attempts: 3      # Read from config.yaml → build.max_review_attempts
+  max_escalations: 5          # Read from config.yaml → build.max_escalations
+  max_concurrent: 3           # Read from config.yaml → build.parallel.max_concurrent
+
+stage_summaries:
+  # Written at each stage_complete boundary. Only record needed for subsequent stages.
+  # 1:
+  #   completed: [build-app-cart, build-app-pricing]
+  #   escalated: []
+  #   blocked: []
+  #   merged_branches: [build/build-app-cart, build/build-app-pricing]
+  #   settled_at: "2026-05-09T14:45:12Z"
+
+halt_info: ~                  # Populated only when phase: halted
+  # type: max_escalations_exceeded | critical_mass_blocked | cycle_detected | corrupt_state | config_missing | tasks_missing
+  # detail: "..."
+  # required_action: "..."
+
+last_transition:
+  phase_from: ~
+  phase_to: ~
+  timestamp: ~
+  reason: ~
+
+history:
+  # Append-only. Never delete or modify entries.
+  # - phase_from: idle
+  #   phase_to: loading_tasks
+  #   timestamp: "2026-05-09T14:30:00Z"
+  #   reason: "INITIALIZE: tasks.yaml found, no existing state"

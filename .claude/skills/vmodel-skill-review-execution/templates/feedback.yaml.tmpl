@@ -1,0 +1,29 @@
+# feedback.yaml template
+# Used for both APPROVED and REJECTED verdicts.
+# For APPROVED: set verdict: APPROVED, leave failures empty.
+# For REJECTED: set verdict: REJECTED, populate failures list.
+# Write to: .vmodel/.build/tasks/<task-id>/feedback.yaml (REJECTED)
+#            .vmodel/.build/tasks/<task-id>/review-ready.yaml (APPROVED)
+
+task_id: <task-id>                   # from current-task.yaml
+scope: <scope-path>                  # e.g. auth/token-validator
+layer: <leaf|branch|root>            # determined from task_type
+verdict: <APPROVED|REJECTED>
+attempt: <N>                         # current attempt number from current-task.yaml
+reviewed_at: <ISO-8601-datetime>     # e.g. 2026-05-09T14:32:00Z
+
+# APPROVED: leave failures as empty list []
+# REJECTED: populate with one entry per distinct failure
+failures:
+  - type: <contract-violation|scope-violation|missing-implementation|wrong-assertion-is-impl-bug|integration-failure-impl-bug|regression>
+    # type must be in-lane for the layer (see references/feedback-taxonomy.md §2)
+    location: <file:line>            # e.g. src/auth/TokenValidator.java:42
+    description: <one-line description of what is wrong>
+    required_fix: <concrete next step — junior-implementable without further lookup>
+    # optional: reference to the DD/ARCH/TestSpec element that is violated
+    spec_ref: <element-id or omit>   # e.g. FC-03, PRE-01, IFACE-07
+
+required_fixes_summary: |
+  # One paragraph summarising all failures. Absent when verdict is APPROVED.
+  # Impl-leaf reads this as the entry point before reading the failures list.
+  <summary paragraph or omit for APPROVED>

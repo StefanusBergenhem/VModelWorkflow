@@ -1,0 +1,201 @@
+# Root system / acceptance test skeleton
+#
+# One file per root scope. Rendered to: <paths.tests>/system/<scope>_system_test.<ext>
+# Tag or annotate as system tests — these do not run in the unit or integration suite.
+#
+# Placeholders:
+#   <<SCOPE>>         scope path slug (typically "root" or the product name)
+#   <<CASE_ID>>       TestSpec case id (e.g., TC-001 at root)
+#   <<VERIFIES_IDS>>  REQ-NNN and PB-outcome-NNN IDs from case verifies: field
+#   <<TEST_NAME>>     derived from case title (the user journey)
+#   <<ENVIRONMENT>>   named environment tier from preconditions: (e.g., "staging-blue")
+#   <<PERSONA>>       named persona from preconditions:
+#   <<TENANT>>        named test tenant from preconditions:
+#   <<FEATURE_FLAGS>> feature flag state from preconditions:
+#   <<STEPS>>         user-journey driver calls (one per step: item)
+#   <<ASSERT>>        business / user-visible assertions (one per expected: item)
+#
+# Key rule: assertions use user-visible and business-visible state only.
+# No internal class names, no HTTP status codes, no internal API terms.
+# See references/layer-rendering.md §Root.
+# ─────────────────────────────────────────────────────────────────
+
+# ── Go ──────────────────────────────────────────────────────────
+# File: tests/system/<<scope>>_system_test.go
+
+```go
+//go:build system
+
+package system_test
+
+import (
+    "testing"
+    "time"
+    "github.com/stretchr/testify/assert"
+    "github.com/stretchr/testify/require"
+)
+
+// VERIFIES: <<CASE_ID>> → <<VERIFIES_IDS>>
+func TestSystem_<<TEST_NAME>>(t *testing.T) {
+    // Arrange
+    env := ConnectEnvironment(t, "<<ENVIRONMENT>>")
+    tenant := env.CreateTestTenant("<<TENANT>>")
+    session := env.AuthAs(tenant, "<<PERSONA>>")
+    env.SetFeatureFlags(map[string]bool{
+        "<<FEATURE_FLAG>>": true,
+    })
+    start := time.Now()
+
+    // Act — user journey steps
+    <<STEPS>>  // e.g.: session.SignUp(email, password)
+               //        session.CreateProject("my-project")
+
+    // Assert — user-visible / business-visible outcomes
+    <<ASSERT>> // e.g.: assert.True(t, env.TenantExists(tenant.ID))
+               //        assert.WithinDuration(t, time.Now(), emailSentAt, 60*time.Second)
+
+    // Timing bound (if expected: specifies one)
+    elapsed := time.Since(start)
+    assert.LessOrEqual(t, elapsed.Minutes(), float64(5), "journey must complete within 5 minutes p95")
+}
+```
+
+# ── Python ──────────────────────────────────────────────────────
+# File: tests/system/test_<<scope_slug>>.py
+
+```python
+import pytest
+import time
+from <<driver>> import Environment
+
+# VERIFIES: <<CASE_ID>> → <<VERIFIES_IDS>>
+@pytest.mark.system
+def test_<<test_name>>(system_env):
+    """<<case title>>"""
+    # Arrange
+    tenant = system_env.create_test_tenant("<<TENANT>>")
+    session = system_env.auth_as(tenant, persona="<<PERSONA>>")
+    system_env.set_feature_flags({"<<FEATURE_FLAG>>": True})
+    start = time.monotonic()
+
+    # Act — user journey steps
+    <<STEPS>>  # e.g.: session.sign_up(email="test@example.com", password="...")
+               #        session.create_project(name="my-project")
+
+    # Assert — user-visible / business-visible outcomes
+    <<ASSERT>> # e.g.: assert system_env.tenant_exists(tenant.id)
+               #        assert system_env.email_sent_to(tenant.email, within_seconds=60)
+
+    # Timing bound
+    elapsed = time.monotonic() - start
+    assert elapsed <= 300, f"journey must complete within 5 min p95, got {elapsed:.1f}s"
+
+
+@pytest.fixture(scope="session")
+def system_env():
+    env = Environment.connect("<<ENVIRONMENT>>")
+    yield env
+    env.cleanup()
+```
+
+# ── Java / JUnit 5 ──────────────────────────────────────────────
+# File: <<ScopeNamePascal>>SystemTest.java
+
+```java
+import org.junit.jupiter.api.*;
+import java.time.*;
+import static org.assertj.core.api.Assertions.*;
+
+@Tag("system")
+@DisplayName("<<product-name>> — system")
+class <<ScopeNamePascal>>SystemTest {
+
+    Environment env;
+
+    @BeforeEach
+    void connect() {
+        env = Environment.connect("<<ENVIRONMENT>>");
+    }
+
+    // VERIFIES: <<CASE_ID>> → <<VERIFIES_IDS>>
+    @Test
+    @DisplayName("<<case title>>")
+    void test<<TEST_NAME>>() {
+        // Arrange
+        var tenant = env.createTestTenant("<<TENANT>>");
+        var session = env.authAs(tenant, "<<PERSONA>>");
+        env.setFeatureFlags(Map.of("<<FEATURE_FLAG>>", true));
+        var start = Instant.now();
+
+        // Act — user journey steps
+        <<STEPS>> // e.g.: session.signUp(email, password);
+                  //        session.createProject("my-project");
+
+        // Assert — user-visible / business-visible outcomes
+        <<ASSERT>> // e.g.: assertThat(env.tenantExists(tenant.getId())).isTrue();
+                   //        assertThat(env.emailSentTo(tenant.getEmail()))
+                   //            .isCompletedWithin(Duration.ofSeconds(60));
+
+        // Timing bound
+        var elapsed = Duration.between(start, Instant.now());
+        assertThat(elapsed.toMinutes()).isLessThanOrEqualTo(5);
+    }
+}
+```
+
+# ── TypeScript / Vitest ─────────────────────────────────────────
+# File: tests/system/<<scope>>.system.test.ts
+
+```typescript
+import { describe, it, expect, beforeAll, afterAll } from 'vitest'
+import { Environment } from '<<driver>>'
+
+describe('<<product-name>> — system', () => {
+  let env: Environment
+
+  beforeAll(async () => {
+    env = await Environment.connect('<<ENVIRONMENT>>')
+  })
+
+  afterAll(async () => {
+    await env.cleanup()
+  })
+
+  // VERIFIES: <<CASE_ID>> → <<VERIFIES_IDS>>
+  it('<<case title>>', async () => {
+    // Arrange
+    const tenant = await env.createTestTenant('<<TENANT>>')
+    const session = await env.authAs(tenant, '<<PERSONA>>')
+    await env.setFeatureFlags({ '<<FEATURE_FLAG>>': true })
+    const start = Date.now()
+
+    // Act — user journey steps
+    <<STEPS>> // e.g.: await session.signUp({ email: 'test@example.com' })
+              //        await session.createProject({ name: 'my-project' })
+
+    // Assert — user-visible / business-visible outcomes
+    <<ASSERT>> // e.g.: expect(await env.tenantExists(tenant.id)).toBe(true)
+               //        expect(await env.emailSentTo(tenant.email, { withinSeconds: 60 })).toBe(true)
+
+    // Timing bound
+    const elapsedMs = Date.now() - start
+    expect(elapsedMs).toBeLessThanOrEqualTo(5 * 60 * 1000)
+  }, /* timeout: */ 10 * 60 * 1000)  // 10 min test timeout > 5 min journey bound
+
+})
+```
+
+# ── Notes ────────────────────────────────────────────────────────
+#
+# Driver abstraction: the `Environment` / `session` object is the test driver.
+# It wraps the product's entry points in user-vocabulary calls. The driver is
+# NOT authored by this skill — it is a test infrastructure concern. If the driver
+# does not exist yet, stub it with methods that throw NotImplementedError /
+# UnsupportedOperationException so the test is red but parseable.
+#
+# Timing bounds: when expected: specifies a p95 bound and a single-run assertion
+# is insufficient, note this in a comment and assert only the single-run upper
+# bound (single run is a conservative check — p95 requires N runs).
+#
+# Feature flags: if preconditions: does not name any feature flags, omit the
+# setFeatureFlags call entirely. Never invent flag names not in the TestSpec.

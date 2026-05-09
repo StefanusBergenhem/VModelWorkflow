@@ -199,12 +199,11 @@ scope: session-store/expiry-calculator
 parent_scope: session-store
 level: unit                           # unit | integration | system
 verifies: [DD-session-store-expiry-calculator]
-derived_from: DD-session-store-expiry-calculator
 governing_adrs: []
 recovery_status: reconstructed        # omit on greenfield
 ---</code></pre>
 
-    <p>The mandatory fields are <code>id</code>, <code>scope</code>, <code>level</code>, <code>verifies</code>, and <code>derived_from</code>. <code>verifies</code> is mandatory non-empty at the TestSpec level and at every case. At root scope <code>scope</code> is <code>null</code> and <code>parent_scope</code> is <code>null</code>; at a branch <code>scope</code> is the branch path; at a leaf <code>scope</code> is the full leaf path and <code>parent_scope</code> is the containing branch. The <code>level</code> field is scope-derived (root &rarr; system; non-leaf non-root &rarr; integration; leaf &rarr; unit) and is carried explicitly so downstream tooling does not have to re-derive it.</p>
+    <p>The mandatory fields are <code>id</code>, <code>scope</code>, <code>level</code>, and <code>verifies</code>. <code>verifies</code> is mandatory non-empty at the TestSpec level and at every case; it is the only link field. The layer convention for <code>verifies</code> targets is: <strong>leaf</strong> &rarr; DD elements; <strong>branch</strong> &rarr; Architecture elements; <strong>root</strong> &rarr; root Requirements and root product (PB / needs / PD) outcomes. At root scope <code>scope</code> is <code>null</code> and <code>parent_scope</code> is <code>null</code>; at a branch <code>scope</code> is the branch path; at a leaf <code>scope</code> is the full leaf path and <code>parent_scope</code> is the containing branch. The <code>level</code> field is scope-derived (root &rarr; system; non-leaf non-root &rarr; integration; leaf &rarr; unit) and is carried explicitly so downstream tooling does not have to re-derive it.</p>
 
     <h3 id="ts-bp-1">2.1 &nbsp; Pre-code specification discipline</h3>
     <p>A TestSpec is authored <em>before</em> the test code is written, and <em>before</em> the implementation code is written. This is the non-negotiable ordering. The reasons compound across the V.</p>
@@ -310,7 +309,7 @@ flowchart LR
     class TC_ROOT,TC_BRANCH,TC_LEAF tc
     </div>
 
-    <p>The chain does not skip layers. A leaf test case does not <code>verifies</code> a root Requirement; it <code>verifies</code> a DD element. The Requirement is reached by walking up the derivation chain through <code>derived_from</code> links (DD &rarr; branch Architecture &rarr; branch Requirement &rarr; root Requirement). Queries like &ldquo;which test cases ultimately verify REQ-002?&rdquo; are answered by graph traversal, not by cramming every Requirement into every leaf case's <code>verifies</code> field.</p>
+    <p>The chain does not skip layers. A leaf test case does not <code>verifies</code> a root Requirement; it <code>verifies</code> a DD element. The Requirement is reached by walking up the composition chain (DD &rarr; branch Architecture &rarr; branch Requirement &rarr; root Requirement) via the structural links in each artifact. Queries like &ldquo;which test cases ultimately verify REQ-002?&rdquo; are answered by graph traversal, not by cramming every Requirement into every leaf case's <code>verifies</code> field.</p>
 
     <h3 id="ts-bp-5">2.5 &nbsp; Case quality: F.I.R.S.T., AAA, assertion specificity</h3>
     <p>The TestSpec declares the case; the test code implements it. The case-quality disciplines below are properties of the test code, declared as expectations in the TestSpec so the test-authoring step (human or AI) has a concrete bar to hit.</p>
@@ -383,8 +382,7 @@ id: TS-{scope}
 scope: {scope-path}                      # null at root
 parent_scope: {parent-scope-path}        # null at root
 level: system | integration | unit
-verifies: [list of spec artifact IDs]    # layer's own spec
-derived_from: {spec artifact}            # the layer's own spec
+verifies: [list of spec artifact IDs]    # layer convention: leaf→DD, branch→ARCH, root→REQ+root product
 governing_adrs: [optional]
 recovery_status: {verified | reconstructed | unknown}   # omit on greenfield
 ---
@@ -480,7 +478,6 @@ scope: session-store/expiry-calculator
 parent_scope: session-store
 level: unit
 verifies: [DD-session-store-expiry-calculator]
-derived_from: DD-session-store-expiry-calculator
 governing_adrs: []
 ---
 
@@ -585,7 +582,6 @@ verifies:
   - ARCH-session-store.interfaces.session-api
   - ARCH-session-store.composition.cleanup-api-coordination
   - REQ-session-store-002
-derived_from: ARCH-session-store
 governing_adrs: [ADR-004]
 ---
 
@@ -674,7 +670,6 @@ verifies:
   - REQ-002     # logout invalidates session immediately on all devices
   - REQ-003     # concurrent session limit is 5 per principal
   - PB.outcomes.secure-session-lifecycle
-derived_from: [requirements.md, product_brief.md]
 governing_adrs: []
 ---
 
@@ -881,7 +876,7 @@ void testExpiry() {
     <div class="card">
       <h3>Derivation discipline</h3>
       <ul>
-        <li>Are the derivation sources named explicitly in <code>derived_from</code> and do they match the layer per Position C (PB + root Req + root Arch at root; branch Req + branch Arch at branch; DD at leaf)?</li>
+        <li>Do the <code>verifies</code> targets match the layer convention (leaf &rarr; DD elements; branch &rarr; Architecture elements; root &rarr; root Requirements + root product outcomes)?</li>
         <li>Was the TestSpec authored before the test code and before the implementation code (or, in retrofit, independently of the existing tests)?</li>
         <li>Does every case declare a <code>type</code> from the derivation-strategy vocabulary (functional / boundary / error / fault-injection / state-transition / property / contract / performance / security / accessibility / error-guessing)?</li>
         <li>Has every applicable strategy been applied: RBT always; ECP+BVA for every input range; decision tables for every compound predicate; state-transition for every stateful unit; error paths for every named error; fault injection for every dependency?</li>

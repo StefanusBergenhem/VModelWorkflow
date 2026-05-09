@@ -1,0 +1,185 @@
+# Leaf unit test skeleton
+#
+# One file per scope. Rendered to: <paths.tests>/<scope>/<scope>_test.<ext>
+#
+# Placeholders:
+#   <<SCOPE>>         scope path slug (e.g., session-store/expiry-calculator)
+#   <<UNIT_CLASS>>    PascalCase name of the unit under test (e.g., ExpiryCalculator)
+#   <<CASE_ID>>       TestSpec case id (e.g., TC-expiry-calc-001)
+#   <<VERIFIES_IDS>>  comma-separated upstream IDs from case verifies: field
+#   <<TEST_NAME>>     derived from case title (language-specific naming convention)
+#   <<SETUP>>         arrange code — inputs, stubs, fakes
+#   <<ACT>>           single call to the unit under test
+#   <<ASSERT>>        assertion(s) translated from expected:
+#
+# Language flavours below. Use the one matching the project language.
+# ─────────────────────────────────────────────────────────────────
+
+# ── Go ──────────────────────────────────────────────────────────
+# File: <<scope>>_test.go  (in the same package as the unit)
+
+```go
+package <<package>>
+
+import (
+    "testing"
+    "github.com/stretchr/testify/assert"
+    "github.com/stretchr/testify/require"
+)
+
+// VERIFIES: <<CASE_ID>> → <<VERIFIES_IDS>>
+func Test<<TEST_NAME>>(t *testing.T) {
+    // Arrange
+    <<SETUP>>
+
+    // Act
+    result, err := <<ACT>>
+
+    // Assert
+    require.NoError(t, err)  // remove if case is an error case
+    assert.Equal(t, <<EXPECTED>>, result)
+}
+```
+
+# Table-driven variant (use when multiple cases share the same test shape)
+```go
+// VERIFIES: <<CASE_ID_1>>, <<CASE_ID_2>> → <<VERIFIES_IDS>>
+func Test<<TEST_NAME>>_TableDriven(t *testing.T) {
+    tests := []struct {
+        name     string
+        <<INPUT_FIELDS>>
+        expected <<TYPE>>
+    }{
+        {name: "<<case 1 title slug>>", <<inputs_1>>, expected: <<expected_1>>},
+        {name: "<<case 2 title slug>>", <<inputs_2>>, expected: <<expected_2>>},
+    }
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            // Arrange
+            <<SETUP_USING_tt>>
+
+            // Act
+            result := <<ACT_USING_tt>>
+
+            // Assert
+            assert.Equal(t, tt.expected, result)
+        })
+    }
+}
+```
+
+# ── Python ──────────────────────────────────────────────────────
+# File: test_<<scope_slug>>.py
+
+```python
+import pytest
+from <<module>> import <<UnitClass>>
+
+# VERIFIES: <<CASE_ID>> → <<VERIFIES_IDS>>
+def test_<<test_name>>():
+    # Arrange
+    <<SETUP>>
+
+    # Act
+    result = <<ACT>>
+
+    # Assert
+    assert result == <<EXPECTED>>
+
+
+# Parameterized variant
+@pytest.mark.parametrize("<<input_names>>,expected", [
+    (<<inputs_1>>, <<expected_1>>),   # <<case 1 title>>
+    (<<inputs_2>>, <<expected_2>>),   # <<case 2 title>>
+], ids=["<<case_1_slug>>", "<<case_2_slug>>"])
+# VERIFIES: <<CASE_ID_1>>, <<CASE_ID_2>> → <<VERIFIES_IDS>>
+def test_<<test_name>>_parametrized(<<input_names>>, expected):
+    # Arrange
+    unit = <<UnitClass>>()
+
+    # Act
+    result = unit.<<method>>(<<input_names>>)
+
+    # Assert
+    assert result == expected
+```
+
+# ── Java / JUnit 5 ──────────────────────────────────────────────
+# File: <<ScopeNamePascal>>Test.java
+
+```java
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+
+@DisplayName("<<scope-name>>")
+class <<ScopeNamePascal>>Test {
+
+    // VERIFIES: <<CASE_ID>> → <<VERIFIES_IDS>>
+    @Test
+    @DisplayName("<<case title>>")
+    void test<<TEST_NAME>>() {
+        // Arrange
+        <<SETUP>>
+
+        // Act
+        var result = <<ACT>>;
+
+        // Assert
+        assertEquals(<<EXPECTED>>, result);
+    }
+
+    // Parameterized variant
+    // VERIFIES: <<CASE_ID_1>>, <<CASE_ID_2>> → <<VERIFIES_IDS>>
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("<<providerMethodName>>")
+    @DisplayName("<<suite title>>")
+    void test<<TEST_NAME>>Parametrized(String name, <<INPUT_TYPES>> input, <<OUTPUT_TYPE>> expected) {
+        var result = <<UNIT>>.<<METHOD>>(input);
+        assertEquals(expected, result, name);
+    }
+
+    static java.util.stream.Stream<Arguments> <<providerMethodName>>() {
+        return java.util.stream.Stream.of(
+            Arguments.of("<<case 1 title>>", <<input_1>>, <<expected_1>>),
+            Arguments.of("<<case 2 title>>", <<input_2>>, <<expected_2>>)
+        );
+    }
+}
+```
+
+# ── TypeScript / Vitest ─────────────────────────────────────────
+# File: <<scope>>.test.ts
+
+```typescript
+import { describe, it, expect, vi } from 'vitest'
+import { <<UnitClass>> } from '<<module>>'
+
+describe('<<scope-name>>', () => {
+
+  // VERIFIES: <<CASE_ID>> → <<VERIFIES_IDS>>
+  it('<<case title>>', () => {
+    // Arrange
+    <<SETUP>>
+
+    // Act
+    const result = <<ACT>>
+
+    // Assert
+    expect(result).toEqual(<<EXPECTED>>)
+  })
+
+  // Parameterized variant
+  // VERIFIES: <<CASE_ID_1>>, <<CASE_ID_2>> → <<VERIFIES_IDS>>
+  it.each([
+    { name: '<<case 1 title>>', input: <<input_1>>, expected: <<expected_1>> },
+    { name: '<<case 2 title>>', input: <<input_2>>, expected: <<expected_2>> },
+  ])('$name', ({ input, expected }) => {
+    const result = <<UNIT>>.<<method>>(input)
+    expect(result).toEqual(expected)
+  })
+
+})
+```

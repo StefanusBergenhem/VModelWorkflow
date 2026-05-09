@@ -42,7 +42,7 @@ Expected upstream context (ask if missing):
 - **Recovery posture** — greenfield (omit `recovery_status`) or retrofit (declare `recovery_status` on human-only fields per `retrofit-discipline.md`)
 - **Supersession context** — if this ADR replaces an older one, the predecessor's id
 - **Prior review files** (optional, consumed when present) — on a revision pass, the latest review at `specs/.reviews/<artifact-id>-*.yaml` (lexically last) is read and findings are addressed. Per TARGET_ARCHITECTURE §5.6 review output convention.
-- **`references/partial-parent-protocol.md`** — partial-parent and no-canonical-upstream protocol — three permitted paths when canonical upstream is missing or partial. For ADR, the canonical upstream is either an Architecture stub at the relevant `scope_tags` (extraction origin) or an external/organisational policy artifact (pre-existing-policy origin). Required reading whenever neither origin is available, or when the Architecture at `scope_tags` has not yet been authored.
+- **`.vmodel/references/partial-parent-protocol.md`** — partial-parent and no-canonical-upstream protocol — three permitted paths when canonical upstream is missing or partial. For ADR, the canonical upstream is either an Architecture stub at the relevant `scope_tags` (extraction origin) or an external/organisational policy artifact (pre-existing-policy origin). Required reading whenever neither origin is available, or when the Architecture at `scope_tags` has not yet been authored. (Resolved via `.vmodel/config.yaml`; framework default copied there at init.)
 
 If the threshold is not met, **HALT** (HALT condition #2) — refusal E fires; offer to record the choice inline in Architecture or Detailed Design instead.
 
@@ -54,7 +54,7 @@ Default output filename: `<repo>/specs/adrs/adr-NNN-<slug>.md`. ADRs live flat r
 
 ## Cross-cutting authoring discipline
 
-Apply the six rules in `references/authoring-discipline.md` across every authoring step. Most relevant here: Rule 0 (no `n/a + justification` for omitted slots, no self-attestation prose — an ADR's body is the product-shape decision record, not a meta-narrative about its own authoring). Rule 3 is meta-relevant — an ADR is the canonical place where rationale is captured at length; subsequent artifacts reference *this* ADR per Rule 3 rather than re-narrating the decision. Rule 5 (cite upstream / governing ADRs and parent Architecture stub by ID; do not restate the originating context). Rule 1 (boundary-only), Rule 2 (small-system collapse), and Rule 4 (diagram-or-prose) apply universally but are less load-bearing for ADR authoring. Review skills enforce all six as `check.discipline.<rule>` findings.
+Apply the six rules in `.vmodel/references/authoring-discipline.md` across every authoring step. Most relevant here: Rule 0 (no `n/a + justification` for omitted slots, no self-attestation prose — an ADR's body is the product-shape decision record, not a meta-narrative about its own authoring). Rule 3 is meta-relevant — an ADR is the canonical place where rationale is captured at length; subsequent artifacts reference *this* ADR per Rule 3 rather than re-narrating the decision. Rule 5 (cite upstream / governing ADRs and parent Architecture stub by ID; do not restate the originating context). Rule 1 (boundary-only), Rule 2 (small-system collapse), and Rule 4 (diagram-or-prose) apply universally but are less load-bearing for ADR authoring. Review skills enforce all six as `check.discipline.<rule>` findings.
 
 ## Authoring procedure
 
@@ -81,15 +81,15 @@ If neither origin's upstream is available — for example, the user wants an ADR
 
 If the canonical upstream is missing or partial:
 
-1. Load `references/partial-parent-protocol.md`.
+1. Load `.vmodel/references/partial-parent-protocol.md`.
 2. Pick path **(a) HALT**, **(b) author from next-best parent + documented deviation**, or **(c) cite a framework artifact as upstream** — explicitly. Silent choice is a hard violation. For ADR, path (a) is the strong default; (b) requires the consuming Architecture to be structurally deferred and an explicit stakeholder decision to capture the ADR ahead of it.
 3. Document the choice in this artifact's *Context* section in 1–2 sentences naming the path and why it was chosen (which canonical parent is missing, which deferral applies, what was used in its place). Note: ADRs use *Context* rather than *Overview* — the Context section carries this protocol declaration.
 4. `scope_tags` cites only existing, resolvable scope ids — never a fabricated scope, never a missing-architecture id.
-5. Under path (b), add an *Open follow-ups* entry that owns "replacement on canonical-parent authoring" with title, owner, action, and citation. The follow-up commits to revisiting this ADR's Propagation block when the consuming Architecture lands and the actual `governing_adrs` linkage can be verified.
+5. Under path (b), emit a `[DEFER-ADR: replacement on canonical-parent authoring — <canonical parent id>]` marker inline at the *Context* section rather than a separate Open follow-ups section entry. The marker commits to revisiting this ADR's Propagation block when the consuming Architecture lands.
 
 If the canonical upstream is fully present (the marker is being consumed, or the policy is in hand), *Context* says so in one short clause naming the consumed marker or cited policy.
 
-→ See `references/partial-parent-protocol.md`
+→ See `.vmodel/references/partial-parent-protocol.md`
 
 ### Step 1 — Threshold check (refusal E intake)
 
@@ -139,7 +139,7 @@ For each consequence, choose the route: (a) new requirement at this ADR's scope 
 
 When route (a) materialises a new requirement at this scope, apply the requirements-shape checklist before writing the requirement YAML. The checklist covers atomicity, EARS shape, testability, no implementation prescription, no fabrication, and traceability — it is the subset of requirements discipline that ADR authors borrow.
 
-→ See `references/requirements-shape-checklist.md`
+→ See `.vmodel/references/requirements-shape-checklist.md`
 
 When a route binds a specific library, protocol, or framework to a child architecture or interface, declare the binding in a structured `propagation.bindings:` YAML block within this ADR's Propagation section. Each entry: `name` (the bound mechanism), `scope` (the child architecture entry name it binds to), `kind` (`library` / `protocol` / `framework`). Downstream architecture authors land the binding in the matching child's `rationale`, citing this ADR by id; structured declaration enables `scripts/check-adr-landing.py` to detect leaks at author time.
 
@@ -169,9 +169,9 @@ Scripts for this skill:
 - `scripts/check-adr-landing.py <specs-root>` — verifies bindings declared in this ADR's `propagation.bindings:` YAML are reflected correctly in any architecture artifact that lists this ADR in `governing_adrs`
 - `scripts/check-id-encoding.py <specs-root>` — detects malformed empty-scope id forms (`TS-`, `TC--NNN`, `ARCH-.interfaces.X`) per TARGET §5.4 empty-scope rule
 
-Verify also: when the partial-parent protocol fired (Step 0.5), *Context* explicitly names the chosen path (a/b/c); under path (b), an *Open follow-ups* entry owns the canonical-parent-replacement; `scope_tags` cites only existing scope ids; no fabricated upstream ids in supersedes / governing_adrs cross-links.
+Verify also: when the partial-parent protocol fired (Step 0.5), *Context* explicitly names the chosen path (a/b/c); under path (b), a `[DEFER-ADR: ...]` marker names the canonical-parent replacement inline; `scope_tags` cites only existing scope ids; no fabricated upstream ids in supersedes / governing_adrs cross-links.
 
-→ See `/home/stefanus/repos/VModelWorkflow/docs/authoring-self-check.md`
+→ See `.vmodel/references/authoring-self-check.md`
 
 ### Step 12 — Run Quality Bar checklist + Spec Ambiguity Test
 
@@ -256,8 +256,8 @@ That's it — one file. The skill does not create directories, schemas, validato
 
 ## Reference index
 
-- `references/authoring-discipline.md` — 6 cross-cutting rules (product-shape, layering, compression) — applies to all authoring steps
-- `references/partial-parent-protocol.md` — partial-parent and no-canonical-upstream protocol — three permitted paths when canonical upstream is missing or partial
+- `.vmodel/references/authoring-discipline.md` — 6 cross-cutting rules (product-shape, layering, compression) — applies to all authoring steps (resolved via `.vmodel/config.yaml`)
+- `.vmodel/references/partial-parent-protocol.md` — partial-parent and no-canonical-upstream protocol — three permitted paths when canonical upstream is missing or partial (resolved via `.vmodel/config.yaml`)
 - `references/adr-purpose-and-shape.md` — cross-cutting role; three-condition threshold; capture-then-design flow; Y-statement compact form
 - `references/canonical-fields-and-body.md` — front-matter required fields; status lifecycle; body section ordering
 - `references/context-and-drivers.md` — forces vs problem domain; named drivers; assumptions enumeration

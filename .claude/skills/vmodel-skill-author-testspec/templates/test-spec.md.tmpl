@@ -13,10 +13,6 @@ id: TS<<scope-suffix?>>
 artifact_type: test-spec
 scope: <<scope-path>>                    # e.g., session-store/expiry-calculator; "" at root
 level: <<unit | integration | system>>   # leaf=unit, non-leaf=integration, root=system
-derived_from:
-  - <<parent-spec-id-1>>                 # e.g., DD-session-store-expiry-calculator (leaf)
-                                         #   or ARCH-cart-service (branch)
-                                         #   or REQ-001 + PB-outcome-X (root)
 verifies:
   - <<upstream-id-1>>                    # MUST be non-empty (refusal B)
   - <<upstream-id-2>>
@@ -78,19 +74,6 @@ cases:
 | Tests without spec elements | <<list, citing existing test file:line; or `(none observed)`>> |
 | Observed-but-suspect cases | <<list of case IDs with reason; or `(none observed)`>> |
 | Cases with `recovery_status: unknown` | <<list of case IDs awaiting human confirmation; or `(none observed)`>> |
-
-## Open follow-ups
-
-<<Mandatory section. Enumerate deferred items here, mirroring the inline [DEFER-DD: ...]
-   and [DEFER-ADR: ...] markers from the body. Bullet shape: title — owner — action —
-   citation locations. Render `(none)` when the list is empty. Empty header alone is
-   not acceptable.
-
-   Example:
-   - **<title>** — owner: <owner> — action: <action> — citation: <file:line>
->>
-
-(none)
 
 ## Notes
 

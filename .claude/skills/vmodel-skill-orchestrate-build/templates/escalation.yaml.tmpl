@@ -1,0 +1,54 @@
+# .vmodel/.build/escalations/ESC-<NNN>.yaml
+# Written by vmodel-skill-orchestrate-build on task escalation.
+# NNN is zero-padded three digits, incrementing from 001 per build run.
+# Do not edit status, resolved_by, or resolved_at manually while the pipeline is running.
+
+escalation_id: ESC-<NNN>
+build_run_id: <id from tasks.yaml>
+
+# --- Source ---
+task_id: <task-id>               # Which task triggered the escalation
+pipeline_position: leaf          # leaf | branch | root
+stage: <N>                       # Stage number (leaf stages) or scope-id (branch/root)
+detected_by: review-execution    # render-tests | implement-leaf | review-execution
+
+# --- Routing ---
+# target_layer drives which spec artifact the human must open to resolve this.
+# Valid values: detailed-design | testspec | architecture | adr | requirements | product | unknown
+# See references/escalation-routing.md for the full routing table.
+target_layer: detailed-design
+
+# Specific artifact ID if known. Omit if unknown.
+target_artifact: ~
+
+# issue_type: ambiguity | gap | contradiction | new-decision-needed | contract-violation
+issue_type: ambiguity
+
+# confidence in the routing decision: low | medium | high
+# When low, add routing_note below.
+confidence: high
+routing_note: ~   # One sentence explaining routing ambiguity; only when confidence: low
+
+# --- Content ---
+summary: "<one-line description of the issue>"
+
+# Concrete evidence — file path + line number + verbatim quote.
+# At least one entry required.
+evidence:
+  - file: <path>:<line>
+    quote: "<verbatim excerpt>"
+  # - file: ...
+  #   quote: ...
+
+# Concrete, actionable next step. Name the specific clause, field, or section.
+# "Fix the DD" is not actionable. "Clarify postcondition of CartService.addItem() — silent on duplicate SKU" is.
+required_action: "<concrete next-step>"
+
+# --- Status ---
+# status: open | resolved | rejected
+# resolved: human confirmed the spec fix is in place and pipeline may resume.
+# rejected: human determined this is not a real escalation (e.g. the implementation was wrong, not the spec).
+status: open
+resolved_by: ~    # Who resolved (human name or "pipeline-resume")
+resolved_at: ~    # ISO 8601 UTC
+resolution_note: ~  # One sentence on what was changed in the spec to resolve

@@ -1,0 +1,185 @@
+# Branch integration test skeleton
+#
+# One file per branch scope. Rendered to: <paths.tests>/<scope>/<scope>_integration_test.<ext>
+# Tag or annotate as integration tests so they run separately from unit tests.
+#
+# Placeholders:
+#   <<SCOPE>>         scope path slug (e.g., cart-service)
+#   <<CASE_ID>>       TestSpec case id
+#   <<VERIFIES_IDS>>  comma-separated upstream IDs from case verifies: field
+#   <<TEST_NAME>>     derived from case title
+#   <<ENV_SHAPE>>     in-process | testcontainers | shared-staging
+#   <<FIXTURES>>      per-case fixture setup from preconditions:
+#   <<CHILD_A>>       child component name from preconditions:
+#   <<FIDELITY>>      dummy | stub | spy | mock | fake (from preconditions:)
+#   <<STEPS>>         sequential driver calls from steps: field
+#   <<ASSERT>>        cross-child observable assertions from expected: field
+#
+# Key rule: every test double named in preconditions: must carry a CONTRACT comment
+# when fidelity is "fake" (the fake honours the named child's contract).
+# ─────────────────────────────────────────────────────────────────
+
+# ── Go ──────────────────────────────────────────────────────────
+# File: <<scope>>_integration_test.go
+
+```go
+//go:build integration
+
+package <<package>>_test
+
+import (
+    "testing"
+    "github.com/stretchr/testify/assert"
+    "github.com/stretchr/testify/require"
+)
+
+// VERIFIES: <<CASE_ID>> → <<VERIFIES_IDS>>
+func TestIntegration_<<TEST_NAME>>(t *testing.T) {
+    // Arrange — environment: <<ENV_SHAPE>>
+    // Fixture: <<FIXTURES>>
+    <<CHILD_A>>Fake := &<<CHILD_A>>Fake{}  // CONTRACT: <<CHILD_A>>
+    sut := New<<ScopeNamePascal>>(<<CHILD_A>>Fake /*, ...other deps */)
+
+    // Act
+    <<STEPS>>
+
+    // Assert
+    <<ASSERT>>
+}
+
+// CONTRACT: <<CHILD_A>>
+// Fake implements <<CHILD_A>> interface for integration test composition.
+type <<CHILD_A>>Fake struct { /* ... */ }
+
+func (f *<<CHILD_A>>Fake) <<Method>>(<<args>>) <<return>> {
+    // minimal behaviour sufficient to drive the composition
+    panic("not implemented — red phase: implement alongside <<CHILD_A>> production code")
+}
+```
+
+# ── Python ──────────────────────────────────────────────────────
+# File: tests/integration/test_<<scope_slug>>.py
+
+```python
+import pytest
+from <<module>> import <<ScopeClass>>
+from <<child_a_module>> import <<ChildAInterface>>
+
+# VERIFIES: <<CASE_ID>> → <<VERIFIES_IDS>>
+@pytest.mark.integration
+def test_<<test_name>>():
+    # Arrange — environment: <<ENV_SHAPE>>
+    # Fixture: <<FIXTURES>>
+    child_a_fake = _ChildAFake()  # CONTRACT: <<CHILD_A>>
+    sut = <<ScopeClass>>(child_a=child_a_fake)
+
+    # Act
+    <<STEPS>>
+
+    # Assert
+    <<ASSERT>>
+
+
+# CONTRACT: <<CHILD_A>>
+class _ChildAFake(<<ChildAInterface>>):
+    """Fake honours <<CHILD_A>> contract for composition testing."""
+    def <<method>>(self, <<args>>):
+        raise NotImplementedError("red phase: implement alongside <<CHILD_A>> production code")
+```
+
+# ── Java / JUnit 5 ──────────────────────────────────────────────
+# File: <<ScopeNamePascal>>IntegrationTest.java
+
+```java
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Tag;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+
+@Tag("integration")
+@DisplayName("<<scope-name>> — integration")
+class <<ScopeNamePascal>>IntegrationTest {
+
+    // VERIFIES: <<CASE_ID>> → <<VERIFIES_IDS>>
+    @Test
+    @DisplayName("<<case title>>")
+    void test<<TEST_NAME>>() {
+        // Arrange — environment: <<ENV_SHAPE>>
+        // Fixture: <<FIXTURES>>
+        var childA = new <<ChildAFake>>();  // CONTRACT: <<CHILD_A>>
+        var sut = new <<ScopeClass>>(childA /*, ...other deps */);
+
+        // Act
+        <<STEPS>>
+
+        // Assert
+        <<ASSERT>>
+    }
+
+    /**
+     * CONTRACT: <<CHILD_A>>
+     * Fake honours <<CHILD_A>> interface for composition testing.
+     */
+    static class <<ChildAFake>> implements <<ChildAInterface>> {
+        @Override
+        public <<ReturnType>> <<method>>(<<args>>) {
+            throw new UnsupportedOperationException(
+                "red phase: implement alongside <<CHILD_A>> production code");
+        }
+    }
+}
+```
+
+# ── TypeScript / Vitest ─────────────────────────────────────────
+# File: tests/integration/<<scope>>.integration.test.ts
+
+```typescript
+import { describe, it, expect, vi } from 'vitest'
+import { <<ScopeClass>> } from '<<module>>'
+import type { <<ChildAInterface>> } from '<<child_a_module>>'
+
+describe('<<scope-name>> — integration', () => {
+
+  // VERIFIES: <<CASE_ID>> → <<VERIFIES_IDS>>
+  it('<<case title>>', () => {
+    // Arrange — environment: <<ENV_SHAPE>>
+    // Fixture: <<FIXTURES>>
+    // CONTRACT: <<CHILD_A>>
+    const childAFake: <<ChildAInterface>> = {
+      <<method>>: (_<<arg>>) => {
+        throw new Error('red phase: implement alongside <<CHILD_A>> production code')
+      },
+    }
+    const sut = new <<ScopeClass>>({ childA: childAFake })
+
+    // Act
+    <<STEPS>>
+
+    // Assert
+    <<ASSERT>>
+  })
+
+})
+```
+
+# ── Testcontainers note (environment: testcontainers) ───────────
+# When preconditions: specifies "test-containers (Postgres 16, ...)" or similar,
+# add the container lifecycle to the Arrange section:
+#
+# Go:
+#   container, err := postgres.Run(ctx, "postgres:16-alpine", ...)
+#   require.NoError(t, err)
+#   t.Cleanup(func() { container.Terminate(ctx) })
+#
+# Java:
+#   @Container
+#   static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
+#
+# Python (testcontainers-python):
+#   with PostgresContainer("postgres:16") as pg:
+#       db_url = pg.get_connection_url()
+#       ...
+#
+# TypeScript (testcontainers):
+#   const pg = await new GenericContainer("postgres:16-alpine")
+#     .withExposedPorts(5432).start()

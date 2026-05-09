@@ -1,21 +1,16 @@
 # VModel Project Configuration Schema
 # =============================================================================
 #
-# Defines language, tooling, and automated checks for a VModelWorkflow project.
-# Lives at .vmodel/config.yaml in each consuming project. Agents read this to
-# determine what checks to run after producing artifacts.
+# Defines a VModelWorkflow project's central config. Lives at
+# .vmodel/config.yaml in each consuming project. All vmodel-* skills load
+# this to resolve reference paths, commands, and project metadata.
 #
-# Check categories are per V-model layer. Currently defined:
-#   - code          (checks after code/test generation)
-#   - detailed-design (checks after design document generation)
-#
-# TODO: Add categories as higher V-model layers are built:
-#   - architecture, sw-requirements, system-test, etc.
-#
-# Resolution order for checks:
-#   1. Match file path against component prefixes (most specific match wins)
-#   2. If no component matches, use defaults
-#   3. Component config fully replaces defaults for that section (no merging)
+# Resolution rule for skill references:
+#   - Skills NEVER hardcode framework `docs/*.md` paths.
+#   - Skills resolve reference docs via `paths.references` (default
+#     `.vmodel/references/`) and load named files (authoring-discipline.md,
+#     partial-parent-protocol.md, authoring-self-check.md, etc.).
+#   - Framework ships defaults; init copies them; project may override.
 #
 # =============================================================================
 
@@ -31,162 +26,261 @@ project:
     type: string
     required: true
     description: "Project identifier. Used in artifact IDs and trace references."
-    example: "fuel-control-system"
+    example: "vmodel-core"
 
   description:
     type: string
     required: false
     description: "One-line project description."
-    example: "Embedded fuel control for engine management unit"
+    example: "V-model framework reference implementation"
 
-# =============================================================================
-# DEFAULTS
-# =============================================================================
-#
-# Apply to all files unless overridden by a component entry.
-
-defaults:
   language:
     type: string
     required: true
-    description: "Primary programming language."
-    example: "java"
+    description: "Primary programming language. Auto-detected at init."
+    example: "go"
+    allowed: ["go", "python", "java", "rust", "typescript", "kotlin", "csharp", "other"]
 
-  test_framework:
+  scope_root:
     type: string
     required: true
-    description: "Primary test framework."
-    example: "junit5"
+    description: "Root of the spec scope tree. Relative to project root."
+    default: "specs/"
 
-  build_tool:
+# =============================================================================
+# PATHS
+# =============================================================================
+#
+# Resolves to where skills find their inputs and write their outputs.
+# All paths are relative to the project root unless absolute.
+
+paths:
+  references:
+    type: string
+    required: true
+    description: >
+      Directory of shared reference docs (authoring-discipline, partial-parent-protocol,
+      authoring-self-check, requirements-shape-checklist, definitions/). Skills load
+      these by filename: <paths.references>/<name>.md.
+    default: ".vmodel/references/"
+
+  reviews:
+    type: string
+    required: true
+    description: "Directory for spec-side review verdict files (.yaml)."
+    default: ".vmodel/.reviews/"
+
+  build:
+    type: string
+    required: true
+    description: "Directory for build-flow state, tasks, escalations, runs."
+    default: ".vmodel/.build/"
+
+  defer_index:
+    type: string
+    required: true
+    description: "Path to the auto-generated DEFER aggregate file."
+    default: ".vmodel/defer-index.md"
+
+  src:
     type: string
     required: false
-    description: "Build tool. Optional — some languages don't need one."
-    example: "gradle"
+    description: "Source code root (build flow). Optional if build flow is unused."
+    example: "src/"
 
-  checks:
-    type: map<layer_name, list<check>>
-    required: true
-    description: >
-      Automated checks organized by V-model layer. Each key is a layer name,
-      each value is a list of check entries. The agent running a particular
-      layer skill looks up its layer key here to know what to run.
-
-    # --- Currently defined layers ---
-
-    code:
-      type: list<check>
-      description: >
-        Checks run after code and test generation. Typical entries:
-        unit-tests, static-analysis, coverage, traceability.
-
-    detailed-design:
-      type: list<check>
-      description: >
-        Checks run after design document generation. Typical entries:
-        schema-validation, traceability.
+  tests:
+    type: string
+    required: false
+    description: "Test code root (build flow). Optional if build flow is unused."
+    example: "tests/"
 
 # =============================================================================
-# CHECK ENTRY
+# ARTIFACTS
 # =============================================================================
+#
+# Shape declarations for the spec tree.
 
-check:
-  name:
+artifacts:
+  root_product:
+    type:
+      type: string
+      required: true
+      description: >
+        Which root-of-tree product artifact this project uses. One of:
+        pb (product brief, heavyweight), needs (interview-derived, mid-weight),
+        pd (product description, lightweight).
+      allowed: ["pb", "needs", "pd"]
+      default: "pd"
+
+    file:
+      type: string
+      required: true
+      description: "Filename of the chosen root product."
+      allowed: ["product_brief.md", "needs.md", "product_description.md"]
+
+# =============================================================================
+# COMMANDS
+# =============================================================================
+#
+# Project-specific shell commands. Build flow reads these.
+# Empty string ("") means "not configured for this project."
+
+commands:
+  test_unit:
     type: string
-    required: true
-    description: "Identifier for this check (e.g., 'unit-tests', 'coverage')."
+    required: false
+    description: "Run unit tests. Must exit 0 on pass, non-zero on fail."
+    example: "go test ./..."
 
-  command:
+  test_integration:
     type: string
-    required: true
-    description: >
-      Shell command to execute. Must exit 0 on success, non-zero on failure.
-      Must be idempotent (safe to re-run). Output goes to stdout/stderr.
+    required: false
+    description: "Run integration tests (branch-level). Optional."
+    example: "go test -tags=integration ./..."
 
-  required:
-    type: boolean
-    required: true
-    description: >
-      If true, the agent must not proceed past this check on failure.
-      If false, the check is advisory — failure is reported but does not block.
+  test_system:
+    type: string
+    required: false
+    description: "Run system / acceptance tests (root-level). Optional."
+    example: "go test -tags=e2e ./..."
+
+  lint:
+    type: string
+    required: false
+    description: "Linter / static analysis."
+    example: "golangci-lint run"
+
+  build:
+    type: string
+    required: false
+    description: "Build / compile."
+    example: "go build ./..."
+
+  coverage:
+    type: string
+    required: false
+    description: "Coverage report. Must exit 0 if threshold met."
+    example: "go test ./... -coverprofile=coverage.out"
+
+# =============================================================================
+# BUILD FLOW
+# =============================================================================
+#
+# Pipeline behaviour for the build-side skills (plan-build, orchestrate-build,
+# implement-leaf, review-execution, etc.).
+
+build:
+  parallel:
+    enabled:
+      type: boolean
+      required: false
+      default: true
+      description: "Run independent leaf tasks in parallel within a stage."
+
+    max_concurrent:
+      type: integer
+      required: false
+      default: 4
+      description: "Max parallel leaf-implementation tasks per stage."
+
+  retry:
+    max_review_attempts:
+      type: integer
+      required: false
+      default: 3
+      description: >
+        Max review-implementation rejection cycles before escalating to a
+        spec-layer skill. Once exceeded, an ESC-NNN.yaml is created.
+
+  models:
+    plan:
+      type: string
+      required: false
+      default: "opus"
+      description: "Model tier for plan-build (DAG derivation)."
+
+    implement:
+      type: string
+      required: false
+      default: "sonnet"
+      description: "Model tier for implement-leaf."
+
+    review:
+      type: string
+      required: false
+      default: "sonnet"
+      description: "Model tier for review-execution."
+
+    retrospect:
+      type: string
+      required: false
+      default: "sonnet"
+      description: "Model tier for retrospect-build."
 
 # =============================================================================
 # COMPONENT OVERRIDES
 # =============================================================================
 #
-# Path-prefix-based overrides for multi-language or multi-module projects.
-# Most specific path match wins. A component entry fully replaces the
-# matching defaults section — no merging. What you see in the component
-# is what runs.
+# Path-prefix-based overrides for multi-language / multi-module projects.
+# Most specific path match wins. Override fully replaces the matching default
+# section for that path (no merging).
 
 components:
   type: map<path_prefix, component_override>
   required: false
   description: >
-    Component-level overrides keyed by directory path prefix (with trailing /).
-    Only needed for projects with multiple languages or toolchains.
+    Optional per-path overrides for language, commands, etc. Keyed by
+    directory prefix (with trailing /).
 
 component_override:
   language:
     type: string
     required: false
-    description: "Overrides defaults.language for files under this path."
 
-  test_framework:
-    type: string
+  commands:
+    type: object
     required: false
-    description: "Overrides defaults.test_framework for files under this path."
-
-  build_tool:
-    type: string
-    required: false
-    description: "Overrides defaults.build_tool for files under this path."
-
-  checks:
-    type: map<layer_name, list<check>>
-    required: false
-    description: >
-      Fully replaces defaults.checks for this component. Same structure
-      as defaults.checks.
+    description: "Same shape as top-level commands; replaces commands for this prefix."
 
 # =============================================================================
 # EXAMPLE
 # =============================================================================
 #
 # project:
-#   name: "fuel-control-system"
-#   description: "Embedded fuel control for engine management unit"
+#   name: "vmodel-core"
+#   description: "V-model framework reference implementation"
+#   language: "go"
+#   scope_root: "specs/"
 #
-# defaults:
-#   language: "java"
-#   test_framework: "junit5"
-#   build_tool: "gradle"
+# paths:
+#   references: ".vmodel/references/"
+#   reviews: ".vmodel/.reviews/"
+#   build: ".vmodel/.build/"
+#   defer_index: ".vmodel/defer-index.md"
+#   src: "src/"
+#   tests: "tests/"
 #
-#   checks:
-#     code:
-#       - name: "unit-tests"
-#         command: "./gradlew test"
-#         required: true
-#       - name: "static-analysis"
-#         command: "./gradlew spotbugsMain"
-#         required: true
-#       - name: "coverage"
-#         command: "./gradlew jacocoTestReport"
-#         required: true
-#     detailed-design:
-#       - name: "schema-validation"
-#         command: "vmodel-schema validate docs/design/"
-#         required: true
+# artifacts:
+#   root_product:
+#     type: "pd"
+#     file: "product_description.md"
 #
-# components:
-#   ml-pipeline/:
-#     language: "python"
-#     test_framework: "pytest"
-#     checks:
-#       code:
-#         - name: "unit-tests"
-#           command: "pytest ml-pipeline/tests/"
-#           required: true
-#         - name: "type-check"
-#           command: "mypy ml-pipeline/"
-#           required: true
+# commands:
+#   test_unit: "go test ./..."
+#   test_integration: ""
+#   test_system: ""
+#   lint: "golangci-lint run"
+#   build: "go build ./..."
+#   coverage: "go test ./... -cover"
+#
+# build:
+#   parallel:
+#     enabled: true
+#     max_concurrent: 4
+#   retry:
+#     max_review_attempts: 3
+#   models:
+#     plan: "opus"
+#     implement: "sonnet"
+#     review: "sonnet"
+#     retrospect: "sonnet"

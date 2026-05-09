@@ -124,7 +124,7 @@
         <tr><th>Section</th><th>Purpose</th></tr>
       </thead>
       <tbody>
-        <tr><td>1. Metadata</td><td>ID, scope, parent_architecture, derived_from, governing_adrs.</td></tr>
+        <tr><td>1. Metadata</td><td>ID, scope, parent_architecture, governing_adrs. <code>parent_architecture</code> is the single structural anchor for the leaf.</td></tr>
         <tr><td>2. Overview</td><td>Two to three paragraphs: what this leaf is, what slice of its parent it realises, the approach at one level of abstraction above the code.</td></tr>
         <tr><td>3. Public Interface</td><td>Every externally visible function, class, or type, with full contracts (&sect;2.3).</td></tr>
         <tr><td>4. Data Structures</td><td>Internal data: fields, invariants, ownership, lifetime (&sect;2.4).</td></tr>
@@ -376,7 +376,6 @@ Null inputs are rejected with IllegalArgumentException.</code></div>
 id: DD-app-jobs-dequeue-service
 scope_tags: [app/jobs]
 parent_architecture: ARCH-app-jobs
-derived_from: REQ-app-jobs-004
 governing_adrs: [ADR-017]
 ---
 
@@ -479,7 +478,6 @@ consistent view via the database's MVCC semantics.
 id: DD-app-config-loader
 scope_tags: [app/config]
 parent_architecture: ARCH-app-config
-derived_from: REQ-app-config-002
 ---
 
 # Configuration Loader
@@ -620,7 +618,7 @@ decision are not recoverable.
       <h3>Structure and completeness</h3>
       <ul>
         <li>Are all seven sections present, each with either substantive content or an explicit assertion of absence ("this leaf is stateless")?</li>
-        <li>Does Metadata include <code>scope_tags</code>, <code>parent_architecture</code>, <code>derived_from</code>, and <code>governing_adrs</code> where applicable?</li>
+        <li>Does Metadata include <code>scope_tags</code>, <code>parent_architecture</code>, and <code>governing_adrs</code> where applicable? (<code>parent_architecture</code> is the single structural anchor for the leaf.)</li>
         <li>Does the Overview say what slice of the parent Architecture this leaf realises, at one level of abstraction above the code?</li>
       </ul>
     </div>
@@ -666,7 +664,7 @@ decision are not recoverable.
       <ul>
         <li>Does every non-obvious decision carry inline rationale (a phrase or sentence naming the forcing constraint)?</li>
         <li>Do load-bearing decisions have an ADR linked via <code>governing_adrs</code>?</li>
-        <li>Does <code>derived_from</code> point to the requirement or design element this leaf realises?</li>
+        <li>Does <code>parent_architecture</code> name the Architecture artifact this leaf realises a slice of?</li>
       </ul>
     </div>
 

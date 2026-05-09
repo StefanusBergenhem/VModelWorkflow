@@ -59,7 +59,7 @@ The YAML shape is `templates/verdict.md.tmpl` (skill self-contained). Each findi
 
 ## Cross-cutting authoring discipline
 
-Enforce the six rules in `references/authoring-discipline.md` across every review check, emitting `check.discipline.<rule>` findings on violation. Most relevant here: Rule 0 (flag `n/a + justification` entries on omitted slots and self-attestation prose as `check.discipline.product-shape`), Rule 3 (flag re-narrated rationale that does not cite a governing ADR as `check.discipline.rationale-narration`), Rule 5 (flag verbatim restatement of upstream parent-requirement or product-brief content as `check.discipline.upstream-restatement`). Rule 1 (boundary-only), Rule 2 (collapse-eligibility), and Rule 4 (diagram-or-prose) apply universally but are less load-bearing for requirements review.
+Enforce the six rules in `.vmodel/references/authoring-discipline.md` across every review check, emitting `check.discipline.<rule>` findings on violation. Most relevant here: Rule 0 (flag `n/a + justification` entries on omitted slots and self-attestation prose as `check.discipline.product-shape`), Rule 3 (flag re-narrated rationale that does not cite a governing ADR as `check.discipline.rationale-narration`), Rule 5 (flag verbatim restatement of upstream parent-requirement or product-brief content as `check.discipline.upstream-restatement`). Rule 1 (boundary-only), Rule 2 (collapse-eligibility), and Rule 4 (diagram-or-prose) apply universally but are less load-bearing for requirements review.
 
 ## Verdict decision table
 
@@ -208,7 +208,7 @@ Before emitting:
 
 ## Pointers
 
-- `references/authoring-discipline.md` — 6 cross-cutting rules (product-shape, layering, compression) — applies to all review checks
+- `.vmodel/references/authoring-discipline.md` — 6 cross-cutting rules (product-shape, layering, compression) — applies to all review checks (resolved via `.vmodel/config.yaml`)
 - `references/ears-conformance.md` — five EARS patterns, conformance check, compound limit, cargo-cult tell
 - `references/requirement-types-classification.md` — five-type taxonomy, level-confusion check
 - `references/statement-quality-checks.md` — atomic / testable / solution-free, complementary-pair, box test

@@ -61,12 +61,14 @@ Ten load-bearing principles. Canonical wording in `TARGET_ARCHITECTURE.md §3`. 
 
 | Type | Lives at | Structure reference |
 |---|---|---|
-| **Product Brief** | Root only | `TARGET_ARCHITECTURE §5.3` |
+| **Root product (PB \| needs \| PD)** | Root only — one of the three | `TARGET_ARCHITECTURE §5.3`. PB heavyweight, needs interview-derived, PD lightweight. |
 | **Requirements** | Non-leaf scopes | `TARGET_ARCHITECTURE §5.3` |
-| **Architecture** | Non-leaf scopes | `TARGET_ARCHITECTURE §5.3` (Composition section mandatory) |
-| **ADR** | Cross-cutting | `TARGET_ARCHITECTURE §5.3` (Reversibility sub-prompt mandatory) |
-| **Detailed Design** | Leaf scopes | `TARGET_ARCHITECTURE §5.3` (junior-implementable) |
-| **TestSpec** | Every scope | `TARGET_ARCHITECTURE §5.3` (`verifies` mandatory non-empty) |
+| **Architecture** | Non-leaf scopes | `TARGET_ARCHITECTURE §5.3` (Composition section mandatory; Rule 8 multi-file bundle when size demands) |
+| **ADR** | Per-scope `adrs/` (cross-cutting reach) | `TARGET_ARCHITECTURE §5.3` (Reversibility sub-prompt mandatory) |
+| **Detailed Design** | Leaf scopes | `TARGET_ARCHITECTURE §5.3` (junior-implementable). `parent_architecture` is the single structural anchor — `derived_from` removed. |
+| **TestSpec** | Every scope | `TARGET_ARCHITECTURE §5.3`. `verifies` is the only link field; layer convention determines target (leaf→DD, branch→ARCH, root→REQ+root product). `derived_from` removed. |
+
+**Killed:** `## Open follow-ups` section on all artifacts. DEFER markers (`[DEFER-DD: …]`, `[DEFER-ADR: …]`, `[NEEDS-TEST: …]`) are the single mechanism for naming product-spec gaps. Aggregate at `.vmodel/defer-index.md` (auto-generated).
 
 ---
 
@@ -77,16 +79,21 @@ Ten load-bearing principles. Canonical wording in `TARGET_ARCHITECTURE.md §3`. 
 - **Phase 2** — Per-artifact documentation (6 types, 5-section structure) — **DONE** (2026-04-22).
 - **Phase 3** — Schemas (per-artifact JSON Schema draft 2020-12 + traceability catalogs + Quality Bar JSON + minimal fixtures) — **DONE** (2026-04-23).
 - **Phase 4** — Product Descriptions for purpose-built tools — **CLOSED** (2026-04-26) without producing PDs. The vmodel-core pilot surfaced that PD was a category error: the actual gap is a missing **elicitation skill** at root scope. Framework retains 6 artifact types. Phase 5 picks up `vmodel-skill-elicit-needs` (renamed from `vmodel-skill-elicit-requirements` during authoring to align with INCOSE's Needs vs Requirements distinction). See `BACKLOG §3.4` + `archive/phase4/PHASE4_AUTHORING_PATTERN.md` §7.
-- **Phase 5** — Skills (craft per artifact + elicit-needs) — **per-artifact pairs + elicit-needs complete (2026-05-01); closeout deferred until Phase 6 dogfooding signal.** Five per-artifact author/review pairs landed (requirements 2026-04-27, architecture 2026-04-30, detailed-design 2026-04-30, testspec 2026-05-01, ADR 2026-05-01); product-brief pair deferred indefinitely; **framework skills (traceability, orchestration, retrofit) deferred** — orchestration moved to harness/command work, traceability deferred to post-Phase-6 (skill wrapping a non-existent tool is shadow-boxing), retrofit deferred to post-greenfield-pilot (designing without lived forward-run experience would calcify wrong assumptions); Haiku-floor evals + `skills-architecture.html` rewrite deferred until pilot signal. See `docs/plan/PHASE5_AUTHORING_PATTERN.md` §3 Q1, Q4, Q5 for per-item rationale.
-- **Phase 6** — Tools + greenfield pilot — **starts 2026-05-01.** First product: `vmodel-core` greenfield dogfooding pilot at `/home/stefanus/repos/vmodel-core/` (fresh repo — true self-containment test). Spec authoring kicks off with elicit-needs in next session. Generates the empirical signal needed to close out Phase 5 deferred items + decide elicit-needs decision γ (promote / merge / stay-transient). Code generation gates on Build workflow design (still deferred).
+- **Phase 5** — Skills (craft per artifact + elicit-needs) — **complete (closeout 2026-05-09).** Five per-artifact author/review pairs landed (requirements, architecture, detailed-design, testspec, ADR); elicit-needs landed; product-brief pair stays deferred (PB authoring is direct against schema until dogfooding shows value of formalising). Framework-skills closeout reabsorbed into Phase 6 build-flow design (orchestration is now `vmodel-skill-orchestrate-build`).
+- **Phase 6** — Build flow + central config + greenfield pilot — **substantially advanced (2026-05-09).**
+  - **Build flow scaffolded** — 6 build-side skills shipped: `vmodel-skill-{plan-build, orchestrate-build, render-tests, implement-leaf, review-execution, retrospect-build}`. Pipeline state machine + layered execution (leaf unit → branch integration → root system) + V-model-typed escalation routing.
+  - **Central config (`.vmodel/`) introduced** — every project gets `.vmodel/config.yaml` + `.vmodel/references/` (shared reference docs) + `.vmodel/.reviews/` + `.vmodel/.build/`. Skills resolve refs via config, never hardcode framework `docs/` paths. `vmodel-init` skill scaffolds + has migrate mode.
+  - **Lightweight root product (PD)** — third option for root-of-tree alongside PB and needs. New skill `vmodel-skill-elicit-pd`.
+  - **Schema simplifications** — DD drops `derived_from` (keeps `parent_architecture` only); TestSpec drops `derived_from` (keeps `verifies` only with layer convention); `## Open follow-ups` killed everywhere (DEFER markers are single mechanism); per-skill bundled copies of shared refs retired (sync scripts removed).
+  - **Pre-pivot skills retired** — `develop-code`, `derive-test-cases`, `vmodel-skill-review-code`, `*-workspace` archived under `archive/pre-pivot-skills/`.
+  - **vmodel-core dogfooding pilot** — `/home/stefanus/repos/vmodel-core/` continues; artifacts migrated to new schema; `.vmodel/` scaffolded.
 - **Phase 7** — Retrofit-specific additions (gated on Phase 6 dogfooding signal).
 
 Full details in `docs/plan/BACKLOG.md`.
 
-**Pre-pivot work preserved and operational:**
-- Lower V docs (`source-code.html`, `unit-test.html`, `detailed-design.html`) — treated as pre-pivot outputs; content mined as reference, pages replaced in Phase 2.
-- Skills `develop-code`, `derive-test-cases`, `vmodel-skill-review-code` — operational.
-- C2–C4 DD skills paused; superseded by Phase 5 structure.
+**Pre-pivot work archived:**
+- `develop-code`, `develop-code-workspace`, `derive-test-cases`, `derive-test-cases-workspace`, `vmodel-skill-review-code`, `vmodel-skill-review-code-workspace`, `combined-workspace` → `archive/pre-pivot-skills/` (2026-05-09).
+- Lower V docs (`source-code.html`, `unit-test.html`, `detailed-design.html`) — kept as pre-pivot outputs in `docs/guide/`; mined as reference.
 
 ---
 
@@ -149,34 +156,62 @@ Each phase produces traceable artifacts. Human gates between phases.
 
 ## Repository Structure
 
+### Framework repo (this project)
+
 ```
-archive/                — Pre-pivot content preserved (pre-pivot-2026-04-18/) + per-phase handoff docs (phase2/, phase3/)
+archive/                — Pre-pivot content (pre-pivot-2026-04-18/) + per-phase handoff docs + pre-pivot-skills/
+references/             — Framework-shipped reference defaults (copied to .vmodel/references/ at init)
+                          authoring-discipline.md, authoring-self-check.md, partial-parent-protocol.md,
+                          requirements-shape-checklist.md, definitions/{component,unit}.md
 research/               — Research documents on standards, patterns, strategies
-docs/plan/              — Architecture (TARGET_ARCHITECTURE.md) and backlog (BACKLOG.md); per-phase handoff docs live here while a phase is active
-docs/guide/             — Interactive HTML documentation (V-model guide + framework docs)
-  css/                  — Styling
-  js/                   — app.js (nav)
-  artifacts/            — Per-artifact HTML pages (post-pivot 5-section structure)
-  skills-architecture.html — pre-pivot; to be rewritten in Phase 5
+docs/plan/              — TARGET_ARCHITECTURE.md, BACKLOG.md, per-phase handoff docs
+docs/guide/             — Interactive HTML documentation
+docs/                   — Framework-internal notes (skill-creation-learnings.md)
 schemas/
-  core/                 — Meta-schemas (skill contracts, pipeline contracts)
+  core/                 — Meta-schemas (vmodel-config.schema.yaml, craft-skill, orchestration-pipeline)
   artifacts/            — Per-artifact JSON schemas (draft 2020-12) + envelope + common-defs
-    quality-bar/        — Quality Bar meta-schema + per-artifact checklists
-    fixtures/            — Minimal-example Markdown fixtures (one per artifact type)
-  traceability/         — Link-type + validation-rule catalogs (with their schemas)
-.claude/skills/         — Installed AI skills (some operational, more in Phase 5)
+    quality-bar/        — Quality Bar checklists
+    fixtures/           — Minimal-example fixtures
+  traceability/         — Link-type + validation-rule catalogs
+scripts/                — Mechanical check scripts (check-*.py, index-deferred-items.py)
+.claude/skills/         — 18 V-model skills:
+                          spec-side (12): elicit-needs, elicit-pd, author/review pairs for
+                          {requirements, architecture, adr, detailed-design, testspec}
+                          build-side (6): plan-build, orchestrate-build, render-tests,
+                          implement-leaf, review-execution, retrospect-build
+                          + vmodel-init
 ```
 
-**Planned directory** (Phase 2+ introduces as artifact authoring begins):
+### Project consumer (e.g. vmodel-core)
 
 ```
-/specs/                 — Spec artifacts (scope tree = directory tree)
-  product_brief.md      — root
-  requirements.md       — root
-  architecture.md       — root
-  testspec.md           — root
-  /adrs/                — flat, cross-cutting
-  /{scope}/             — branch / leaf scopes recurse
+.vmodel/
+  config.yaml           — Project central config (schema in framework/schemas/core/)
+  references/           — Shared skill references (copied from framework at init; project may override)
+    authoring-discipline.md
+    authoring-self-check.md
+    partial-parent-protocol.md
+    requirements-shape-checklist.md
+    definitions/{component,unit}.md
+  defer-index.md        — Auto-generated DEFER aggregate (gitignored; regenerated by index-deferred-items.py)
+  .reviews/             — Spec-side review verdict files (checked in)
+  .build/
+    tasks.yaml          — Build task DAG (from plan-build)
+    pipeline-state.yaml — Pipeline state (gitignored; transient)
+    tasks/{id}/         — Per-task review-ready.yaml, feedback.yaml, log.txt (logs gitignored)
+    escalations/ESC-NNN.yaml  — Layer-typed escalations (checked in)
+    runs/{run-id}/      — Retrospectives + metrics (gitignored)
+    lessons.yaml        — Cumulative bounded lessons (checked in)
+
+specs/                  — Spec scope tree (per TARGET §5.7)
+  product_brief.md  OR  needs.md  OR  product_description.md   (one of, mandatory at root)
+  glossary.md           — Mandatory document (not yet a first-class artifact)
+  requirements.md
+  architecture.md       (+ optional architecture/interfaces/ bundle, Rule 8)
+  testspec.md
+  adrs/                 — Per-scope (Rule 7)
+  {branch-scope}/       — Recurse: requirements.md, architecture.md, testspec.md, adrs/
+    {leaf-scope}/       — detailed_design.md, testspec.md
 ```
 
 ---
@@ -189,6 +224,26 @@ schemas/
 - All framework outputs include verification via Quality Bar checklists.
 - IDs are stable across file renames; traceability links reference IDs, not paths.
 - EARS is used by craft skills but not enforced by schemas.
+- **No `docs/` path references in skills.** Skills resolve shared references via `.vmodel/config.yaml` `paths.references` (default `.vmodel/references/`). Framework ships defaults; init copies them; projects may override.
+- **DEFER markers are the single mechanism** for naming product-spec gaps. `## Open follow-ups` sections are not authored on any artifact.
+- **Per-skill bundled copies of shared references are retired.** Skills load shared refs (authoring-discipline, partial-parent-protocol, etc.) from `.vmodel/references/`. Skill-specific references stay bundled in each skill's `references/` directory.
+
+---
+
+## Build Flow (Phase 6)
+
+The build flow runs after spec authoring and produces code + tests with V-model coupling. Six build-side skills:
+
+- `vmodel-skill-plan-build` — derive task DAG from architecture + leaves + ADRs; emit `.vmodel/.build/tasks.yaml`.
+- `vmodel-skill-orchestrate-build` — pipeline state machine; dispatches sub-skills per task; layered execution (leaf → branch → root); layer-typed escalations.
+- `vmodel-skill-render-tests` — TestSpec → executable tests (TDD red phase). Layer-aware: leaf TS → unit, branch TS → integration, root TS → system.
+- `vmodel-skill-implement-leaf` — TDD green + refactor for one leaf (greenfield or fix mode); strict DD/ADR adherence.
+- `vmodel-skill-review-execution` — verdict at any layer (APPROVED / REJECTED / ESCALATE); routes failures to the responsible spec layer (DD, TestSpec, ARCH, ADR, REQ, root product).
+- `vmodel-skill-retrospect-build` — extract bounded lessons from a build run.
+
+Escalations are typed by target spec layer and confidence-tagged. High-confidence routes auto-fire; low-confidence surfaces to human gating.
+
+No build-side artifact yet — Verification Report was considered and dropped (no current need).
 
 ---
 

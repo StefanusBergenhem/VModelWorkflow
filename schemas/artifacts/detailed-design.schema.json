@@ -2,13 +2,13 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vmodelworkflow.dev/schemas/artifacts/detailed-design/v1",
   "title": "Detailed Design front-matter",
-  "description": "Front-matter shape for a Detailed Design artifact. Lives at /specs/{leaf-scope}/detailed_design.md — leaf scopes only; branch scopes carry Architecture instead. Composes the universal envelope and adds artifact-level identity (scope, parent_scope, parent_architecture, derived_from, governing_adrs). Status uses the universal lifecycle vocabulary (draft | active | superseded). The seven mandatory body sections (Metadata, Overview, Public Interface, Data Structures, Algorithms, State, Error Handling per TARGET §5.3) live in prose / Mermaid / code fences inside the markdown body — this schema validates only the front-matter YAML. Per-entry embedded-YAML shapes are exported as $defs/public_interface_entry, $defs/data_structure_entry, and $defs/error_matrix_row for parsers and validators that extract individual blocks. The public-interface def lifts the Design-by-Contract discipline from architecture.schema.json's $defs/interface (preconditions / postconditions.on_success|on_failure / typed errors) but makes the sub-fields optional: rigor is a Quality Bar concern, shape is schema's. Recovery_status narrows map-form 'overview' to verified | unknown only — the Overview section carries intent (why this leaf exists, what invariants must hold), which is a human-only field under the no-fabrication rule. Scalar recovery_status keeps the full 3-value vocabulary because DD's dominant content (interfaces, data, algorithms, state, error matrix) is code-observable, so a whole-artifact 'reconstructed' is legitimate for the structural side even when intent must be re-verified separately.",
+  "description": "Front-matter shape for a Detailed Design artifact. Lives at /specs/{leaf-scope}/detailed_design.md — leaf scopes only; branch scopes carry Architecture instead. Composes the universal envelope and adds artifact-level identity (scope, parent_scope, parent_architecture, governing_adrs). Status uses the universal lifecycle vocabulary (draft | active | superseded). The seven mandatory body sections (Metadata, Overview, Public Interface, Data Structures, Algorithms, State, Error Handling per TARGET §5.3) live in prose / Mermaid / code fences inside the markdown body — this schema validates only the front-matter YAML. Per-entry embedded-YAML shapes are exported as $defs/public_interface_entry, $defs/data_structure_entry, and $defs/error_matrix_row for parsers and validators that extract individual blocks. The public-interface def lifts the Design-by-Contract discipline from architecture.schema.json's $defs/interface (preconditions / postconditions.on_success|on_failure / typed errors) but makes the sub-fields optional: rigor is a Quality Bar concern, shape is schema's. Recovery_status narrows map-form 'overview' to verified | unknown only — the Overview section carries intent (why this leaf exists, what invariants must hold), which is a human-only field under the no-fabrication rule. Scalar recovery_status keeps the full 3-value vocabulary because DD's dominant content (interfaces, data, algorithms, state, error matrix) is code-observable, so a whole-artifact 'reconstructed' is legitimate for the structural side even when intent must be re-verified separately.",
 
   "allOf": [
     { "$ref": "https://vmodelworkflow.dev/schemas/artifacts/envelope/v1" },
     {
       "type": "object",
-      "required": ["id", "artifact_type", "scope", "parent_scope", "parent_architecture", "derived_from"],
+      "required": ["id", "artifact_type", "scope", "parent_scope", "parent_architecture"],
       "properties": {
 
         "id": {
@@ -39,15 +39,6 @@
           "description": "The Architecture artifact that allocates this leaf's responsibilities. Required — every leaf DD is governed by a parent Architecture's Decomposition entry. Tightened to the ARCH id pattern so broken references surface at schema validation rather than deferring to the traceability tool.",
           "type": "string",
           "pattern": "^ARCH(-[a-z0-9]+(-[a-z0-9]+)*)?$"
-        },
-
-        "derived_from": {
-          "description": "Upstream artifact ids this DD is refined from. Typically at least one requirement (REQ-…) plus optionally sibling DDs, ARCH interfaces, or ADRs that shape the contract. Non-empty list; empty would mean an orphan design.",
-          "type": "array",
-          "items": {
-            "$ref": "https://vmodelworkflow.dev/schemas/artifacts/common-defs/v1#/$defs/artifact_id_ref"
-          },
-          "minItems": 1
         },
 
         "governing_adrs": {

@@ -38,7 +38,7 @@ Expected upstream context (ask if missing):
 - **Recovery posture** — greenfield (omit `recovery_status`) or retrofit (declare `recovery_status` and supply source-code references)
 - **Mode flags** — root vs branch (root activates deployment intent), greenfield vs retrofit
 - **Prior review files** (optional, consumed when present) — on a revision pass, the latest review at `specs/.reviews/<artifact-id>-*.yaml` (lexically last) is read and findings are addressed. Per TARGET_ARCHITECTURE §5.6 review output convention.
-- **`references/partial-parent-protocol.md`** — partial-parent and no-canonical-upstream protocol — three permitted paths when canonical upstream is missing or partial. Required reading whenever the canonical upstream (parent Requirements at branch scope, or Product Brief at root scope) is absent or only partially present.
+- **`.vmodel/references/partial-parent-protocol.md`** — partial-parent and no-canonical-upstream protocol — three permitted paths when canonical upstream is missing or partial. Required reading whenever the canonical upstream (parent Requirements at branch scope, or Product Brief at root scope) is absent or only partially present. (Resolved via `.vmodel/config.yaml`; framework default copied there at init.)
 
 If any of the four primary inputs is unavailable, **HALT** (see HALT condition #1) and ask the user. Do not invent inputs.
 
@@ -50,7 +50,7 @@ Default output filename: `<scope>/architecture.md`. If the user has a scope-tree
 
 ## Cross-cutting authoring discipline
 
-Apply the nine rules in `references/authoring-discipline.md` across every authoring step. Most relevant here: Rule 0 (no `n/a + justification` for omitted slots, no self-attestation prose), Rule 1 (boundary-only — no DD content inside Architecture), Rule 2 (small-system collapse: when all children are leaves AND fewer than 5, MAY author a combined `architecture-and-design.md`), Rule 3 (rationale = one line + ADR cite, no re-narration), Rule 4 (diagram OR interface entry per call, not both), Rule 5 (cite upstream IDs, don't restate), Rule 6 (defer-marker semantics: `[DEFER-DD: ...]` and `[DEFER-ADR: ...]` only), Rule 7 (scope tree by layer; reserved subdirectory names cannot be used as child scope IDs), Rule 8 (architecture MAY be authored as helicopter `architecture.md` + detail bundle at `architecture/interfaces/<NAME>.md`; banned decomposition fields are `bounded_context_line`, `owning_team_type`, `test_seam`). Review skills enforce them as `check.discipline.<rule>` findings.
+Apply the nine rules in `.vmodel/references/authoring-discipline.md` across every authoring step. Most relevant here: Rule 0 (no `n/a + justification` for omitted slots, no self-attestation prose), Rule 1 (boundary-only — no DD content inside Architecture), Rule 2 (small-system collapse: when all children are leaves AND fewer than 5, MAY author a combined `architecture-and-design.md`), Rule 3 (rationale = one line + ADR cite, no re-narration), Rule 4 (diagram OR interface entry per call, not both), Rule 5 (cite upstream IDs, don't restate), Rule 6 (defer-marker semantics: `[DEFER-DD: ...]` and `[DEFER-ADR: ...]` only), Rule 7 (scope tree by layer; reserved subdirectory names cannot be used as child scope IDs), Rule 8 (architecture MAY be authored as helicopter `architecture.md` + detail bundle at `architecture/interfaces/<NAME>.md`; banned decomposition fields are `bounded_context_line`, `owning_team_type`, `test_seam`). Review skills enforce them as `check.discipline.<rule>` findings.
 
 ## Authoring procedure
 
@@ -72,15 +72,15 @@ Before drafting decomposition, verify whether the canonical upstream is fully pr
 
 If the canonical upstream is missing or partial:
 
-1. Load `references/partial-parent-protocol.md`.
+1. Load `.vmodel/references/partial-parent-protocol.md`.
 2. Pick path **(a) HALT**, **(b) author from next-best parent + documented deviation**, or **(c) cite a framework artifact as upstream** — explicitly. Silent choice is a hard violation.
 3. Document the choice in this artifact's *Overview* section in 1–2 sentences naming the path and why it was chosen (which canonical parent is missing, which deferral applies, what was used in its place).
 4. `derived_from` cites only existing, resolvable artifact ids — never the missing parent, never a fabricated placeholder id.
-5. Under path (b), add an *Open follow-ups* entry that owns "replacement on canonical-parent authoring" with title, owner, action, and citation.
+5. Under path (b), emit a `[DEFER-DD: replacement on canonical-parent authoring — <canonical parent id>]` marker inline at the *Overview* section rather than a separate Open follow-ups section entry.
 
 If the canonical upstream is fully present, *Overview* says so in one short clause ("(canonical parent present)") and the protocol is satisfied without further action.
 
-→ See `references/partial-parent-protocol.md`
+→ See `.vmodel/references/partial-parent-protocol.md`
 
 ### Step 1 — Decompose the scope
 
@@ -90,7 +90,7 @@ Banned decomposition fields per Rule 8: do NOT carry `bounded_context_line`, `ow
 
 When the `allocates` list spawns a NEW derived requirement at child scope (uncommon — most allocations reuse parent IDs), apply the requirements-shape checklist before writing the derived requirement.
 
-→ See `references/requirements-shape-checklist.md`
+→ See `.vmodel/references/requirements-shape-checklist.md`
 
 → See `references/decomposition-discipline.md`
 → Template: `templates/decomposition-entry.yaml.tmpl`
@@ -106,7 +106,7 @@ When interface contract clauses (preconditions, postconditions, invariants) read
 When a governing ADR's `propagation.bindings:` block binds a specific library, protocol, or framework to this scope, the binding lands in the matching Decomposition entry's `rationale` field, citing the ADR by id — NOT in `purpose`, `responsibilities`, or any interface `operation` signature.
 
 → See `references/adr-propagation-landing-rules.md`
-→ See `references/requirements-shape-checklist.md`
+→ See `.vmodel/references/requirements-shape-checklist.md`
 
 → See `references/interface-contracts.md`
 → Template: `templates/interface-entry.yaml.tmpl`
@@ -185,9 +185,9 @@ Scripts for this skill:
 - `scripts/check-requirement-shape.py <specs-root>` — derived-requirement shape (only when Step 1 spawned new sub-requirements)
 - `scripts/check-id-encoding.py <specs-root>` — detects malformed empty-scope id forms (`TS-`, `TC--NNN`, `ARCH-.interfaces.X`) per TARGET §5.4 empty-scope rule
 
-Verify also: when the partial-parent protocol fired (Step 0.5), *Overview* explicitly names the chosen path (a/b/c); under path (b), an *Open follow-ups* entry owns the canonical-parent-replacement; no fabricated upstream ids in `derived_from`.
+Verify also: when the partial-parent protocol fired (Step 0.5), *Overview* explicitly names the chosen path (a/b/c); under path (b), a `[DEFER-DD: ...]` marker names the canonical-parent replacement inline; no fabricated upstream ids in `derived_from`.
 
-→ See `/home/stefanus/repos/VModelWorkflow/docs/authoring-self-check.md`
+→ See `.vmodel/references/authoring-self-check.md`
 
 ### Step 14 — Run Quality Bar checklist + Spec Ambiguity Test
 
@@ -262,8 +262,8 @@ One helicopter file is always produced. When the architecture is authored in hel
 
 ## Pointers
 
-- `references/authoring-discipline.md` — 9 cross-cutting rules (product-shape, layering, compression) — applies to all authoring steps
-- `references/partial-parent-protocol.md` — partial-parent and no-canonical-upstream protocol — three permitted paths when canonical upstream is missing or partial
+- `.vmodel/references/authoring-discipline.md` — 9 cross-cutting rules (product-shape, layering, compression) — applies to all authoring steps (resolved via `.vmodel/config.yaml`)
+- `.vmodel/references/partial-parent-protocol.md` — partial-parent and no-canonical-upstream protocol — three permitted paths when canonical upstream is missing or partial (resolved via `.vmodel/config.yaml`)
 - `references/decomposition-discipline.md` — info hiding, cohesion+coupling, bounded contexts, context-mapping, Conway-inverse, depth heuristics
 - `references/interface-contracts.md` — syntax-vs-semantics, Design-by-Contract clauses, SEI nine-part template, ISP, versioning + deprecation
 - `references/composition-patterns.md` — protocol families + sync/async + composition patterns catalog + wiring concerns

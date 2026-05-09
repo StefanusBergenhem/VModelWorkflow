@@ -41,7 +41,7 @@ Expected upstream context (ask if missing):
 - **Recovery posture** — greenfield (omit `recovery_status`) or retrofit (declare `recovery_status` on reconstructed `verifies`)
 - **Project policy on coverage / mutation thresholds** — if the project has named values, capture them; otherwise the bar is populated with placeholder values and a note that policy will fix them
 - **Prior review files** (optional, consumed when present) — on a revision pass, the latest review at `specs/.reviews/<artifact-id>-*.yaml` (lexically last) is read and findings are addressed. Per TARGET_ARCHITECTURE §5.6 review output convention.
-- **`references/partial-parent-protocol.md`** — partial-parent and no-canonical-upstream protocol — three permitted paths when canonical upstream is missing or partial. Required reading whenever any canonical parent for the layer is absent or partial — leaf without DD; branch missing Architecture or Requirements; root missing Product Brief, Requirements, or Architecture Composition. Multi-parent scopes (branch, root) trigger this protocol on partial absence even when one parent is present.
+- **`.vmodel/references/partial-parent-protocol.md`** — partial-parent and no-canonical-upstream protocol — three permitted paths when canonical upstream is missing or partial. Required reading whenever any canonical parent for the layer is absent or partial — leaf without DD; branch missing Architecture or Requirements; root missing Product Brief, Requirements, or Architecture Composition. Multi-parent scopes (branch, root) trigger this protocol on partial absence even when one parent is present. (Resolved via `.vmodel/config.yaml`; framework default copied there at init.)
 
 If the parent spec is not provided, **HALT** (see HALT condition #1) — refusal B fires when TestSpec authoring proceeds without an upstream artifact.
 
@@ -53,7 +53,7 @@ Default output filename: `<scope>/testspec.md`. Follow the project's scope-tree 
 
 ## Cross-cutting authoring discipline
 
-Apply the six rules in `references/authoring-discipline.md` across every authoring step. Most relevant here: Rule 0 (no `n/a + justification` for omitted slots, no self-attestation prose — `coverage_mutation_bar` placeholder values are valid product-shape, not template-shape excuses), Rule 3 (rationale on coverage-bar / mutation-bar choices is one line plus citation when a governing ADR fixes the threshold; no re-narration of the policy), Rule 5 (`verifies` is a citation — the case body should not restate what is being verified; cite the upstream DD field / Architecture interface / Requirement by ID and let the reader follow the link). Rule 1 (boundary-only), Rule 2 (small-system collapse), and Rule 4 (diagram-or-prose) apply universally but are less load-bearing for testspec authoring. Review skills enforce all six as `check.discipline.<rule>` findings.
+Apply the six rules in `.vmodel/references/authoring-discipline.md` across every authoring step. Most relevant here: Rule 0 (no `n/a + justification` for omitted slots, no self-attestation prose — `coverage_mutation_bar` placeholder values are valid product-shape, not template-shape excuses), Rule 3 (rationale on coverage-bar / mutation-bar choices is one line plus citation when a governing ADR fixes the threshold; no re-narration of the policy), Rule 5 (`verifies` is a citation — the case body should not restate what is being verified; cite the upstream DD field / Architecture interface / Requirement by ID and let the reader follow the link). Rule 1 (boundary-only), Rule 2 (small-system collapse), and Rule 4 (diagram-or-prose) apply universally but are less load-bearing for testspec authoring. Review skills enforce all six as `check.discipline.<rule>` findings.
 
 ## Authoring procedure
 
@@ -81,16 +81,16 @@ For multi-parent layers (branch, root), the protocol fires on **partial** absenc
 
 If the canonical upstream is missing or partial:
 
-1. Load `references/partial-parent-protocol.md`.
+1. Load `.vmodel/references/partial-parent-protocol.md`.
 2. Pick path **(a) HALT**, **(b) author from next-best parent + documented deviation**, or **(c) cite a framework artifact as upstream** — explicitly. Silent choice is a hard violation.
 3. Document the choice in this artifact's *Overview* section in 1–2 sentences naming the path and why it was chosen (which canonical parent is missing, which deferral applies, what was used in its place).
 4. Under path (b) for TestSpec: **`level:` follows scope position** (root → `system`, branch → `integration`, leaf → `unit`). Level does NOT shift just because a parent is missing. **Case shape follows the *actual* parent type** — if branch TestSpec is authored from Architecture only because Requirements is missing, cases carry branch-Architecture shape (fixtures-rich preconditions, interface DbC oracle), not requirements shape.
 5. `derived_from` and `verifies` cite only existing, resolvable artifact ids — never the missing parent, never a fabricated placeholder id.
-6. Under path (b), add an *Open follow-ups* entry that owns "replacement on canonical-parent authoring" with title, owner, action, and citation.
+6. Under path (b), emit a `[DEFER-DD: replacement on canonical-parent authoring — <canonical parent id>]` marker inline at the *Overview* section rather than a separate Open follow-ups section entry.
 
 If the canonical upstream is fully present (all parents for the layer), *Overview* says so in one short clause ("(canonical parents present)") and the protocol is satisfied without further action.
 
-→ See `references/partial-parent-protocol.md`
+→ See `.vmodel/references/partial-parent-protocol.md`
 
 ### Step 1 — Locate the layer and parent spec
 
@@ -172,9 +172,9 @@ Scripts for this skill:
 - `scripts/check-typed-error-coverage.py <specs-root>` — typed-error enum coverage from parent interfaces (every `errors:` enum entry has at least one covering case)
 - `scripts/check-id-encoding.py <specs-root>` — detects malformed empty-scope id forms (`TS-`, `TC--NNN`, `ARCH-.interfaces.X`) per TARGET §5.4 empty-scope rule
 
-Verify also: when the partial-parent protocol fired (Step 0.5), *Overview* explicitly names the chosen path (a/b/c); under path (b), an *Open follow-ups* entry owns the canonical-parent-replacement; declared `level:` matches scope position; case shape matches the actual parent type used; no fabricated upstream ids in `derived_from` or `verifies`.
+Verify also: when the partial-parent protocol fired (Step 0.5), *Overview* explicitly names the chosen path (a/b/c); under path (b), a `[DEFER-DD: ...]` marker names the canonical-parent replacement inline; declared `level:` matches scope position; case shape matches the actual parent type used; no fabricated upstream ids in `derived_from` or `verifies`.
 
-→ See `/home/stefanus/repos/VModelWorkflow/docs/authoring-self-check.md`
+→ See `.vmodel/references/authoring-self-check.md`
 
 ### Step 12 — Run Quality Bar checklist + Spec Ambiguity Test
 
@@ -251,8 +251,8 @@ That's it — one file. The skill does not create directories, schemas, validato
 
 ## Reference index
 
-- `references/authoring-discipline.md` — 6 cross-cutting rules (product-shape, layering, compression) — applies to all authoring steps
-- `references/partial-parent-protocol.md` — partial-parent and no-canonical-upstream protocol — three permitted paths when canonical upstream is missing or partial
+- `.vmodel/references/authoring-discipline.md` — 6 cross-cutting rules (product-shape, layering, compression) — applies to all authoring steps (resolved via `.vmodel/config.yaml`)
+- `.vmodel/references/partial-parent-protocol.md` — partial-parent and no-canonical-upstream protocol — three permitted paths when canonical upstream is missing or partial (resolved via `.vmodel/config.yaml`)
 - `references/testspec-purpose-and-shape.md` — V-model placement, derivation source per layer, pre-code authoring discipline
 - `references/derivation-strategies.md` — eleven strategies (functional / boundary / error / fault-injection / property / state-transition / contract / performance / security / accessibility / error-guessing) plus ECP and decision tables
 - `references/per-layer-weight.md` — three case shapes (thin leaf, fixtures-rich branch, journey-narrative root)
