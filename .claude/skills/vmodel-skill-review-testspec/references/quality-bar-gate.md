@@ -53,6 +53,7 @@ Two purposes in one file:
 - [ ] Every case `verifies` non-empty (HARD)
 - [ ] Every `verifies` element resolves to a live upstream id (HARD)
 - [ ] `verifies` granularity matches the layer
+- [ ] Every upstream id mentioned in a case's `preconditions:` or `expected:` text (`REQ-\d+`, `IC-\d+`, `ADR-\d+`, `ARCH.*`) is also listed in that case's `verifies:`
 
 ### Test-double discipline
 
@@ -118,7 +119,7 @@ If any answer is No → TestSpec fails regardless of other items.
 | `check.derivation.type-not-in-enum` | **hard_reject** ★ (schema invariant) | — |
 | `check.derivation.rbt-uncovered-rule` | soft_reject | — |
 | `check.derivation.bva-missing-at-boundary` | soft_reject | input range present |
-| `check.derivation.error-path-uncovered` | soft_reject | error matrix present |
+| `check.derivation.error-path-uncovered` | soft_reject (one finding per uncovered code) | error matrix OR parent-Architecture interface `errors:` enum present. The review must enumerate **every** uncovered code (typed-error enum entry without an `error` / `fault-injection` case whose `verifies:` resolves to `ARCH.interfaces.<name>.errors.<code>`), not just the first detected. Cross-ref: `scripts/check-typed-error-coverage.py` rule `testspec.typed-error-uncovered` |
 
 ### `check.per-layer.*`
 
@@ -147,6 +148,7 @@ If any answer is No → TestSpec fails regardless of other items.
 | `check.verifies.case-level-empty` | **hard_reject** ★ (refusal B) | — |
 | `check.verifies.unresolvable` | **hard_reject** ★ (refusal B; aliases `anti-pattern.orphan-tests`) | — |
 | `check.verifies.granularity-mismatch` | soft_reject | — |
+| `check.verifies.implicit-reference-uncited` | soft_reject | case `preconditions:` or `expected:` text mentions an upstream id (`REQ-\d+`, `IC-\d+`, `ADR-\d+`, `ARCH.*`) not listed in that case's `verifies:`. Cross-ref: `scripts/check-implicit-verifies.py` rule `testspec.implicit-verifies-uncited` |
 
 ### `check.test-doubles.*` (gated on doubles being declared)
 

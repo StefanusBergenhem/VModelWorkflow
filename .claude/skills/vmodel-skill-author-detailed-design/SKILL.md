@@ -142,7 +142,17 @@ Sweep the document against the sixteen anti-patterns: five interface/contract (u
 
 → See `references/anti-patterns.md`
 
-### Step 13 — Run Quality Bar checklist + Spec Ambiguity Test
+### Step 13 — Pre-publish mechanical self-check
+
+Run the skill's mechanical check scripts before the Quality Bar gate. Each finding must be addressed (fix the artifact, defend with inline rationale, or escalate if the script appears wrong) — never silently ignored. Scripts emit `<file>:<line>:<rule-id>:<message>` on stdout; exit 0 = clean, 1 = findings, 2 = script error.
+
+Scripts for this skill:
+
+- `scripts/check-mermaid.py <specs-root>` — state diagram syntax (when state machines are authored)
+
+→ See `/home/stefanus/repos/VModelWorkflow/docs/authoring-self-check.md`
+
+### Step 14 — Run Quality Bar checklist + Spec Ambiguity Test
 
 Run the Yes/No checklist. Items that cannot be answered Yes are flagged inline in the output, not silently passed. Apply the Spec Ambiguity Test as the meta-gate (override): a junior engineer must produce a correct implementation from the DD alone; a test engineer must derive unit tests without seeing the code; an equivalent implementation in a different language must satisfy the same DD.
 

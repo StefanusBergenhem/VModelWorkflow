@@ -71,6 +71,10 @@ Decide the children. Apply information-hiding (Parnas), cohesion+coupling, bound
 
 Banned decomposition fields per Rule 8: do NOT carry `bounded_context_line`, `owning_team_type`, or `test_seam` (and its sub-fields `driving_ports`, `driven_ports`, `fake_strategy`). Team-topology-derived; not load-bearing for AI-first frameworks. Test-design content lives in TestSpec at the corresponding scope, not in architecture.
 
+When the `allocates` list spawns a NEW derived requirement at child scope (uncommon — most allocations reuse parent IDs), apply the requirements-shape checklist before writing the derived requirement.
+
+→ See `references/requirements-shape-checklist.md`
+
 → See `references/decomposition-discipline.md`
 → Template: `templates/decomposition-entry.yaml.tmpl`
 
@@ -79,6 +83,13 @@ Banned decomposition fields per Rule 8: do NOT carry `bounded_context_line`, `ow
 For every cross-child and externally callable interface, write a Design-by-Contract entry: preconditions, postconditions (on success / precondition-failure / downstream-failure), invariants, typed error enum, quality attributes, rationale, version, deprecation policy. Apply Interface Segregation — narrow per responsibility, no god-interfaces.
 
 When the artifact would otherwise breach the working token budget, MAY author in helicopter+detail-bundle form per Rule 8: keep `name, from, to, protocol, contract.operation, contract.summary_postcondition, contract.key_invariants, contract.rationale, detail` in the helicopter; move full preconditions, postconditions, invariants, errors, quality_attributes, authentication, authorisation, version, deprecation_policy to `architecture/interfaces/<NAME>.md` detail files. Default to single-file form for small architectures (≤4 interfaces, low DbC volume).
+
+When interface contract clauses (preconditions, postconditions, invariants) read like standalone requirements, apply the requirements-shape checklist. The line is fuzzy; when in doubt, run the checklist.
+
+When a governing ADR's `propagation.bindings:` block binds a specific library, protocol, or framework to this scope, the binding lands in the matching Decomposition entry's `rationale` field, citing the ADR by id — NOT in `purpose`, `responsibilities`, or any interface `operation` signature.
+
+→ See `references/adr-propagation-landing-rules.md`
+→ See `references/requirements-shape-checklist.md`
 
 → See `references/interface-contracts.md`
 → Template: `templates/interface-entry.yaml.tmpl`
@@ -146,7 +157,19 @@ Sweep the document against the ten anti-patterns: six universal (big ball of mud
 
 → See `references/anti-patterns.md`
 
-### Step 13 — Run Quality Bar checklist + Spec Ambiguity Test
+### Step 13 — Pre-publish mechanical self-check
+
+Run the skill's mechanical check scripts before the Quality Bar gate. Each finding must be addressed (fix the artifact, defend with inline rationale, or escalate if the script appears wrong) — never silently ignored. Scripts emit `<file>:<line>:<rule-id>:<message>` on stdout; exit 0 = clean, 1 = findings, 2 = script error.
+
+Scripts for this skill:
+
+- `scripts/check-mermaid.py <specs-root>` — diagram syntax (parser-breaking characters in structure / sequence diagrams)
+- `scripts/check-adr-landing.py <specs-root>` — ADR-bound binding placement (bindings declared in any governing ADR's `propagation.bindings:` block must land in the matching Decomposition entry's `rationale`)
+- `scripts/check-requirement-shape.py <specs-root>` — derived-requirement shape (only when Step 1 spawned new sub-requirements)
+
+→ See `/home/stefanus/repos/VModelWorkflow/docs/authoring-self-check.md`
+
+### Step 14 — Run Quality Bar checklist + Spec Ambiguity Test
 
 Run the Yes/No checklist. Items that cannot be answered Yes are flagged inline in the output, not silently passed. Apply the Spec Ambiguity Test as the meta-gate (override): a junior engineer or mid-tier AI must be able to derive defensible Detailed Designs and a TestSpec from this artifact alone (plus governing ADRs and parent Requirements), without asking clarifying questions.
 

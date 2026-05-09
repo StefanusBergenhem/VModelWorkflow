@@ -44,6 +44,7 @@ Two purposes in one file:
 
 - [ ] Stateless leaf asserts absence in one line
 - [ ] Stateful leaf has state inventory + transition table + undefined-event handling
+- [ ] Mermaid state-machine diagrams free of parser-breaking characters (`;` in message text, unquoted `<…>` placeholders, unquoted aliases with `/` `:` `,`)
 - [ ] Thread-safety category named (per leaf and per shared field)
 - [ ] Cancellation contract on long-running ops
 - [ ] Timing constraints have all five elements
@@ -151,6 +152,14 @@ If any answer is No → DD fails regardless of other items.
 | `check.thread-safety.leaf-category-unstated` | soft_reject | multi-threaded |
 | `check.thread-safety.shared-field-without-contract` | soft_reject | shared mutable present |
 | `check.timing.unmeasurable` | soft_reject | timing constraint present |
+
+### `check.mermaid.*` (Diagram syntax — state-machine diagrams)
+
+| Identifier | Severity | Conditional gating |
+|---|---|---|
+| `check.mermaid.parser-breaking-chars` | soft_reject | Mermaid block present (state machine in stateful leaf). Cross-ref: `scripts/check-mermaid.py` rules `mermaid.semicolon-in-message`, `mermaid.angle-bracket-in-message`, `mermaid.unquoted-alias-special-char` |
+
+Bundles author-script findings: semicolon in message text, unquoted `<…>` placeholders, participant aliases containing `/`, `:`, or `,` without surrounding double quotes. One finding per check; the script's rule IDs identify the specific occurrences.
 
 ### `check.error.*`
 

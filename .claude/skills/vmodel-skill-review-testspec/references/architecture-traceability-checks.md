@@ -26,6 +26,20 @@ When the TestSpec is non-leaf (branch OR root), walk the parent Architecture's C
 
 **recommended_action:** *"Derive a cross-child integration case per composition invariant. Composition invariants describe properties that emerge from the runtime pattern; they live at branch only."*
 
+## check.derivation.error-path-uncovered (soft, typed-error widening)
+
+**Check that** every code in a parent-Architecture interface's `errors:` enum (i.e. every `ARCH.interfaces.<name>.errors.<code>` id) has at least one case in this TestSpec under the `error` or `fault-injection` strategy whose `verifies:` resolves to that id.
+
+**Reject when** any typed-error code lacks a covering case. The review must enumerate **every** uncovered code, not just the first detected — emit one finding per uncovered code so the matched author skill can act on the full set in a single pass.
+
+**Approve when** every typed-error code has ≥ 1 covering case.
+
+**Evidence pattern:** for each uncovered code, name the parent-Architecture interface, the code, and the `ARCH.interfaces.<name>.errors.<code>` id; confirm no case lists that id in `verifies:`.
+
+**recommended_action:** *"Derive an error or fault-injection case per typed-error code. Cover every code in the enum, not just the most visible failure path."*
+
+**Cross-link:** `scripts/check-typed-error-coverage.py` rule `testspec.typed-error-uncovered` mechanically detects uncovered codes; the review skill aggregates one finding per code under this check ID.
+
 ## check.architecture-traceability.quality-attribute-unallocated (soft)
 
 **Check that** every quality-attribute allocation to a child or interface in the parent Architecture has at least one specialised case at branch — `type: performance` / `security` / `accessibility` / etc.

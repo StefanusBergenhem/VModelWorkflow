@@ -13,6 +13,7 @@ Two purposes in one file:
   - `check.decomposition.*` and `check.responsibility.*`
   - `check.interface.*`
   - `check.composition.*`
+  - `check.mermaid.*`
   - `check.qa.*`
   - `check.resilience.*`
   - `check.security.*` and `check.observability.*`
@@ -32,6 +33,7 @@ Walk every applicable item. Every No becomes a finding with the `check_failed` i
 - [ ] Every child's purpose is one sentence with no conjunctions
 - [ ] Every child's responsibility list ≤3 items, all architectural-level
 - [ ] No responsibility prescribes implementation (HARD)
+- [ ] No ADR-bound mechanism (library / protocol / framework binding declared in a governing ADR's `propagation.bindings:`) appears in `purpose`, `responsibilities`, or interface operation signatures — allowed only in `rationale`
 - [ ] Every parent-allocated requirement lands in at least one child (no requirement orphans)
 - [ ] Every child has at least one allocation (no component orphans)
 - [ ] Depth/cognitive-load/change-blast trio recorded if revision happened
@@ -58,6 +60,7 @@ Walk every applicable item. Every No becomes a finding with the `check_failed` i
 - [ ] Message-bus topology specified where applicable
 - [ ] Failure-path sequence diagram
 - [ ] Rationale on the runtime-pattern choice
+- [ ] Mermaid diagrams free of parser-breaking characters (`;` in message text, unquoted `<…>` placeholders, unquoted aliases with `/` `:` `,`)
 
 ### Quality-attribute coverage
 
@@ -128,6 +131,7 @@ Stable identifiers used across all findings. Two namespaces visible here:
 | `check.decomposition.depth-test-not-applied` | soft_reject | non-trivial scope only |
 | `check.decomposition.bounded-context-fracture-ignored` | soft_reject | — |
 | `check.responsibility.implementation-prescription` | **hard_reject** ★ (refusal B) | — |
+| `check.responsibility.adr-bound-mechanism-leaked` | soft_reject | governing ADR with `propagation.bindings:` exists. Cross-ref: `scripts/check-adr-landing.py` rule `arch.adr-bound-mechanism-leaked` |
 
 ### `check.interface.*` (Interfaces card)
 
@@ -158,6 +162,14 @@ Stable identifiers used across all findings. Two namespaces visible here:
 | `check.composition.message-bus-topology-unspecified` | soft_reject | messaging-pattern only |
 | `check.composition.failure-path-sequence-diagram-missing` | soft_reject | — |
 | `check.composition.no-rationale-on-pattern` | soft_reject | — |
+
+### `check.mermaid.*` (Diagram syntax — sequence diagrams in Composition)
+
+| Identifier | Severity | Conditional gating |
+|---|---|---|
+| `check.mermaid.parser-breaking-chars` | soft_reject | Mermaid block present. Cross-ref: `scripts/check-mermaid.py` rules `mermaid.semicolon-in-message`, `mermaid.angle-bracket-in-message`, `mermaid.unquoted-alias-special-char` |
+
+Bundles author-script findings: semicolon in sequence-diagram message text, unquoted `<…>` placeholders in message text, participant aliases containing `/`, `:`, or `,` without surrounding double quotes. One finding per check; the script's rule IDs identify the specific occurrences.
 
 ### `check.qa.*` (Quality-attribute card)
 

@@ -13,7 +13,7 @@ Execution plan for the VModelWorkflow framework following the 2026-04-18 pivot. 
 - **Phase 3** — schemas + traceability + Quality Bar — **DONE** (2026-04-23). Six per-artifact JSON Schemas (draft 2020-12), envelope + common-defs, traceability link-types + validation-rules catalogs, Quality Bar container + six per-artifact checklists, six minimal-example fixtures round-tripping clean through the schemas. `PHASE3_AUTHORING_PATTERN.md` archived to `archive/phase3/` on completion. See §3.3.
 - **Phase 4** — Product Descriptions for purpose-built tools — **CLOSED** (2026-04-26) without producing PDs. The vmodel-core PD pilot surfaced that PD is a category error: the actual gap is a missing **elicitation skill** at root scope (interview-style, anti-assumption / explanation / gap-finding / readback for joint agreement, DDD-flavoured). Framework retains its 6-artifact set. Phase 5 picks up `vmodel-skill-elicit-needs`; the vmodel-core PD draft is preserved as eval input for that skill. `PHASE4_AUTHORING_PATTERN.md` archived to `archive/phase4/` on closeout. See §3.4.
 - **Phase 5** — Skills (craft + framework) — **per-artifact pairs + elicit-needs complete; closeout deferred** (2026-05-01). Five per-artifact author/review pairs landed (requirements / architecture / detailed-design / testspec / ADR); product-brief pair deferred indefinitely; framework skills (traceability, orchestration, retrofit) deferred to post-Phase-6; Haiku-floor evals + `skills-architecture.html` rewrite deferred until after dogfooding signal. See §3.5.
-- **Phase 6** — Tools + greenfield pilot — **starts 2026-05-01**. `vmodel-core` greenfield dogfooding pilot at `/home/stefanus/repos/vmodel-core/`. Spec authoring kicks off with elicit-needs.
+- **Phase 6** — Tools + greenfield pilot — **in progress (started 2026-05-01)**. `vmodel-core` greenfield dogfooding pilot at `/home/stefanus/repos/vmodel-core/`. Dogfooding feedback tracked in `docs/plan/PHASE6_FINDINGS.md` by cluster. Cluster 1 (Issue 22), Cluster 2 (Issues 13, 23), Cluster 3 (Issues 11/15/16/20/21) — RESOLVED. Clusters 4 (convention pin-downs), 5 (no-fabrication extensions), 6 (process / UX) — pending.
 - Phase 7 — pending (gated on Phase 6 dogfooding signal).
 
 **Preserved and operational:**
@@ -326,4 +326,4 @@ Phase 0 (done) → Phase 1 (this commit) → Phase 2 (docs)
 
 ---
 
-*Last updated: 2026-05-01 (Phase 5 per-artifact pairs + elicit-needs complete; framework skills + closeout activities deferred until Phase 6 dogfooding signal; Phase 6 greenfield pilot — `vmodel-core` at `/home/stefanus/repos/vmodel-core/` — kicks off next session with elicit-needs run).*
+*Last updated: 2026-05-09 (Phase 6 Cluster 3 closed: Pre-publish mechanical self-check pattern + 5 Python check scripts + requirements-shape checklist sync; resolves Issues 11/15/16/20/21. Cluster 4 next.).*

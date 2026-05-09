@@ -115,6 +115,14 @@ List positives and negatives, both non-empty, both concrete. Replace handwave ("
 
 For each consequence, choose the route: (a) new requirement at this ADR's scope (testable here), (b) `governing_adrs` reference from a child artifact (bounds child choices only), or (c) both. Every consequence picks at least one route — orphan consequences are dropped obligations.
 
+When route (a) materialises a new requirement at this scope, apply the requirements-shape checklist before writing the requirement YAML. The checklist covers atomicity, EARS shape, testability, no implementation prescription, no fabrication, and traceability — it is the subset of requirements discipline that ADR authors borrow.
+
+→ See `references/requirements-shape-checklist.md`
+
+When a route binds a specific library, protocol, or framework to a child architecture or interface, declare the binding in a structured `propagation.bindings:` YAML block within this ADR's Propagation section. Each entry: `name` (the bound mechanism), `scope` (the child architecture entry name it binds to), `kind` (`library` / `protocol` / `framework`). Downstream architecture authors land the binding in the matching child's `rationale`, citing this ADR by id; structured declaration enables `scripts/check-adr-landing.py` to detect leaks at author time.
+
+→ See `templates/propagation-bindings.yaml.tmpl`
+
 → See `references/propagation-and-completeness.md`
 
 ### Step 9 — Apply retrofit posture (retrofit only)
@@ -129,13 +137,24 @@ Sweep against the eleven anti-patterns: single-option, generic-justification, mi
 
 → See `references/anti-patterns.md`
 
-### Step 11 — Run Quality Bar checklist + Spec Ambiguity Test
+### Step 11 — Pre-publish mechanical self-check
+
+Run the skill's mechanical check scripts before the Quality Bar gate. Each finding must be addressed (fix the artifact, defend with inline rationale, or escalate if the script appears wrong) — never silently ignored. Scripts emit `<file>:<line>:<rule-id>:<message>` on stdout; exit 0 = clean, 1 = findings, 2 = script error.
+
+Scripts for this skill:
+
+- `scripts/check-requirement-shape.py <specs-root>` — when this ADR materialises new requirements via Propagation route (a)
+- `scripts/check-adr-landing.py <specs-root>` — verifies bindings declared in this ADR's `propagation.bindings:` YAML are reflected correctly in any architecture artifact that lists this ADR in `governing_adrs`
+
+→ See `/home/stefanus/repos/VModelWorkflow/docs/authoring-self-check.md`
+
+### Step 12 — Run Quality Bar checklist + Spec Ambiguity Test
 
 Run the Yes/No checklist (nine groups). Flag any No inline; do not silently pass. The SAT is the override: a junior engineer reading only this ADR (plus the parent Architecture context) must be able to derive the same design without guessing.
 
 → See `references/anti-patterns.md` (the QB self-checklist lives there)
 
-### Step 12 — Supersession dance (when applicable)
+### Step 13 — Supersession dance (when applicable)
 
 If the new ADR replaces an older one: set `supersedes: <old-id>`. Then edit the old ADR's **front-matter only** — set `status: superseded` and `superseded_by: <new-id>`. Do not touch the old body. Refusal: editing an `accepted` body is forbidden.
 

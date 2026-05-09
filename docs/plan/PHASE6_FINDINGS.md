@@ -55,19 +55,67 @@ Small-text issues with big-implication ripples. Don't let skill-level cleanup be
 
 ---
 
-## Cluster 3 — Missing author-time gate (5 issues, 1 structural fix)
+## Cluster 3 — Missing author-time gate (split: 3a + 3b — RESOLVED 2026-05-09)
 
-Five issues, same shape: review skills catch what author skills emit without a corresponding gate. Not five fixes — one structural decision applied to five surfaces.
+The original framing of "5 issues, 1 structural fix" turned out to be wrong on inspection. The five issues share a *symptom* (review catches what author emits) but not a *root cause*. Re-split into:
 
-| # | Surface |
-|---|---|
-| 11 | ADR/architecture skills write requirement-shaped content without invoking requirements-skill discipline |
-| 15 | Mermaid parser-breaking characters in author templates |
-| 16 | ADR-bound library bindings land in wrong architecture field |
-| 20 | Typed-error enum coverage in testspec |
-| 21 | Implicit-`verifies` references uncited in testspec cases |
+- **3a — Issue 11** — genuine cross-skill: ADR/architecture authors emit requirement-shaped content without requirements-skill discipline. **Resolution:** verbatim-copy `docs/requirements-shape-checklist.md` into author-adr and author-architecture via `scripts/sync-requirements-shape-checklist.sh` (matches Issue-22 sync precedent). Author skills invoke the checklist at the propagation/decomposition seam.
+- **3b — Issues 15 / 16 / 20 / 21** — per-skill author-discipline gaps with mechanically-detectable failure modes. **Resolution:** generic *Pre-publish mechanical self-check* terminal step pattern across all five author skills (see `docs/authoring-self-check.md`) + skill-specific scripts (see below) + matching review-side `check.*` IDs (belt-and-braces).
 
-**Decision shape.** Pick one of: (A) recursive cross-skill invocation, (B) shared author-time checklist imports, (C) accept review as the gate. Decide once; ripple through the five surfaces.
+The structural decision is the **Pre-publish mechanical self-check** pattern. Each author skill terminates with a step inserted between *Anti-pattern self-check* and *Quality Bar checklist + Spec Ambiguity Test* that runs zero or more skill-specific scripts under `scripts/check-*.py`. Stable contract: `<file>:<line>:<rule-id>:<message>`; exit 0/1/2.
+
+### Mechanical scripts (Python 3, venv, pyyaml)
+
+| Script | Issue | Detects |
+|---|---|---|
+| `scripts/check-mermaid.py` | 15 | `;` in sequence-message text, unquoted `<…>` placeholders, unquoted aliases with `/` `:` `,` |
+| `scripts/check-adr-landing.py` | 16 | bindings declared in an ADR's `propagation.bindings:` YAML appearing outside `rationale` of the matching architecture child |
+| `scripts/check-typed-error-coverage.py` | 20 | parent-architecture interfaces' `errors:` enum entries with no covering testspec case |
+| `scripts/check-implicit-verifies.py` | 21 | upstream-id mentions (REQ-, IC-, ADR-, ARCH.) in case `preconditions` / `expected` text not listed in `verifies:` |
+| `scripts/check-requirement-shape.py` | 11 | atomicity (compound `shall`/`must`), EARS opener, implementation-prescription vocabulary heuristic |
+| `scripts/sync-requirements-shape-checklist.sh` | 11 | distributes `docs/requirements-shape-checklist.md` into author-adr + author-architecture (framework + vmodel-core mirror); md5 verify |
+
+Shared parser at `scripts/lib/spec_parser.py` (front-matter, YAML blocks, Mermaid blocks).
+
+### Review-side `check.*` IDs added (belt-and-braces)
+
+| Skill | New check ID(s) | Pairs with script |
+|---|---|---|
+| review-architecture | `check.responsibility.adr-bound-mechanism-leaked`, `check.mermaid.parser-breaking-chars` | `check-adr-landing.py`, `check-mermaid.py` |
+| review-detailed-design | `check.mermaid.parser-breaking-chars` | `check-mermaid.py` |
+| review-testspec | `check.verifies.implicit-reference-uncited`, widened `check.derivation.error-path-uncovered` (enumerate every uncovered code) | `check-implicit-verifies.py`, `check-typed-error-coverage.py` |
+| review-requirements / review-adr | none added — existing checks (`check.ears.compound-too-many-keywords`, `check.ears.invalid-pattern`, `anti-pattern.implementation-prescription`) already cover the surface caught by `check-requirement-shape.py` |
+
+### Author-side skill changes
+
+All 5 author SKILL.md files received an inserted **Pre-publish mechanical self-check** step (renumbered subsequent steps; QB step moved by +1):
+
+- `author-requirements` → +Step 9
+- `author-adr` → +Step 11; Step 8 (Propagation) extended for requirements-shape checklist invocation (route a) and `propagation.bindings:` structured YAML; new template `propagation-bindings.yaml.tmpl`
+- `author-architecture` → +Step 13; Steps 1+2 extended for requirements-shape and ADR-binding-landing rule; new reference `adr-propagation-landing-rules.md`; comment blocks added to `decomposition-entry.yaml.tmpl` and the Mermaid templates
+- `author-testspec` → +Step 11; Step 6 extended with implicit-verifies and typed-error-enum coverage cues; appended to `verifies-traceability.md` and `architecture-traceability-cues.md`
+- `author-detailed-design` → +Step 13; Mermaid comment block added to `state-machine.mmd.tmpl`
+
+### Validation against vmodel-core (2026-05-09)
+
+Scripts run cleanly (no exit-2 errors) on `/home/stefanus/repos/vmodel-core/specs/`. Findings reproduce historical Cluster 3 issues:
+
+| Script | Exit | Findings | Notes |
+|---|---:|---:|---|
+| `check-mermaid.py` | 1 | 1 | Issue 15 reproduction (architecture.md:336 — `;` in sequence message text) |
+| `check-adr-landing.py` | 0 | 0 | Clean — ADR-001 has not yet adopted the new structured `propagation.bindings:` YAML; vacuous-clean is the correct script behaviour |
+| `check-typed-error-coverage.py` | 1 | 12 | Issue 20 reproduction — 12 typed errors across 8 interfaces lack covering testspec cases |
+| `check-implicit-verifies.py` | 1 | 6 | Issue 21 reproduction — TC-017/023/026 mention IC-002/011/012 + REQ-022 in prose without listing in `verifies:` |
+| `check-requirement-shape.py` | 1 | 3 | REQ-001/026/027 fail EARS opener regex |
+
+These 22 findings are now a backlog for the vmodel-core spec author to triage — not a Cluster 3 deliverable, but the empirical signal that the scripts work.
+
+### Known follow-ups (not blocking)
+
+- **EARS regex strictness.** `check-requirement-shape.py` requires `^The` for Ubiquitous. REQ-026/027 use `^A` (`A finding-record shall...`); arguably-conformant variant under indefinite-article subjects. One-line fix: broaden Ubiquitous to `^(?:The|A|An)`. Tracked for next pass.
+- **vmodel-core skill mirror.** Author/review SKILL.md changes were applied only to the framework `.claude/skills/`. The vmodel-core mirror at `/home/stefanus/repos/vmodel-core/.claude/skills/` was not updated — there is no skill-bundle sync script for SKILL.md (only for the canonical reference docs). Either author one or copy on demand.
+- **`check-adr-landing.py` positive path uncovered.** No vmodel-core ADR yet declares `propagation.bindings:` YAML. The script's negative-finding path is unexercised on real input. A synthetic fixture would prove correctness; deferred until first ADR adopts the structured form.
+- **`docs/guide/` ripple.** None this round — Cluster 3 changes are skill-internal and script-level. Re-evaluate at the next `skills-architecture.html` rewrite (deferred per Phase 5 closeout).
 
 ---
 
@@ -114,10 +162,10 @@ Skill-flow refinements. Mostly small per-skill updates.
 
 ## Recommended decision order
 
-1. **Cluster 1 (Issue 22) — discipline pass DONE 2026-05-04. Structural pass NEXT.** Take the two structural moves (YAML factoring + scope-shape variants) before more skill work — they affect every author skill's template.
-2. **Cluster 2 (Issues 13, 23)** — settle file-based handover and testspec semantics before reshaping skills.
-3. **Cluster 3 as one design pass** — pick A/B/C, ripple through 5 surfaces.
-4. **Cluster 4 + 5 + 6 in parallel** — mechanical, batchable, low-risk.
+1. **Cluster 1 (Issue 22) — discipline pass DONE 2026-05-04. Structural pass DONE 2026-05-05.**
+2. **Cluster 2 (Issues 13, 23) — RESOLVED 2026-05-05.**
+3. **Cluster 3 — RESOLVED 2026-05-09 (split: 3a checklist + 3b Pre-publish self-check pattern; 5 scripts; 4 new review check IDs; 1 widened review check).**
+4. **Cluster 4 + 5 + 6 in parallel — pending.** Mechanical, batchable, low-risk.
 
 ---
 

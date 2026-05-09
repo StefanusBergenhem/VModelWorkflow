@@ -1,3 +1,8 @@
+%% Parser-breaking characters in sequence diagrams (mechanical check via scripts/check-mermaid.py):
+%%   ; in message text → use em-dash or comma (Mermaid treats ; as statement terminator)
+%%   <...> placeholder in message text → use literal name (PATH) or square brackets [PATH]
+%%   /, :, , in unquoted aliases → quote the alias with double quotes
+%%
 %% Mermaid stateDiagram-v2 skeleton for the State section.
 %% Use ONLY when the state machine fits on one page (≤ ~10 states).
 %% For larger machines, prefer a transition table (textual, scrollable, diff-friendly).

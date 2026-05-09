@@ -162,7 +162,17 @@ Before delivering, sweep the document for the universal nine and AI-era seven an
 
 → See `references/anti-patterns.md`
 
-### Step 9 — Quality Bar self-check
+### Step 9 — Pre-publish mechanical self-check
+
+Run the skill's mechanical check scripts before the Quality Bar gate. Each finding must be addressed (fix the artifact, defend with inline rationale, or escalate if the script appears wrong) — never silently ignored. Scripts emit `<file>:<line>:<rule-id>:<message>` on stdout; exit 0 = clean, 1 = findings, 2 = script error.
+
+Scripts for this skill:
+
+- `scripts/check-requirement-shape.py <path-to-requirements.md>` — checks atomicity (compound `shall`/`must`), EARS shape, and the implementation-prescription vocabulary heuristic.
+
+→ See `/home/stefanus/repos/VModelWorkflow/docs/authoring-self-check.md`
+
+### Step 10 — Quality Bar self-check
 
 Run the self-check checklist before delivering. Every applicable item must be answered Yes. The Spec Ambiguity Test is the meta-gate: a junior engineer or mid-tier AI must be able to derive a defensible architecture allocation, detailed design, and test specification from this document alone, without asking clarifying questions.
 

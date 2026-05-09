@@ -107,6 +107,13 @@ For every case: the title is a scenario (not a method name); the type is from th
 
 → See `references/case-quality.md` (F.I.R.S.T., AAA, oracle specificity), `references/verifies-traceability.md`
 
+Implicit-verifies self-check: when a case mentions an upstream identifier (REQ-NNN, IC-NNN, ADR-NNN, ARCH.<path>) in `preconditions:` or `expected:` text, that identifier MUST appear in the case's `verifies:` list. Mechanically detected by `scripts/check-implicit-verifies.py` at Step 11.
+
+Typed-error enum coverage: every entry in a parent interface's `errors:` enum requires at least one case under the `error` or `fault-injection` strategy. Roll-up cases (one case covering multiple errors via shared halt-and-report path) are permissible when the parent contract treats them uniformly, but each rolled-up code MUST be cited in the case's `verifies:` list. Mechanically detected by `scripts/check-typed-error-coverage.py` at Step 11.
+
+→ See `references/verifies-traceability.md`
+→ See `references/architecture-traceability-cues.md`
+
 ### Step 7 — Apply test-double discipline (branch and leaf cases involving doubles)
 
 When a case names a test double in preconditions, name the type (dummy / stub / spy / mock / fake). Fakes require a contract test against the real implementation. Cap of two doubles per leaf case; over-threshold flags a design issue. Reserve interaction verification for cases where the interaction itself is the observable behaviour.
@@ -131,7 +138,18 @@ Sweep the document against the thirteen anti-patterns (code-to-test derivation, 
 
 → See `references/anti-patterns.md`
 
-### Step 11 — Run Quality Bar checklist + Spec Ambiguity Test
+### Step 11 — Pre-publish mechanical self-check
+
+Run the skill's mechanical check scripts before the Quality Bar gate. Each finding must be addressed (fix the artifact, defend with inline rationale, or escalate if the script appears wrong) — never silently ignored. Scripts emit `<file>:<line>:<rule-id>:<message>` on stdout; exit 0 = clean, 1 = findings, 2 = script error.
+
+Scripts for this skill:
+
+- `scripts/check-implicit-verifies.py <specs-root>` — case-level upstream-id citation completeness (every REQ/IC/ADR/ARCH ID mentioned in `preconditions:` or `expected:` text must appear in the case's `verifies:`)
+- `scripts/check-typed-error-coverage.py <specs-root>` — typed-error enum coverage from parent interfaces (every `errors:` enum entry has at least one covering case)
+
+→ See `/home/stefanus/repos/VModelWorkflow/docs/authoring-self-check.md`
+
+### Step 12 — Run Quality Bar checklist + Spec Ambiguity Test
 
 Run the Yes/No checklist (eight QB groups + the SAT meta-gate). Flag any No inline; do not silently pass. The SAT is the override: a junior engineer reading only this TestSpec (plus the parent spec and governing ADRs) must be able to write the test code, and a reviewer must be able to tell whether every equivalence class, every boundary, every error path was considered.
 

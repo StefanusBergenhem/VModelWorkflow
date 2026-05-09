@@ -1,0 +1,12 @@
+# Optional: structured bindings for Propagation route — library / protocol / framework choices
+# bound by this ADR. Downstream architecture authors land each binding in the matching
+# child's `rationale` field, citing this ADR by id.
+# Validated mechanically by scripts/check-adr-landing.py.
+propagation:
+  bindings:
+    - name: "html/template"        # bound mechanism (library, protocol, or framework name)
+      scope: "reporter"             # architecture decomposition child this binding applies to
+      kind: "library"               # library | protocol | framework
+    - name: "goccy/go-yaml"
+      scope: "artifact-loader"
+      kind: "library"

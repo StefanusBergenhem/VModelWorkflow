@@ -61,6 +61,12 @@ When the count grows beyond ~4 upstream elements per case → the case is doing 
 - **Granularity-mismatched cases** — a leaf case pointing at `REQ-001` reveals that the leaf author skipped the DD layer's contract.
 - **`verifies` as path or filename** — paths point at code/test files; the TestSpec verifies *spec elements*, not files.
 
+## Implicit-verifies rule
+
+When a case's `preconditions:` or `expected:` text mentions a specific upstream identifier (`REQ-\d+`, `IC-\d+`, `ADR-\d+`, `ARCH\.\w+`), that identifier MUST appear in the case's `verifies:` list. The text reference is the case's commitment to verifying that upstream content; omitting it from `verifies:` produces a silent traceability gap. Pre-publish self-check: `scripts/check-implicit-verifies.py` greps each case for upstream-id patterns and cross-references against `verifies:`.
+
+Granularity convention: a parent ID in `verifies:` covers any sub-path mentioned in prose (`ARCH.interfaces.IValidate` covers `ARCH.interfaces.IValidate.errors.ErrInvalidVerdict`). A specific sub-path in `verifies:` covers itself only.
+
 ## Cross-link
 
 `testspec-purpose-and-shape.md` (the layer→parent-spec mapping) · `dd-traceability-cues.md` / `architecture-traceability-cues.md` / `requirements-traceability-cues.md` (per-layer seam files showing which IDs to point at) · `retrofit-discipline.md` (`recovery_status: unknown` for reconstructed `verifies`) · `anti-patterns.md` (`anti-pattern.orphan-tests`)
