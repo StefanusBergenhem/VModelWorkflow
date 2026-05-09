@@ -274,6 +274,12 @@ Behavioural cases (functional / boundary / error / state-transition) cite Requir
 
 **Mandatory non-empty `verifies`** is the anti-orphan rule: tests without traceable intent are either misplaced or testing unspecified behaviour.
 
+#### Open follow-ups (every authoring artifact except Product Brief)
+
+Every Requirements / Architecture / ADR / Detailed Design / TestSpec artifact ends with an `## Open follow-ups` section enumerating deferred items as bullets in the shape *title — owner — action — citation locations*. Empty list is acceptable; the **section header is mandatory** and rendered as `(none)` when no follow-ups exist. The section mirrors and aggregates the inline `[DEFER-DD: …]` and `[DEFER-ADR: …]` markers (per §5.5) that already exist in the body, providing a known per-artifact location for pending work without forcing a body grep. `scripts/index-deferred-items.py` walks the tree and emits a structured cross-artifact index.
+
+Product Brief carries pending stakeholder questions in its existing structure (Stakeholders, Constraints, Non-Goals); a separate Open follow-ups appendix would duplicate.
+
 ### 5.4 File shape, directory layout, IDs
 
 **File shape** — single-file Markdown per artifact:
@@ -286,6 +292,7 @@ Behavioural cases (functional / boundary / error / state-transition) cite Requir
 /specs/
   product_brief.md            # root scope
   needs.md                    # root scope (optional — elicit-needs prototype output)
+  glossary.md                 # root scope (optional — tree-global definitions, non-artifact reference doc)
   requirements.md             # root scope
   architecture.md             # root scope (helicopter)
   architecture/               # root scope detail bundle (Rule 8, optional)
@@ -320,10 +327,20 @@ Root-scope artifacts live directly at `/specs/`. "Root" is implicit — not a di
 | Architecture | `ARCH-{scope}` | `ARCH-app-checkout`; at root: `ARCH` |
 | Detailed Design | `DD-{scope}-{name}` | `DD-app-checkout-discount-calc` |
 | TestSpec | `TS-{scope}` | `TS-app-checkout`; at root: `TS` |
-| Test Case | `TC-{testspec-id}-{seq}` | `TC-TS-app-checkout-007` |
+| Test Case | `TC-{scope}-{seq}` | `TC-app-checkout-007`; at root: `TC-001` |
 | ADR | `ADR-{seq}-{slug}` | `ADR-012-use-postgres` |
 
 Traceability links reference IDs, not paths.
+
+#### Empty-scope ID encoding
+
+At root scope (`scope: ""`), the scope segment is omitted from all derived identifiers. Concretely:
+
+- **Artifact ids:** bare type prefix — `PB`, `REQS`, `ARCH`, `TS`. (DD always carries a leaf name and so cannot collapse: `DD-{name}`.)
+- **Per-element ids:** scope segment dropped, *not* a double-hyphen — `REQ-001` (not `REQ--001`), `TC-001` (not `TC--001`).
+- **Dotted-path references:** bare type prefix, no stranded hyphen before the dot — `ARCH.interfaces.{name}` (not `ARCH-.interfaces.{name}`); `REQS.functional.{seq}` (not `REQS-.functional.{seq}`).
+
+Resolvers MUST treat the bare-prefix form as canonical at empty scope and SHOULD reject trailing-hyphen forms (`TS-`, `ARCH-`, `TC--NNN`, `ARCH-.interfaces.X`) as malformed to prevent silent drift between artifacts. `scripts/check-id-encoding.py` enforces this mechanically.
 
 ### 5.5 Scope tree convention
 
@@ -333,7 +350,7 @@ The spec tree is a **strict hierarchy**: each scope is a directory; its children
 
 ```
 architecture, architecture-and-design, requirements, testspec,
-adrs, needs, product_brief, detailed_design
+adrs, needs, product_brief, detailed_design, glossary
 ```
 
 A subdirectory inside a scope is a **child scope** iff its name is **not** in the reserved list; otherwise it is an artifact bundle (e.g., `architecture/` for the Rule-8 detail bundle) or a fixed structural directory (e.g., `adrs/`). The reserved list is closed; new names enter only by amendment of this section.
@@ -342,11 +359,13 @@ A subdirectory inside a scope is a **child scope** iff its name is **not** in th
 
 | Scope role | Mandatory artifacts | Optional artifacts |
 |---|---|---|
-| Root | `product_brief.md`, `requirements.md`, `architecture.md` (+ optional `architecture/` bundle), `testspec.md` | `needs.md` (elicit-needs output), `adrs/<adr-files>` |
+| Root | `product_brief.md`, `requirements.md`, `architecture.md` (+ optional `architecture/` bundle), `testspec.md` | `needs.md` (elicit-needs output), `glossary.md` (tree-global definitions †), `adrs/<adr-files>` |
 | Branch (non-leaf) | `requirements.md`, `architecture.md` (+ optional `architecture/` bundle), `testspec.md` | `adrs/<adr-files>` |
 | Leaf | `detailed_design.md`, `testspec.md` | `adrs/<adr-files>` |
 
 **ADR placement.** ADRs live at the scope where the decision was taken — every scope can have its own `adrs/` directory. ADRs are still cross-cutting in the link sense (`scope_tags` may name multiple scopes; `governing_adrs` may reference an ADR taken at a different scope), but their *file home* is the scope of authorship. This replaces the earlier "flat at `/specs/adrs/`" convention.
+
+**† Tree-global reference documents.** `glossary.md` (root only, optional) is a tree-global definitions file, **not** an artifact: it has no Quality Bar checklist, no review skill, no schema, no `derived_from`. It carries authoritative term definitions used across spec artifacts in the tree. Term registration is author-skill discretion at this stage — author skills MAY add a term when introducing a typed concept and MAY check for term-definition presence; neither is mandated. Promotion of `glossary.md` to artifact status is deferred until pilot reps reveal whether the term-resolution discipline merits formal validation. The same row category (tree-global non-artifact reference docs) is reserved for future companions; new entries enter only by amendment of this section.
 
 **Marker semantics inside artifacts.** When authoring an upstream artifact reveals a downstream gap, mark it with one of two forms:
 
@@ -378,6 +397,22 @@ Author/review skill pairs interoperate via durable, file-based handover — not 
 **Author consumption (mode B).** When an author skill is invoked on an existing artifact for revision, it reads the latest review file at `specs/.reviews/<artifact-id>-*.yaml` (lexically last). Findings are treated as input. Each finding is addressed in the revision — applied, pushed back with rationale, or deferred via an explicit marker. The revision narrative names which findings were addressed and how.
 
 **Mapping to build-side workflow.** This convention is shape-similar to the build-side `.workflow/{review_ready,feedback}.yaml` pattern (per global `CLAUDE.md`), but the spec workflow is per-artifact (cardinality differs from build's single-active-task model). `.reviews/` is committed; build-side `.workflow/` is gitignored — different lifecycle (forensic vs. transient).
+
+### 5.7 Partial-parent / no-canonical-upstream protocol
+
+Author skills may be invoked at a scope where the canonical upstream artifact is **fully absent** (e.g., authoring root Requirements before any Product Brief exists) or **partially present** (e.g., authoring root TestSpec when Requirements + Architecture exist but Product Brief does not). Both cases share the same rule shape; they differ only in trigger condition.
+
+Three permitted paths — the author chooses **explicitly** and documents the choice in the artifact's *Overview*:
+
+**(a) HALT** — request the missing canonical upstream be authored first. Default for greenfield once the framework is mature.
+
+**(b) Author from next-best-available parent + documented deviation.** Allowed when the upstream gap is structurally deferred (decision unresolved at framework level, stakeholder unavailable, etc.) and the stakeholder explicitly accepts the orphan posture. The artifact's *Overview* names the deviation; declared `level:` follows scope position; case shape (where applicable) follows the *actual* parent type, not the canonical one; an *Open follow-ups* entry owns "replacement on canonical-parent authoring".
+
+**(c) Cite a framework reference as upstream.** Permissible only when the framework reference is itself a canonical artifact in the framework's own scope tree (rare — most framework references are documentation, not artifacts).
+
+Silently inventing an upstream id, bypassing the schema's non-empty-`derived_from` requirement, or fabricating a placeholder id without documented rationale are **hard violations**.
+
+The canonical operational text for this protocol lives at `docs/partial-parent-protocol.md` and is distributed verbatim into each of the 5 author skills' `references/` by `scripts/sync-partial-parent-protocol.sh` so skills are self-contained at runtime (skills do not read this document directly). This subsection is the architectural record; the operational text is the runtime input.
 
 ---
 

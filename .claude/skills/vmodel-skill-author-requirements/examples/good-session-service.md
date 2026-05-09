@@ -5,7 +5,7 @@ parent_scope: ecommerce-platform
 derived_from:
   - REQS-ecommerce-platform
   - PB-ecommerce-platform
-governing_decisions:
+governing_adrs:
   - ADR-012  # token generation must use CSPRNG
   - ADR-018  # session-policy configuration is per-tenant
 status: draft

@@ -143,6 +143,43 @@ The interface five-dimension form maps one-to-one to cases per dimension. Skippi
 
 Mistargeting these at root produces ice-cream-cone coverage (many e2e, few lower-level cases) and is flagged.
 
+## Empty-scope worked example
+
+The Requirements + PB seam is the *typical* root case (root scope is empty by definition for most projects). Per the empty-scope ID rule (TARGET_ARCHITECTURE §5.4), case ids drop the scope segment — `TC-001`, not `TC--001`. `REQ-NNN` and `PB-outcome-X` ids carry no scope segment at any layer.
+
+```yaml
+# Root scope (scope: "") — typical: REQ + PB outcomes are root-scope content.
+# Bare `TC-NNN` for the case id; `REQ-007`, `PB-outcome-...` unchanged.
+
+- id: TC-001
+  title: "tenant admin invites teammate; teammate accepts within 7 days; gains Editor role"
+  type: functional
+  verifies:
+    - "REQ-007"
+    - "PB-outcome-collaboration-onboarding"
+  preconditions:
+    - "Environment: production-like"
+    - "Tenant: 'acme-corp'"
+  expected:
+    - "After teammate accepts: tenant 'acme-corp' has the teammate as a member with Editor role"
+```
+
+```yaml
+# Branch scope (scope: "platform-billing") — Requirements at this scope.
+# `TC-platform-billing-NNN` for the case id; `REQ-NFR-002` unchanged.
+
+- id: TC-platform-billing-001
+  title: "billing API p95 latency <= 250ms at 100 RPS"
+  type: performance
+  verifies:
+    - "REQ-NFR-002"
+  preconditions:
+    - "Load: 100 RPS sustained, 5-min ramp, 10-min steady"
+  expected:
+    metric: p95
+    threshold: "<= 250 ms"
+```
+
 ## Cross-link
 
 `per-layer-weight.md` (root case shape — journey narrative, PB vocabulary) · `derivation-strategies.md` (specialised strategies for QA requirements) · `integration-and-system-specifics.md` (production-like environment shape, version pinning) · `verifies-traceability.md` (granularity for root cases)

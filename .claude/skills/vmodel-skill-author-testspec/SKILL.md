@@ -41,6 +41,7 @@ Expected upstream context (ask if missing):
 - **Recovery posture** — greenfield (omit `recovery_status`) or retrofit (declare `recovery_status` on reconstructed `verifies`)
 - **Project policy on coverage / mutation thresholds** — if the project has named values, capture them; otherwise the bar is populated with placeholder values and a note that policy will fix them
 - **Prior review files** (optional, consumed when present) — on a revision pass, the latest review at `specs/.reviews/<artifact-id>-*.yaml` (lexically last) is read and findings are addressed. Per TARGET_ARCHITECTURE §5.6 review output convention.
+- **`references/partial-parent-protocol.md`** — partial-parent and no-canonical-upstream protocol — three permitted paths when canonical upstream is missing or partial. Required reading whenever any canonical parent for the layer is absent or partial — leaf without DD; branch missing Architecture or Requirements; root missing Product Brief, Requirements, or Architecture Composition. Multi-parent scopes (branch, root) trigger this protocol on partial absence even when one parent is present.
 
 If the parent spec is not provided, **HALT** (see HALT condition #1) — refusal B fires when TestSpec authoring proceeds without an upstream artifact.
 
@@ -67,6 +68,29 @@ If `specs/.reviews/<artifact-id>-*.yaml` contains review files for this artifact
 4. Address findings in the revision. The revision narrative names which findings were addressed and how.
 
 Skip this step on greenfield (first author pass) — no review files yet.
+
+### Step 0.5 — Canonical-upstream check (every run)
+
+Before walking the parent spec for derivation seeds, verify whether the canonical upstream is fully present, partially present, or fully absent. Canonical upstream depends on layer:
+
+- *Leaf:* parent Detailed Design.
+- *Branch:* parent Architecture **AND** branch Requirements (both canonical — Position C, multi-parent).
+- *Root:* Product Brief + root Requirements + root Architecture Composition (all three canonical — multi-parent).
+
+For multi-parent layers (branch, root), the protocol fires on **partial** absence — even when one canonical parent is present, a missing other parent is a real gap.
+
+If the canonical upstream is missing or partial:
+
+1. Load `references/partial-parent-protocol.md`.
+2. Pick path **(a) HALT**, **(b) author from next-best parent + documented deviation**, or **(c) cite a framework artifact as upstream** — explicitly. Silent choice is a hard violation.
+3. Document the choice in this artifact's *Overview* section in 1–2 sentences naming the path and why it was chosen (which canonical parent is missing, which deferral applies, what was used in its place).
+4. Under path (b) for TestSpec: **`level:` follows scope position** (root → `system`, branch → `integration`, leaf → `unit`). Level does NOT shift just because a parent is missing. **Case shape follows the *actual* parent type** — if branch TestSpec is authored from Architecture only because Requirements is missing, cases carry branch-Architecture shape (fixtures-rich preconditions, interface DbC oracle), not requirements shape.
+5. `derived_from` and `verifies` cite only existing, resolvable artifact ids — never the missing parent, never a fabricated placeholder id.
+6. Under path (b), add an *Open follow-ups* entry that owns "replacement on canonical-parent authoring" with title, owner, action, and citation.
+
+If the canonical upstream is fully present (all parents for the layer), *Overview* says so in one short clause ("(canonical parents present)") and the protocol is satisfied without further action.
+
+→ See `references/partial-parent-protocol.md`
 
 ### Step 1 — Locate the layer and parent spec
 
@@ -146,6 +170,9 @@ Scripts for this skill:
 
 - `scripts/check-implicit-verifies.py <specs-root>` — case-level upstream-id citation completeness (every REQ/IC/ADR/ARCH ID mentioned in `preconditions:` or `expected:` text must appear in the case's `verifies:`)
 - `scripts/check-typed-error-coverage.py <specs-root>` — typed-error enum coverage from parent interfaces (every `errors:` enum entry has at least one covering case)
+- `scripts/check-id-encoding.py <specs-root>` — detects malformed empty-scope id forms (`TS-`, `TC--NNN`, `ARCH-.interfaces.X`) per TARGET §5.4 empty-scope rule
+
+Verify also: when the partial-parent protocol fired (Step 0.5), *Overview* explicitly names the chosen path (a/b/c); under path (b), an *Open follow-ups* entry owns the canonical-parent-replacement; declared `level:` matches scope position; case shape matches the actual parent type used; no fabricated upstream ids in `derived_from` or `verifies`.
 
 → See `/home/stefanus/repos/VModelWorkflow/docs/authoring-self-check.md`
 
@@ -225,6 +252,7 @@ That's it — one file. The skill does not create directories, schemas, validato
 ## Reference index
 
 - `references/authoring-discipline.md` — 6 cross-cutting rules (product-shape, layering, compression) — applies to all authoring steps
+- `references/partial-parent-protocol.md` — partial-parent and no-canonical-upstream protocol — three permitted paths when canonical upstream is missing or partial
 - `references/testspec-purpose-and-shape.md` — V-model placement, derivation source per layer, pre-code authoring discipline
 - `references/derivation-strategies.md` — eleven strategies (functional / boundary / error / fault-injection / property / state-transition / contract / performance / security / accessibility / error-guessing) plus ECP and decision tables
 - `references/per-layer-weight.md` — three case shapes (thin leaf, fixtures-rich branch, journey-narrative root)
@@ -247,3 +275,4 @@ That's it — one file. The skill does not create directories, schemas, validato
 - `templates/retrofit-stub.yaml.tmpl` — retrofit case scaffold with `# HUMAN-ONLY` markers
 - `examples/good-leaf-expiry-calculator.md` — worked example, leaf scope, eight cases across strategies, populated bar
 - `examples/bad-orphan-and-fabricated.md` — counter-example with annotated refusal trips
+- `scripts/index-deferred-items.py` — informational cross-artifact deferred-items index for the spec tree (Phase 6 Cluster 4)

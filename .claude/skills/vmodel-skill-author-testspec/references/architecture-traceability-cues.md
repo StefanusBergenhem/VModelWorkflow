@@ -132,6 +132,41 @@ Every entry in a parent interface's `errors:` enum requires at least one case un
 
 Missing-error coverage is a soft-reject (`testspec.typed-error-uncovered`), not refusal. Mechanical detection: `scripts/check-typed-error-coverage.py` enumerates the parent's `errors:` enum and lists every code with no covering case.
 
+## Empty-scope worked example
+
+The same Architecture-seam mapping applies at root scope (`scope: ""`). Per the empty-scope ID rule (TARGET_ARCHITECTURE §5.4), the scope segment is omitted from derived identifiers — never emit a trailing dash like `ARCH-.interfaces.X` or `TC--001`.
+
+```yaml
+# Root scope (scope: "") — verifying the root Architecture's Composition section
+# (deployment intent + root-level orchestration). Bare `ARCH` prefix; bare `TC-NNN`.
+
+- id: TC-001
+  title: "OrderPlacement.accept publishes OrderPlaced with matching payload"
+  type: contract
+  verifies:
+    - "ARCH.interfaces.OrderPlacement.postconditions.on_accept"
+    - "ARCH.composition.event_propagation"
+  preconditions:
+    - "Environment: test-containers (Postgres 16, Kafka 3.6)"
+  expected:
+    - "Subscriber on 'orders.placed' receives OrderPlaced event within 500ms"
+```
+
+```yaml
+# Branch scope (scope: "cart-service") — same mapping; suffix appears.
+
+- id: TC-cart-service-001
+  title: "OrderPlacement.accept publishes OrderPlaced with matching payload"
+  type: contract
+  verifies:
+    - "ARCH-cart-service.interfaces.OrderPlacement.postconditions.on_accept"
+    - "ARCH-cart-service.composition.event_propagation"
+  preconditions:
+    - "Environment: test-containers (Postgres 16, Kafka 3.6)"
+  expected:
+    - "Subscriber on 'orders.placed' receives OrderPlaced event within 500ms"
+```
+
 ## Cross-link
 
 `per-layer-weight.md` (branch case shape) · `derivation-strategies.md` (contract / fault-injection / property strategies) · `integration-and-system-specifics.md` (contract testing posture, environment shape, version pinning) · `verifies-traceability.md` (granularity for branch cases)

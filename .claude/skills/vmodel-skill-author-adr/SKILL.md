@@ -42,6 +42,7 @@ Expected upstream context (ask if missing):
 - **Recovery posture** — greenfield (omit `recovery_status`) or retrofit (declare `recovery_status` on human-only fields per `retrofit-discipline.md`)
 - **Supersession context** — if this ADR replaces an older one, the predecessor's id
 - **Prior review files** (optional, consumed when present) — on a revision pass, the latest review at `specs/.reviews/<artifact-id>-*.yaml` (lexically last) is read and findings are addressed. Per TARGET_ARCHITECTURE §5.6 review output convention.
+- **`references/partial-parent-protocol.md`** — partial-parent and no-canonical-upstream protocol — three permitted paths when canonical upstream is missing or partial. For ADR, the canonical upstream is either an Architecture stub at the relevant `scope_tags` (extraction origin) or an external/organisational policy artifact (pre-existing-policy origin). Required reading whenever neither origin is available, or when the Architecture at `scope_tags` has not yet been authored.
 
 If the threshold is not met, **HALT** (HALT condition #2) — refusal E fires; offer to record the choice inline in Architecture or Detailed Design instead.
 
@@ -68,6 +69,27 @@ If `specs/.reviews/<artifact-id>-*.yaml` contains review files for this artifact
 4. Address findings in the revision. The revision narrative names which findings were addressed and how.
 
 Skip this step on greenfield (first author pass) — no review files yet.
+
+### Step 0.5 — Canonical-upstream check (every run)
+
+Before threshold-checking the decision, verify whether the canonical upstream is fully present, partially present, or fully absent. Canonical upstream for ADR depends on origin:
+
+- *Extraction-from-marker:* a parent Architecture artifact at the relevant `scope_tags`, carrying a `[DEFER-ADR: <decision>]` marker that this ADR is consuming.
+- *Pre-existing-policy:* an external/organisational policy artifact (the policy itself is the upstream record); no Architecture is required to exist yet.
+
+If neither origin's upstream is available — for example, the user wants an ADR captured before the consuming Architecture exists AND the decision is not an external policy — the protocol fires.
+
+If the canonical upstream is missing or partial:
+
+1. Load `references/partial-parent-protocol.md`.
+2. Pick path **(a) HALT**, **(b) author from next-best parent + documented deviation**, or **(c) cite a framework artifact as upstream** — explicitly. Silent choice is a hard violation. For ADR, path (a) is the strong default; (b) requires the consuming Architecture to be structurally deferred and an explicit stakeholder decision to capture the ADR ahead of it.
+3. Document the choice in this artifact's *Context* section in 1–2 sentences naming the path and why it was chosen (which canonical parent is missing, which deferral applies, what was used in its place). Note: ADRs use *Context* rather than *Overview* — the Context section carries this protocol declaration.
+4. `scope_tags` cites only existing, resolvable scope ids — never a fabricated scope, never a missing-architecture id.
+5. Under path (b), add an *Open follow-ups* entry that owns "replacement on canonical-parent authoring" with title, owner, action, and citation. The follow-up commits to revisiting this ADR's Propagation block when the consuming Architecture lands and the actual `governing_adrs` linkage can be verified.
+
+If the canonical upstream is fully present (the marker is being consumed, or the policy is in hand), *Context* says so in one short clause naming the consumed marker or cited policy.
+
+→ See `references/partial-parent-protocol.md`
 
 ### Step 1 — Threshold check (refusal E intake)
 
@@ -145,6 +167,9 @@ Scripts for this skill:
 
 - `scripts/check-requirement-shape.py <specs-root>` — when this ADR materialises new requirements via Propagation route (a)
 - `scripts/check-adr-landing.py <specs-root>` — verifies bindings declared in this ADR's `propagation.bindings:` YAML are reflected correctly in any architecture artifact that lists this ADR in `governing_adrs`
+- `scripts/check-id-encoding.py <specs-root>` — detects malformed empty-scope id forms (`TS-`, `TC--NNN`, `ARCH-.interfaces.X`) per TARGET §5.4 empty-scope rule
+
+Verify also: when the partial-parent protocol fired (Step 0.5), *Context* explicitly names the chosen path (a/b/c); under path (b), an *Open follow-ups* entry owns the canonical-parent-replacement; `scope_tags` cites only existing scope ids; no fabricated upstream ids in supersedes / governing_adrs cross-links.
 
 → See `/home/stefanus/repos/VModelWorkflow/docs/authoring-self-check.md`
 
@@ -232,6 +257,7 @@ That's it — one file. The skill does not create directories, schemas, validato
 ## Reference index
 
 - `references/authoring-discipline.md` — 6 cross-cutting rules (product-shape, layering, compression) — applies to all authoring steps
+- `references/partial-parent-protocol.md` — partial-parent and no-canonical-upstream protocol — three permitted paths when canonical upstream is missing or partial
 - `references/adr-purpose-and-shape.md` — cross-cutting role; three-condition threshold; capture-then-design flow; Y-statement compact form
 - `references/canonical-fields-and-body.md` — front-matter required fields; status lifecycle; body section ordering
 - `references/context-and-drivers.md` — forces vs problem domain; named drivers; assumptions enumeration
@@ -252,3 +278,4 @@ That's it — one file. The skill does not create directories, schemas, validato
 - `examples/good-postgres-job-queue.md` — fully populated ADR with annotations
 - `examples/bad-redis-async-queue.md` — counter-example with annotated refusal trips (B + C)
 - `examples/bad-fabricated-retrofit.md` — retrofit fabrication anti-example with refusal A trips, and the corrected honest-unknown version
+- `scripts/index-deferred-items.py` — informational cross-artifact deferred-items index for the spec tree (Phase 6 Cluster 4)

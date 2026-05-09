@@ -1,8 +1,17 @@
+# Empty-scope rule (TARGET_ARCHITECTURE §5.4):
+#   `<<scope-suffix?>>` is a conditional placeholder:
+#     - At root scope (scope: ""), `<<scope-suffix?>>` expands to `` (empty string).
+#     - At non-empty scope (e.g. scope: "app-checkout"), expands to `-app-checkout`.
+#   Concretely:
+#     Per-case id:      `TC<<scope-suffix?>>-NNN` → `TC-001`             at root  /  `TC-app-checkout-001` at branch
+#   Root cases cite `REQ-NNN` and `PB-outcome-X` directly — those IDs do not carry the scope segment.
+#   Never emit `TC--001`.
+#
 # Root case (level: system) — user-journey narrative shape
 # Use for cases at root scope where the parent specs are root Requirements + Product Brief.
 # Cases narrate user journeys in PB vocabulary; observe business / user-visible state.
 
-- id: TC-<<scope>>-NNN
+- id: TC<<scope-suffix?>>-NNN
   title: "<<user journey, e.g., 'tenant signs up, creates first project, invites teammate'>>"
   type: <<functional | error | performance | security | accessibility>>
   verifies:

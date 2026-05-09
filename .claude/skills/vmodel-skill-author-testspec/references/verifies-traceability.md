@@ -38,6 +38,45 @@ verifies:
     - "<upstream-ID-2>"      # multiple permitted when one case asserts a property over multiple upstream elements
 ```
 
+## Empty-scope worked example
+
+Per the empty-scope ID rule (TARGET_ARCHITECTURE §5.4), at root scope (`scope: ""`) the scope segment is omitted from derived identifiers — so `verifies:` entries pointing at root-scope artifacts use the bare prefix. Never emit `DD-.field`, `ARCH-.interfaces.X`, or `TC--001`.
+
+```yaml
+# Root scope (scope: "") — verifies entries against root-scope artifacts.
+# Bare `DD`, `ARCH` prefixes; `REQ-NNN` and `PB-outcome-X` carry no scope at any layer.
+
+# Artifact-level (front-matter)
+verifies:
+  - "REQ-007"
+  - "PB-outcome-collaboration-onboarding"
+  - "ARCH.interfaces.OrderPlacement"
+
+# Per-case
+- id: TC-001
+  verifies:
+    - "REQ-007"
+- id: TC-002
+  verifies:
+    - "DD.public_interface.sort.postconditions.on_success"
+```
+
+```yaml
+# Branch / leaf scope (scope: "cart-service" or "session-store/expiry-calculator") — suffix appears.
+
+# Artifact-level (front-matter)
+verifies:
+  - "ARCH-cart-service.interfaces.OrderPlacement"
+
+# Per-case
+- id: TC-cart-service-001
+  verifies:
+    - "ARCH-cart-service.interfaces.OrderPlacement.postconditions.on_accept"
+- id: TC-session-store-expiry-calculator-001
+  verifies:
+    - "DD-session-store-expiry-calculator.public_interface.sort.postconditions.on_success"
+```
+
 ## Resolution check
 
 When authoring → for each `verifies:` element, confirm the ID exists in the upstream spec being read (DD / Architecture / Requirements / PB). When the ID does not exist:
