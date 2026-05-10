@@ -17,7 +17,7 @@ Three case shapes — leaf, branch, root. The shape follows the layer; the layer
 |---|---|---|---|
 | **Leaf** | unit | id, title, type, verifies, inputs, expected | Function-return values, exception classes, data-structure invariants |
 | **Branch** | integration | id, title, type, verifies, preconditions, steps, expected | Cross-child observable state (interface return values, side-effects on sibling components) |
-| **Root** | system | id, title, type, verifies, preconditions, steps, expected | Product Brief vocabulary — user outcomes, business state, observable artifacts |
+| **Root** | system | id, title, type, verifies, preconditions, steps, expected | Root-product vocabulary (PB outcomes / needs.md entries / PD sections) — user outcomes, business state, observable artifacts. PB is the most prescriptive; needs.md and PD admit looser phrasing — match what the root product carries. |
 
 Templates: `case-leaf.yaml.tmpl`, `case-branch.yaml.tmpl`, `case-root.yaml.tmpl`.
 

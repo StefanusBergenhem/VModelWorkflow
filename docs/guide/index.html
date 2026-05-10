@@ -59,8 +59,14 @@
     </div>
 
     <div class="nav-group">
+      <span class="nav-group-label">Project Setup</span>
+      <a class="nav-link" data-section="project-setup" href="#project-setup">.vmodel/ &amp; vmodel-init</a>
+    </div>
+
+    <div class="nav-group">
       <span class="nav-group-label">Further Reading</span>
-      <a class="nav-link" data-section="skills" href="#skills">Skills Architecture</a>
+      <a class="nav-link" href="skills-architecture.html">Skills &amp; Workflow Architecture</a>
+      <a class="nav-link" data-section="skills" href="#skills">Skills (overview)</a>
       <a class="nav-link" data-section="references" href="#references">References</a>
     </div>
   </nav>
@@ -90,8 +96,8 @@
       <li>Code and tests that a human can accept or reject because the spec above them is unambiguous.</li>
     </ul>
 
-    <h3>Status</h3>
-    <p>Framework is in active construction. Post-pivot (2026-04-18), the per-artifact craft documentation is complete for all six artifact types (linked in the sidebar). Schemas, skills, and purpose-built tools are in flight. See <code>docs/plan/BACKLOG.md</code> for current phase.</p>
+    <h3>Status (2026-05-10)</h3>
+    <p>Phases 0–5 complete. Phase 6 (build flow + central config + greenfield pilot) substantially advanced — 18 V-model skills + 3 worker agents installed, central <code>.vmodel/</code> config pattern in place, candidate-set propagation walker (<code>scripts/walk-impact.py</code>) shipped. <code>vmodel-core</code> dogfooding pilot active. Phase 7 (retrofit additions, purpose-built tools) pending. See <code>docs/plan/BACKLOG.md</code>; for the full skill catalog and workflow handovers see <a href="skills-architecture.html">Skills &amp; Workflow Architecture</a>.</p>
   </section>
 
   <!-- ===================== FOUR COMPONENTS ===================== -->
@@ -141,8 +147,42 @@
     <h3>Target Audience</h3>
     <p>Mid-to-senior software engineers and architects orchestrating AI agents on real codebases. Not a product-management tool; not a rigor-optional framework. If the rigor is not needed for the work at hand, this is not the right tool.</p>
 
-    <h3>First Pilot</h3>
-    <p>Java 17, Gradle, JUnit 5. A legacy codebase of ~100k lines, ~10% test coverage, requirements in mixed Word/spreadsheet/DOORS formats. The retrofit path is the primary entry vector.</p>
+    <h3>Greenfield Dogfooding (active)</h3>
+    <p>The framework's own purpose-built tooling project, <code>vmodel-core</code>, is the active greenfield dogfooding pilot. It exercises the spec-flow + build-flow round trip end-to-end before retrofit work begins.</p>
+
+    <h3>First Retrofit Pilot (planned)</h3>
+    <p>Java 17, Gradle, JUnit 5. A legacy codebase of ~100k lines, ~10% test coverage, requirements in mixed Word/spreadsheet/DOORS formats. The retrofit path is the primary market entry vector. Gated on Phase 7 (topology discovery + gap report aggregator).</p>
+  </section>
+
+  <!-- ===================== PROJECT SETUP ===================== -->
+  <section id="project-setup" class="content-section">
+    <h2>Project Setup &mdash; <code>.vmodel/</code> &amp; <code>vmodel-init</code></h2>
+    <p class="lead">Every project that uses the framework gets a <code>.vmodel/</code> directory at the project root, scaffolded by <code>vmodel-init</code>. Skills resolve all reference paths via this central config; nothing is hardcoded to the framework repo.</p>
+
+    <h3>Layout</h3>
+    <div class="code-block"><code>.vmodel/
+  config.yaml           # paths, build settings, tool commands  (committed)
+  references/           # shared reference docs, copied from framework  (committed)
+    authoring-discipline.md
+    partial-parent-protocol.md
+    authoring-self-check.md
+    requirements-shape-checklist.md
+    definitions/
+  defer-index.md        # auto-gen DEFER aggregate  (gitignored)
+  .reviews/             # spec-side verdict files  (committed; forensic)
+  .build/               # build pipeline state  (mostly gitignored)
+    tasks.yaml          # task DAG from plan-build
+    pipeline-state.yaml # live state from orchestrate-build
+    lessons.yaml        # cumulative bounded lessons  (committed)
+    tasks/&lt;task-id&gt;/  # per-task worker handoff files
+    escalations/        # ESC-NNN.yaml  (committed; forensic)
+    runs/&lt;run-id&gt;/    # retrospectives</code></div>
+
+    <h3>vmodel-init</h3>
+    <p>One-time setup skill. Creates <code>.vmodel/</code>, copies framework reference defaults into <code>.vmodel/references/</code>, prompts for project name, language, root-product type (PB / needs / PD), and tool commands. Migrate mode upgrades existing <code>.vmodel/</code> non-destructively after framework changes.</p>
+
+    <h3>Why central?</h3>
+    <p>Skills MUST resolve reference doc paths via <code>.vmodel/config.yaml</code> <code>paths.references</code>. Hardcoding any <code>docs/*.md</code> path is a violation. This makes the framework usable from any project repo without checking out the framework alongside, and lets a project override individual references locally without forking the framework.</p>
   </section>
 
   <!-- ===================== PRINCIPLES ===================== -->
@@ -411,7 +451,7 @@
         <tr><td>Architecture</td><td><code>ARCH-{scope}</code></td><td><code>ARCH-app-checkout</code></td></tr>
         <tr><td>Detailed Design</td><td><code>DD-{scope}-{name}</code></td><td><code>DD-app-checkout-discount-calc</code></td></tr>
         <tr><td>TestSpec</td><td><code>TS-{scope}</code></td><td><code>TS-app-checkout</code></td></tr>
-        <tr><td>Test Case</td><td><code>TC-{testspec-id}-{seq}</code></td><td><code>TC-TS-app-checkout-007</code></td></tr>
+        <tr><td>Test Case</td><td><code>TC-{scope}-{seq}</code></td><td><code>TC-app-checkout-007</code>; at root: <code>TC-001</code></td></tr>
         <tr><td>ADR</td><td><code>ADR-{seq}-{slug}</code></td><td><code>ADR-012-use-postgres</code></td></tr>
       </tbody>
     </table>
@@ -525,6 +565,7 @@
 
     <h3>Candidate-Set Propagation</h3>
     <p>Tooling walks traceability forward from the entry-layer change and produces a <strong>candidate set</strong> of artifacts that may need updates. The change is incomplete until every candidate is either updated or explicitly closed as "no change needed" with a brief reason.</p>
+    <p>Implemented as <code>scripts/walk-impact.py &lt;ARTIFACT-ID&gt; --specs-root specs/ --format text|json</code>. Pure graph walker — no LLM. Reads <code>derived_from</code>, <code>parent_architecture</code>, <code>governing_adrs</code>, <code>verifies</code> (envelope + per-case), and <code>allocates</code> (per-child) link types and emits the BFS reverse closure ordered by hop distance.</p>
 
     <h3>Upward Propagation</h3>
     <p>If a gap is discovered downstream, the change's entry layer retroactively rises. The impact set recomputes from the higher entry. If a code fix implies the spec was wrong, the spec is the entry &mdash; not the code.</p>
@@ -533,43 +574,66 @@
   <!-- ===================== BUILD WORKFLOW ===================== -->
   <section id="build-workflow" class="content-section">
     <h2>Build Workflow</h2>
-    <p class="lead">Consumes specifications, produces code + tests. Designed in its own later session; decisions already fixed below.</p>
+    <p class="lead">Consumes specifications, produces code + tests. Six build-side skills compose into the pipeline; three are dispatched as worker agents under the Task tool for parallel isolated execution.</p>
 
-    <h3>Already Decided</h3>
+    <h3>Skills</h3>
+    <table class="field-table">
+      <thead><tr><th>Skill</th><th>Role</th></tr></thead>
+      <tbody>
+        <tr><td><code>vmodel-skill-plan-build</code></td><td>Walk specs/ tree; emit task DAG to <code>.vmodel/.build/tasks.yaml</code>. Populates <code>acceptance_criteria</code> / <code>context_to_load</code> / <code>out_of_scope</code> mechanically.</td></tr>
+        <tr><td><code>vmodel-skill-orchestrate-build</code></td><td>Pipeline state machine. Layered execution (leaf unit → branch integration → root system). Dispatches workers via Task tool. Layer-typed escalation routing.</td></tr>
+        <tr><td><code>vmodel-skill-render-tests</code></td><td>TestSpec → executable tests (TDD red phase). Layer-aware.</td></tr>
+        <tr><td><code>vmodel-skill-implement-leaf</code></td><td>TDD green + refactor for one leaf. Greenfield / fix / resume modes. Scope-expansion HALT via <code>build-blocked.yaml</code>.</td></tr>
+        <tr><td><code>vmodel-skill-review-execution</code></td><td>Verdict at any layer (APPROVED / REJECTED / ESCALATE). Confidence-tagged. APPROVED writes no file.</td></tr>
+        <tr><td><code>vmodel-skill-retrospect-build</code></td><td>End-of-run lessons extraction. Refuses to fabricate (≥2 reproductions or one high-impact).</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Worker Agents</h3>
+    <p>Three thin dispatch shells under <code>.claude/agents/</code> wrap the worker skills (<code>render-tests</code>, <code>implement-leaf</code>, <code>review-execution</code>) for true within-stage parallelism via the Task tool. The agent file declares the dispatch envelope; the skill holds the procedure. <code>retrospect-build</code> stays a Skill invocation (single end-of-run, no parallelism need).</p>
+
+    <h3>Per-task File Contract</h3>
+    <p>Each leaf task owns <code>.vmodel/.build/tasks/&lt;task-id&gt;/</code> with single-producer files: <code>current-task.yaml</code> (orchestrator), <code>render-report.yaml</code> (render-tests), <code>build-progress.yaml</code> + <code>build-blocked.yaml</code> + <code>review-ready.yaml</code> (implement-leaf), <code>feedback.yaml</code> + <code>ESC-NNN.yaml</code> (review-execution). APPROVED writes no file — orchestrator infers from absence.</p>
+
+    <h3>Coupling to Specification</h3>
     <ul>
-      <li><strong>No runtime coupling to Specification.</strong> Artifacts are the sole contract.</li>
-      <li><strong>Build chunks as it sees fit.</strong> Pick-up strategy is Build's call based on its own context budget and decomposition choices.</li>
-      <li><strong>Build-side artifacts add <code>realizes</code> links</strong> to the traceability graph. Spec artifacts stay oblivious to them.</li>
-      <li><strong>Insufficient spec &rarr; escalate.</strong> When Build cannot implement, the change enters the Specification workflow at the appropriate layer. Build does not hunt external channels for intent; if intent is not in the spec, the spec failed the Spec Ambiguity Test and the spec updates.</li>
+      <li><strong>No runtime coupling.</strong> Artifacts are the sole contract.</li>
+      <li><strong>Build-side <code>realizes</code> links</strong> reserved in the traceability schema for code → spec mapping.</li>
+      <li><strong>Insufficient spec → escalate.</strong> <code>review-execution</code> emits typed <code>ESC-NNN.yaml</code> with <code>target_layer</code> (DD / TestSpec / Architecture / ADR / Requirements / product); orchestrator routes to the matching author skill in mode B.</li>
       <li><strong>Declarative IaC has no extra DD layer.</strong> Architecture Composition is the intent spec; IaC (terraform / k8s / compose) is the implementation.</li>
     </ul>
 
-    <h3>Open Question</h3>
-    <p>Whether imperative wiring code (DI containers, middleware stacks, event-bus setup) warrants its own Detailed Design, or whether Architecture Composition + integration TestSpec is sufficient. Deferred to the Build workflow design session.</p>
+    <p>Full pipeline shape, escalation routing, resume modes, and worked walkthroughs in <a href="skills-architecture.html">Skills &amp; Workflow Architecture</a> (Build Flow + User Workflow 1).</p>
   </section>
 
   <!-- ===================== SKILLS ===================== -->
   <section id="skills" class="content-section">
-    <h2>Skills Architecture</h2>
-    <p class="lead">Three-layer model: skills (atomic units) &rarr; agents (specialised execution environments) &rarr; orchestration (pipeline control). Skills are built against the Documentation component.</p>
+    <h2>Skills (overview)</h2>
+    <p class="lead">18 V-model skills + 3 worker agents shipped (2026-05-10). For the catalog, handovers, escalation routing, and full user workflows see <a href="skills-architecture.html">Skills &amp; Workflow Architecture</a>.</p>
 
-    <h3>The Three Layers</h3>
+    <h3>Skill Catalog (counts)</h3>
     <ul>
-      <li><strong>Skills</strong> &mdash; atomic units. <em>Craft skills</em> (standalone best practices, framework-independent) and <em>framework skills</em> (VModelWorkflow-specific: template formats, traceability link creation, orchestration glue).</li>
-      <li><strong>Agents</strong> &mdash; specialised execution environments. Subagents with isolated contexts, scoped tool access, structured I/O contracts. Compose skills into producer and reviewer roles.</li>
-      <li><strong>Orchestration</strong> &mdash; pipeline control. Research / plan session, task decomposer, pipeline controller. Document-based handoffs via YAML on disk &mdash; any session can crash and restart from the last written artifact.</li>
+      <li><strong>Spec-side (12)</strong> — 5 author/review pairs (Requirements, Architecture, ADR, Detailed Design, TestSpec) + 2 elicitation skills (<code>elicit-needs</code>, <code>elicit-pd</code>).</li>
+      <li><strong>Build-side (6)</strong> — <code>plan-build</code>, <code>orchestrate-build</code>, <code>render-tests</code>, <code>implement-leaf</code>, <code>review-execution</code>, <code>retrospect-build</code>.</li>
+      <li><strong>Setup (1)</strong> — <code>vmodel-init</code>.</li>
     </ul>
 
-    <h3>Skill Design Rules</h3>
+    <h3>Worker Agents (3)</h3>
+    <p>Thin dispatch shells under <code>.claude/agents/</code>: <code>render-tests</code>, <code>implement-leaf</code>, <code>review-execution</code>. Each loads its canonical skill via the Skill tool. Orchestrator dispatches via the Task tool for parallel isolated execution.</p>
+
+    <h3>Skill / Agent / Tool Split</h3>
     <ul>
-      <li>Naming: <code>vmodel-skill-*</code> and <code>vmodel-agent-*</code>.</li>
-      <li>Evaluated on the cheapest viable model tier (typically Haiku) with baseline comparison. Skills must prove value at the cheap tier &mdash; otherwise the leverage is illusory.</li>
-      <li>Document-based handoffs for crash-tolerance and auditability.</li>
+      <li><strong>Skill</strong> — interpretive, judgment-driven procedure (LLM-driven). Holds procedure, references, templates, HALT conditions.</li>
+      <li><strong>Agent</strong> — dispatch shell loaded via Task tool for isolated context. No procedure of its own.</li>
+      <li><strong>Tool</strong> — mechanical, deterministic check (no LLM). E.g., <code>scripts/check-*.py</code>, <code>scripts/walk-impact.py</code>, <code>scripts/index-deferred-items.py</code>.</li>
     </ul>
 
-    <div class="card">
-      <p><strong>Stale-reference note.</strong> The detailed skills-architecture HTML at <a href="skills-architecture.html">skills-architecture.html</a> is <em>pre-pivot</em> and does not reflect the six-artifact model. It will be rewritten in Phase 5 (<code>BACKLOG §3.5</code>). Until then, treat the detailed page as historical record; this section plus <code>TARGET_ARCHITECTURE §11</code> are authoritative.</p>
-    </div>
+    <h3>Design Rules</h3>
+    <ul>
+      <li>Naming: <code>vmodel-skill-*</code> for skills, dispatch agents named after their wrapped skill (e.g., <code>implement-leaf</code>).</li>
+      <li>File-based handovers for crash-tolerance and auditability — every author ↔ review and worker ↔ orchestrator boundary is a YAML or Markdown file on disk under <code>.vmodel/</code>.</li>
+      <li>Haiku-floor evaluation per skill is deferred until Phase 6 dogfooding signal exposes real failure modes; pilot signal is higher-value than synthetic eval scenarios at this stage.</li>
+    </ul>
   </section>
 
   <!-- ===================== REFERENCES ===================== -->
@@ -578,15 +642,15 @@
 
     <h3>Planning Documents (authoritative)</h3>
     <ul>
-      <li><code>docs/plan/TARGET_ARCHITECTURE.md</code> &mdash; stable architectural reference. Six-artifact model, workflows, rigor model, traceability model, tools architecture, open questions.</li>
+      <li><code>docs/plan/TARGET_ARCHITECTURE.md</code> &mdash; stable architectural reference. Six-artifact model, workflows, rigor model, traceability model, tools architecture, central config, build flow, open questions.</li>
       <li><code>docs/plan/BACKLOG.md</code> &mdash; execution plan. Phase state, upcoming work, deferred items.</li>
-      <li><code>docs/plan/PHASE2_AUTHORING_PATTERN.md</code> &mdash; craft-documentation authoring pattern captured during Phase 2.</li>
+      <li><a href="skills-architecture.html">Skills &amp; Workflow Architecture</a> &mdash; full skill catalog, build/spec flows, escalation routing, three user workflows (greenfield, update, retrofit).</li>
       <li><code>CLAUDE.md</code> &mdash; project conventions and working process.</li>
     </ul>
 
     <h3>Per-Artifact Craft Pages</h3>
     <ul>
-      <li><a href="artifacts/product-brief.html">Product Brief</a></li>
+      <li><a href="artifacts/product-brief.html">Product Brief</a> (PB &mdash; one of three root product options; needs and PD pages pending — see <code>BACKLOG</code>)</li>
       <li><a href="artifacts/requirements.html">Requirements</a></li>
       <li><a href="artifacts/architecture.html">Architecture</a></li>
       <li><a href="artifacts/adr.html">ADR</a></li>
@@ -594,8 +658,15 @@
       <li><a href="artifacts/testspec.html">TestSpec</a></li>
     </ul>
 
+    <h3>Tools (mechanical checkers under <code>scripts/</code>)</h3>
+    <ul>
+      <li><code>scripts/walk-impact.py</code> &mdash; candidate-set propagation walker (TARGET §8.3). BFS reverse over the spec graph.</li>
+      <li><code>scripts/index-deferred-items.py</code> &mdash; auto-generates <code>.vmodel/defer-index.md</code> from inline DEFER markers.</li>
+      <li><code>scripts/check-*.py</code> &mdash; mechanical structural checks (id encoding, mermaid, ADR landing, requirement shape, template-schema fields, typed-error coverage, implicit verifies).</li>
+    </ul>
+
     <h3>Archive</h3>
-    <p>Pre-pivot design record preserved at <code>archive/pre-pivot-2026-04-18/</code>. Includes: original status session (<code>status.md</code>), concept-map README, pre-pivot artifact HTML pages (superseded by the six post-pivot pages above), and archived domain-translation JSON plugins.</p>
+    <p>Pre-pivot design record preserved at <code>archive/pre-pivot-2026-04-18/</code> (status session, concept-map README, superseded artifact pages, domain-translation JSON plugins). Pre-pivot skills (<code>develop-code</code>, <code>derive-test-cases</code>, <code>review-code</code>) at <code>archive/pre-pivot-skills/</code>. Per-phase authoring pattern handoffs at <code>archive/phase{N}/</code>.</p>
   </section>
 
 </main>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Skills Architecture — VModelWorkflow Guide</title>
+  <title>Skills &amp; Workflow Architecture — VModelWorkflow Guide</title>
   <link rel="stylesheet" href="css/main.css">
   <style>
     /* Skills Architecture — page-specific styles */
@@ -53,26 +53,14 @@
       stroke: var(--accent-trace);
       stroke-dasharray: 6,3;
     }
-    .arch-diagram .compose-flow {
-      stroke: var(--fg-muted);
-      opacity: 0.5;
-    }
 
     .skill-card {
       border-left: 4px solid var(--accent-left);
     }
-    .skill-card.craft {
-      border-left-color: var(--accent-bottom);
-    }
-    .skill-card.framework {
-      border-left-color: var(--accent-trace);
-    }
-    .skill-card.agent {
-      border-left-color: var(--accent-right);
-    }
-    .skill-card.orchestration {
-      border-left-color: var(--accent-left);
-    }
+    .skill-card.spec       { border-left-color: var(--accent-bottom); }
+    .skill-card.build      { border-left-color: var(--accent-right); }
+    .skill-card.agent      { border-left-color: var(--accent-trace); }
+    .skill-card.init       { border-left-color: var(--accent-left); }
     .skill-card .skill-type {
       font-size: var(--size-xs);
       font-weight: 600;
@@ -80,10 +68,10 @@
       letter-spacing: 0.06em;
       margin-bottom: var(--space-xs);
     }
-    .skill-card.craft .skill-type { color: var(--accent-bottom); }
-    .skill-card.framework .skill-type { color: var(--accent-trace); }
-    .skill-card.agent .skill-type { color: var(--accent-right); }
-    .skill-card.orchestration .skill-type { color: var(--accent-left); }
+    .skill-card.spec  .skill-type { color: var(--accent-bottom); }
+    .skill-card.build .skill-type { color: var(--accent-right); }
+    .skill-card.agent .skill-type { color: var(--accent-trace); }
+    .skill-card.init  .skill-type { color: var(--accent-left); }
 
     .pipeline-flow {
       display: flex;
@@ -101,12 +89,8 @@
       text-align: center;
       position: relative;
     }
-    .pipeline-step:first-child {
-      border-radius: 8px 0 0 8px;
-    }
-    .pipeline-step:last-child {
-      border-radius: 0 8px 8px 0;
-    }
+    .pipeline-step:first-child { border-radius: 8px 0 0 8px; }
+    .pipeline-step:last-child  { border-radius: 0 8px 8px 0; }
     .pipeline-step .step-label {
       font-size: var(--size-xs);
       font-weight: 600;
@@ -144,25 +128,12 @@
       border-bottom: 8px solid transparent;
       border-left: 8px solid var(--border-medium);
     }
-
     .human-gate {
       background: rgba(37, 99, 168, 0.04);
       border-color: var(--accent-left);
       border-width: 2px;
     }
-    .human-gate .step-label {
-      color: var(--accent-left);
-    }
-
-    .feedback-arrow {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: var(--space-sm);
-      color: var(--fg-muted);
-      font-size: var(--size-xs);
-      font-style: italic;
-    }
+    .human-gate .step-label { color: var(--accent-left); }
 
     .ref-grid {
       display: grid;
@@ -176,9 +147,16 @@
       color: var(--fg-secondary);
       white-space: nowrap;
     }
-    .ref-grid dd {
-      color: var(--fg-primary);
+    .ref-grid dd { color: var(--fg-primary); }
+
+    .todo-banner {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: var(--space-md);
+      margin: var(--space-md) 0;
+      border-radius: 4px;
     }
+    .todo-banner strong { color: #856404; }
   </style>
 </head>
 <body>
@@ -199,48 +177,62 @@
     </div>
 
     <div class="nav-group">
-      <span class="nav-group-label">Architecture</span>
-      <a class="nav-link" href="#sa-intro">Overview</a>
-      <a class="nav-link" href="#sa-diagram">Component Diagram</a>
-      <a class="nav-link" href="#sa-principles">Design Principles</a>
+      <span class="nav-group-label">Overview</span>
+      <a class="nav-link" href="#sa-intro">The Framework at a Glance</a>
+      <a class="nav-link" href="#sa-diagram">Workflow Map</a>
+      <a class="nav-link" href="#sa-principles">Skill / Agent / Tool Split</a>
     </div>
 
     <div class="nav-group">
-      <span class="nav-group-label">Authoring Contract</span>
-      <a class="nav-link" href="#sa-ground-rules">Ground Rules</a>
-      <a class="nav-link" href="#sa-enforcement">Enforcement Catalog</a>
-      <a class="nav-link" href="#sa-halt">HALT Pattern</a>
+      <span class="nav-group-label">Artifacts</span>
+      <a class="nav-link" href="#sa-permanent">Permanent (the spec tree)</a>
+      <a class="nav-link" href="#sa-transient">Transient (.vmodel state)</a>
+      <a class="nav-link" href="#sa-links">Links between artifacts</a>
+      <a class="nav-link" href="#sa-task-contract">Per-task file contract</a>
     </div>
 
     <div class="nav-group">
-      <span class="nav-group-label">Layer 1: Skills</span>
-      <a class="nav-link" href="#sa-craft">Craft Skills</a>
-      <a class="nav-link" href="#sa-framework">Framework Skills</a>
+      <span class="nav-group-label">Spec Flow</span>
+      <a class="nav-link" href="#sa-spec-skills">Skill Catalog</a>
+      <a class="nav-link" href="#sa-spec-handover">Author ↔ Review Handover</a>
     </div>
 
     <div class="nav-group">
-      <span class="nav-group-label">Layer 2: Agents</span>
-      <a class="nav-link" href="#sa-agents">Agent Definitions</a>
+      <span class="nav-group-label">Build Flow</span>
+      <a class="nav-link" href="#sa-build-skills">Skill Catalog</a>
+      <a class="nav-link" href="#sa-build-agents">Worker Agents</a>
+      <a class="nav-link" href="#sa-build-pipeline">Pipeline Shape</a>
+      <a class="nav-link" href="#sa-build-escalations">Escalation Routing</a>
     </div>
 
     <div class="nav-group">
-      <span class="nav-group-label">Layer 3: Orchestration</span>
-      <a class="nav-link" href="#sa-pipeline">Pipeline &amp; Handoffs</a>
-      <a class="nav-link" href="#sa-config">Configuration</a>
+      <span class="nav-group-label">Workflow Handover</span>
+      <a class="nav-link" href="#sa-spec-build-bridge">Spec → Build</a>
+      <a class="nav-link" href="#sa-build-spec-loop">Build → Spec (escalations)</a>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-group-label">User Workflows</span>
+      <a class="nav-link" href="#sa-uw-greenfield">1. Greenfield from scratch</a>
+      <a class="nav-link" href="#sa-uw-update">2. Updating an existing repo</a>
+      <a class="nav-link" href="#sa-uw-retrofit">3. Retrofitting legacy code</a>
     </div>
 
     <div class="nav-group">
       <span class="nav-group-label">Reference</span>
-      <a class="nav-link" href="#sa-contracts">Contract Schemas</a>
+      <a class="nav-link" href="#sa-init">vmodel-init</a>
       <a class="nav-link" href="#sa-file-layout">File Layout</a>
-      <a class="nav-link" href="#sa-scope">Current Scope</a>
+      <a class="nav-link" href="#sa-todo">Pending / TODO</a>
     </div>
 
     <div class="nav-group">
       <span class="nav-group-label">Related</span>
+      <a class="nav-link" href="artifacts/product-brief.html">Product Brief</a>
+      <a class="nav-link" href="artifacts/requirements.html">Requirements</a>
+      <a class="nav-link" href="artifacts/architecture.html">Architecture</a>
+      <a class="nav-link" href="artifacts/adr.html">ADR</a>
       <a class="nav-link" href="artifacts/detailed-design.html">Detailed Design</a>
-      <a class="nav-link" href="artifacts/source-code.html">Source Code</a>
-      <a class="nav-link" href="artifacts/unit-test.html">Unit Test</a>
+      <a class="nav-link" href="artifacts/testspec.html">TestSpec</a>
     </div>
   </nav>
 </aside>
@@ -250,68 +242,40 @@
      ============================================================ -->
 <main class="main-content" style="margin-left: var(--sidebar-width); padding: var(--space-3xl) var(--space-2xl); max-width: calc(var(--content-max) + var(--space-2xl) * 2 + var(--sidebar-width));">
 
-
-  <!-- ===================== SECTION 1: OVERVIEW ===================== -->
+  <!-- ===================== OVERVIEW ===================== -->
   <section id="sa-intro">
-    <div class="stub-banner" style="background: #fff3cd; border: 1px solid #ffc107; padding: 1em; margin-bottom: 2em;">
-      <h3 style="margin-top: 0;">⚠ Pre-pivot content — refresh pending</h3>
-      <p>This page predates the 2026-04-18 framework pivot and the 2026-05 build-flow shipment. It still references archived skills (<code>vmodel-skill-develop-code</code>, <code>vmodel-skill-review-code</code>, <code>vmodel-skill-derive-test-cases</code>) and the old <code>.vmodel/pipeline/</code> path layout. The current authoritative sources are:</p>
-      <ul>
-        <li><strong>Framework architecture:</strong> <code>docs/plan/TARGET_ARCHITECTURE.md</code> §16 (Build Flow) and §5 (artifact set).</li>
-        <li><strong>Skill catalog:</strong> <code>.claude/skills/vmodel-skill-*/SKILL.md</code> — 18 V-model skills (12 spec-side + 6 build-side + vmodel-init).</li>
-        <li><strong>Agent catalog (new 2026-05-10):</strong> <code>.claude/agents/{implement-leaf,render-tests,review-execution}.md</code> — three thin dispatch shells that wrap the corresponding canonical skills. The orchestrator dispatches them via the Task tool to give each per-task worker an isolated context window and enable true within-stage parallelism. <code>retrospect-build</code> remains a Skill invocation (single end-of-run). See TARGET_ARCHITECTURE §11 for the skill / agent split rationale.</li>
-        <li><strong>Per-task file contract</strong> (leaf build): see TARGET_ARCHITECTURE §16 *Per-task file contract*. Files live at <code>.vmodel/.build/tasks/&lt;task-id&gt;/</code>; producers are unique per file; APPROVED writes no file. <strong>New 2026-05-10:</strong> <code>current-task.yaml</code> (orchestrator-written task envelope carrying <code>acceptance_criteria</code> / <code>context_to_load</code> / <code>out_of_scope</code>), <code>build-blocked.yaml</code> (implement-leaf scope-expansion HALT; orchestrator auto-amends within budget or escalates), and <code>build-progress.yaml</code> (overwrite-on-update gate journal driving silent-recover / resume-at-gate / restart on resume).</li>
-      </ul>
-      <p>This page is preserved as a design-record snapshot. A full rewrite is tracked in <code>docs/plan/BACKLOG.md</code>.</p>
-    </div>
+    <h2>Skills &amp; Workflow Architecture</h2>
+    <p class="lead">How the framework's <strong>18 skills</strong> and <strong>3 worker agents</strong> compose into the two coupled workflows — <strong>Spec Flow</strong> (humans + AI authoring specifications) and <strong>Build Flow</strong> (AI dispatching code + tests against those specifications). This page is the navigational map: what each piece does, what it reads, what it writes, and how a user runs the framework end-to-end on a real project.</p>
 
-    <h2>Skills Architecture</h2>
-    <p class="lead">A detailed design for the AI skills, agents, and orchestration that drive V-model compliant development. This document defines <em>what</em> each component does, <em>how</em> they compose, and <em>where</em> the boundaries are.</p>
-
-    <p>The skill system is organized into three layers, each with a distinct concern:</p>
+    <p>The framework follows three load-bearing rules:</p>
 
     <div class="card-grid">
       <div class="card">
-        <h4>Layer 1 &mdash; Skills</h4>
-        <p>Atomic knowledge units. <strong>Craft skills</strong> encode best practices independent of any framework. <strong>Framework skills</strong> are thin adapters that introduce VModelWorkflow templates, traceability, and tool checks. Each skill is a single <code>.md</code> file with optional reference files.</p>
+        <h4>Workflows are independent</h4>
+        <p>Spec Flow, Build Flow, and Retrofit are <strong>loosely coupled through artifacts only</strong>. No workflow calls, subscribes to, or has runtime knowledge of another. The Spec Flow emits artifacts; the Build Flow consumes them; there is no "spec-complete" event — Build can start whenever it has enough.</p>
       </div>
       <div class="card">
-        <h4>Layer 2 &mdash; Agents</h4>
-        <p>Execution environments that compose skills into specialized roles. Each agent runs as a <strong>subagent</strong> with isolated context, scoped tool access, and a structured input/output contract. Agents do the work; skills provide the knowledge.</p>
+        <h4>Skills are the canonical procedure</h4>
+        <p>Skills hold the procedure, references, templates, and HALT conditions. They are what a human reads to understand what the framework does. <strong>Agents</strong> are thin dispatch shells that exist to give workers an isolated context window and enable parallelism — they delegate everything substantive to a skill.</p>
       </div>
       <div class="card">
-        <h4>Layer 3 &mdash; Orchestration</h4>
-        <p>Pipeline control. A lean orchestrator reads state files, decides what happens next, and spawns agents. All handoffs between pipeline phases are <strong>document-based</strong> &mdash; any session can restart from the last written artifact.</p>
+        <h4>Handovers are file-based</h4>
+        <p>Every boundary — author ↔ review, render ↔ implement ↔ review-execution, orchestrator ↔ worker — is a YAML or Markdown file on disk under <code>.vmodel/</code>. No in-memory state survives a tool boundary. Any session can crash and resume from the last written file.</p>
       </div>
     </div>
 
-    <h3>Why Three Layers?</h3>
-    <p>Separation of concerns. A craft skill doesn&rsquo;t know it&rsquo;s being used inside a V-model pipeline. An agent doesn&rsquo;t know which orchestrator spawned it. The orchestrator doesn&rsquo;t know the domain knowledge &mdash; it just routes contracts between agents. This means:</p>
-    <ul>
-      <li><strong>Craft skills are independently usable</strong> &mdash; anyone can use <code>vmodel-skill-develop-code</code> without the framework</li>
-      <li><strong>Agents are recomposable</strong> &mdash; swap in a different review skill without changing the pipeline</li>
-      <li><strong>Orchestration is V-model-layer-agnostic</strong> &mdash; the same pipeline pattern works for detailed design, architecture, requirements</li>
-      <li><strong>Context windows are protected</strong> &mdash; each agent gets a fresh context; no pollution from prior phases</li>
-    </ul>
-
-    <h3>Document-Based Handoffs</h3>
-    <p>Every boundary between pipeline components is a <strong>file on disk</strong>, not an in-memory transfer. This is a deliberate architectural decision for resilience:</p>
-    <ul>
-      <li>If a session runs out of context, restart from the last written artifact</li>
-      <li>If an unforeseen problem consumes context, exit the pipeline and resume later</li>
-      <li>Human can inspect any handoff document to understand pipeline state</li>
-      <li>Subagents communicate through contracts and verdicts, never through direct messaging</li>
-    </ul>
+    <h3>Where this fits in the framework</h3>
+    <p>The framework has four independent components: documentation, templates &amp; schemas, traceability, and AI skills. This page documents the <em>AI skills</em> component and <em>how the artifacts and workflows tie together at runtime</em>. For per-artifact craft (what a good Requirements doc looks like, what a good ADR looks like) see the per-artifact pages in the sidebar. For the architectural rationale behind every decision, see <code>docs/plan/TARGET_ARCHITECTURE.md</code>.</p>
   </section>
 
 
-  <!-- ===================== SECTION 2: COMPONENT DIAGRAM ===================== -->
+  <!-- ===================== WORKFLOW MAP ===================== -->
   <section id="sa-diagram">
-    <h2>Component Diagram</h2>
-    <p>The diagram shows all components for the lower V-model layers (detailed design, source code, unit tests). Higher layers follow the same pattern with layer-specific skills.</p>
+    <h2>Workflow Map</h2>
+    <p>One picture of the whole runtime — the two workflows, the artifacts that bridge them, the per-task transient files, and the escalation back-channel.</p>
 
     <div class="v-diagram-container">
-      <svg class="arch-diagram" viewBox="0 0 900 720" xmlns="http://www.w3.org/2000/svg">
+      <svg class="arch-diagram" viewBox="0 0 940 620" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
             <polygon points="0 0, 8 3, 0 6" fill="var(--fg-muted)" />
@@ -319,1272 +283,1312 @@
           <marker id="arrowhead-trace" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
             <polygon points="0 0, 8 3, 0 6" fill="var(--accent-trace)" />
           </marker>
+          <marker id="arrowhead-escalate" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#dc2626" />
+          </marker>
         </defs>
 
-        <!-- ═══════ LAYER 3: ORCHESTRATION ═══════ -->
-        <rect class="layer-bg" x="20" y="15" width="860" height="150" fill="rgba(37,99,168,0.04)" stroke="rgba(37,99,168,0.15)" stroke-width="1" />
-        <text class="layer-label" x="40" y="35" fill="var(--accent-left)">Layer 3 — Orchestration</text>
+        <!-- ═══════ SPEC FLOW (left band) ═══════ -->
+        <rect class="layer-bg" x="20" y="20" width="380" height="500"
+              fill="rgba(180,83,9,0.04)" stroke="rgba(180,83,9,0.18)" stroke-width="1" />
+        <text class="layer-label" x="40" y="42" fill="var(--accent-bottom)">Spec Flow — author + review</text>
 
-        <!-- Research-Plan (separate session) -->
-        <rect class="component-box" x="40" y="50" width="180" height="54" fill="var(--bg-surface)" stroke="var(--accent-left)" />
-        <text class="comp-label" x="130" y="72" text-anchor="middle" fill="var(--accent-left)">Research &amp; Plan</text>
-        <text class="comp-sublabel" x="130" y="88" text-anchor="middle">own session, interactive</text>
+        <!-- elicit -->
+        <rect class="component-box" x="40" y="60" width="170" height="44" fill="var(--bg-surface)" stroke="var(--accent-bottom)" />
+        <text class="comp-label" x="125" y="80" text-anchor="middle" fill="var(--accent-bottom)">elicit-needs / elicit-pd</text>
+        <text class="comp-sublabel" x="125" y="95" text-anchor="middle">root product (rough)</text>
 
-        <!-- Task Decomposer -->
-        <rect class="component-box" x="280" y="50" width="180" height="54" fill="var(--bg-surface)" stroke="var(--accent-left)" />
-        <text class="comp-label" x="370" y="72" text-anchor="middle" fill="var(--accent-left)">Task Decomposer</text>
-        <text class="comp-sublabel" x="370" y="88" text-anchor="middle">subagent</text>
+        <!-- author -->
+        <rect class="component-box" x="40" y="120" width="170" height="60" fill="var(--bg-surface)" stroke="var(--accent-bottom)" />
+        <text class="comp-label" x="125" y="140" text-anchor="middle" fill="var(--accent-bottom)">author-{REQ, ARCH,</text>
+        <text class="comp-label" x="125" y="155" text-anchor="middle" fill="var(--accent-bottom)">ADR, DD, TS}</text>
+        <text class="comp-sublabel" x="125" y="170" text-anchor="middle">5 author skills</text>
 
-        <!-- Pipeline Controller -->
-        <rect class="component-box" x="520" y="50" width="180" height="54" fill="var(--bg-surface)" stroke="var(--accent-left)" />
-        <text class="comp-label" x="610" y="72" text-anchor="middle" fill="var(--accent-left)">Pipeline Controller</text>
-        <text class="comp-sublabel" x="610" y="88" text-anchor="middle">lean skill, spawns agents</text>
+        <!-- review -->
+        <rect class="component-box" x="220" y="120" width="170" height="60" fill="var(--bg-surface)" stroke="var(--accent-bottom)" />
+        <text class="comp-label" x="305" y="140" text-anchor="middle" fill="var(--accent-bottom)">review-{REQ, ARCH,</text>
+        <text class="comp-label" x="305" y="155" text-anchor="middle" fill="var(--accent-bottom)">ADR, DD, TS}</text>
+        <text class="comp-sublabel" x="305" y="170" text-anchor="middle">5 review skills</text>
 
-        <!-- Human gates -->
-        <rect class="component-box" x="760" y="50" width="100" height="54" fill="rgba(37,99,168,0.06)" stroke="var(--accent-left)" stroke-dasharray="4,3" />
-        <text class="comp-label" x="810" y="72" text-anchor="middle" fill="var(--accent-left)">Human</text>
-        <text class="comp-sublabel" x="810" y="88" text-anchor="middle">gates</text>
+        <!-- author/review loop arrows -->
+        <path class="flow-arrow" d="M 210 142 L 218 142" stroke="var(--accent-bottom)" marker-end="url(#arrowhead)" />
+        <path class="flow-arrow" d="M 218 165 L 210 165" stroke="var(--accent-bottom)" marker-end="url(#arrowhead)" />
+        <text x="214" y="135" font-size="8" fill="var(--accent-bottom)" text-anchor="middle">draft</text>
+        <text x="214" y="180" font-size="8" fill="var(--accent-bottom)" text-anchor="middle">verdict</text>
 
-        <!-- Handoff arrows L3 -->
-        <line class="flow-arrow doc-flow" x1="220" y1="77" x2="272" y2="77" stroke="var(--accent-trace)" marker-end="url(#arrowhead-trace)" />
-        <text x="246" y="68" font-size="8" fill="var(--accent-trace)" text-anchor="middle">plan.yaml</text>
+        <!-- spec tree (artifact bridge) -->
+        <rect class="component-box" x="40" y="200" width="350" height="120" fill="rgba(124,58,237,0.06)" stroke="var(--accent-trace)" stroke-dasharray="4,3" />
+        <text class="comp-label" x="215" y="220" text-anchor="middle" fill="var(--accent-trace)" font-weight="600">specs/ (the spec tree)</text>
+        <text class="comp-sublabel" x="215" y="238" text-anchor="middle">product_brief.md / needs.md / product_description.md</text>
+        <text class="comp-sublabel" x="215" y="252" text-anchor="middle">requirements.md · architecture.md · testspec.md</text>
+        <text class="comp-sublabel" x="215" y="266" text-anchor="middle">adrs/adr-NNN.md · &lt;leaf&gt;/detailed_design.md</text>
+        <text class="comp-sublabel" x="215" y="284" text-anchor="middle" font-style="italic">+ .vmodel/.reviews/&lt;artifact-id&gt;-DATE-NN.yaml</text>
+        <text class="comp-sublabel" x="215" y="300" text-anchor="middle" font-style="italic">(verdict trail, committed)</text>
 
-        <line class="flow-arrow doc-flow" x1="460" y1="77" x2="512" y2="77" stroke="var(--accent-trace)" marker-end="url(#arrowhead-trace)" />
-        <text x="486" y="68" font-size="8" fill="var(--accent-trace)" text-anchor="middle">contracts/</text>
+        <!-- author writes specs -->
+        <path class="flow-arrow doc-flow" d="M 125 180 L 125 198" stroke="var(--accent-trace)" marker-end="url(#arrowhead-trace)" />
+        <!-- review reads specs + writes verdict -->
+        <path class="flow-arrow doc-flow" d="M 305 198 L 305 180" stroke="var(--accent-trace)" marker-end="url(#arrowhead-trace)" />
 
-        <!-- Human gate arrows -->
-        <line class="flow-arrow" x1="460" y1="92" x2="460" y2="130" x2="760" y2="92" stroke="var(--accent-left)" stroke-dasharray="3,3" opacity="0.4" />
-        <path class="flow-arrow" d="M 460 96 L 460 130 L 752 130 L 752 96" stroke="var(--accent-left)" stroke-dasharray="3,3" opacity="0.4" fill="none" marker-end="url(#arrowhead)" />
-        <text x="606" y="125" font-size="8" fill="var(--accent-left)" text-anchor="middle">approves decomposition</text>
+        <!-- elicit feeds author chain -->
+        <path class="flow-arrow doc-flow" d="M 125 104 L 125 118" stroke="var(--accent-trace)" marker-end="url(#arrowhead-trace)" />
 
-        <path class="flow-arrow" d="M 700 77 L 752 77" stroke="var(--accent-left)" stroke-dasharray="3,3" opacity="0.4" fill="none" marker-end="url(#arrowhead)" />
-        <text x="726" y="68" font-size="8" fill="var(--accent-left)" text-anchor="middle">final</text>
+        <!-- review verdicts go forensic -->
+        <text x="215" y="345" font-size="10" fill="var(--fg-secondary)" text-anchor="middle" font-style="italic">Spec Flow user-invoked</text>
+        <text x="215" y="358" font-size="10" fill="var(--fg-secondary)" text-anchor="middle" font-style="italic">(per artifact, by human)</text>
 
-        <!-- ═══════ LAYER 2: AGENTS ═══════ -->
-        <rect class="layer-bg" x="20" y="185" width="860" height="230" fill="rgba(22,128,60,0.04)" stroke="rgba(22,128,60,0.15)" stroke-width="1" />
-        <text class="layer-label" x="40" y="205" fill="var(--accent-right)">Layer 2 — Agents (subagents with isolated context)</text>
 
-        <!-- TDD Developer Agent -->
-        <rect class="component-box" x="40" y="220" width="250" height="90" fill="var(--bg-surface)" stroke="var(--accent-right)" />
-        <text class="comp-label" x="165" y="243" text-anchor="middle" fill="var(--accent-right)">vmodel-agent-tdd-developer</text>
-        <text class="comp-sublabel" x="165" y="260" text-anchor="middle">Composes: develop-code + derive-test-cases</text>
-        <text class="comp-sublabel" x="165" y="275" text-anchor="middle">+ framework skills + task contract</text>
-        <text class="comp-sublabel" x="165" y="290" text-anchor="middle">Tools: Read, Write, Edit, Bash, Glob, Grep</text>
+        <!-- ═══════ BUILD FLOW (right band) ═══════ -->
+        <rect class="layer-bg" x="540" y="20" width="380" height="500"
+              fill="rgba(22,128,60,0.04)" stroke="rgba(22,128,60,0.18)" stroke-width="1" />
+        <text class="layer-label" x="560" y="42" fill="var(--accent-right)">Build Flow — code + tests</text>
 
-        <!-- Code Reviewer Agent -->
-        <rect class="component-box" x="325" y="220" width="250" height="90" fill="var(--bg-surface)" stroke="var(--accent-right)" />
-        <text class="comp-label" x="450" y="243" text-anchor="middle" fill="var(--accent-right)">vmodel-agent-code-reviewer</text>
-        <text class="comp-sublabel" x="450" y="260" text-anchor="middle">Composes: review-code</text>
-        <text class="comp-sublabel" x="450" y="275" text-anchor="middle">+ framework skills + task contract</text>
-        <text class="comp-sublabel" x="450" y="290" text-anchor="middle">Tools: Read, Glob, Grep (read-only)</text>
+        <!-- plan-build -->
+        <rect class="component-box" x="560" y="60" width="170" height="44" fill="var(--bg-surface)" stroke="var(--accent-right)" />
+        <text class="comp-label" x="645" y="80" text-anchor="middle" fill="var(--accent-right)">plan-build</text>
+        <text class="comp-sublabel" x="645" y="95" text-anchor="middle">walks specs/, emits tasks.yaml</text>
 
-        <!-- Feedback arrow between developer and reviewer -->
-        <line class="flow-arrow" x1="290" y1="258" x2="317" y2="258" stroke="var(--accent-right)" marker-end="url(#arrowhead)" />
-        <path class="flow-arrow" d="M 325 275 L 305 275 L 305 272 L 298 272" stroke="#dc2626" stroke-dasharray="3,2" fill="none" marker-end="url(#arrowhead)" opacity="0.5" />
-        <text x="305" y="250" font-size="7" fill="var(--accent-right)" text-anchor="middle">code</text>
-        <text x="305" y="285" font-size="7" fill="#dc2626" text-anchor="middle">reject</text>
+        <!-- orchestrate-build -->
+        <rect class="component-box" x="560" y="120" width="350" height="58" fill="var(--bg-surface)" stroke="var(--accent-right)" stroke-width="3" />
+        <text class="comp-label" x="735" y="142" text-anchor="middle" fill="var(--accent-right)" font-weight="600">orchestrate-build</text>
+        <text class="comp-sublabel" x="735" y="158" text-anchor="middle">pipeline state machine; stage-by-stage,</text>
+        <text class="comp-sublabel" x="735" y="170" text-anchor="middle">parallel within stage; dispatches via Task tool</text>
+        <path class="flow-arrow doc-flow" d="M 645 104 L 645 118" stroke="var(--accent-trace)" marker-end="url(#arrowhead-trace)" />
+        <text x="700" y="116" font-size="8" fill="var(--accent-trace)">tasks.yaml</text>
 
-        <!-- DD Developer Agent -->
-        <rect class="component-box" x="40" y="330" width="250" height="75" fill="var(--bg-surface)" stroke="var(--accent-right)" />
-        <text class="comp-label" x="165" y="353" text-anchor="middle" fill="var(--accent-right)">vmodel-agent-dd-developer</text>
-        <text class="comp-sublabel" x="165" y="370" text-anchor="middle">Composes: develop-dd (or retrofit-dd)</text>
-        <text class="comp-sublabel" x="165" y="385" text-anchor="middle">+ framework skills + task contract</text>
+        <!-- worker agents -->
+        <rect class="component-box" x="560" y="200" width="105" height="50" fill="var(--bg-surface)" stroke="var(--accent-trace)" />
+        <text class="comp-label" x="612" y="220" text-anchor="middle" fill="var(--accent-trace)" font-size="11">render-tests</text>
+        <text class="comp-sublabel" x="612" y="234" text-anchor="middle">agent</text>
+        <text class="comp-sublabel" x="612" y="245" text-anchor="middle">TDD red</text>
 
-        <!-- DD Reviewer Agent -->
-        <rect class="component-box" x="325" y="330" width="250" height="75" fill="var(--bg-surface)" stroke="var(--accent-right)" />
-        <text class="comp-label" x="450" y="353" text-anchor="middle" fill="var(--accent-right)">vmodel-agent-dd-reviewer</text>
-        <text class="comp-sublabel" x="450" y="370" text-anchor="middle">Composes: review-dd</text>
-        <text class="comp-sublabel" x="450" y="385" text-anchor="middle">+ framework skills + task contract</text>
+        <rect class="component-box" x="680" y="200" width="105" height="50" fill="var(--bg-surface)" stroke="var(--accent-trace)" />
+        <text class="comp-label" x="732" y="220" text-anchor="middle" fill="var(--accent-trace)" font-size="11">implement-leaf</text>
+        <text class="comp-sublabel" x="732" y="234" text-anchor="middle">agent</text>
+        <text class="comp-sublabel" x="732" y="245" text-anchor="middle">TDD green + refactor</text>
 
-        <!-- Feedback arrow between DD developer and reviewer -->
-        <line class="flow-arrow" x1="290" y1="363" x2="317" y2="363" stroke="var(--accent-right)" marker-end="url(#arrowhead)" />
-        <path class="flow-arrow" d="M 325 380 L 305 380 L 305 377 L 298 377" stroke="#dc2626" stroke-dasharray="3,2" fill="none" marker-end="url(#arrowhead)" opacity="0.5" />
+        <rect class="component-box" x="800" y="200" width="105" height="50" fill="var(--bg-surface)" stroke="var(--accent-trace)" />
+        <text class="comp-label" x="852" y="220" text-anchor="middle" fill="var(--accent-trace)" font-size="11">review-execution</text>
+        <text class="comp-sublabel" x="852" y="234" text-anchor="middle">agent</text>
+        <text class="comp-sublabel" x="852" y="245" text-anchor="middle">verdict</text>
 
-        <!-- Pipeline controller to agents -->
-        <path class="flow-arrow" d="M 610 104 L 610 170 L 165 170 L 165 212" stroke="var(--accent-left)" fill="none" marker-end="url(#arrowhead)" opacity="0.4" />
-        <path class="flow-arrow" d="M 610 104 L 610 170 L 450 170 L 450 212" stroke="var(--accent-left)" fill="none" marker-end="url(#arrowhead)" opacity="0.4" />
-        <text x="610" y="163" font-size="8" fill="var(--accent-left)" text-anchor="middle">spawns</text>
+        <!-- orchestrator dispatches workers -->
+        <path class="flow-arrow" d="M 645 178 L 612 198" stroke="var(--accent-right)" marker-end="url(#arrowhead)" opacity="0.6" />
+        <path class="flow-arrow" d="M 735 178 L 732 198" stroke="var(--accent-right)" marker-end="url(#arrowhead)" opacity="0.6" />
+        <path class="flow-arrow" d="M 825 178 L 852 198" stroke="var(--accent-right)" marker-end="url(#arrowhead)" opacity="0.6" />
+        <text x="735" y="194" font-size="8" fill="var(--accent-right)" text-anchor="middle" font-style="italic">Task tool dispatch (parallel)</text>
 
-        <!-- Verdict document flow -->
-        <rect class="component-box" x="620" y="240" width="120" height="50" fill="rgba(124,58,237,0.06)" stroke="var(--accent-trace)" stroke-dasharray="4,3" />
-        <text class="comp-label" x="680" y="262" text-anchor="middle" fill="var(--accent-trace)" font-size="11">Handoff Docs</text>
-        <text class="comp-sublabel" x="680" y="278" text-anchor="middle">verdict.yaml</text>
+        <!-- per-task transient state -->
+        <rect class="component-box" x="560" y="270" width="350" height="120" fill="rgba(124,58,237,0.06)" stroke="var(--accent-trace)" stroke-dasharray="4,3" />
+        <text class="comp-label" x="735" y="290" text-anchor="middle" fill="var(--accent-trace)" font-weight="600">.vmodel/.build/tasks/&lt;task-id&gt;/</text>
+        <text class="comp-sublabel" x="735" y="306" text-anchor="middle">current-task.yaml ← orchestrator</text>
+        <text class="comp-sublabel" x="735" y="320" text-anchor="middle">render-report.yaml ← render-tests</text>
+        <text class="comp-sublabel" x="735" y="334" text-anchor="middle">build-progress.yaml · build-blocked.yaml ← implement-leaf</text>
+        <text class="comp-sublabel" x="735" y="348" text-anchor="middle">review-ready.yaml ← implement-leaf</text>
+        <text class="comp-sublabel" x="735" y="362" text-anchor="middle">feedback.yaml · ESC-NNN.yaml ← review-execution</text>
+        <text class="comp-sublabel" x="735" y="380" text-anchor="middle" font-style="italic">(transient, gitignored)</text>
 
-        <line class="flow-arrow doc-flow" x1="575" y1="265" x2="612" y2="265" stroke="var(--accent-trace)" marker-end="url(#arrowhead-trace)" />
-        <path class="flow-arrow doc-flow" d="M 680 290 L 680 310 L 610 310 L 610 168" stroke="var(--accent-trace)" fill="none" marker-end="url(#arrowhead-trace)" />
-        <text x="660" y="305" font-size="7" fill="var(--accent-trace)" text-anchor="middle">back to pipeline</text>
+        <!-- workers ↔ files -->
+        <path class="flow-arrow doc-flow" d="M 612 250 L 612 268" stroke="var(--accent-trace)" marker-end="url(#arrowhead-trace)" />
+        <path class="flow-arrow doc-flow" d="M 732 250 L 732 268" stroke="var(--accent-trace)" marker-end="url(#arrowhead-trace)" />
+        <path class="flow-arrow doc-flow" d="M 852 250 L 852 268" stroke="var(--accent-trace)" marker-end="url(#arrowhead-trace)" />
 
-        <!-- ═══════ LAYER 1: SKILLS ═══════ -->
-        <rect class="layer-bg" x="20" y="435" width="420" height="270" fill="rgba(180,83,9,0.04)" stroke="rgba(180,83,9,0.15)" stroke-width="1" />
-        <text class="layer-label" x="40" y="455" fill="var(--accent-bottom)">Layer 1 — Craft Skills (framework-independent)</text>
+        <!-- retrospect -->
+        <rect class="component-box" x="560" y="410" width="350" height="44" fill="var(--bg-surface)" stroke="var(--accent-right)" />
+        <text class="comp-label" x="735" y="430" text-anchor="middle" fill="var(--accent-right)">retrospect-build</text>
+        <text class="comp-sublabel" x="735" y="445" text-anchor="middle">end-of-run; emits retrospective.md + lessons.yaml</text>
 
-        <rect class="layer-bg" x="460" y="435" width="420" height="270" fill="rgba(124,58,237,0.04)" stroke="rgba(124,58,237,0.15)" stroke-width="1" />
-        <text class="layer-label" x="480" y="455" fill="var(--accent-trace)">Layer 1 — Framework Skills (VModelWorkflow-specific)</text>
+        <text x="735" y="478" font-size="10" fill="var(--fg-secondary)" text-anchor="middle" font-style="italic">User invokes orchestrate-build;</text>
+        <text x="735" y="491" font-size="10" fill="var(--fg-secondary)" text-anchor="middle" font-style="italic">orchestrator drives the rest.</text>
 
-        <!-- Craft Skills -->
-        <rect class="component-box" x="40" y="468" width="190" height="44" fill="var(--bg-surface)" stroke="var(--accent-bottom)" />
-        <text class="comp-label" x="135" y="487" text-anchor="middle" fill="var(--accent-bottom)" font-size="11">vmodel-skill-develop-code</text>
-        <text class="comp-sublabel" x="135" y="502" text-anchor="middle">implementation from design</text>
 
-        <rect class="component-box" x="240" y="468" width="190" height="44" fill="var(--bg-surface)" stroke="var(--accent-bottom)" />
-        <text class="comp-label" x="335" y="487" text-anchor="middle" fill="var(--accent-bottom)" font-size="11">vmodel-skill-derive-test-cases</text>
-        <text class="comp-sublabel" x="335" y="502" text-anchor="middle">4 derivation strategies</text>
+        <!-- ═══════ BRIDGE: spec tree → plan-build ═══════ -->
+        <path class="flow-arrow doc-flow" d="M 390 245 L 555 78" stroke="var(--accent-trace)" marker-end="url(#arrowhead-trace)" />
+        <text x="475" y="155" font-size="10" fill="var(--accent-trace)" text-anchor="middle" font-weight="600">specs read</text>
+        <text x="475" y="167" font-size="9" fill="var(--accent-trace)" text-anchor="middle">(handover #1)</text>
 
-        <rect class="component-box" x="40" y="522" width="190" height="44" fill="var(--bg-surface)" stroke="var(--accent-bottom)" />
-        <text class="comp-label" x="135" y="541" text-anchor="middle" fill="var(--accent-bottom)" font-size="11">vmodel-skill-review-code</text>
-        <text class="comp-sublabel" x="135" y="556" text-anchor="middle">code + test quality review</text>
+        <!-- ═══════ ESCALATION BACK-CHANNEL: ESC → spec authoring ═══════ -->
+        <path class="flow-arrow" d="M 735 392 L 735 530 L 215 530 L 215 322"
+              stroke="#dc2626" stroke-dasharray="5,3" fill="none" marker-end="url(#arrowhead-escalate)" opacity="0.7" />
+        <text x="475" y="525" font-size="10" fill="#dc2626" text-anchor="middle" font-weight="600">ESC-NNN.yaml — re-author spec layer</text>
+        <text x="475" y="540" font-size="9" fill="#dc2626" text-anchor="middle">(handover #2 — spec gap surfaced by build)</text>
 
-        <rect class="component-box" x="240" y="522" width="190" height="44" fill="var(--bg-surface)" stroke="var(--accent-bottom)" />
-        <text class="comp-label" x="335" y="541" text-anchor="middle" fill="var(--accent-bottom)" font-size="11">vmodel-skill-develop-dd</text>
-        <text class="comp-sublabel" x="335" y="556" text-anchor="middle">forward detailed design</text>
-
-        <rect class="component-box" x="40" y="576" width="190" height="44" fill="var(--bg-surface)" stroke="var(--accent-bottom)" />
-        <text class="comp-label" x="135" y="595" text-anchor="middle" fill="var(--accent-bottom)" font-size="11">vmodel-skill-retrofit-dd</text>
-        <text class="comp-sublabel" x="135" y="610" text-anchor="middle">reverse-engineer from code</text>
-
-        <rect class="component-box" x="240" y="576" width="190" height="44" fill="var(--bg-surface)" stroke="var(--accent-bottom)" />
-        <text class="comp-label" x="335" y="595" text-anchor="middle" fill="var(--accent-bottom)" font-size="11">vmodel-skill-review-dd</text>
-        <text class="comp-sublabel" x="335" y="610" text-anchor="middle">design quality checklist</text>
-
-        <!-- Framework Skills -->
-        <rect class="component-box" x="480" y="468" width="190" height="44" fill="var(--bg-surface)" stroke="var(--accent-trace)" />
-        <text class="comp-label" x="575" y="487" text-anchor="middle" fill="var(--accent-trace)" font-size="11">vmodel-skill-dd-template</text>
-        <text class="comp-sublabel" x="575" y="502" text-anchor="middle">schema, L1/L2/L3, IDs</text>
-
-        <rect class="component-box" x="680" y="468" width="190" height="44" fill="var(--bg-surface)" stroke="var(--accent-trace)" />
-        <text class="comp-label" x="775" y="487" text-anchor="middle" fill="var(--accent-trace)" font-size="11">vmodel-skill-traceability</text>
-        <text class="comp-sublabel" x="775" y="502" text-anchor="middle">trace links, staleness, coverage</text>
-
-        <rect class="component-box" x="480" y="522" width="190" height="44" fill="var(--bg-surface)" stroke="var(--accent-trace)" />
-        <text class="comp-label" x="575" y="541" text-anchor="middle" fill="var(--accent-trace)" font-size="11">vmodel-skill-tool-checks</text>
-        <text class="comp-sublabel" x="575" y="556" text-anchor="middle">run config-defined checks</text>
-
-        <!-- Shared reference files -->
-        <rect x="480" y="585" width="390" height="50" rx="4" fill="var(--bg-code)" stroke="var(--border-subtle)" />
-        <text x="675" y="605" text-anchor="middle" font-size="11" fill="var(--fg-secondary)" font-weight="500">Shared Reference Files (.md)</text>
-        <text x="675" y="620" text-anchor="middle" font-size="9" fill="var(--fg-muted)">code-quality-checks · testing-anti-patterns · derivation-strategies · design-quality-criteria · review-checklists</text>
-
-        <!-- Composition arrows (skills to agents) -->
-        <path class="flow-arrow compose-flow" d="M 135 468 L 135 415 L 135 312" stroke="var(--fg-muted)" fill="none" marker-end="url(#arrowhead)" />
-        <path class="flow-arrow compose-flow" d="M 335 468 L 335 415 L 200 415 L 200 312" stroke="var(--fg-muted)" fill="none" marker-end="url(#arrowhead)" />
-        <path class="flow-arrow compose-flow" d="M 135 522 L 110 522 L 110 415 L 450 415 L 450 312" stroke="var(--fg-muted)" fill="none" marker-end="url(#arrowhead)" />
-        <path class="flow-arrow compose-flow" d="M 575 468 L 575 420 L 250 420 L 250 312" stroke="var(--fg-muted)" fill="none" marker-end="url(#arrowhead)" />
+        <!-- vmodel-init footer -->
+        <rect class="component-box" x="20" y="555" width="900" height="44" fill="rgba(37,99,168,0.06)" stroke="var(--accent-left)" />
+        <text class="comp-label" x="470" y="575" text-anchor="middle" fill="var(--accent-left)">vmodel-init</text>
+        <text class="comp-sublabel" x="470" y="590" text-anchor="middle">scaffolds .vmodel/ (config + references + reviews + build) at project setup; migrate mode upgrades existing projects</text>
       </svg>
     </div>
 
-    <p><strong>Reading the diagram:</strong> Dashed violet arrows are document handoffs (artifacts on disk). Solid gray arrows are composition (agent loads skill into its context). The pipeline controller spawns agents; agents produce documents; documents flow back to the pipeline. No direct agent-to-agent communication.</p>
+    <p><strong>Reading the diagram.</strong> Solid arrows are agent dispatch (Task tool) and author ↔ review iteration. Dashed violet arrows are document handoffs (a file written by one component, read by another). The red dashed arrow is the escalation back-channel — when the build flow finds a spec gap, it routes a typed escalation file to the relevant spec author skill. <strong>The two workflows never share memory; everything crosses the boundary as a file.</strong></p>
   </section>
 
 
-  <!-- ===================== SECTION 3: DESIGN PRINCIPLES ===================== -->
+  <!-- ===================== SKILL / AGENT / TOOL SPLIT ===================== -->
   <section id="sa-principles">
-    <h2>Design Principles</h2>
+    <h2>Skill / Agent / Tool Split</h2>
+    <p>Three categories with different jobs. Knowing which is which is how the framework keeps each piece small and replaceable.</p>
 
-    <h3>Context Window as Scarce Resource</h3>
-    <p>Every design decision optimizes for context window preservation:</p>
+    <table class="field-table">
+      <thead>
+        <tr><th>Category</th><th>Job</th><th>What it knows</th><th>Lives at</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="field-name">Skill</td>
+          <td>Interpretive, judgment-driven procedure (LLM-driven).</td>
+          <td>Procedure, references, templates, HALT conditions, hard refusals.</td>
+          <td><code>.claude/skills/&lt;skill&gt;/SKILL.md</code> + <code>references/</code> + <code>templates/</code></td>
+        </tr>
+        <tr>
+          <td class="field-name">Agent</td>
+          <td>Thin dispatch shell run via Task tool. Loads one canonical skill in an isolated context.</td>
+          <td>Only the dispatch envelope shape (worktree path, task id, mode). No procedure.</td>
+          <td><code>.claude/agents/&lt;agent&gt;.md</code></td>
+        </tr>
+        <tr>
+          <td class="field-name">Tool</td>
+          <td>Mechanical, deterministic check (no LLM). Same input → same output.</td>
+          <td>Schema validation, link integrity, ID encoding, defer-index aggregation, etc.</td>
+          <td><code>scripts/check-*.py</code>, <code>scripts/index-deferred-items.py</code>, plus the <code>vmodel-core</code> external tool product.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Why agents wrap skills</h3>
+    <p>The build flow needs <strong>parallel</strong> per-task workers with <strong>isolated context windows</strong>. Three things follow from that:</p>
     <ul>
-      <li><strong>Research/plan runs in its own session</strong> &mdash; the back-and-forth with the human can consume significant context. The output is a clean artifact; the exploration history is discarded.</li>
-      <li><strong>Task decomposer runs as a subagent</strong> &mdash; reads the plan, produces contracts, releases its context.</li>
-      <li><strong>Each developer/reviewer is a subagent</strong> &mdash; fresh context per task. No pollution from prior tasks.</li>
-      <li><strong>The orchestrator is lean</strong> &mdash; reads state files, makes routing decisions, spawns agents. Minimal context consumption.</li>
-      <li><strong>Skills are short</strong> &mdash; under 500 lines per SKILL.md (research finding: small models follow early instructions better, context dropout increases with length).</li>
+      <li><strong>Isolated context.</strong> A worker reading one leaf's DD + tests + source should not pollute its sibling worker's context. The Task tool gives each invocation a fresh context.</li>
+      <li><strong>Parallelism.</strong> The orchestrator emits multiple Task tool calls in a single tool-use message — the runtime executes them concurrently, bounded by <code>build.parallel.max_concurrent</code>.</li>
+      <li><strong>Failure isolation.</strong> A worker crash does not affect siblings or the orchestrator.</li>
     </ul>
+    <p>The agent file itself is &lt; 50 lines — it just declares the dispatch envelope and tells the runtime to load the canonical skill. All procedure lives in the skill. The three workers (<code>render-tests</code>, <code>implement-leaf</code>, <code>review-execution</code>) are wrapped this way; <code>retrospect-build</code> stays a Skill invocation because it's a single end-of-run call with no parallelism need.</p>
 
-    <h3>SOLID for Skills</h3>
-    <p>Skills follow the same decomposition principles as code:</p>
-    <ul>
-      <li><strong>Single Responsibility:</strong> Each skill teaches one concern. <code>develop-code</code> doesn&rsquo;t know about testing. <code>derive-test-cases</code> doesn&rsquo;t know about code style.</li>
-      <li><strong>Open/Closed:</strong> Skills are extended by adding reference files, not by modifying the SKILL.md. New V-model layers add new skills; existing skills don&rsquo;t change.</li>
-      <li><strong>Dependency Inversion:</strong> Agents depend on skill interfaces (what the skill does), not on skill internals (how the prompt is structured).</li>
-    </ul>
+    <h3>Why spec-side skills are not wrapped</h3>
+    <p>Spec authoring is interactive — the human discusses, the skill drafts, the reviewer verdicts, the human approves or pushes back. There is no parallelism story to enable, and the human wants the work in their own context. So spec skills are <strong>user-invoked directly</strong> (<code>/vmodel-skill-author-architecture</code>), not dispatched as agents.</p>
+  </section>
 
-    <h3>Shared Reference Files</h3>
-    <p>Common knowledge is factored into <code>references/*.md</code> files that multiple skills can include. This prevents duplication and ensures consistency. When a quality criterion changes, it changes in one place.</p>
+
+  <!-- ===================== ARTIFACTS — PERMANENT ===================== -->
+  <section id="sa-permanent">
+    <h2>Artifacts — Permanent (the spec tree)</h2>
+    <p>Six artifact types live under <code>specs/</code> and are committed to version control. They are the durable design record. Every workflow reads or writes these.</p>
 
     <table class="field-table">
       <thead>
-        <tr><th>Reference File</th><th>Used By</th><th>Content</th></tr>
+        <tr><th>Type</th><th>Lives at</th><th>Author skill</th><th>Review skill</th><th>Verified by</th></tr>
       </thead>
       <tbody>
         <tr>
-          <td class="field-name">code-quality-checks.md</td>
-          <td>develop-code, review-code</td>
-          <td>Complexity limits, error handling rules, naming, architecture boundaries</td>
+          <td class="field-name">Root product</td>
+          <td>Root only — exactly one of <code>product_brief.md</code> (PB), <code>needs.md</code>, or <code>product_description.md</code> (PD)</td>
+          <td><code>elicit-needs</code> → <code>needs.md</code><br><code>elicit-pd</code> → <code>product_description.md</code><br>PB authored direct (no skill yet, deferred)</td>
+          <td>— (no review skill in current set)</td>
+          <td>Stakeholder review</td>
         </tr>
         <tr>
-          <td class="field-name">testing-anti-patterns.md</td>
-          <td>derive-test-cases, review-code</td>
-          <td>Tautological tests, assertion-free, happy-path bias, over-mocking, mirror tests</td>
+          <td class="field-name">Requirements</td>
+          <td>Every non-leaf scope: <code>requirements.md</code></td>
+          <td><code>author-requirements</code></td>
+          <td><code>review-requirements</code></td>
+          <td>Acceptance / integration tests</td>
         </tr>
         <tr>
-          <td class="field-name">ai-testing-failures.md</td>
-          <td>derive-test-cases, review-code</td>
-          <td>AI-specific test failure modes: tautological, assertion-free, happy-path bias, over-mocking, hallucinated assertions, code-to-test trap</td>
+          <td class="field-name">Architecture</td>
+          <td>Every non-leaf scope: <code>architecture.md</code> (+ optional <code>architecture/interfaces/</code> bundle, Rule 8)</td>
+          <td><code>author-architecture</code></td>
+          <td><code>review-architecture</code></td>
+          <td>Integration tests</td>
         </tr>
         <tr>
-          <td class="field-name">derivation-strategies.md</td>
-          <td>derive-test-cases</td>
-          <td>Requirement-based, equivalence class, boundary value, fault injection, coverage matrix format, parameterized test patterns</td>
+          <td class="field-name">ADR</td>
+          <td>Per scope where the decision was taken: <code>adrs/adr-NNN-{slug}.md</code></td>
+          <td><code>author-adr</code></td>
+          <td><code>review-adr</code></td>
+          <td>Review (immutable once accepted)</td>
         </tr>
         <tr>
-          <td class="field-name">design-quality-criteria.md</td>
-          <td>develop-dd, retrofit-dd, review-dd</td>
-          <td>Interface completeness, behavioral specification, rationale, error handling design</td>
+          <td class="field-name">Detailed Design</td>
+          <td>Every leaf scope: <code>detailed_design.md</code></td>
+          <td><code>author-detailed-design</code></td>
+          <td><code>review-detailed-design</code></td>
+          <td>Unit tests</td>
         </tr>
         <tr>
-          <td class="field-name">review-checklist-code.md</td>
-          <td>review-code</td>
-          <td>Design compliance, coding standards, clean code, test quality, cross-checks</td>
-        </tr>
-        <tr>
-          <td class="field-name">review-checklist-dd.md</td>
-          <td>review-dd</td>
-          <td>Specification completeness, rationale presence, testability, traceability</td>
-        </tr>
-        <tr>
-          <td class="field-name">retrofit-risks.md</td>
-          <td>retrofit-dd</td>
-          <td>Post-hoc rationalization, missing intent, code paraphrase trap, human involvement</td>
+          <td class="field-name">TestSpec</td>
+          <td>Every scope: <code>testspec.md</code></td>
+          <td><code>author-testspec</code></td>
+          <td><code>review-testspec</code></td>
+          <td>(its own test code, rendered by build flow)</td>
         </tr>
       </tbody>
     </table>
 
-    <h3>Model-Tier Awareness</h3>
-    <p>All craft skills must work on the cheapest viable model tier. Model requirements are classified using vendor-neutral tiers based on capability, not specific provider model names:</p>
+    <p><strong>Glossary.</strong> An optional <code>specs/glossary.md</code> sits at root scope as a tree-global definitions file. It is a reference document, not an artifact — no Quality Bar, no review skill, no schema.</p>
+
+    <p>For per-artifact craft (what makes a good Requirements doc, what makes a good ADR), see the artifact pages linked in the sidebar.</p>
+  </section>
+
+
+  <!-- ===================== ARTIFACTS — TRANSIENT ===================== -->
+  <section id="sa-transient">
+    <h2>Artifacts — Transient (.vmodel state)</h2>
+    <p>Files under <code>.vmodel/</code> hold runtime state, review verdicts, build pipeline state, and per-task worker handoffs. Lifecycle and git policy differ per directory.</p>
 
     <table class="field-table">
       <thead>
-        <tr><th>Tier</th><th>Properties</th><th>Examples (2025)</th></tr>
+        <tr><th>Path</th><th>Producer</th><th>Consumer</th><th>Lifecycle</th><th>Git</th></tr>
       </thead>
       <tbody>
-        <tr><td class="field-name">Tier 1 &mdash; Reasoning</td><td>Deep reasoning, architectural judgment, trade-off analysis, long chain-of-thought</td><td>Claude Opus, GPT-4o, Gemini Ultra</td></tr>
-        <tr><td class="field-name">Tier 2 &mdash; Workhorse</td><td>Good code generation, analysis, review. Balances quality and cost</td><td>Claude Sonnet, GPT-4o-mini, Gemini Pro</td></tr>
-        <tr><td class="field-name">Tier 3 &mdash; Fast</td><td>Deterministic tasks, file finding, simple transformations. Cheap and fast</td><td>Claude Haiku, GPT-3.5, Gemini Flash</td></tr>
+        <tr>
+          <td class="field-name"><code>.vmodel/config.yaml</code></td>
+          <td><code>vmodel-init</code> (scaffolds); human (edits)</td>
+          <td>All skills (paths, build settings, tool commands)</td>
+          <td>Permanent</td>
+          <td>Committed</td>
+        </tr>
+        <tr>
+          <td class="field-name"><code>.vmodel/references/</code></td>
+          <td><code>vmodel-init</code> (copies framework defaults); project may override</td>
+          <td>Every skill at runtime (authoring-discipline, partial-parent-protocol, definitions, etc.)</td>
+          <td>Permanent</td>
+          <td>Committed</td>
+        </tr>
+        <tr>
+          <td class="field-name"><code>.vmodel/.reviews/&lt;artifact-id&gt;-DATE-NN.yaml</code></td>
+          <td>Review skill (one file per review run)</td>
+          <td>Author skill on next revision (reads lexically-last)</td>
+          <td>Append-only forensic record</td>
+          <td>Committed</td>
+        </tr>
+        <tr>
+          <td class="field-name"><code>.vmodel/defer-index.md</code></td>
+          <td><code>scripts/index-deferred-items.py</code> (mechanical)</td>
+          <td>Human (gap visibility)</td>
+          <td>Regenerated on demand</td>
+          <td>Gitignored</td>
+        </tr>
+        <tr>
+          <td class="field-name"><code>.vmodel/.build/tasks.yaml</code></td>
+          <td><code>plan-build</code></td>
+          <td><code>orchestrate-build</code></td>
+          <td>Per build run</td>
+          <td>Gitignored</td>
+        </tr>
+        <tr>
+          <td class="field-name"><code>.vmodel/.build/pipeline-state.yaml</code></td>
+          <td><code>orchestrate-build</code> (overwrite-on-tick)</td>
+          <td><code>orchestrate-build</code> (resume)</td>
+          <td>Per build run</td>
+          <td>Gitignored</td>
+        </tr>
+        <tr>
+          <td class="field-name"><code>.vmodel/.build/tasks/&lt;task-id&gt;/*.yaml</code></td>
+          <td>Workers (see per-task contract below)</td>
+          <td>Workers + orchestrator</td>
+          <td>Per task</td>
+          <td>Gitignored</td>
+        </tr>
+        <tr>
+          <td class="field-name"><code>.vmodel/.build/escalations/ESC-NNN.yaml</code></td>
+          <td><code>review-execution</code></td>
+          <td>Spec author skill (revision)</td>
+          <td>Permanent (forensic)</td>
+          <td>Committed</td>
+        </tr>
+        <tr>
+          <td class="field-name"><code>.vmodel/.build/runs/&lt;run-id&gt;/retrospective.md</code></td>
+          <td><code>retrospect-build</code></td>
+          <td>Human</td>
+          <td>Per run</td>
+          <td>Gitignored</td>
+        </tr>
+        <tr>
+          <td class="field-name"><code>.vmodel/.build/lessons.yaml</code></td>
+          <td><code>retrospect-build</code> (bounded, eviction policy)</td>
+          <td>Future build runs (informational)</td>
+          <td>Cumulative, capped</td>
+          <td>Committed</td>
+        </tr>
       </tbody>
     </table>
 
-    <table class="field-table" style="margin-top: var(--space-lg);">
-      <thead>
-        <tr><th>Component</th><th>Minimum Tier</th><th>Rationale</th></tr>
-      </thead>
-      <tbody>
-        <tr><td>Craft skills (standalone)</td><td>Tier 3 (Fast)</td><td>Atomic tasks with clear instructions; tested with baseline comparison</td></tr>
-        <tr><td>Developer agents</td><td>Tier 2 (Workhorse)</td><td>Implementation requires moderate reasoning + code generation</td></tr>
-        <tr><td>Reviewer agents</td><td>Tier 2 (Tier 1 for safety-critical)</td><td>Review requires judgment; Tier 1 when assurance level demands it</td></tr>
-        <tr><td>Task decomposer</td><td>Tier 1 (Reasoning)</td><td>Architectural reasoning, scope judgment</td></tr>
-        <tr><td>Pipeline controller</td><td>Tier 2 (Workhorse)</td><td>Routing decisions, state machine &mdash; no deep reasoning needed</td></tr>
-        <tr><td>Research/plan</td><td>Tier 1 (Reasoning)</td><td>Strategic discussion, design decisions, trade-off analysis</td></tr>
-      </tbody>
-    </table>
+    <p><strong>Lifecycle distinction.</strong> Spec-side review verdicts (<code>.vmodel/.reviews/</code>) are <em>committed</em> — they are a forensic record of design-time decisions and have lasting value. Build-side runtime state (<code>.vmodel/.build/</code> tasks, progress, pipeline state) is <em>gitignored</em> — it is transient operational state. The two committed exceptions on the build side are <code>escalations/</code> (spec-gap evidence) and <code>lessons.yaml</code> (cumulative learning).</p>
   </section>
 
 
-  <!-- ===================== SECTION: GROUND RULES ===================== -->
-  <section id="sa-ground-rules">
-    <h2>Ground Rules</h2>
-    <p class="lead">Authoring rules that govern every skill, agent, reference, and orchestration prompt shipped by this framework. Derived from research on LLM context management, prompt-persuasion patterns, empirical skill performance, and lessons about what models can be trusted to do deterministically versus what must be pushed to tools.</p>
-
-    <p><strong>Scope.</strong> These rules apply to what this framework <em>ships</em>: <code>SKILL.md</code> files, references, agent definitions, orchestration prompts, handover and HALT schemas. They explicitly do <strong>not</strong> constrain the host <code>CLAUDE.md</code>, host-level hooks, user MCP servers, or any context a downstream user adds on top &mdash; those are out of our control and deliberately out of scope.</p>
+  <!-- ===================== LINKS ===================== -->
+  <section id="sa-links">
+    <h2>Links between artifacts</h2>
+    <p>Every artifact carries its <strong>outgoing</strong> links in front-matter. Reverse relationships (<code>realized_by</code>, <code>verified_by</code>, <code>derives</code>) are <strong>computed</strong> by tooling — never stored — to avoid the DOORS-era "central table drifts from documents" problem.</p>
 
     <table class="field-table">
       <thead>
-        <tr><th style="width: 4rem;">#</th><th style="width: 14rem;">Rule</th><th>Detail</th></tr>
+        <tr><th>Link</th><th>Source</th><th>Target</th><th>Meaning</th></tr>
       </thead>
       <tbody>
         <tr>
-          <td class="field-name">GR-1</td>
-          <td>Prime, don&rsquo;t teach</td>
-          <td>Reference known concepts by name. Add reasoning only where the model doesn&rsquo;t default to the desired behavior. Save budget for the delta that matters.</td>
+          <td class="field-name">derived_from</td>
+          <td>Requirements, Architecture, ADR</td>
+          <td>Parent spec at layer above</td>
+          <td>Refinement / breakdown lineage. <strong>Not</strong> on DD or TestSpec.</td>
         </tr>
         <tr>
-          <td class="field-name">GR-2</td>
-          <td>Instruction budget: 100 commands</td>
-          <td>Across all framework artifacts at run-time combined (composed skills + agent bodies + orchestration prompts). <em>Counts:</em> <code>MUST</code>, <code>MUST NOT</code>, <code>NEVER</code>, <code>ALWAYS</code>, <code>SHOULD</code>, or a checklist item. <em>Excludes:</em> definitions, rationale, examples, references. Host <code>CLAUDE.md</code> and user MCPs are out of scope. Starting target &mdash; revisit empirically.</td>
+          <td class="field-name">parent_architecture</td>
+          <td>Detailed Design</td>
+          <td>Parent Architecture artifact</td>
+          <td>Sole structural anchor for a leaf DD.</td>
         </tr>
         <tr>
-          <td class="field-name">GR-3</td>
-          <td>One instruction = one enforceable directive</td>
-          <td>Compound sentences split per obligation. A single bullet should carry a single obligation the agent can act on.</td>
+          <td class="field-name">allocates</td>
+          <td>Architecture child entry</td>
+          <td>List of REQ-IDs at this scope</td>
+          <td>Parent assigns responsibility to child.</td>
         </tr>
         <tr>
-          <td class="field-name">GR-4</td>
-          <td>Minimalism in framework artifacts</td>
-          <td>Thin skills. Controlled skill count. No deeply nested references &mdash; at most one level deep from <code>SKILL.md</code>. Applies only to what we ship; host-side <code>CLAUDE.md</code> and MCP layout are out of scope.</td>
+          <td class="field-name">verifies</td>
+          <td>TestSpec case (mandatory non-empty per case <em>and</em> at envelope)</td>
+          <td>Layer-dependent: leaf → DD; branch → Architecture; root → Requirements + root product</td>
+          <td>Anti-orphan rule. A test without traceable intent is misplaced or testing unspecified behaviour.</td>
         </tr>
         <tr>
-          <td class="field-name">GR-5</td>
-          <td>Match persuasion profile to skill role</td>
-          <td>
-            <em>Lower-V / discipline:</em> Authority + Commitment + Social Proof.<br>
-            <em>Upper-V / advisory:</em> Unity + Commitment, moderate Authority.<br>
-            <em>Framework / template:</em> Clarity only.<br>
-            <strong>Never use Liking or Reciprocity.</strong>
-          </td>
+          <td class="field-name">governing_adrs</td>
+          <td>Any spec artifact</td>
+          <td>List of ADR IDs</td>
+          <td>Artifact subject to one or more ADR constraints.</td>
         </tr>
         <tr>
-          <td class="field-name">GR-6</td>
-          <td>HALT option on every skill</td>
-          <td>Every skill must give the agent an explicit HALT path when instructions or inputs don&rsquo;t fit the situation. Every HALT produces a versioned <code>halt.yaml</code> (schema v1). See <a href="#sa-halt">HALT Pattern</a>.</td>
+          <td class="field-name">scope_tags</td>
+          <td>ADR</td>
+          <td>Scope list</td>
+          <td>Scopes the ADR primarily binds.</td>
         </tr>
         <tr>
-          <td class="field-name">GR-7</td>
-          <td>Implementation intentions over general instructions</td>
-          <td>&ldquo;When X, do Y&rdquo; beats &ldquo;generally do Y.&rdquo; Trigger + response pairs survive context pressure better than abstract principles.</td>
+          <td class="field-name">affected_scopes</td>
+          <td>ADR (optional)</td>
+          <td>Scope list</td>
+          <td>Downstream consequence scopes.</td>
         </tr>
         <tr>
-          <td class="field-name">GR-8</td>
-          <td>Strict typed handover artifacts at every agent entry/exit</td>
-          <td>Every agent reads a contract on entry and writes a handover artifact on exit &mdash; success, failure, or HALT. All handovers carry <code>schema_version</code>. No untyped in-memory state survives across agents.</td>
+          <td class="field-name">supersedes / superseded_by</td>
+          <td>ADR</td>
+          <td>ADR</td>
+          <td>Lineage. Supersession is by new ADR + back-link, never in-place edit.</td>
         </tr>
         <tr>
-          <td class="field-name">GR-9</td>
-          <td><em>[Hypothesis]</em> Progressive disclosure via staggered loading</td>
-          <td><code>SKILL.md</code> is thin; references load only when the agent reaches the phase that needs them. <em>Expected benefit:</em> stay in the very-smart zone, degrade only to normal-smart. <strong>To be validated empirically.</strong> If we measure no effect, revisit.</td>
-        </tr>
-        <tr>
-          <td class="field-name">GR-10</td>
-          <td>Deterministic enforcement by default</td>
-          <td>Anything checkable by schema, lint, regex, or AST <strong>must not</strong> be prose in a skill &mdash; push it to a tool. See <a href="#sa-enforcement">Deterministic Enforcement Catalog</a>. What we can&rsquo;t mechanize gets an ADR in the architecture doc.</td>
-        </tr>
-        <tr>
-          <td class="field-name">GR-11</td>
-          <td>Evaluation is a consideration, not a gate</td>
-          <td>Reality: eval-scenario derivation methodology is an open problem in this project; existing evals in this repo are acknowledged as weak; upper-V skills need reasoning beyond Tier 3, so the Haiku baseline doesn&rsquo;t apply universally. When building or revising a skill, discuss whether and how to evaluate it. <strong>Do not claim uplift we can&rsquo;t measure.</strong></td>
-        </tr>
-        <tr>
-          <td class="field-name">GR-12</td>
-          <td>Separation of concerns</td>
-          <td>No &ldquo;do everything&rdquo; skills &mdash; each skill owns one role. Tight coupling between orchestrator and craft-skill internals is banned.</td>
-        </tr>
-        <tr>
-          <td class="field-name">GR-13</td>
-          <td>Restart over repeated correction</td>
-          <td>When an agent is stuck &mdash; retry budget exhausted, off-track, or the same failure is being patched repeatedly &mdash; restart in fresh context with an updated contract. Don&rsquo;t keep patching a drifted reasoning trace.</td>
+          <td class="field-name">realizes (reserved)</td>
+          <td>Build-side artifacts (code file, test file, IaC)</td>
+          <td>Spec elements (DD function, TestSpec case, Architecture Composition)</td>
+          <td>Forward-compatibility for build-side traceability. Spec shapes don't change; build adds itself to the graph.</td>
         </tr>
       </tbody>
     </table>
+
+    <p><strong>DEFER markers</strong> (<code>[DEFER-DD: …]</code>, <code>[DEFER-ADR: …]</code>, <code>[NEEDS-TEST: …]</code>) are inline in artifact bodies — they name product-spec gaps without breaking traceability. The aggregate at <code>.vmodel/defer-index.md</code> is auto-generated by <code>scripts/index-deferred-items.py</code>. The pre-pivot <code>## Open follow-ups</code> section is no longer authored on any artifact.</p>
   </section>
 
 
-  <!-- ===================== SECTION: ENFORCEMENT CATALOG ===================== -->
-  <section id="sa-enforcement">
-    <h2>Deterministic Enforcement Catalog</h2>
-    <p><strong>GR-10 in action.</strong> Anything on this list is enforced by a tool, not prose in a skill. Skills reference the rule and delegate; they don&rsquo;t re-implement it in English. Every time a new skill is drafted, check this catalog first &mdash; if the rule is here, the skill delegates.</p>
+  <!-- ===================== PER-TASK FILE CONTRACT ===================== -->
+  <section id="sa-task-contract">
+    <h2>Per-task file contract (build flow)</h2>
+    <p>Each leaf build task owns a directory under <code>.vmodel/.build/tasks/&lt;task-id&gt;/</code>. The three workers (<code>render-tests</code>, <code>implement-leaf</code>, <code>review-execution</code>) communicate exclusively through files in that directory. Every file has exactly one producer.</p>
 
     <table class="field-table">
       <thead>
-        <tr><th style="width: 3rem;">#</th><th style="width: 14rem;">Enforcement</th><th style="width: 14rem;">Scope</th><th>Notes</th></tr>
+        <tr><th>File</th><th>Producer</th><th>Consumer</th><th>Purpose</th></tr>
       </thead>
       <tbody>
         <tr>
-          <td class="field-name">1</td>
-          <td>YAML/JSON schema validation</td>
-          <td>All artifacts, contracts, trace files, HALT files</td>
-          <td>Via <code>schemas/</code></td>
+          <td class="field-name">current-task.yaml</td>
+          <td><code>orchestrate-build</code></td>
+          <td>All three workers</td>
+          <td>Task contract — <code>acceptance_criteria</code>, <code>context_to_load</code>, <code>out_of_scope</code> copied verbatim from <code>tasks.yaml</code>; carries <code>mode</code> (greenfield/fix/resume), <code>attempt</code>, <code>amendments_used</code>, optional <code>resume_from_step</code>.</td>
         </tr>
         <tr>
-          <td class="field-name">2</td>
-          <td>Language linter</td>
-          <td>Source code</td>
-          <td>Per-language, no suppression directives allowed (CLAUDE.md rule)</td>
+          <td class="field-name">render-report.yaml</td>
+          <td><code>render-tests</code></td>
+          <td>Orchestrator (manifest)</td>
+          <td>Cases rendered, cases skipped, compile and red-phase confirmation.</td>
         </tr>
         <tr>
-          <td class="field-name">3</td>
-          <td>Type checker</td>
-          <td>Source code (where the language supports it)</td>
-          <td>Same no-suppression rule</td>
+          <td class="field-name">build-progress.yaml</td>
+          <td><code>implement-leaf</code> (overwrite-on-update)</td>
+          <td>Orchestrator (resume only)</td>
+          <td>Per-gate journal. <code>last_step</code> across red / green / refactor / lint / coverage / self-check / review-ready-written. Drives silent-recover / resume-at-gate / restart on resume.</td>
         </tr>
         <tr>
-          <td class="field-name">4</td>
-          <td>Test runner + exit code</td>
-          <td>Unit tests, integration tests</td>
-          <td>Pipe to <code>/tmp</code> to protect the context window (CLAUDE.md rule)</td>
+          <td class="field-name">build-blocked.yaml</td>
+          <td><code>implement-leaf</code></td>
+          <td>Orchestrator</td>
+          <td>Scope-expansion HALT. <code>blocker_type</code>, <code>needed_writes</code> / <code>needed_reads</code>, <code>suggested_resolution</code>. Routed to auto-amend (within budget) or escalate.</td>
         </tr>
         <tr>
-          <td class="field-name">5</td>
-          <td>Test meaningfulness</td>
-          <td>Unit / integration tests</td>
-          <td><strong>Mutation score is the primary signal.</strong> Line / branch coverage is a gameable floor only &mdash; AI will happily write assertion-free tests that hit 100&nbsp;% lines. Mutation below threshold &rarr; reject. Coverage-matrix cross-check still required.</td>
+          <td class="field-name">review-ready.yaml</td>
+          <td><code>implement-leaf</code> (sole producer)</td>
+          <td><code>review-execution</code></td>
+          <td>Implementation handoff: files changed, contracts implemented, lint / coverage / test status.</td>
         </tr>
         <tr>
-          <td class="field-name">6</td>
-          <td>Trace link validator</td>
-          <td>Trace files</td>
-          <td>Checks (a) target exists, (b) content-hash is not stale</td>
+          <td class="field-name">feedback.yaml</td>
+          <td><code>review-execution</code> (REJECTED only)</td>
+          <td><code>implement-leaf</code> (fix mode)</td>
+          <td><code>failures[]</code> with type, location, description, required_fix, spec_ref. Taxonomy: <code>contract-violation</code>, <code>scope-violation</code>, <code>missing-implementation</code>, <code>wrong-assertion-is-impl-bug</code>, <code>integration-failure-impl-bug</code>, <code>regression</code>.</td>
         </tr>
         <tr>
-          <td class="field-name">7</td>
-          <td>Content-hash staleness</td>
-          <td>All traced artifacts</td>
-          <td>Deterministic &mdash; no LLM needed</td>
-        </tr>
-        <tr>
-          <td class="field-name">8</td>
-          <td>File boundary guard</td>
-          <td>Every agent task</td>
-          <td>Only files in <code>files_to_touch</code> are editable (CLAUDE.md rule)</td>
-        </tr>
-        <tr>
-          <td class="field-name">9</td>
-          <td>Structured-output parser</td>
-          <td>All agent output claiming YAML / JSON</td>
-          <td>Reject on parse failure</td>
-        </tr>
-        <tr>
-          <td class="field-name">10</td>
-          <td>Requirement regex checks</td>
-          <td>Requirement artifacts</td>
-          <td>EARS patterns; subset of INCOSE&nbsp;42 rules (absolute quantifiers, passive voice, vague adjectives)</td>
-        </tr>
-        <tr>
-          <td class="field-name">11</td>
-          <td>Secret / credential detector</td>
-          <td>Pre-commit</td>
-          <td>Standard tool</td>
-        </tr>
-        <tr>
-          <td class="field-name">12</td>
-          <td>Schema-version guard</td>
-          <td>All handover / HALT files</td>
-          <td>Refuse unknown <code>schema_version</code></td>
+          <td class="field-name">ESC-NNN.yaml</td>
+          <td><code>review-execution</code> (ESCALATE only)</td>
+          <td>Orchestrator → spec-side author skill</td>
+          <td>Layer-typed escalation. Mirror copy lives in <code>.vmodel/.build/escalations/</code> (committed).</td>
         </tr>
       </tbody>
     </table>
 
-    <h3>Known non-automatable</h3>
-    <p>These stay with humans. Each gets an ADR in the architecture doc explaining why.</p>
-    <ul>
-      <li>Requirement <em>semantic</em> correctness &mdash; &ldquo;does this capture what the stakeholder meant.&rdquo;</li>
-      <li>Design judgment and trade-off reasoning.</li>
-      <li>Review judgment on clarity and writing quality.</li>
-      <li>Safety analysis completeness certification &mdash; AI measured empirically at &lt;&nbsp;70&nbsp;%; humans required.</li>
-      <li>Stakeholder interpretation and concurrence.</li>
-    </ul>
+    <p><strong>APPROVED writes no file.</strong> <code>review-execution</code> emits a single stdout line <code>APPROVED &lt;task-id&gt;</code>; the orchestrator infers APPROVED from the absence of <code>feedback.yaml</code> and any new <code>ESC-NNN.yaml</code> after dispatch. The implementation's <code>review-ready.yaml</code> remains as the record of what was implemented.</p>
   </section>
 
 
-  <!-- ===================== SECTION: HALT PATTERN ===================== -->
-  <section id="sa-halt">
-    <h2>HALT Pattern</h2>
-    <p class="lead">Every skill gives the agent an explicit HALT path when its instructions or inputs don&rsquo;t fit the situation. HALT is not failure &mdash; it is a deliberate pause that produces a versioned, typed artifact a human can resume from.</p>
+  <!-- ===================== SPEC FLOW SKILLS ===================== -->
+  <section id="sa-spec-skills">
+    <h2>Spec Flow — Skill Catalog</h2>
+    <p>12 spec-side skills. Two elicitation skills produce a root product; five author/review pairs produce the rest. Author skills draft and revise; review skills emit a structured verdict (APPROVED / REJECTED / DESIGN_ISSUE) plus findings tied to specific element IDs.</p>
 
-    <h3>When to HALT</h3>
-    <table class="field-table">
-      <thead>
-        <tr><th style="width: 14rem;">Category</th><th>Trigger</th></tr>
-      </thead>
-      <tbody>
-        <tr><td class="field-name">uncertain</td><td>Multiple viable options with no defensible default from context.</td></tr>
-        <tr><td class="field-name">missing-input</td><td>Contract depends on an artifact that is not available or not trustworthy.</td></tr>
-        <tr><td class="field-name">off-track</td><td>Reasoning has drifted from the task&rsquo;s scope or intent. Stop rather than compound the drift.</td></tr>
-        <tr><td class="field-name">conflict</td><td>Instructions or inputs contradict each other and the agent cannot resolve it.</td></tr>
-        <tr><td class="field-name">out-of-scope</td><td>Correctness requires changes outside <code>files_to_touch</code>.</td></tr>
-        <tr><td class="field-name">design-issue</td><td>An architectural problem blocks implementation &mdash; needs a design decision, not a code change.</td></tr>
-        <tr><td class="field-name">retry-exhausted</td><td>Retry budget has been hit (see GR-13). Restart in fresh context rather than continue patching.</td></tr>
-      </tbody>
-    </table>
+    <h3>Elicitation skills (root product)</h3>
 
-    <h3>HALT Schema v1</h3>
-    <div class="code-block">
-      <span class="lang-label">YAML</span>
-      <code># .workflow/halts/&lt;ISO-timestamp&gt;_&lt;halt_id&gt;.yaml
-# Pointer to most recent: .workflow/halt.yaml (symlink or copy)
-
-schema_version: 1
-
-halt_id: halt-2026-04-16-001
-timestamp: 2026-04-16T14:32:11Z
-
-# Who halted
-agent: vmodel-agent-tdd-developer           # agent that halted
-skill: vmodel-skill-develop-code            # skill active at halt (optional)
-task_contract: .workflow/current_task.yaml  # pointer, not inline
-
-# Why
-category: uncertain | missing-input | off-track | conflict | out-of-scope | design-issue | retry-exhausted
-trigger: "one-line description of what triggered the halt"
-context_summary: |
-  2-5 lines: what the agent was doing, how far it got, what state
-  it's leaving behind.
-
-# What was tried (for retry-exhausted or off-track)
-what_was_tried:
-  - attempt: 1
-    approach: "brief description"
-    outcome: "what happened"
-  # ...
-
-# What the agent needs from human
-specific_question: "single crisp question, or null if category is design-issue/retry-exhausted"
-options:                                    # null if open-ended
-  - name: "option-a-slug"
-    summary: "1-2 lines"
-    consequence: "1-2 lines on downstream impact"
-  - name: "option-b-slug"
-    summary: "..."
-    consequence: "..."
-
-# Enables clean resume
-work_in_progress:
-  files_touched: ["src/foo.py", "tests/test_foo.py"]   # for rollback/commit decisions
-  uncommitted: true
-  references: [".workflow/current_task.yaml", "design/foo-dd.md"]
-
-resume_instructions: |
-  Human provides: answer to specific_question (or selected option).
-  Resuming agent loads: task_contract, halt.yaml, files_touched.
-  Recommended: restart in fresh context per GR-13 if category is
-  off-track or retry-exhausted.</code>
-    </div>
-
-    <h3>Rules of Use</h3>
-    <ul>
-      <li>Every agent entry reads and references a contract; every agent exit &mdash; success, failure, or HALT &mdash; writes a handover artifact (GR-8).</li>
-      <li><code>schema_version: 1</code>. Bump on any field rename or semantic change. Agents <strong>must</strong> refuse to parse a HALT with an unknown <code>schema_version</code> (catalog item&nbsp;12).</li>
-      <li>Stored under <code>.workflow/halts/</code> with full history. <code>.workflow/halt.yaml</code> always points to the most recent.</li>
-      <li><strong>Resume default for <code>off-track</code> and <code>retry-exhausted</code>:</strong> restart in fresh context (GR-13). Patching a drifted trace compounds the drift.</li>
-    </ul>
-  </section>
-
-
-  <!-- ===================== SECTION 4: CRAFT SKILLS ===================== -->
-  <section id="sa-craft">
-    <h2>Craft Skills</h2>
-    <p>Framework-independent best practices. Each skill is derived from the corresponding artifact documentation page. The skill adds value only where models don&rsquo;t already follow best practice by default &mdash; the delta that matters.</p>
-
-    <!-- develop-code -->
-    <div class="card skill-card craft">
-      <div class="skill-type">Craft Skill</div>
-      <h4>vmodel-skill-develop-code</h4>
-      <p>Implement production code from a design document with quantified quality constraints.</p>
+    <div class="card skill-card spec">
+      <div class="skill-type">Spec — Elicitation</div>
+      <h4>vmodel-skill-elicit-needs</h4>
+      <p>Interactive stakeholder elicitation that produces a rough <code>needs.md</code> from unstructured input (interview notes, transcripts, drafts, scattered ideas).</p>
       <dl class="ref-grid">
-        <dt>Status</dt><dd>Exists (iteration 2)</dd>
-        <dt>Derived from</dt><dd><a href="artifacts/source-code.html">Source Code documentation</a></dd>
-        <dt>Input</dt><dd>Design document (any format)</dd>
-        <dt>Output</dt><dd>Production source code files</dd>
-        <dt>Key delta</dt><dd>Quantified complexity limits (function length, cyclomatic complexity, nesting), strict error handling rules (no null returns, no swallowed exceptions), architecture boundary enforcement (domain imports nothing from infrastructure), SOLID principles (SRP, OCP, LSP, ISP, DIP with litmus tests), functional core/imperative shell separation</dd>
-        <dt>References</dt><dd><code>code-quality-checks.md</code></dd>
-        <dt>HALT conditions</dt><dd>Vague design, complexity limits require redesign, out-of-scope files needed</dd>
+        <dt>Reads</dt><dd>Stakeholder narrative (chat, transcript, draft, file)</dd>
+        <dt>Writes</dt><dd><code>specs/needs.md</code></dd>
+        <dt>Disciplines</dt><dd>Anti-assumption · Explanation-while-eliciting · Gap-finding · Readback-for-joint-agreement</dd>
+        <dt>HALT</dt><dd>Stakeholder unavailable for readback; ambiguity that cannot be surfaced</dd>
       </dl>
     </div>
 
-    <!-- derive-test-cases -->
-    <div class="card skill-card craft">
-      <div class="skill-type">Craft Skill</div>
-      <h4>vmodel-skill-derive-test-cases</h4>
-      <p>Derive comprehensive test cases from a design document using four systematic strategies. Tests verify <em>design</em>, not code.</p>
+    <div class="card skill-card spec">
+      <div class="skill-type">Spec — Elicitation</div>
+      <h4>vmodel-skill-elicit-pd</h4>
+      <p>Lightweight Product Description — vision-only, five mandatory sections (Product, Users, Smallest worthwhile slice, Out of scope, Open questions). Question-prompted blind-spot scanning.</p>
       <dl class="ref-grid">
-        <dt>Status</dt><dd>Exists (iteration 4 &mdash; added principles, coverage matrix mandate, test double guidance)</dd>
-        <dt>Derived from</dt><dd><a href="artifacts/unit-test.html">Unit Test documentation</a></dd>
-        <dt>Input</dt><dd>Design document (any format)</dd>
-        <dt>Output</dt><dd>Test source code files + coverage matrix (design element &rarr; test case &rarr; strategy)</dd>
-        <dt>Key delta</dt><dd>Four derivation strategies (requirement-based, equivalence class, boundary value, fault injection) applied systematically. Forces spec-to-test instead of code-to-test. Anti-pattern guard against tautological and assertion-free tests. Mandatory coverage matrix as traceability artifact. Test double decision rules (mock only infrastructure; real &gt; fake &gt; stub &gt; mock). Assertion specificity enforcement.</dd>
-        <dt>References</dt><dd><code>derivation-strategies.md</code>, <code>testing-anti-patterns.md</code>, <code>ai-testing-failures.md</code></dd>
-        <dt>HALT conditions</dt><dd>Vague design, ambiguous behavior rules, unknown test framework, &gt;2 mocked dependencies</dd>
+        <dt>Reads</dt><dd>Initial vision narrative from human</dd>
+        <dt>Writes</dt><dd><code>specs/product_description.md</code></dd>
+        <dt>Use when</dt><dd>Discovery is not the bottleneck and a vision-level start is wanted (engineering-internal tools, dogfood projects)</dd>
+        <dt>Does NOT enforce</dt><dd>Stakeholder roster, NFR matrix — push to Requirements or use heavier PB</dd>
       </dl>
     </div>
 
-    <!-- review-code -->
-    <div class="card skill-card craft">
-      <div class="skill-type">Craft Skill</div>
-      <h4>vmodel-skill-review-code</h4>
-      <p>Review source code and unit tests together against design specification and quality criteria. Produces a structured verdict.</p>
-      <dl class="ref-grid">
-        <dt>Status</dt><dd>Done (C1, 2026-04-10)</dd>
-        <dt>Derived from</dt><dd><a href="artifacts/source-code.html">Source Code</a> (Section 3.5: Code Review) + <a href="artifacts/unit-test.html">Unit Test</a> (Section 3.5: Test Smells, Section 3.7: AI Testing Failures)</dd>
-        <dt>Input</dt><dd>Source code + test code + design document</dd>
-        <dt>Output</dt><dd>Review verdict: APPROVED, REJECTED (with findings table + fix instructions), or DESIGN_ISSUE (escalate to human &mdash; the code is correct per a flawed design)</dd>
-        <dt>Key delta</dt><dd>Strict checklist enforcement across three passes: (1) code quality &mdash; design compliance, complexity, error handling, SOLID, architecture boundaries, naming, dead code; (2) test quality &mdash; derivation completeness, anti-pattern detection, assertion quality, mock audit, AI testing failure modes (always-on); (3) cross-checks &mdash; every design element has code, every design element has tests, no orphan code/tests, interface match, boundary consistency. All findings block &mdash; no severity filtering.</dd>
-        <dt>References</dt><dd><code>review-checklist-code.md</code>, <code>code-quality-checks.md</code>, <code>testing-anti-patterns.md</code>, <code>ai-testing-failures.md</code>, <code>review-verdict-template.md</code></dd>
-        <dt>HALT conditions</dt><dd>Design document not available, unable to determine design intent</dd>
-      </dl>
-      <p><strong>Why combined:</strong> Code quality and test quality are interdependent. A reviewer cannot assess test coverage without seeing the code, and cannot assess code correctness without seeing what the tests actually verify. The checklist has clear sections for code-specific, test-specific, and cross-cutting concerns.</p>
-      <p><strong>Three verdicts:</strong> APPROVED means all checks pass. REJECTED means specific findings that the developer must fix. DESIGN_ISSUE means the reviewer found a problem that cannot be fixed without changing the design (wrong decomposition, missing interface, contradictory specification) &mdash; this escalates to human rather than cycling back to developer.</p>
-    </div>
+    <h3>Author / Review pairs (5 pairs)</h3>
 
-    <!-- develop-dd -->
-    <div class="card skill-card craft">
-      <div class="skill-type">Craft Skill</div>
-      <h4>vmodel-skill-develop-dd</h4>
-      <p>Create a detailed design for a component or unit, working forward from requirements and architecture.</p>
-      <dl class="ref-grid">
-        <dt>Status</dt><dd>To build</dd>
-        <dt>Derived from</dt><dd><a href="artifacts/detailed-design.html">Detailed Design documentation</a></dd>
-        <dt>Input</dt><dd>Requirements and/or architecture, scope description</dd>
-        <dt>Output</dt><dd>Detailed design document (Markdown with YAML frontmatter)</dd>
-        <dt>Key delta</dt><dd>Interface specification completeness (Design by Contract: preconditions, postconditions, invariants, error semantics for every public interface). Behavioral specification using appropriate formalism (decision tables, state machines). Mandatory design rationale. Error handling as explicit design decisions, not afterthought. Tiering guidance (L1/L2/L3).</dd>
-        <dt>References</dt><dd><code>design-quality-criteria.md</code></dd>
-        <dt>HALT conditions</dt><dd>Requirements too vague, scope too large for single design unit, contradictory constraints</dd>
-      </dl>
-      <p><strong>Risk profile (forward):</strong> Over-specification, gold plating, designing beyond what requirements ask for. The skill enforces &ldquo;design what is required, no more.&rdquo;</p>
-    </div>
+    <div class="card-grid">
+      <div class="card skill-card spec">
+        <div class="skill-type">Spec — Author</div>
+        <h4>vmodel-skill-author-requirements</h4>
+        <p>Refines an upstream root product or parent Requirements allocation into atomic, testable, EARS-structured statements with rationale and traceability.</p>
+        <dl class="ref-grid">
+          <dt>Reads</dt><dd>Root product (PB / needs / PD) or parent Requirements; ADRs in scope</dd>
+          <dt>Writes</dt><dd><code>{scope}/requirements.md</code></dd>
+          <dt>Refuses</dt><dd>Fabricated rationale, smuggled design (named technologies / algorithms in statements)</dd>
+        </dl>
+      </div>
 
-    <!-- retrofit-dd -->
-    <div class="card skill-card craft">
-      <div class="skill-type">Craft Skill</div>
-      <h4>vmodel-skill-retrofit-dd</h4>
-      <p>Reverse-engineer a detailed design from existing source code. Captures intent and decisions, not just structure.</p>
-      <dl class="ref-grid">
-        <dt>Status</dt><dd>To build</dd>
-        <dt>Derived from</dt><dd><a href="artifacts/detailed-design.html">Detailed Design documentation</a> (Section 3.8: AI-Assisted Design)</dd>
-        <dt>Input</dt><dd>Existing source code, any available documentation or comments</dd>
-        <dt>Output</dt><dd>Detailed design document (Markdown with YAML frontmatter)</dd>
-        <dt>Key delta</dt><dd>Guards against the post-hoc paraphrase trap (restating code as design). Forces identification of actual decisions vs. happenstance. Flags areas where intent is ambiguous and human input is needed. Separates &ldquo;what the code does&rdquo; from &ldquo;what the code was meant to do.&rdquo;</dd>
-        <dt>References</dt><dd><code>design-quality-criteria.md</code>, <code>retrofit-risks.md</code></dd>
-        <dt>HALT conditions</dt><dd>Code too complex to analyze in scope, intent genuinely unrecoverable without domain expert, multiple plausible design interpretations</dd>
-      </dl>
-      <p><strong>Risk profile (retrofit):</strong> Post-hoc rationalization, code paraphrase disguised as design, missing implicit decisions. This skill requires more frequent human involvement than forward design &mdash; the orchestration must account for this with additional human gates when retrofit mode is active.</p>
-    </div>
+      <div class="card skill-card spec">
+        <div class="skill-type">Spec — Review</div>
+        <h4>vmodel-skill-review-requirements</h4>
+        <p>Verdict on atomicity, testability, EARS conformance, NFR measurability (five-element rule), interface contracts, traceability gaps, Spec Ambiguity Test.</p>
+        <dl class="ref-grid">
+          <dt>Reads</dt><dd>The Requirements doc + upstream + ADRs</dd>
+          <dt>Writes</dt><dd><code>.vmodel/.reviews/REQS-{scope}-DATE-NN.yaml</code></dd>
+          <dt>Verdicts</dt><dd>APPROVED · REJECTED · DESIGN_ISSUE</dd>
+        </dl>
+      </div>
 
-    <!-- review-dd -->
-    <div class="card skill-card craft">
-      <div class="skill-type">Craft Skill</div>
-      <h4>vmodel-skill-review-dd</h4>
-      <p>Review a detailed design against quality criteria and upstream requirements. Produces a structured verdict.</p>
-      <dl class="ref-grid">
-        <dt>Status</dt><dd>To build</dd>
-        <dt>Derived from</dt><dd><a href="artifacts/detailed-design.html">Detailed Design documentation</a> (Section 3, all subsections)</dd>
-        <dt>Input</dt><dd>Detailed design document + upstream requirements/architecture</dd>
-        <dt>Output</dt><dd>Review verdict (APPROVED / REJECTED / DESIGN_ISSUE with findings)</dd>
-        <dt>Key delta</dt><dd>Checklist across: (1) interface completeness &mdash; every public interface has full contract (pre/post/invariants/errors/nullability/thread-safety); (2) behavioral specification &mdash; all behavior rules are unambiguous and testable; (3) rationale &mdash; every design decision has documented reasoning; (4) error handling &mdash; all error conditions identified with explicit strategy; (5) testability &mdash; can unit tests be derived from this design?</dd>
-        <dt>References</dt><dd><code>review-checklist-dd.md</code>, <code>design-quality-criteria.md</code></dd>
-        <dt>HALT conditions</dt><dd>Upstream requirements not available for compliance check</dd>
-      </dl>
+      <div class="card skill-card spec">
+        <div class="skill-type">Spec — Author</div>
+        <h4>vmodel-skill-author-architecture</h4>
+        <p>Decomposes a non-leaf scope into children with responsibilities and Design-by-Contract interface contracts; specifies a runtime composition pattern; allocates quality attributes.</p>
+        <dl class="ref-grid">
+          <dt>Reads</dt><dd>Requirements at this scope; parent Architecture (if branch); ADRs</dd>
+          <dt>Writes</dt><dd><code>{scope}/architecture.md</code> (+ optional <code>architecture/interfaces/</code> bundle)</dd>
+          <dt>Refuses</dt><dd>Detailed Design content inside Architecture; shipping without non-trivial Composition section</dd>
+          <dt>Emits</dt><dd><code>[DEFER-ADR: …]</code> markers when decisions are exposed but not yet captured</dd>
+        </dl>
+      </div>
+
+      <div class="card skill-card spec">
+        <div class="skill-type">Spec — Review</div>
+        <h4>vmodel-skill-review-architecture</h4>
+        <p>Verdict on decomposition discipline, DbC interface contracts, Composition completeness, quality-attribute allocation, resilience, security and observability at boundaries, retrofit honesty, governing_adrs resolution, Spec Ambiguity Test.</p>
+        <dl class="ref-grid">
+          <dt>Reads</dt><dd>The Architecture doc + Requirements + ADRs + child specs (if any)</dd>
+          <dt>Writes</dt><dd><code>.vmodel/.reviews/ARCH-{scope}-DATE-NN.yaml</code></dd>
+        </dl>
+      </div>
+
+      <div class="card skill-card spec">
+        <div class="skill-type">Spec — Author</div>
+        <h4>vmodel-skill-author-adr</h4>
+        <p>Captures one load-bearing decision that meets the three-condition threshold (load-bearing AND ≥ 2 real options AND contingent on changeable assumptions). Immutable once accepted.</p>
+        <dl class="ref-grid">
+          <dt>Reads</dt><dd>The triggering context (DEFER-ADR marker, external policy, retrofit code evidence)</dd>
+          <dt>Writes</dt><dd><code>{scope}/adrs/adr-NNN-{slug}.md</code></dd>
+          <dt>Refuses</dt><dd>Single-option alternatives, routine-choice ADRs, missing Reversibility answer, fabricated rationale</dd>
+        </dl>
+      </div>
+
+      <div class="card skill-card spec">
+        <div class="skill-type">Spec — Review</div>
+        <h4>vmodel-skill-review-adr</h4>
+        <p>Verdict on three-condition threshold, named-driver Context, ≥ 2-real-alternatives discipline, driver-citing Rationale, Consequences both-signs, Reversibility sub-prompt, propagation hybrid rule, supersession lineage, retrofit honesty, Spec Ambiguity Test.</p>
+        <dl class="ref-grid">
+          <dt>Reads</dt><dd>The ADR + governing artifacts</dd>
+          <dt>Writes</dt><dd><code>.vmodel/.reviews/ADR-NNN-DATE-NN.yaml</code></dd>
+        </dl>
+      </div>
+
+      <div class="card skill-card spec">
+        <div class="skill-type">Spec — Author</div>
+        <h4>vmodel-skill-author-detailed-design</h4>
+        <p>Refines a parent Architecture's leaf-allocation into a DD with seven mandatory sections — the level at which code can be implemented and unit tests derived without guessing.</p>
+        <dl class="ref-grid">
+          <dt>Reads</dt><dd>Parent Architecture (mandatory); governing ADRs</dd>
+          <dt>Writes</dt><dd><code>{scope}/{leaf}/detailed_design.md</code></dd>
+          <dt>Refuses</dt><dd>Code paraphrase, algorithmic postconditions, fabricated retrofit rationale, authoring without parent Architecture</dd>
+        </dl>
+      </div>
+
+      <div class="card skill-card spec">
+        <div class="skill-type">Spec — Review</div>
+        <h4>vmodel-skill-review-detailed-design</h4>
+        <p>Verdict on Design-by-Contract completeness, data-structure invariants, result-property algorithms, state-machine completeness, error-matrix coverage, rationale, retrofit honesty, ADR traceability, TestSpec seams, Spec Ambiguity Test.</p>
+        <dl class="ref-grid">
+          <dt>Reads</dt><dd>The DD + parent Architecture + ADRs</dd>
+          <dt>Writes</dt><dd><code>.vmodel/.reviews/DD-{scope}-{name}-DATE-NN.yaml</code></dd>
+        </dl>
+      </div>
+
+      <div class="card skill-card spec">
+        <div class="skill-type">Spec — Author</div>
+        <h4>vmodel-skill-author-testspec</h4>
+        <p>Derives test cases from the layer's upstream spec (leaf → DD; branch → Architecture; root → Requirements + root product) via named strategies, with non-empty <code>verifies</code> links and specific oracles on every case.</p>
+        <dl class="ref-grid">
+          <dt>Reads</dt><dd>Layer-dependent: DD (leaf), Architecture (branch), Requirements + root product (root); ADRs</dd>
+          <dt>Writes</dt><dd><code>{scope}/testspec.md</code></dd>
+          <dt>Refuses</dt><dd>Fabricated retrofit intent, orphan cases, weak assertions, missing coverage bar</dd>
+        </dl>
+      </div>
+
+      <div class="card skill-card spec">
+        <div class="skill-type">Spec — Review</div>
+        <h4>vmodel-skill-review-testspec</h4>
+        <p>Verdict on derivation-strategy coverage, <code>verifies</code> traceability, oracle specificity, per-layer case shape, test-double discipline, coverage and mutation bar, retrofit discipline, cross-artifact traceability, Spec Ambiguity Test.</p>
+        <dl class="ref-grid">
+          <dt>Reads</dt><dd>The TestSpec + upstream spec at the same layer</dd>
+          <dt>Writes</dt><dd><code>.vmodel/.reviews/TS-{scope}-DATE-NN.yaml</code></dd>
+        </dl>
+      </div>
     </div>
   </section>
 
 
-  <!-- ===================== SECTION 5: FRAMEWORK SKILLS ===================== -->
-  <section id="sa-framework">
-    <h2>Framework Skills</h2>
-    <p>Thin adapter skills that introduce VModelWorkflow-specific concepts. These contain <em>only</em> schema and format information &mdash; no craft knowledge. If templates or schemas change, only these skills update.</p>
-
-    <!-- dd-template -->
-    <div class="card skill-card framework">
-      <div class="skill-type">Framework Skill</div>
-      <h4>vmodel-skill-dd-template</h4>
-      <p>How to produce and consume detailed design documents in VModelWorkflow format.</p>
-      <dl class="ref-grid">
-        <dt>Status</dt><dd>To build</dd>
-        <dt>Content</dt><dd>Schema reference (<code>detailed-design.schema.yaml</code> v2.0), layer model (L1 component / L2 interface / L3 deep evidence), heading structure, ID conventions (CD-nnn, DD-nnn), YAML frontmatter fields, Markdown body format</dd>
-        <dt>Used by</dt><dd>DD developer agent, DD reviewer agent</dd>
-        <dt>Does NOT contain</dt><dd>Design quality criteria, review checklists, or any craft knowledge about what makes a good design</dd>
-      </dl>
-    </div>
-
-    <!-- traceability -->
-    <div class="card skill-card framework">
-      <div class="skill-type">Framework Skill</div>
-      <h4>vmodel-skill-traceability</h4>
-      <p>How to create, update, and validate trace links between VModelWorkflow artifacts.</p>
-      <dl class="ref-grid">
-        <dt>Status</dt><dd>To build</dd>
-        <dt>Content</dt><dd>Trace file format, link types (verified-by, allocated-to, derived-from, implemented-by), content hash for staleness detection, link rules per artifact type, where trace files live relative to artifacts</dd>
-        <dt>Used by</dt><dd>All developer and reviewer agents</dd>
-        <dt>Does NOT contain</dt><dd>What makes a good design or good code &mdash; only how to express trace relationships</dd>
-      </dl>
-    </div>
-
-    <!-- tool-checks -->
-    <div class="card skill-card framework">
-      <div class="skill-type">Framework Skill</div>
-      <h4>vmodel-skill-tool-checks</h4>
-      <p>How to read the project configuration and run the defined automated checks.</p>
-      <dl class="ref-grid">
-        <dt>Status</dt><dd>To build</dd>
-        <dt>Content</dt><dd>Config file format (<code>.vmodel/config.yaml</code>), check resolution order (component override → project default), how to run checks, how to interpret results, what to do on failure</dd>
-        <dt>Used by</dt><dd>All producer agents (run checks before declaring done), all reviewer agents (verify checks passed)</dd>
-        <dt>Does NOT contain</dt><dd>Which specific checks to run &mdash; that is project configuration, not skill knowledge</dd>
-      </dl>
-    </div>
-
-    <h3>Extensibility</h3>
-    <p>As we move up the V-model, new framework skills will be added for each layer&rsquo;s template format (e.g., <code>vmodel-skill-sw-req-template</code>, <code>vmodel-skill-arch-template</code>). The traceability and tool-checks skills are layer-agnostic and will not need duplication.</p>
-  </section>
-
-
-  <!-- ===================== SECTION 6: AGENTS ===================== -->
-  <section id="sa-agents">
-    <h2>Agent Definitions</h2>
-    <p>Agents are subagents &mdash; isolated execution environments with their own context window, scoped tool access, and a structured input/output contract. Each agent composes relevant skills and runs one task to completion.</p>
-
-    <!-- TDD Developer -->
-    <div class="card skill-card agent">
-      <div class="skill-type">Agent — Producer</div>
-      <h4>vmodel-agent-tdd-developer</h4>
-      <p>Takes a task contract and produces code + tests using red-green-refactor TDD. Runs all configured tool checks before declaring done.</p>
-      <dl class="ref-grid">
-        <dt>Skills loaded</dt><dd><code>vmodel-skill-develop-code</code>, <code>vmodel-skill-derive-test-cases</code>, <code>vmodel-skill-traceability</code>, <code>vmodel-skill-tool-checks</code></dd>
-        <dt>Input</dt><dd>Task contract (from decomposer) + detailed design document</dd>
-        <dt>Output</dt><dd>Source code files, test files, trace links, tool check results</dd>
-        <dt>Tool access</dt><dd>Read, Write, Edit, Bash, Glob, Grep (full file system access within scope)</dd>
-        <dt>Process</dt><dd>
-          <ol>
-            <li>Read task contract, load context files</li>
-            <li>Read design document for the units in scope</li>
-            <li><strong>Red:</strong> Derive test cases from design (invoke derive-test-cases knowledge). Write tests. Confirm they fail.</li>
-            <li><strong>Green:</strong> Implement code from design (invoke develop-code knowledge). Write minimum code to pass tests.</li>
-            <li><strong>Refactor:</strong> Clean up without changing behavior. Apply code quality checks.</li>
-            <li>Create/update trace links (invoke traceability knowledge)</li>
-            <li>Run tool checks from config (invoke tool-checks knowledge)</li>
-            <li>If all checks pass: write completion artifact. If checks fail: fix and retry (max 3 attempts, different approach each time).</li>
-          </ol>
-        </dd>
-        <dt>Escalation</dt><dd>HALTs to pipeline controller if: design is ambiguous, scope exceeds contract, 3 consecutive check failures</dd>
-      </dl>
-    </div>
-
-    <!-- Code Reviewer -->
-    <div class="card skill-card agent">
-      <div class="skill-type">Agent — Reviewer</div>
-      <h4>vmodel-agent-code-reviewer</h4>
-      <p>Reviews developer output against design specification, quality criteria, and tool check results. Produces a verdict.</p>
-      <dl class="ref-grid">
-        <dt>Skills loaded</dt><dd><code>vmodel-skill-review-code</code>, <code>vmodel-skill-traceability</code>, <code>vmodel-skill-tool-checks</code></dd>
-        <dt>Input</dt><dd>Task contract + design document + developer output (code, tests, traces, check results)</dd>
-        <dt>Output</dt><dd>Review verdict: APPROVED, REJECTED (with specific findings + fix instructions), or DESIGN_ISSUE (escalate to human)</dd>
-        <dt>Tool access</dt><dd>Read, Glob, Grep <strong>(read-only &mdash; reviewer cannot modify code)</strong></dd>
-        <dt>Process</dt><dd>
-          <ol>
-            <li>Read task contract and design document</li>
-            <li>Verify tool checks were run and passed</li>
-            <li>Review code against checklist (code quality section)</li>
-            <li>Review tests against checklist (test quality section)</li>
-            <li>Cross-check: every design element has implementation + test</li>
-            <li>Check trace link completeness and correctness</li>
-            <li>Produce structured verdict with evidence for each finding</li>
-          </ol>
-        </dd>
-        <dt>DESIGN_ISSUE</dt><dd>If the review reveals a problem that cannot be fixed without changing the design (wrong decomposition, missing interface, contradictory requirements), the reviewer writes a DESIGN_ISSUE verdict. This escalates to human rather than cycling back to developer.</dd>
-      </dl>
-    </div>
-
-    <!-- DD Developer -->
-    <div class="card skill-card agent">
-      <div class="skill-type">Agent — Producer</div>
-      <h4>vmodel-agent-dd-developer</h4>
-      <p>Creates detailed design documents from requirements/architecture. Uses forward or retrofit skill based on context.</p>
-      <dl class="ref-grid">
-        <dt>Skills loaded</dt><dd><code>vmodel-skill-develop-dd</code> OR <code>vmodel-skill-retrofit-dd</code> (selected by orchestrator), <code>vmodel-skill-dd-template</code>, <code>vmodel-skill-traceability</code>, <code>vmodel-skill-tool-checks</code></dd>
-        <dt>Input</dt><dd>Task contract + requirements/architecture (forward) OR existing code (retrofit)</dd>
-        <dt>Output</dt><dd>Detailed design document (VModelWorkflow format), trace links, tool check results</dd>
-        <dt>Tool access</dt><dd>Read, Write, Edit, Glob, Grep (needs to read code for retrofit, write design docs)</dd>
-        <dt>Process</dt><dd>
-          <ol>
-            <li>Read task contract, load context</li>
-            <li>Apply develop-dd or retrofit-dd craft knowledge</li>
-            <li>Produce design in VModelWorkflow template format (dd-template knowledge)</li>
-            <li>Create trace links to upstream artifacts</li>
-            <li>Run tool checks, fix issues, write completion artifact</li>
-          </ol>
-        </dd>
-        <dt>Retrofit note</dt><dd>When in retrofit mode, additional HALT conditions apply: ambiguous intent flags human review rather than guessing.</dd>
-      </dl>
-    </div>
-
-    <!-- DD Reviewer -->
-    <div class="card skill-card agent">
-      <div class="skill-type">Agent — Reviewer</div>
-      <h4>vmodel-agent-dd-reviewer</h4>
-      <p>Reviews detailed design against quality criteria and upstream requirements. Produces a verdict.</p>
-      <dl class="ref-grid">
-        <dt>Skills loaded</dt><dd><code>vmodel-skill-review-dd</code>, <code>vmodel-skill-dd-template</code>, <code>vmodel-skill-traceability</code>, <code>vmodel-skill-tool-checks</code></dd>
-        <dt>Input</dt><dd>Task contract + design document + upstream requirements/architecture</dd>
-        <dt>Output</dt><dd>Review verdict: APPROVED, REJECTED, or DESIGN_ISSUE</dd>
-        <dt>Tool access</dt><dd>Read, Glob, Grep <strong>(read-only)</strong></dd>
-      </dl>
-    </div>
-
-    <!-- Task Decomposer -->
-    <div class="card skill-card agent">
-      <div class="skill-type">Agent — Planning</div>
-      <h4>vmodel-agent-task-decomposer</h4>
-      <p>Reads the implementation plan and produces scoped task contracts that fit within a single agent context window.</p>
-      <dl class="ref-grid">
-        <dt>Skills loaded</dt><dd>(none &mdash; this is an architectural reasoning task, not a craft task)</dd>
-        <dt>Input</dt><dd>Implementation plan (from research/plan phase) + detailed design documents + project config</dd>
-        <dt>Output</dt><dd>Task contract files (one per task)</dd>
-        <dt>Tool access</dt><dd>Read, Write, Glob, Grep</dd>
-        <dt>Sizing rule</dt><dd>Each task must be completable within a single agent session. Heuristic: one component or unit at a time. If a design has 5 units, that&rsquo;s 5 task contracts, not 1.</dd>
-        <dt>Model tier</dt><dd>Tier 1 — Reasoning (requires architectural judgment about scope and dependencies)</dd>
-      </dl>
-    </div>
-  </section>
-
-
-  <!-- ===================== SECTION 7: PIPELINE ===================== -->
-  <section id="sa-pipeline">
-    <h2>Pipeline &amp; Handoffs</h2>
-    <p>The pipeline is a state machine where every transition produces a document on disk. The orchestrator is a lean skill that reads state, decides the next step, and spawns the appropriate agent.</p>
-
-    <h3>End-to-End Flow</h3>
+  <!-- ===================== AUTHOR ↔ REVIEW HANDOVER ===================== -->
+  <section id="sa-spec-handover">
+    <h2>Author ↔ Review Handover</h2>
+    <p>Author and review skills interoperate exclusively through files. No chat. The author drafts; the review verdicts to a YAML file; the author reads the latest verdict on the next revision.</p>
 
     <div class="pipeline-flow">
       <div class="pipeline-step human-gate">
-        <div class="step-label">Phase 1 — Own Session</div>
-        <div class="step-name">Research &amp; Plan</div>
-        <div class="step-detail">Human-driven, interactive. Gathers context, discusses approach, makes design decisions.</div>
-        <div class="step-artifact">→ implementation-plan.yaml</div>
-      </div>
-      <div class="pipeline-step human-gate">
-        <div class="step-label">Phase 2 — Human Gate</div>
-        <div class="step-name">Task Decomposition</div>
-        <div class="step-detail">Subagent reads plan, produces contracts. Human approves scope.</div>
-        <div class="step-artifact">→ task-contracts/*.yaml</div>
+        <div class="step-label">Step 1</div>
+        <div class="step-name">Human invokes author</div>
+        <div class="step-detail"><code>/vmodel-skill-author-architecture</code> at a scope</div>
       </div>
       <div class="pipeline-step">
-        <div class="step-label">Phase 3 — Automated Loop</div>
-        <div class="step-name">Build → Review</div>
-        <div class="step-detail">Per task: developer agent produces, reviewer agent validates. Feedback loop (max 3).</div>
-        <div class="step-artifact">→ code, tests, traces, verdicts</div>
+        <div class="step-label">Step 2</div>
+        <div class="step-name">Author drafts</div>
+        <div class="step-detail">Reads upstream + governing ADRs; produces or revises the artifact</div>
+        <div class="step-artifact">→ specs/{scope}/architecture.md</div>
       </div>
       <div class="pipeline-step human-gate">
-        <div class="step-label">Phase 4 — Human Gate</div>
-        <div class="step-name">Final Review</div>
-        <div class="step-detail">Human reviews all output. Approves or rejects.</div>
-        <div class="step-artifact">→ approved artifacts</div>
+        <div class="step-label">Step 3</div>
+        <div class="step-name">Human invokes review</div>
+        <div class="step-detail"><code>/vmodel-skill-review-architecture</code></div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-label">Step 4</div>
+        <div class="step-name">Review verdicts</div>
+        <div class="step-detail">APPROVED / REJECTED / DESIGN_ISSUE + findings tied to element IDs</div>
+        <div class="step-artifact">→ .vmodel/.reviews/ARCH-{scope}-DATE-NN.yaml</div>
+      </div>
+      <div class="pipeline-step human-gate">
+        <div class="step-label">Step 5</div>
+        <div class="step-name">Human routes</div>
+        <div class="step-detail">If REJECTED → re-invoke author (mode B); if DESIGN_ISSUE → fix at the responsible upstream layer</div>
       </div>
     </div>
 
-    <h3>Phase 1: Research &amp; Plan</h3>
-    <p>Runs in its own session. The human provides context and goals; the AI gathers information, analyzes impact, and proposes approaches. This is a back-and-forth discussion that may take significant context. The output is a clean artifact that captures all decisions &mdash; the exploration history is discarded.</p>
+    <h3>Mode B — author with review feedback</h3>
+    <p>When an author skill is invoked on an existing artifact, it reads the latest review file at <code>.vmodel/.reviews/&lt;artifact-id&gt;-*.yaml</code> (lexically last). Each finding is addressed in the revision — applied, pushed back with rationale, or deferred via an explicit marker. The revision narrative names which findings were addressed and how.</p>
 
-    <h4>Output: Implementation Plan</h4>
+    <h3>Verdict file shape</h3>
     <div class="code-block">
       <span class="lang-label">YAML</span>
-      <code># .vmodel/pipeline/implementation-plan.yaml
-plan_id: "PLAN-001"
-created: "2026-04-06"
-v_model_layer: "detailed-design"   # or "code+unit-test"
-mode: "forward"                     # or "retrofit"
+      <code># .vmodel/.reviews/ARCH-app-checkout-2026-05-10-01.yaml
+document: specs/app/checkout/architecture.md
+reviewer: vmodel-skill-review-architecture
+date: 2026-05-10
+verdict: REJECTED                # APPROVED | REJECTED | DESIGN_ISSUE
 
-scope:
-  description: "Detailed design for Fuel Control subsystem"
-  components:
-    - "fuel-rate-limiter"
-    - "fuel-pump-controller"
-  upstream_artifacts:
-    - "docs/requirements/fuel-control-sw-req.yaml"
-    - "docs/architecture/fuel-control-arch.yaml"
+inputs_provided:
+  parent_requirements: specs/app/requirements.md
+  governing_adrs: [ADR-014-use-postgres]
 
-decisions:
-  - id: "D1"
-    topic: "Rate limiting algorithm"
-    decision: "Token bucket with configurable burst size"
-    rationale: "Matches timing requirements in SWREQ-042; simpler than leaky bucket for our use case"
-  - id: "D2"
-    topic: "Error handling strategy"
-    decision: "Fail-safe: default to minimum fuel rate on sensor failure"
-    rationale: "Safety requirement SR-107 mandates fail-safe behavior"
-
-constraints:
-  - "Must be thread-safe (called from ARINC 653 partition)"
-  - "No dynamic memory allocation after initialization"
-  - "Cycle time budget: 10ms worst case"
-
-context_files:
-  - "src/fuel-control/existing-pump-controller.java"
-  - "docs/safety/fuel-control-fmea.xlsx"
-
-notes: |
-  Human confirmed token bucket approach during discussion.
-  Existing pump controller code should be referenced for
-  interface conventions but not modified in this scope.</code>
-    </div>
-
-    <h3>Phase 2: Task Decomposition</h3>
-    <p>The task decomposer runs as a subagent (preserves orchestrator context). It reads the plan and produces one task contract per scoped unit of work. The human reviews and approves the decomposition before the automated loop begins.</p>
-
-    <h4>Output: Task Contract</h4>
-    <div class="code-block">
-      <span class="lang-label">YAML</span>
-      <code># .vmodel/pipeline/tasks/TASK-001.yaml
-task_id: "TASK-001"
-plan_ref: "PLAN-001"
-status: "pending"            # pending | in_progress | review | approved | rejected | blocked
-
-description: "Implement FuelRateLimiter unit with token bucket algorithm"
-v_model_layer: "code+unit-test"
-
-design_refs:
-  - artifact: "DD-FRL-001"
-    file: "docs/design/fuel-rate-limiter.md"
-    sections: ["interface", "behavior", "error-handling"]
-
-files_to_touch:
-  - "src/fuel-control/FuelRateLimiter.java"
-  - "src/fuel-control/FuelRateResult.java"
-  - "src/fuel-control/ClampingReason.java"
-  - "test/fuel-control/FuelRateLimiterTest.java"
-
-context_to_load:
-  - "src/fuel-control/FuelPumpController.java"      # interface conventions
-  - "docs/design/fuel-rate-limiter.md"                # full design
-  - ".vmodel/config.yaml"                             # tool checks
-
-acceptance_criteria:
-  - "All design behavior rules (B1-B7) have corresponding tests"
-  - "All error conditions (E1-E4) have tests with fault injection"
-  - "Tool checks pass: unit-tests, static-analysis, coverage ≥ 80%"
-  - "Trace links created: DD-FRL-001 → source files, DD-FRL-001 → test files"
-
-trace_links_expected:
-  - source: "DD-FRL-001"
-    targets: ["FuelRateLimiter.java", "FuelRateLimiterTest.java"]
-    link_types: ["implemented-by", "verified-by"]
-
-decisions_from_plan:
-  - ref: "D1"
-    summary: "Token bucket with configurable burst size"
-  - ref: "D2"
-    summary: "Fail-safe: default to minimum fuel rate"</code>
-    </div>
-
-    <h3>Phase 3: Build → Review Loop</h3>
-    <p>For each task contract, the pipeline controller spawns a producer agent, then a reviewer agent. If the reviewer rejects, the task goes back to the producer with specific feedback. Maximum 3 attempts with different approaches. On the 3rd failure or on DESIGN_ISSUE, escalate to human.</p>
-
-    <div class="code-block">
-      <span class="lang-label">State Machine</span>
-      <code>                    ┌─────────────┐
-                    │   pending    │
-                    └──────┬──────┘
-                           │ pipeline picks up
-                    ┌──────▼──────┐
-              ┌────►│ in_progress  │ (developer agent)
-              │     └──────┬──────┘
-              │            │ developer done
-              │     ┌──────▼──────┐
-              │     │   review    │ (reviewer agent)
-              │     └──────┬──────┘
-              │            │
-              │     ┌──────┴──────┐
-              │     │             │
-         REJECTED   │          APPROVED ──► done
-         (attempt   │
-          &lt; 3)      │          DESIGN_ISSUE ──► human escalation
-              │     │
-              └─────┘
-                    │
-              attempt ≥ 3 ──► human escalation</code>
-    </div>
-
-    <h4>Feedback Document (on REJECTED)</h4>
-    <div class="code-block">
-      <span class="lang-label">YAML</span>
-      <code># .vmodel/pipeline/tasks/TASK-001-feedback.yaml
-task_ref: "TASK-001"
-attempt: 1
-verdict: "REJECTED"
-reviewer: "vmodel-agent-code-reviewer"
+perspectives_applied: [architect, integrator, operator]
 
 findings:
-  - severity: "must-fix"
-    category: "error-handling"
-    location: "FuelRateLimiter.java:47"
-    finding: "Null returned on sensor timeout instead of fail-safe default"
-    fix_instruction: "Return FuelRateResult.failSafe(MIN_RATE) per design rule E2"
-  - severity: "must-fix"
-    category: "test-completeness"
-    finding: "No test for concurrent access (design rule B6: thread-safety)"
-    fix_instruction: "Add test verifying thread-safe rate calculation under concurrent calls"
-  - severity: "suggestion"
-    category: "naming"
-    location: "FuelRateLimiter.java:23"
-    finding: "Parameter 'ts' should use domain vocabulary"
-    fix_instruction: "Rename to 'sensorTimestamp'"</code>
-    </div>
+  - id: F-01
+    interface_id: ICheckoutFinalise
+    check_failed: check.composition.runtime-pattern-missing
+    severity: must-fix
+    category: composition
+    evidence: "Composition section names no runtime pattern; reader cannot decide what files/configs to create"
+    recommended_action: "Add Composition.runtime_pattern with one of: event-driven / request-response / pipeline. State wiring approach."
 
-    <h3>Retry Discipline</h3>
-    <ul>
-      <li><strong>Attempt 1:</strong> Developer implements from contract</li>
-      <li><strong>Attempt 2:</strong> Developer receives feedback, must use a <em>different approach</em> to fix each finding</li>
-      <li><strong>Before attempt 3:</strong> Root-cause tracing applied &mdash; diagnose why previous fixes didn&rsquo;t work</li>
-      <li><strong>After attempt 3 failure:</strong> HALT. Escalate to human with full history (all feedback documents preserved)</li>
-    </ul>
+summary: "Composition section incomplete; one interface contract missing postconditions"
+recommended_next_action: "Re-invoke author-architecture in mode B; address F-01 and F-02"
+counts: { must_fix: 2, should_fix: 0, info: 1 }</code>
+    </div>
   </section>
 
 
-  <!-- ===================== SECTION 8: CONFIGURATION ===================== -->
-  <section id="sa-config">
-    <h2>Configuration</h2>
-    <p>Each project has a <code>.vmodel/config.yaml</code> that defines language, tool checks, and component-level overrides. Producer agents read this to know what checks to run. The configuration is project-specific but follows a standard schema.</p>
+  <!-- ===================== BUILD FLOW SKILLS ===================== -->
+  <section id="sa-build-skills">
+    <h2>Build Flow — Skill Catalog</h2>
+    <p>Six build-side skills. Three of them (<code>render-tests</code>, <code>implement-leaf</code>, <code>review-execution</code>) are dispatched as agents during the pipeline; the other three (<code>plan-build</code>, <code>orchestrate-build</code>, <code>retrospect-build</code>) are user-invoked or single end-of-run.</p>
 
-    <h3>Configuration Schema</h3>
-    <p>Formal schema: <code>schemas/core/vmodel-config.schema.yaml</code>. Example:</p>
+    <div class="card skill-card build">
+      <div class="skill-type">Build — Planning</div>
+      <h4>vmodel-skill-plan-build</h4>
+      <p>Derives the build-flow task DAG from the spec tree — no human-authored sprint. Walks the architecture artifacts, finds leaf scopes (those with <code>detailed_design.md</code> + <code>testspec.md</code>), infers dependencies from interface usage and ADR ordering, topologically sorts into stages, populates <code>acceptance_criteria</code> / <code>context_to_load</code> / <code>out_of_scope</code> mechanically.</p>
+      <dl class="ref-grid">
+        <dt>Reads</dt><dd>The whole <code>specs/</code> tree</dd>
+        <dt>Writes</dt><dd><code>.vmodel/.build/tasks.yaml</code></dd>
+        <dt>Refuses</dt><dd>Fabricated context entries (Refusal E)</dd>
+      </dl>
+    </div>
+
+    <div class="card skill-card build">
+      <div class="skill-type">Build — Orchestration</div>
+      <h4>vmodel-skill-orchestrate-build</h4>
+      <p>Pipeline state machine. Reads <code>tasks.yaml</code>, dispatches per-task worker agents via the Task tool for parallel isolated execution, runs branch integration test stages bottom-up, runs root system test stage, handles layer-typed escalations. Resume is schema-validated.</p>
+      <dl class="ref-grid">
+        <dt>Reads</dt><dd><code>tasks.yaml</code>, <code>pipeline-state.yaml</code> (resume), per-task progress / blocked / feedback / ESC files</dd>
+        <dt>Writes</dt><dd><code>pipeline-state.yaml</code>, <code>current-task.yaml</code> per task, escalation mirror copies</dd>
+        <dt>Dispatches</dt><dd>3 worker agents (Task tool) + <code>retrospect-build</code> skill at end-of-run</dd>
+      </dl>
+    </div>
+
+    <div class="card skill-card build">
+      <div class="skill-type">Build — Worker (dispatched as agent)</div>
+      <h4>vmodel-skill-render-tests</h4>
+      <p>Translates a TestSpec artifact into executable test code (TDD red phase). Layer-aware — leaf TestSpec produces unit tests, branch TestSpec produces integration tests across child components, root TestSpec produces system / acceptance tests. Mechanical translation preserving traceability via VERIFIES comments.</p>
+      <dl class="ref-grid">
+        <dt>Reads</dt><dd>One TestSpec + linked spec elements; project test-framework config</dd>
+        <dt>Writes</dt><dd>Test files in the project; <code>render-report.yaml</code></dd>
+        <dt>Verifies</dt><dd>Tests compile and fail (red phase confirmed)</dd>
+      </dl>
+    </div>
+
+    <div class="card skill-card build">
+      <div class="skill-type">Build — Worker (dispatched as agent)</div>
+      <h4>vmodel-skill-implement-leaf</h4>
+      <p>TDD green + refactor for one leaf. Operates in three modes: <strong>greenfield</strong> (new code), <strong>fix</strong> (re-implement after a review-execution rejection — taxonomy-driven, max retry from config), <strong>resume</strong> (re-enter after crash, skip already-completed gates).</p>
+      <dl class="ref-grid">
+        <dt>Reads</dt><dd>Leaf DD + TestSpec + already-rendered failing tests + governing ADRs + dependency-leaf interface DD/TS</dd>
+        <dt>Writes</dt><dd>Source files in <code>files_to_touch</code>; <code>build-progress.yaml</code> per gate; <code>review-ready.yaml</code> on success; <code>build-blocked.yaml</code> on scope expansion</dd>
+        <dt>Refuses</dt><dd>Implement features not in DD, contradict ADRs, weaken tests, skip refactor, read outside <code>context_to_load</code> (Refusal H)</dd>
+        <dt>HALT</dt><dd>Scope-expansion HALT → orchestrator auto-amends within budget or escalates</dd>
+      </dl>
+    </div>
+
+    <div class="card skill-card build">
+      <div class="skill-type">Build — Worker (dispatched as agent)</div>
+      <h4>vmodel-skill-review-execution</h4>
+      <p>Verdict-emitting review for build-flow execution at any V-model layer (leaf / branch / root). Reads test results plus implementation; compares to the relevant spec layer (DD / Architecture / Requirements + root product). Layer-aware routing.</p>
+      <dl class="ref-grid">
+        <dt>Reads</dt><dd>Source code (read-only), test output, layer-relevant spec(s)</dd>
+        <dt>Writes (REJECTED)</dt><dd><code>feedback.yaml</code> with taxonomy-typed failures</dd>
+        <dt>Writes (ESCALATE)</dt><dd><code>ESC-NNN.yaml</code> with <code>target_layer</code> (DD / TestSpec / ARCH / ADR / REQ / product) + confidence tag</dd>
+        <dt>Writes (APPROVED)</dt><dd>No file — single stdout line; orchestrator infers from absence</dd>
+      </dl>
+    </div>
+
+    <div class="card skill-card build">
+      <div class="skill-type">Build — Retrospective</div>
+      <h4>vmodel-skill-retrospect-build</h4>
+      <p>Runs after a build flow completes. Reads pipeline-state, escalations, feedback files; aggregates stats; extracts patterns from rejection types, escalation clusters, retry-thrashing tasks. Refuses to fabricate lessons (threshold: ≥ 2 reproductions or one high-impact).</p>
+      <dl class="ref-grid">
+        <dt>Reads</dt><dd>Whole <code>.vmodel/.build/</code> for the run + cumulative <code>lessons.yaml</code></dd>
+        <dt>Writes</dt><dd><code>.vmodel/.build/runs/&lt;run-id&gt;/retrospective.md</code>; updates bounded <code>lessons.yaml</code> (eviction prefers low-confidence + old)</dd>
+      </dl>
+    </div>
+  </section>
+
+
+  <!-- ===================== WORKER AGENTS ===================== -->
+  <section id="sa-build-agents">
+    <h2>Worker Agents</h2>
+    <p>Three thin dispatch shells under <code>.claude/agents/</code>. Each declares an envelope and loads its canonical skill via the Skill tool. Always invoked by <code>orchestrate-build</code> via the Task tool — never user-invoked.</p>
+
+    <div class="card skill-card agent">
+      <div class="skill-type">Agent — Worker</div>
+      <h4>render-tests <span style="font-weight: 400; color: var(--fg-muted); font-size: var(--size-sm);">→ loads vmodel-skill-render-tests</span></h4>
+      <dl class="ref-grid">
+        <dt>Tools</dt><dd>Read, Edit, Write, Bash, Grep, Glob, Skill</dd>
+        <dt>Context</dt><dd>Isolated per-task worktree (full file system access within scope)</dd>
+        <dt>Output file</dt><dd><code>render-report.yaml</code></dd>
+      </dl>
+    </div>
+
+    <div class="card skill-card agent">
+      <div class="skill-type">Agent — Worker</div>
+      <h4>implement-leaf <span style="font-weight: 400; color: var(--fg-muted); font-size: var(--size-sm);">→ loads vmodel-skill-implement-leaf</span></h4>
+      <dl class="ref-grid">
+        <dt>Tools</dt><dd>Read, Edit, Write, Bash, Grep, Glob, Skill</dd>
+        <dt>Context</dt><dd>Isolated per-task worktree</dd>
+        <dt>Output files</dt><dd><code>build-progress.yaml</code> (per gate), <code>review-ready.yaml</code> (success), or <code>build-blocked.yaml</code> (scope expansion)</dd>
+      </dl>
+    </div>
+
+    <div class="card skill-card agent">
+      <div class="skill-type">Agent — Worker</div>
+      <h4>review-execution <span style="font-weight: 400; color: var(--fg-muted); font-size: var(--size-sm);">→ loads vmodel-skill-review-execution</span></h4>
+      <dl class="ref-grid">
+        <dt>Tools</dt><dd>Read, Bash, Grep, Glob, Write, Skill <strong>(read-only on source code)</strong></dd>
+        <dt>Context</dt><dd>Isolated per-task worktree</dd>
+        <dt>Output files</dt><dd><code>feedback.yaml</code> (REJECTED) or <code>ESC-NNN.yaml</code> (ESCALATE); APPROVED writes nothing</dd>
+      </dl>
+    </div>
+  </section>
+
+
+  <!-- ===================== BUILD PIPELINE SHAPE ===================== -->
+  <section id="sa-build-pipeline">
+    <h2>Build Pipeline Shape</h2>
+    <p>The pipeline runs bottom-up the V — leaves first (unit tests + code), then branches (integration tests), then root (system tests). Within a stage, tasks run in parallel up to <code>build.parallel.max_concurrent</code>.</p>
+
     <div class="code-block">
-      <span class="lang-label">YAML</span>
-      <code># .vmodel/config.yaml
-project:
-  name: "fuel-control-system"
-  description: "Embedded fuel control for engine management unit"
+      <span class="lang-label">Pipeline</span>
+      <code>plan-build (user-invoked)
+  └─► writes .vmodel/.build/tasks.yaml
 
-defaults:
-  language: "java"
-  test_framework: "junit5"
-  build_tool: "gradle"
-
-  checks:
-    code:
-      - name: "unit-tests"
-        command: "./gradlew test"
-        required: true
-      - name: "static-analysis"
-        command: "./gradlew spotbugsMain"
-        required: true
-      - name: "coverage"
-        command: "./gradlew jacocoTestReport"
-        required: true
-      - name: "traceability"
-        command: "vmodel-trace validate"
-        required: true
-    detailed-design:
-      - name: "schema-validation"
-        command: "vmodel-schema validate docs/design/"
-        required: true
-      - name: "traceability"
-        command: "vmodel-trace validate"
-        required: true
-
-# Component-level overrides — most specific path match wins
-components:
-  ml-pipeline/:
-    language: "python"
-    test_framework: "pytest"
-    checks:
-      code:
-        - name: "unit-tests"
-          command: "pytest ml-pipeline/tests/"
-          required: true
-        - name: "type-check"
-          command: "mypy ml-pipeline/"
-          required: true
-        - name: "coverage"
-          command: "pytest --cov=ml-pipeline --cov-fail-under=80"
-          required: true
-
-  frontend/:
-    language: "typescript"
-    test_framework: "vitest"
-    checks:
-      code:
-        - name: "unit-tests"
-          command: "npm test -- --run"
-          required: true
-        - name: "lint"
-          command: "npm run lint"
-          required: true
-        - name: "type-check"
-          command: "npx tsc --noEmit"
-          required: true</code>
+orchestrate-build (user-invoked)
+  ├─► Stage: leaf builds (parallel within stage, sequential across stages by dependency)
+  │     for each leaf task:
+  │       Task → render-tests   (worker agent, isolated worktree)
+  │       Task → implement-leaf (worker agent, isolated worktree)
+  │       Task → review-execution (worker agent, isolated worktree)
+  │
+  ├─► Stage: branch integration (bottom-up by tree depth)
+  │     for each branch:
+  │       Task → render-tests   (branch TestSpec → integration tests)
+  │       Task → review-execution (branch verdict)
+  │
+  ├─► Stage: root system
+  │     Task → render-tests     (root TestSpec → system / acceptance tests)
+  │     Task → review-execution (root verdict)
+  │
+  └─► retrospect-build (skill, single end-of-run)</code>
     </div>
 
-    <h3>Resolution Order</h3>
-    <p>When an agent needs to determine which checks to run for a file:</p>
-    <ol>
-      <li>Match the file path against component prefixes (most specific match wins)</li>
-      <li>If no component matches, use <code>defaults</code></li>
-      <li>Component config fully replaces defaults for that section (no merging) &mdash; keeps behavior predictable</li>
-    </ol>
+    <h3>Per-leaf build loop</h3>
 
-    <h3>Check Execution Contract</h3>
-    <p>Every check command must:</p>
+    <div class="pipeline-flow">
+      <div class="pipeline-step">
+        <div class="step-label">Gate 1</div>
+        <div class="step-name">render-tests</div>
+        <div class="step-detail">Translate leaf TestSpec → unit test code; confirm tests fail (red phase)</div>
+        <div class="step-artifact">→ render-report.yaml</div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-label">Gate 2</div>
+        <div class="step-name">implement-leaf</div>
+        <div class="step-detail">TDD green; refactor; lint; coverage; pre-publish self-check</div>
+        <div class="step-artifact">→ build-progress.yaml<br>→ review-ready.yaml</div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-label">Gate 3</div>
+        <div class="step-name">review-execution</div>
+        <div class="step-detail">Read source + tests; compare to DD; emit verdict</div>
+        <div class="step-artifact">APPROVED · REJECTED · ESCALATE</div>
+      </div>
+      <div class="pipeline-step human-gate">
+        <div class="step-label">Routing</div>
+        <div class="step-name">Orchestrator</div>
+        <div class="step-detail">APPROVED → next task<br>REJECTED → fix-mode dispatch (max retry from config)<br>ESCALATE → spec author skill (next section)</div>
+      </div>
+    </div>
+
+    <h3>Resume modes</h3>
+    <p>If a worker crashes mid-attempt, the orchestrator reads <code>build-progress.yaml</code> on resume and picks one of three modes:</p>
     <ul>
-      <li>Exit 0 on success, non-zero on failure</li>
-      <li>Write output to stdout/stderr (agent captures and logs to <code>/tmp</code>)</li>
-      <li>Be idempotent (safe to re-run)</li>
-      <li>Complete within a reasonable time</li>
+      <li><strong>Silent-recover</strong> — <code>last_step == review-ready-written</code> AND <code>review-ready.yaml</code> exists. Proceed directly to <code>review-execution</code>; attempt counter unchanged.</li>
+      <li><strong>Resume-at-gate</strong> — <code>last_step ∈ {self-check-passed, coverage-met, lint-clean, refactored, green-passing}</code> AND <code>review-ready.yaml</code> absent. Re-dispatch with <code>mode: resume</code> + <code>resume_from_step</code>; skip earlier work, re-validate from the resume point.</li>
+      <li><strong>Restart</strong> — earlier <code>last_step</code> or <code>build-progress.yaml</code> absent. Fresh attempt, increment counter, prior worktree contents kept as starting code.</li>
+    </ul>
+
+    <h3>Scope-expansion HALT</h3>
+    <p>When <code>implement-leaf</code> cannot proceed without violating its contract — needing to read a file outside <code>context_to_load</code>, write a file outside <code>files_to_touch</code>, or cross an <code>out_of_scope</code> boundary — it emits <code>build-blocked.yaml</code> and halts. The orchestrator routes:</p>
+    <ul>
+      <li><strong>Auto-amend</strong> — when <code>suggested_resolution: amend-contract</code> AND <code>amendments_used &lt; build.auto_amend.max_auto_amendments</code> (default 1) AND scope is within the leaf's source directory: append needed paths and re-dispatch same-attempt.</li>
+      <li><strong>Escalate</strong> — otherwise: write <code>ESC-NNN.yaml</code> with <code>target_layer</code> derived from <code>suggested_resolution</code>.</li>
     </ul>
   </section>
 
 
-  <!-- ===================== SECTION 9: CONTRACT SCHEMAS ===================== -->
-  <section id="sa-contracts">
-    <h2>Contract Schemas</h2>
-    <p>Summary of all document types that flow between pipeline components.</p>
+  <!-- ===================== ESCALATION ROUTING ===================== -->
+  <section id="sa-build-escalations">
+    <h2>Escalation Routing</h2>
+    <p>When the build flow finds a spec gap, it does not silently work around it. <code>review-execution</code> emits a typed <code>ESC-NNN.yaml</code> tagged with <strong>target spec layer</strong> and <strong>confidence</strong>. The orchestrator routes:</p>
 
     <table class="field-table">
       <thead>
-        <tr><th>Document</th><th>Producer</th><th>Consumer</th><th>Location</th></tr>
+        <tr><th>target_layer</th><th>Routes to</th><th>Trigger</th></tr>
       </thead>
       <tbody>
         <tr>
-          <td class="field-name">implementation-plan.yaml</td>
-          <td>Research &amp; Plan (human + AI)</td>
-          <td>Task decomposer</td>
-          <td><code>.vmodel/pipeline/</code></td>
+          <td class="field-name">detailed-design</td>
+          <td><code>vmodel-skill-author-detailed-design</code> (mode B)</td>
+          <td>DD ambiguous, contract incomplete, missing function spec</td>
         </tr>
         <tr>
-          <td class="field-name">TASK-nnn.yaml</td>
-          <td>Task decomposer</td>
-          <td>Pipeline controller, developer agent, reviewer agent</td>
-          <td><code>.vmodel/pipeline/tasks/</code></td>
+          <td class="field-name">testspec</td>
+          <td><code>vmodel-skill-author-testspec</code> (mode B)</td>
+          <td>Test contradicts DD (<code>wrong-assertion</code>), missing case for an edge surfaced during impl</td>
         </tr>
         <tr>
-          <td class="field-name">TASK-nnn-feedback.yaml</td>
-          <td>Reviewer agent</td>
-          <td>Pipeline controller, developer agent (on retry)</td>
-          <td><code>.vmodel/pipeline/tasks/</code></td>
+          <td class="field-name">architecture</td>
+          <td><code>vmodel-skill-author-architecture</code> (mode B)</td>
+          <td>Branch integration failure pointing at decomposition / interface contract</td>
         </tr>
         <tr>
-          <td class="field-name">pipeline-state.yaml</td>
-          <td>Pipeline controller</td>
-          <td>Pipeline controller (on restart)</td>
-          <td><code>.vmodel/pipeline/</code></td>
+          <td class="field-name">adr</td>
+          <td><code>vmodel-skill-author-adr</code> (mode B)</td>
+          <td>Decision needed that meets the three-condition threshold; was deferred but now blocks</td>
         </tr>
         <tr>
-          <td class="field-name">config.yaml</td>
-          <td>Human (project setup)</td>
-          <td>Task decomposer, all agents</td>
-          <td><code>.vmodel/</code></td>
+          <td class="field-name">requirements</td>
+          <td><code>vmodel-skill-author-requirements</code> (mode B)</td>
+          <td>Root system test failure pointing at requirement (not implementation)</td>
+        </tr>
+        <tr>
+          <td class="field-name">product</td>
+          <td>Human (no skill yet — re-elicit or hand-edit)</td>
+          <td>Root acceptance failure pointing at product intent (rare)</td>
         </tr>
       </tbody>
     </table>
 
-    <h3>Pipeline State</h3>
-    <div class="code-block">
-      <span class="lang-label">YAML</span>
-      <code># .vmodel/pipeline/pipeline-state.yaml
-plan_ref: "PLAN-001"
-phase: "executing"           # planning | decomposing | executing | human-review | done
-current_task: "TASK-002"
+    <h3>Confidence tagging</h3>
+    <ul>
+      <li><strong>High confidence</strong> — auto-routes to the owning spec author skill; no human interrupt. The author skill runs in mode B and surfaces the result via a fresh review verdict.</li>
+      <li><strong>Low confidence</strong> — surfaces to human gate before the spec layer is touched. The human decides which layer is actually responsible.</li>
+    </ul>
 
-tasks:
-  TASK-001: { status: "approved", attempts: 1 }
-  TASK-002: { status: "in_progress", attempts: 2 }
-  TASK-003: { status: "pending", attempts: 0 }
-
-blocked: []
-escalated: []</code>
-    </div>
-
-    <p>The pipeline controller reads this file on startup to determine where to resume. If the file doesn&rsquo;t exist, the pipeline starts fresh. If the session crashed mid-task, the task&rsquo;s status tells the controller whether to re-run the developer or the reviewer.</p>
+    <p><strong>No spec artifact is silently modified by the build flow.</strong> All escalations are filed under <code>.vmodel/.build/escalations/</code> (committed) before routing.</p>
   </section>
 
 
-  <!-- ===================== SECTION 10: FILE LAYOUT ===================== -->
+  <!-- ===================== SPEC → BUILD HANDOVER ===================== -->
+  <section id="sa-spec-build-bridge">
+    <h2>Workflow Handover — Spec → Build</h2>
+    <p>The spec workflow has no "spec-complete" event. The handover is purely <strong>artifact-driven</strong>:</p>
+
+    <ol>
+      <li>Human runs <code>plan-build</code>. The skill walks the spec tree.</li>
+      <li>For each <strong>leaf scope</strong> with both <code>detailed_design.md</code> and <code>testspec.md</code> present and structurally valid, <code>plan-build</code> emits a leaf task.</li>
+      <li>For each <strong>branch scope</strong> with <code>architecture.md</code> and <code>testspec.md</code>, it emits a branch integration test task.</li>
+      <li>For the <strong>root scope</strong> with <code>testspec.md</code>, it emits a root system test task.</li>
+      <li>Dependencies are inferred from interface usage in DDs and from ADR <code>governing_adrs</code> ordering. Topological sort produces stages.</li>
+      <li>For each leaf task, <code>plan-build</code> populates the task contract mechanically:
+        <ul>
+          <li><strong><code>acceptance_criteria</code></strong> — one entry per TestSpec case, format <code>"&lt;TS-id&gt;.&lt;case-id&gt;: &lt;case title&gt;"</code></li>
+          <li><strong><code>context_to_load</code></strong> — read-only allowlist: own DD + TS, parent ARCH, governing ADRs, dependency-leaf DDs/TSs (interface readability), <code>.vmodel/references/**</code></li>
+          <li><strong><code>out_of_scope</code></strong> — declarative do-not list (no spec mutation, no test weakening, no gold-plating, no sibling-leaf source mutation)</li>
+        </ul>
+      </li>
+    </ol>
+
+    <p><strong>Partial spec trees are first-class.</strong> The framework explicitly supports starting Build before the entire spec tree is authored. <code>plan-build</code> emits tasks for whatever leaves and branches are spec-complete; missing spec artifacts simply do not appear in the DAG. This lets a project run a vertical slice end-to-end before broadening.</p>
+
+    <h3>Build → Spec back-channel</h3>
+    <a id="sa-build-spec-loop"></a>
+    <p>The reverse handover happens through escalations (covered above). The shape:</p>
+
+    <div class="code-block">
+      <span class="lang-label">YAML</span>
+      <code># .vmodel/.build/escalations/ESC-007.yaml
+schema_version: 1
+id: ESC-007
+date: 2026-05-10
+source_task: leaf-app-checkout-discount-calc
+target_layer: detailed-design
+target_artifact: specs/app/checkout/discount-calc/detailed_design.md
+confidence: high
+trigger: "DD postcondition for discount(orderTotal, code) does not specify behaviour when code is expired"
+evidence:
+  - "TestSpec case TC-007 references DD-…discount-expired but DD function has no expired-handling postcondition"
+recommended_action: "Add postcondition to discount() for expired-code outcome; re-render TC-007 if oracle changes"</code>
+    </div>
+
+    <p>The orchestrator copies the file to <code>.vmodel/.build/escalations/</code> (committed; forensic record) and routes to the named author skill in mode B. The author revises; the human reviews the new draft; <code>review-{layer}</code> verdicts; the loop closes when the new spec is APPROVED. Then the build task can be re-attempted with the corrected spec.</p>
+  </section>
+
+
+  <!-- ===================== USER WORKFLOW 1 — GREENFIELD ===================== -->
+  <section id="sa-uw-greenfield">
+    <h2>User Workflow 1 — Greenfield from Scratch</h2>
+    <p>You have an idea. You want to build it the V-model way, with AI doing the bulk of the writing under your design review. Step-by-step:</p>
+
+    <h3>Phase 0 — Project setup (one-time)</h3>
+    <ol>
+      <li><strong>Create the project directory</strong> and <code>cd</code> into it.</li>
+      <li><strong>Run <code>vmodel-init</code></strong>. The skill creates <code>.vmodel/config.yaml</code>, copies the framework's reference defaults into <code>.vmodel/references/</code>, and creates the <code>.reviews/</code> and <code>.build/</code> placeholders. Interactive checkpoints let you set project name, language, root-product type (PB / needs / PD).</li>
+      <li><strong>Answer the root-product choice.</strong>
+        <ul>
+          <li><strong>Product Brief (PB)</strong> if you have stakeholders, an NFR matrix, real business context.</li>
+          <li><strong>needs.md</strong> if you have stakeholder narrative but not yet a structured PB — you'll run <code>elicit-needs</code> next.</li>
+          <li><strong>Product Description (PD)</strong> if it's an internal tool or dogfood project — you'll run <code>elicit-pd</code> next.</li>
+        </ul>
+      </li>
+    </ol>
+
+    <h3>Phase 1 — Author the root product</h3>
+    <ol>
+      <li><strong>If PD:</strong> invoke <code>/vmodel-skill-elicit-pd</code>. Answer the question-prompted blind-spot scan. The skill writes <code>specs/product_description.md</code>.</li>
+      <li><strong>If needs:</strong> invoke <code>/vmodel-skill-elicit-needs</code>. Provide stakeholder narrative (transcript, draft, or interactive). The skill applies anti-assumption / explanation / gap-finding / readback discipline and writes <code>specs/needs.md</code>.</li>
+      <li><strong>If PB:</strong> hand-author <code>specs/product_brief.md</code> against the schema and craft doc (no skill yet — deferred per Phase 5 closeout).</li>
+    </ol>
+
+    <h3>Phase 2 — Author the spec tree, top-down</h3>
+    <p>Recurse from root through every scope. At each scope:</p>
+    <ol>
+      <li><strong>Author Requirements.</strong> <code>/vmodel-skill-author-requirements</code> at this scope. Reads root product (or parent Requirements). Writes <code>{scope}/requirements.md</code>.</li>
+      <li><strong>Review Requirements.</strong> <code>/vmodel-skill-review-requirements</code>. Reads the verdict from <code>.vmodel/.reviews/</code>. Iterate until APPROVED.</li>
+      <li><strong>Author Architecture.</strong> <code>/vmodel-skill-author-architecture</code>. Decompose into children with responsibilities and DbC interface contracts. Composition section names the runtime pattern. May emit <code>[DEFER-ADR: …]</code> markers when decisions surface.</li>
+      <li><strong>Capture ADRs.</strong> For each <code>[DEFER-ADR]</code> marker: <code>/vmodel-skill-author-adr</code>. Then <code>/vmodel-skill-review-adr</code>.</li>
+      <li><strong>Review Architecture.</strong> <code>/vmodel-skill-review-architecture</code>. Iterate.</li>
+      <li><strong>Author TestSpec at this scope.</strong> <code>/vmodel-skill-author-testspec</code>. At a non-leaf scope, derives integration cases from Architecture (composition + interface DbC). Then <code>/vmodel-skill-review-testspec</code>.</li>
+      <li><strong>Recurse into each child scope</strong> defined in the Architecture decomposition. Branches repeat steps 1 – 6; leaves go to step 7.</li>
+      <li><strong>At each leaf scope: author Detailed Design.</strong> <code>/vmodel-skill-author-detailed-design</code>. Reads the parent Architecture's leaf-allocation. Writes <code>{leaf}/detailed_design.md</code> with seven mandatory sections.</li>
+      <li><strong>Review DD.</strong> <code>/vmodel-skill-review-detailed-design</code>. Iterate.</li>
+      <li><strong>Author leaf TestSpec.</strong> <code>/vmodel-skill-author-testspec</code> at the leaf — derives unit-level cases from the DD. Then <code>/vmodel-skill-review-testspec</code>.</li>
+    </ol>
+
+    <p><strong>Tip — vertical slice first.</strong> You don't have to author the entire tree before starting Build. A common pattern is: author root product, root Requirements + Architecture + ADRs + root TestSpec, then drill straight down one branch to one leaf, get that leaf to passing code, then come back and broaden. <code>plan-build</code> handles partial trees natively.</p>
+
+    <h3>Phase 3 — Build</h3>
+    <ol>
+      <li><strong>Run <code>/vmodel-skill-plan-build</code>.</strong> Walks the spec tree, emits <code>.vmodel/.build/tasks.yaml</code> with leaf, branch, and root stages.</li>
+      <li><strong>Run <code>/vmodel-skill-orchestrate-build</code>.</strong> The orchestrator dispatches workers via the Task tool, stage by stage, parallel within stage. Each leaf goes through render-tests → implement-leaf → review-execution. Branches and root run their integration / system test stages.</li>
+      <li><strong>If escalations fire</strong> (high-confidence), the relevant author skill is auto-invoked in mode B. The fresh draft surfaces in your conversation; you review and approve, then re-run <code>orchestrate-build</code> to retry the affected task.</li>
+      <li><strong>On run completion</strong>, <code>retrospect-build</code> emits <code>retrospective.md</code> and updates <code>lessons.yaml</code>.</li>
+    </ol>
+
+    <h3>Phase 4 — Iterate</h3>
+    <p>You now have committed code + tests for the slice. To extend, broaden the spec tree (Phase 2 for new branches / leaves), then re-run Phase 3. The build is idempotent on already-completed tasks.</p>
+  </section>
+
+
+  <!-- ===================== USER WORKFLOW 2 — UPDATE ===================== -->
+  <section id="sa-uw-update">
+    <h2>User Workflow 2 — Updating an Existing VModel Repo</h2>
+    <p>The repo already has a spec tree and (probably) committed code. You want to add a behaviour, fix a bug, swap a technology. The principle is <strong>enter at the highest layer that must change</strong>.</p>
+
+    <h3>Step 1 — Decide the entry layer</h3>
+    <table class="field-table">
+      <thead>
+        <tr><th>Change source</th><th>Entry layer</th><th>Skill to invoke</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>New stakeholder, outcome, scope expansion</td><td>Root product</td><td>Hand-edit PB, or re-run <code>elicit-needs</code> / <code>elicit-pd</code></td></tr>
+        <tr><td>New behaviour under an existing outcome</td><td>Requirements (at the scope where it applies)</td><td><code>author-requirements</code> + <code>review-requirements</code></td></tr>
+        <tr><td>Re-allocation of existing behaviour to a different component</td><td>Architecture</td><td><code>author-architecture</code> + <code>review-architecture</code></td></tr>
+        <tr><td>Technology swap / pattern change</td><td>ADR + Architecture Composition</td><td><code>author-adr</code> + <code>author-architecture</code> (mode B)</td></tr>
+        <tr><td>Algorithm or state-machine change</td><td>Detailed Design (leaf)</td><td><code>author-detailed-design</code> + <code>review-detailed-design</code></td></tr>
+        <tr><td>Bug fix where spec was correct, code was wrong</td><td>Build flow only</td><td>Re-run <code>orchestrate-build</code> targeting the affected leaf</td></tr>
+        <tr><td>Bug fix where spec was ambiguous or wrong</td><td>The layer whose spec was wrong</td><td>Author skill at that layer + downstream propagation</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Step 2 — Author the change at the entry layer</h3>
+    <ol>
+      <li>Invoke the author skill at the entry layer. The author skill reads the latest review verdict at <code>.vmodel/.reviews/</code> if one exists.</li>
+      <li>Revise the artifact. The author skill addresses any prior findings, applies the new change, and may emit new <code>[DEFER-ADR]</code> / <code>[DEFER-DD]</code> markers.</li>
+      <li>Run the matching review skill. Iterate until APPROVED.</li>
+    </ol>
+
+    <h3>Step 3 — Propagate downstream</h3>
+    <div class="todo-banner">
+      <strong>Pending — candidate-set walker.</strong> <code>TARGET_ARCHITECTURE §8.3</code> describes a tooling-driven candidate-set walker that, given an entry-layer change, produces a list of downstream artifacts that may need updates. This walker is not yet implemented as a skill or tool. <strong>Workaround for now:</strong> manually walk the forward links (<code>derived_from</code>, <code>allocates</code>, <code>governing_adrs</code>, <code>verifies</code>) from the changed artifact and visit each affected child. The change is incomplete until every candidate is either updated or explicitly closed as "no change needed" with a brief reason.
+    </div>
+
+    <p>For each downstream artifact that must change:</p>
+    <ol>
+      <li>Invoke the author skill in mode B (it reads the latest review verdict and the upstream change).</li>
+      <li>Run the matching review skill.</li>
+      <li>If the change creates a <code>[DEFER-ADR]</code>, capture the ADR.</li>
+    </ol>
+
+    <h3>Step 4 — Rebuild affected leaves</h3>
+    <ol>
+      <li>Run <code>/vmodel-skill-plan-build</code>. The new task DAG reflects the changed specs.</li>
+      <li>Run <code>/vmodel-skill-orchestrate-build</code>. Already-passing leaves whose specs did not change may be skipped (idempotent on no-op). Affected leaves go through render-tests → implement-leaf → review-execution.</li>
+      <li>Branch integration tests and root system tests re-run if their TestSpec or upstream architecture changed.</li>
+    </ol>
+
+    <h3>Step 5 — Retrospect</h3>
+    <p>End-of-run <code>retrospect-build</code> updates <code>lessons.yaml</code>. If the same kind of escalation surfaced multiple times, that's signal worth reviewing.</p>
+  </section>
+
+
+  <!-- ===================== USER WORKFLOW 3 — RETROFIT ===================== -->
+  <section id="sa-uw-retrofit">
+    <h2>User Workflow 3 — Retrofitting Legacy Code</h2>
+    <p>You have an existing codebase (e.g., a 100k-line Java legacy app with ~10% test coverage and no documentation). You want an <strong>honest floor of documentation</strong> from which forward development can proceed, plus a gap report driving remediation priorities.</p>
+
+    <p><strong>Principle.</strong> Retrofit is the Specification workflow run <em>bottom-up</em> with a topology-discovery phase prepended. Same artifact set, same Quality Bar, same Spec Ambiguity Test. Same author/review skills — they have a retrofit mode that enforces <strong>no fabrication</strong>.</p>
+
+    <h3>Phase 0 — Project setup</h3>
+    <ol>
+      <li><code>vmodel-init</code> in the legacy repo (or migrate mode if a partial <code>.vmodel/</code> already exists). The skill scaffolds <code>.vmodel/</code> non-destructively.</li>
+      <li>Choose the root product type. Most retrofits start with no product narrative — defer the root-product authoring to Phase 4 below.</li>
+    </ol>
+
+    <h3>Phase 1 — Topology discovery</h3>
+    <div class="todo-banner">
+      <strong>Pending — automated topology discovery (Phase 7).</strong> The framework backlog (<code>BACKLOG.md §3.7</code>) tracks topology discovery as a Phase 7 deliverable: a tool that proposes a candidate scope tree from dependency / package / module analysis. <strong>Workaround for now:</strong> hand-author the scope tree by inspecting the codebase's directory structure, package boundaries, and dependency graph. AI assistance is fine but the human owns the validation. Output: an agreed scope tree before any artifact authoring.
+    </div>
+
+    <h3>Phase 2 — Leaf recovery (per leaf)</h3>
+    <ol>
+      <li>For each leaf identified in Phase 1, invoke <code>/vmodel-skill-author-detailed-design</code> in retrofit mode (the skill auto-detects when source code exists at the scope but no DD).</li>
+      <li>The DD author reads source files at the leaf scope. <strong>Code-derivable fields</strong> (signatures, data structures, observable behaviour) are populated with <code>recovery_status: verified | reconstructed</code>. <strong>Human-only fields</strong> (rationale, intent, "why this leaf exists") default to <code>recovery_status: unknown</code> — never fabricated.</li>
+      <li>Human supplies missing intent. Iterate.</li>
+      <li>Run <code>/vmodel-skill-review-detailed-design</code>. The review skill enforces retrofit honesty (no <code>reconstructed</code> on human-only fields).</li>
+      <li><strong>Author the leaf TestSpec.</strong> Existing tests, if present, become the seed. <code>/vmodel-skill-author-testspec</code> in retrofit mode preserves existing tests as cases with <code>recovery_status: reconstructed</code> on the <code>verifies</code> field; gaps surface as <code>[NEEDS-TEST: …]</code> markers.</li>
+      <li><strong>Capture leaf-scope ADRs</strong> for visible technology choices (frameworks, libraries, persistence). <code>/vmodel-skill-author-adr</code> in retrofit mode — context / alternatives / rationale default to <code>recovery_status: unknown</code> unless human supplies.</li>
+    </ol>
+
+    <h3>Phase 3 — Branch + root recovery (bottom-up)</h3>
+    <ol>
+      <li>Going up the tree, for each branch scope:
+        <ul>
+          <li><code>/vmodel-skill-author-architecture</code> in retrofit mode — derives Composition from child DDs / Architectures, decomposition from observed coupling, interfaces from observed call sites. <code>recovery_status</code> applies as for DD.</li>
+          <li><code>/vmodel-skill-author-requirements</code> in retrofit mode — derives requirements from child contracts and externally-supplied QAs. Rationale defaults to <code>unknown</code>.</li>
+          <li><code>/vmodel-skill-author-testspec</code> at the branch — integration cases derived from Architecture composition and child TestSpecs.</li>
+          <li>Capture ADRs as decisions surface.</li>
+          <li>Review pass per artifact.</li>
+        </ul>
+      </li>
+      <li>At root: same pattern. Root TestSpec verifies Requirements + (deferred) root product.</li>
+    </ol>
+
+    <h3>Phase 4 — Root product (stakeholder-driven, optional)</h3>
+    <p>Requires conversations with product owners / users. If stakeholders are accessible, run <code>/vmodel-skill-elicit-needs</code> or <code>/vmodel-skill-elicit-pd</code>. If they aren't, defer — the system runs on everything below without a root product. This is a <strong>correct outcome</strong> for retrofit, not a partial failure.</p>
+
+    <h3>Phase 5 — Gap report</h3>
+    <div class="todo-banner">
+      <strong>Pending — gap report aggregator (Phase 7).</strong> The framework specifies six gap categories (unintentioned leaf, test coverage gap, ambiguous spec, lost rationale, structural drift, ADR without decision record — see <code>TARGET_ARCHITECTURE §8.2</code>). The aggregator that compiles them into a single retrofit gap report is a Phase 7 deliverable. <strong>Workaround for now:</strong> the per-artifact <code>recovery_status: unknown</code> fields plus the <code>.vmodel/defer-index.md</code> aggregate (regenerated by <code>scripts/index-deferred-items.py</code>) together cover most of the gap surface. Hand-compile a gap report from these signals.
+    </div>
+
+    <h3>Phase 6 — Forward development from the retrofit floor</h3>
+    <p>Once the retrofit baseline is committed, switch to <strong>Update Workflow</strong> (above) for ongoing changes. Retrofit is read-only on code — it produces specs and a gap report. Code modifications are a separate follow-up activity at that point.</p>
+
+    <h3>What is missing for retrofit-mature use</h3>
+    <ul>
+      <li><strong>Topology discovery tool</strong> (Phase 7) — currently human-driven.</li>
+      <li><strong>Gap report aggregator</strong> (Phase 7) — currently a manual sweep.</li>
+      <li><strong>Dedicated retrofit author skill</strong> for code-structure analysis and behaviour characterisation — deferred to Phase 7. Per-artifact author skills already encode retrofit honesty (hard refusal A in ADR pair; equivalent in DD), so the framework is usable for retrofit today; the dedicated skill would lift specific recurring patterns.</li>
+    </ul>
+  </section>
+
+
+  <!-- ===================== INIT ===================== -->
+  <section id="sa-init">
+    <h2>vmodel-init</h2>
+    <p>The one-time setup skill. Scaffolds the central config and reference defaults; migrate mode upgrades existing projects non-destructively after framework changes.</p>
+
+    <div class="card skill-card init">
+      <div class="skill-type">Setup</div>
+      <h4>vmodel-init</h4>
+      <dl class="ref-grid">
+        <dt>Reads</dt><dd>Project root; framework reference defaults at <code>references/</code></dd>
+        <dt>Writes</dt><dd><code>.vmodel/config.yaml</code> · <code>.vmodel/references/*</code> · <code>.vmodel/.reviews/</code> · <code>.vmodel/.build/</code> · <code>.vmodel/defer-index.md</code> placeholder</dd>
+        <dt>Modes</dt><dd>Init (greenfield) · Migrate (upgrade existing <code>.vmodel/</code>)</dd>
+        <dt>Interactive</dt><dd>Project name, language, root-product type (PB / needs / PD), test-framework command, lint command — each with skip / auto defaults</dd>
+        <dt>Refuses</dt><dd>Overwriting an existing <code>config.yaml</code> without explicit migrate intent</dd>
+      </dl>
+    </div>
+  </section>
+
+
+  <!-- ===================== FILE LAYOUT ===================== -->
   <section id="sa-file-layout">
     <h2>File Layout</h2>
-    <p>Where skills, agents, and pipeline state live in the repository.</p>
+    <p>What lives where in a project that uses the framework.</p>
 
     <div class="code-block">
-      <span class="lang-label">Directory Structure</span>
-      <code>.claude/
-  skills/
-    vmodel-skill-develop-code/
-      SKILL.md
-      references/
-        code-quality-checks.md
-    vmodel-skill-derive-test-cases/
-      SKILL.md
-      references/
-        derivation-strategies.md
-        testing-anti-patterns.md
-        ai-testing-failures.md
-    vmodel-skill-review-code/
-      SKILL.md
-      references/
-        review-checklist-code.md
-        review-verdict-template.md
-        code-quality-checks.md          ← shared with develop-code
-        testing-anti-patterns.md        ← shared with derive-test-cases
-        ai-testing-failures.md          ← shared with derive-test-cases
-    vmodel-skill-develop-dd/
-      SKILL.md
-      references/
-        design-quality-criteria.md
-    vmodel-skill-retrofit-dd/
-      SKILL.md
-      references/
-        design-quality-criteria.md      ← shared with develop-dd
-        retrofit-risks.md
-    vmodel-skill-review-dd/
-      SKILL.md
-      references/
-        review-checklist-dd.md
-        design-quality-criteria.md      ← shared with develop-dd
-    vmodel-skill-dd-template/
-      SKILL.md                          ← schema reference only
-    vmodel-skill-traceability/
-      SKILL.md                          ← trace format reference only
-    vmodel-skill-tool-checks/
-      SKILL.md                          ← config format reference only
-  agents/
-    vmodel-agent-tdd-developer.md
-    vmodel-agent-code-reviewer.md
-    vmodel-agent-dd-developer.md
-    vmodel-agent-dd-reviewer.md
-    vmodel-agent-task-decomposer.md
-
-.vmodel/                                ← project-specific, in .gitignore
-  config.yaml                           ← project configuration (committed)
-  pipeline/                             ← pipeline state (gitignored)
-    implementation-plan.yaml
-    pipeline-state.yaml
-    tasks/
-      TASK-001.yaml
-      TASK-001-feedback.yaml
-      TASK-002.yaml</code>
+      <span class="lang-label">Project tree</span>
+      <code>project-root/
+├── .vmodel/                                    # central config (created by vmodel-init)
+│   ├── config.yaml                              # paths, build settings, tool commands  (committed)
+│   ├── references/                              # shared skill references               (committed)
+│   │   ├── authoring-discipline.md
+│   │   ├── partial-parent-protocol.md
+│   │   ├── authoring-self-check.md
+│   │   ├── requirements-shape-checklist.md
+│   │   └── definitions/
+│   ├── defer-index.md                           # auto-gen DEFER aggregate              (gitignored)
+│   ├── .reviews/                                # spec-side verdict files               (committed)
+│   │   ├── REQS-app-checkout-2026-05-09-01.yaml
+│   │   ├── ARCH-app-checkout-2026-05-09-01.yaml
+│   │   └── DD-app-checkout-discount-calc-2026-05-09-01.yaml
+│   └── .build/                                  # build pipeline state
+│       ├── tasks.yaml                           # task DAG from plan-build              (gitignored)
+│       ├── pipeline-state.yaml                  # live state from orchestrate-build     (gitignored)
+│       ├── lessons.yaml                         # cumulative bounded lessons            (committed)
+│       ├── tasks/
+│       │   └── leaf-app-checkout-discount-calc/
+│       │       ├── current-task.yaml            ← orchestrator
+│       │       ├── render-report.yaml           ← render-tests
+│       │       ├── build-progress.yaml          ← implement-leaf (overwrite-on-update)
+│       │       ├── review-ready.yaml            ← implement-leaf
+│       │       └── feedback.yaml                ← review-execution (REJECTED only)
+│       ├── escalations/
+│       │   └── ESC-007.yaml                     ← review-execution                       (committed)
+│       └── runs/
+│           └── 2026-05-10-001/
+│               └── retrospective.md             ← retrospect-build                       (gitignored)
+│
+├── specs/                                       # the spec tree (committed)
+│   ├── product_brief.md   OR  needs.md   OR  product_description.md   # one of, mandatory
+│   ├── glossary.md                              # optional, tree-global definitions
+│   ├── requirements.md                          # root scope
+│   ├── architecture.md                          # root scope
+│   ├── architecture/                            # optional Rule-8 detail bundle
+│   │   └── interfaces/
+│   │       └── ICheckoutFinalise.md
+│   ├── testspec.md                              # root scope
+│   ├── adrs/
+│   │   └── adr-001-use-postgres.md
+│   └── app/                                     # branch scope
+│       ├── requirements.md
+│       ├── architecture.md
+│       ├── testspec.md
+│       ├── adrs/
+│       └── checkout/                            # leaf scope
+│           ├── detailed_design.md
+│           └── testspec.md
+│
+├── src/                                         # code (build flow output)
+└── tests/                                       # test code (build flow output)</code>
     </div>
 
-    <h3>Shared Reference Files</h3>
-    <p>Reference files that are used by multiple skills are duplicated into each skill&rsquo;s <code>references/</code> directory. This is deliberate &mdash; each skill must be self-contained (no cross-skill file references). When a shared reference changes, all copies must be updated. A future meta-skill or build step may automate this synchronization.</p>
-
-    <p><strong>Alternative considered:</strong> Symlinks or a shared <code>references/</code> directory. Rejected because the agentskills.io spec expects each skill to be self-contained, and symlink behavior varies across platforms and tools.</p>
+    <h3>Framework repo</h3>
+    <div class="code-block">
+      <span class="lang-label">.claude/ in this repo</span>
+      <code>.claude/
+├── skills/
+│   ├── vmodel-init/                             # one-time setup
+│   ├── vmodel-skill-elicit-needs/               # spec — root product
+│   ├── vmodel-skill-elicit-pd/                  # spec — root product (lightweight)
+│   ├── vmodel-skill-author-requirements/        # spec — author/review pairs (5)
+│   ├── vmodel-skill-review-requirements/
+│   ├── vmodel-skill-author-architecture/
+│   ├── vmodel-skill-review-architecture/
+│   ├── vmodel-skill-author-adr/
+│   ├── vmodel-skill-review-adr/
+│   ├── vmodel-skill-author-detailed-design/
+│   ├── vmodel-skill-review-detailed-design/
+│   ├── vmodel-skill-author-testspec/
+│   ├── vmodel-skill-review-testspec/
+│   ├── vmodel-skill-plan-build/                 # build (6)
+│   ├── vmodel-skill-orchestrate-build/
+│   ├── vmodel-skill-render-tests/
+│   ├── vmodel-skill-implement-leaf/
+│   ├── vmodel-skill-review-execution/
+│   └── vmodel-skill-retrospect-build/
+└── agents/
+    ├── render-tests.md                          # dispatch shells (3)
+    ├── implement-leaf.md
+    └── review-execution.md</code>
+    </div>
   </section>
 
 
-  <!-- ===================== SECTION 11: CURRENT SCOPE ===================== -->
-  <section id="sa-scope">
-    <h2>Current Scope &amp; Build Order</h2>
-    <p>This architecture covers the lower V-model layers: detailed design, source code, and unit tests. Higher layers (architecture, requirements, system test) will follow the same pattern with layer-specific skills added.</p>
+  <!-- ===================== TODO / PENDING ===================== -->
+  <section id="sa-todo">
+    <h2>Pending / TODO</h2>
+    <p>Items referenced inline that are not yet built. Tracked in <code>docs/plan/BACKLOG.md</code>.</p>
 
-    <h3>What Exists</h3>
     <table class="field-table">
       <thead>
-        <tr><th>Component</th><th>Status</th><th>Notes</th></tr>
-      </thead>
-      <tbody>
-        <tr><td class="field-name">vmodel-skill-develop-code</td><td>Exists</td><td>Iteration 2 — added SOLID principles, functional core/imperative shell. Code-specific eval assertions (8 per scenario).</td></tr>
-        <tr><td class="field-name">vmodel-skill-derive-test-cases</td><td>Exists</td><td>Iteration 3, eval infrastructure built</td></tr>
-        <tr><td class="field-name">Artifact documentation</td><td>Complete</td><td>source-code.html, unit-test.html, detailed-design.html</td></tr>
-        <tr><td class="field-name">Schemas</td><td>Partial</td><td>artifact-envelope, detailed-design v2.0, trace schema</td></tr>
-      </tbody>
-    </table>
-
-    <h3>Build Order</h3>
-    <p>Bottom-up, craft skills first, then framework, then agents, then orchestration:</p>
-    <ol>
-      <li><strong>Craft skills:</strong> review-code, develop-dd, retrofit-dd, review-dd (rename existing skills to vmodel-skill-* convention)</li>
-      <li><strong>Framework skills:</strong> dd-template, traceability, tool-checks</li>
-      <li><strong>Agents:</strong> tdd-developer, code-reviewer, dd-developer, dd-reviewer, task-decomposer</li>
-      <li><strong>Orchestration:</strong> research-plan skill, pipeline controller skill</li>
-      <li><strong>Configuration:</strong> config schema, project setup (<code>.vmodel/config.yaml</code>)</li>
-    </ol>
-
-    <p>Each step is independently useful. After step 1, anyone can use the craft skills standalone. After step 3, agents can be manually invoked. Step 4 wires everything together.</p>
-
-    <h3>What Changes When We Add Higher Layers</h3>
-    <table class="field-table">
-      <thead>
-        <tr><th>New Layer</th><th>New Skills Added</th><th>Existing Components Unchanged</th></tr>
+        <tr><th>Item</th><th>Where it bites</th><th>Phase</th><th>Workaround today</th></tr>
       </thead>
       <tbody>
         <tr>
-          <td class="field-name">SW Architecture</td>
-          <td>vmodel-skill-develop-arch, vmodel-skill-review-arch, vmodel-skill-arch-template, vmodel-agent-arch-developer, vmodel-agent-arch-reviewer</td>
-          <td>traceability, tool-checks, pipeline controller, config schema, all lower-layer skills</td>
+          <td class="field-name">Candidate-set propagation walker</td>
+          <td>Update workflow Step 3</td>
+          <td>Phase 6+ tooling</td>
+          <td>Manually walk forward links from changed artifact</td>
         </tr>
         <tr>
-          <td class="field-name">SW Requirements</td>
-          <td>vmodel-skill-write-req, vmodel-skill-review-req, vmodel-skill-req-template, vmodel-agent-req-developer, vmodel-agent-req-reviewer</td>
-          <td>Everything above</td>
+          <td class="field-name">Topology discovery tool</td>
+          <td>Retrofit Phase 1</td>
+          <td>Phase 7</td>
+          <td>Hand-author scope tree from dependency graph</td>
+        </tr>
+        <tr>
+          <td class="field-name">Gap report aggregator</td>
+          <td>Retrofit Phase 5</td>
+          <td>Phase 7</td>
+          <td>Hand-compile from <code>recovery_status: unknown</code> + <code>defer-index.md</code></td>
+        </tr>
+        <tr>
+          <td class="field-name">Dedicated retrofit author skill</td>
+          <td>Retrofit any phase</td>
+          <td>Phase 7</td>
+          <td>Per-artifact author skills already encode retrofit honesty</td>
+        </tr>
+        <tr>
+          <td class="field-name">Product Brief author/review pair</td>
+          <td>Greenfield Phase 1 if PB chosen</td>
+          <td>Deferred indefinitely (Phase 5 closeout)</td>
+          <td>Hand-author against <code>schemas/artifacts/product-brief.schema.json</code> + craft doc</td>
+        </tr>
+        <tr>
+          <td class="field-name">Product-layer escalation target</td>
+          <td>Build escalations to <code>target_layer: product</code></td>
+          <td>Tied to PB skill or to elicit-needs / elicit-pd promotion</td>
+          <td>Surfaces to human; re-elicit or hand-edit root product</td>
+        </tr>
+        <tr>
+          <td class="field-name">Purpose-built tools (vmodel-core, vmodel-author, vmodel-retrofit)</td>
+          <td>Mechanical validation invoked from skills</td>
+          <td>Phase 6 (tools as independent products) — partial; <code>scripts/check-*.py</code> cover near-term needs</td>
+          <td>Use the <code>scripts/</code> Python checkers; structural validation via embedded JSON Schema runners</td>
+        </tr>
+        <tr>
+          <td class="field-name">Haiku-floor evaluation per skill</td>
+          <td>Skill quality assurance</td>
+          <td>Phase 5 closeout (deferred until pilot signal)</td>
+          <td>Pilot-driven validation in vmodel-core dogfooding</td>
         </tr>
       </tbody>
     </table>
 
-    <p>The orchestration pattern (plan → decompose → build → review → human gate) is identical across layers. Layer-specific knowledge lives entirely in craft skills and template adapters.</p>
+    <p><strong>For the canonical execution plan, see <code>docs/plan/BACKLOG.md</code>. For architectural rationale on every decision, see <code>docs/plan/TARGET_ARCHITECTURE.md</code>.</strong></p>
   </section>
-
 
 </main>
 

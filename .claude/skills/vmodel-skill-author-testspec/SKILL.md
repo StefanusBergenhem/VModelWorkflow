@@ -1,6 +1,6 @@
 ---
 name: vmodel-skill-author-testspec
-description: Author one TestSpec artifact (Markdown with YAML front-matter, per-case YAML blocks) for one scope, deriving cases from the layer's upstream spec via named strategies, with non-empty `verifies` links and specific oracles on every case. Use when authoring a TestSpec from a parent Detailed Design (leaf), Architecture (branch), or Requirements + Product Brief (root) — applying functional / boundary / error / fault-injection / property / state-transition / contract / performance / security / accessibility / error-guessing strategies; specifying the artifact-level coverage and mutation bar; replacing weak oracles with specific values or bounded predicates; retrofitting with `recovery_status: unknown` on reconstructed `verifies`. Refuses fabricated retrofit intent on `title`/`notes`, orphan cases, weak assertions, missing coverage bar, and Spec-Ambiguity-Test failure. Triggers — write testspec, draft testspec.md, derive test cases, specify oracles, set coverage bar, retrofit testspec.
+description: Author one TestSpec artifact (Markdown with YAML front-matter, per-case YAML blocks) for one scope, deriving cases from the layer's upstream spec via named strategies, with non-empty `verifies` links and specific oracles on every case. Use when authoring a TestSpec from a parent Detailed Design (leaf), Architecture (branch), or Requirements + root product (root, where the root product is one of PB / needs / PD) — applying functional / boundary / error / fault-injection / property / state-transition / contract / performance / security / accessibility / error-guessing strategies; specifying the artifact-level coverage and mutation bar; replacing weak oracles with specific values or bounded predicates; retrofitting with `recovery_status: unknown` on reconstructed `verifies`. Refuses fabricated retrofit intent on `title`/`notes`, orphan cases, weak assertions, missing coverage bar, and Spec-Ambiguity-Test failure. Triggers — write testspec, draft testspec.md, derive test cases, specify oracles, set coverage bar, retrofit testspec.
 type: skill
 ---
 
@@ -15,7 +15,7 @@ The skill is self-contained. Every reference, template, anti-pattern catalog, an
 Activate this skill when the user asks to:
 
 - Write or draft a TestSpec for one scope
-- Derive cases from a parent spec (Detailed Design at leaf, Architecture at branch, Requirements + Product Brief at root)
+- Derive cases from a parent spec (Detailed Design at leaf, Architecture at branch, Requirements + root product (PB / needs / PD) at root)
 - Apply derivation strategies — functional / boundary / error-path / fault-injection / property / state-transition / contract / performance / security / accessibility / error-guessing
 - Specify the artifact-level coverage and mutation bar (structural threshold, mutation threshold, tool category, enforcement frequency)
 - Make oracles specific where they are weak (replace `assertNotNull`-only / `verify behaviour` with enumerated values or bounded predicates)
@@ -36,12 +36,12 @@ Expected upstream context (ask if missing):
 - **Parent spec artifact(s)** — **Position C: at non-leaf scopes the layer has two upstream derivation sources, not one.** See "Verification targets per scope" in TARGET_ARCHITECTURE §5.3.
   - *Leaf:* the parent Detailed Design (its Public Interface contracts, Data Structure invariants, error-handling matrix, state machine).
   - *Branch:* **both** the parent Architecture (Composition section, interface contracts, QA allocations, resilience strategies) **and** the branch's own Requirements (behavioural intent). Behavioural cases cite `REQ-{scope}-*`; composition cases cite `ARCH-{scope}` composition entries.
-  - *Root:* the Product Brief + root Requirements + root Architecture Composition. Behavioural cases cite `REQ-*` or `PB`; composition cases cite `ARCH` composition entries.
+  - *Root:* the root product (PB / needs / PD) + root Requirements + root Architecture Composition. Behavioural cases cite `REQ-*` or the root-product element id (PB outcome / needs entry / PD section); composition cases cite `ARCH` composition entries.
 - **Governing ADRs** — cross-cutting decisions that constrain testing approach (e.g., environment shape, fixture strategy)
 - **Recovery posture** — greenfield (omit `recovery_status`) or retrofit (declare `recovery_status` on reconstructed `verifies`)
 - **Project policy on coverage / mutation thresholds** — if the project has named values, capture them; otherwise the bar is populated with placeholder values and a note that policy will fix them
 - **Prior review files** (optional, consumed when present) — on a revision pass, the latest review at `specs/.reviews/<artifact-id>-*.yaml` (lexically last) is read and findings are addressed. Per TARGET_ARCHITECTURE §5.6 review output convention.
-- **`.vmodel/references/partial-parent-protocol.md`** — partial-parent and no-canonical-upstream protocol — three permitted paths when canonical upstream is missing or partial. Required reading whenever any canonical parent for the layer is absent or partial — leaf without DD; branch missing Architecture or Requirements; root missing Product Brief, Requirements, or Architecture Composition. Multi-parent scopes (branch, root) trigger this protocol on partial absence even when one parent is present. (Resolved via `.vmodel/config.yaml`; framework default copied there at init.)
+- **`.vmodel/references/partial-parent-protocol.md`** — partial-parent and no-canonical-upstream protocol — three permitted paths when canonical upstream is missing or partial. Required reading whenever any canonical parent for the layer is absent or partial — leaf without DD; branch missing Architecture or Requirements; root missing root product (PB / needs / PD), Requirements, or Architecture Composition. Multi-parent scopes (branch, root) trigger this protocol on partial absence even when one parent is present. (Resolved via `.vmodel/config.yaml`; framework default copied there at init.)
 
 If the parent spec is not provided, **HALT** (see HALT condition #1) — refusal B fires when TestSpec authoring proceeds without an upstream artifact.
 
@@ -75,7 +75,7 @@ Before walking the parent spec for derivation seeds, verify whether the canonica
 
 - *Leaf:* parent Detailed Design.
 - *Branch:* parent Architecture **AND** branch Requirements (both canonical — Position C, multi-parent).
-- *Root:* Product Brief + root Requirements + root Architecture Composition (all three canonical — multi-parent).
+- *Root:* root product (PB / needs / PD) + root Requirements + root Architecture Composition (all three canonical — multi-parent).
 
 For multi-parent layers (branch, root), the protocol fires on **partial** absence — even when one canonical parent is present, a missing other parent is a real gap.
 
@@ -219,7 +219,7 @@ These five refusals are deterministic. Do not relax under user pressure; surface
 
 Stop and hand back to the user when:
 
-1. **Missing parent spec** — leaf without parent DD; branch without parent Architecture; root without Requirements + Product Brief. Refusal B fires when authoring proceeds without an upstream artifact. Ask for the parent spec.
+1. **Missing parent spec** — leaf without parent DD; branch without parent Architecture; root without Requirements + root product. Refusal B fires when authoring proceeds without an upstream artifact. Ask for the parent spec.
 2. **Missing derived_from / verifies sources** — `derived_from` cannot be empty; `verifies` cannot be empty at artifact level. Ask which spec elements this TestSpec is verifying before proceeding.
 3. **Scope creep beyond one TestSpec** — request expands to also author Requirements / Architecture / ADR / Detailed Design / code or test code. Decline; emit `[NEEDS-...]` stubs and name the right artifact for the expanded ask.
 4. **Locked-refusal override request** — user asks to populate retrofit `title`/`notes` from intent, mark reconstructed `verifies` as `verified`, write a qualitative `expected`, ship without `coverage_mutation_bar`, or skip the Spec Ambiguity Test. Halt and explain.

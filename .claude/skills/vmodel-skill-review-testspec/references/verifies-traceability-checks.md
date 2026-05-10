@@ -43,7 +43,7 @@ The `verifies` field is the spine of the TestSpec. Empty `verifies` is refusal B
 **Check that** `verifies` granularity matches the layer:
 - **Leaf**: case `verifies` points at a DD field (function name, error-matrix row id, postcondition id, invariant id) — not at a root-level requirement
 - **Branch**: case `verifies` points at an Architecture interface, decomposition entry, or composition invariant
-- **Root**: case `verifies` points at a Requirement id or Product Brief outcome statement
+- **Root**: case `verifies` points at a Requirement id or root-product element (PB outcome / needs entry / PD section)
 
 **Reject when** a leaf case `verifies` resolves to a root requirement (skipping the DD), or a branch case `verifies` resolves to a leaf DD field (jumping down a layer), or a root case `verifies` resolves to a leaf DD field.
 

@@ -71,7 +71,7 @@ Walk top to bottom — first match wins:
 | 4 | Any soft-reject finding present | **REJECTED** |
 | 5 | Only `info` findings, or no findings at all | **APPROVED** |
 
-**Verdict precedence**: DESIGN_ISSUE wins over REJECTED, which wins over APPROVED. If `check.spec-ambiguity-test.fail` fires AND a hard-reject trigger also fires, the verdict is DESIGN_ISSUE if the meta-gate failure is upstream-traceable (parent spec at the layer is itself ambiguous; a governing ADR is missing the load-bearing decision; an upstream Requirement or Product Brief outcome is under-specified). The findings list still contains all observed issues.
+**Verdict precedence**: DESIGN_ISSUE wins over REJECTED, which wins over APPROVED. If `check.spec-ambiguity-test.fail` fires AND a hard-reject trigger also fires, the verdict is DESIGN_ISSUE if the meta-gate failure is upstream-traceable (parent spec at the layer is itself ambiguous; a governing ADR is missing the load-bearing decision; an upstream Requirement or root-product element is under-specified). The findings list still contains all observed issues.
 
 ## Hard-reject triggers (non-negotiable)
 

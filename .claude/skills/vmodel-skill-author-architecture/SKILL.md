@@ -38,7 +38,7 @@ Expected upstream context (ask if missing):
 - **Recovery posture** — greenfield (omit `recovery_status`) or retrofit (declare `recovery_status` and supply source-code references)
 - **Mode flags** — root vs branch (root activates deployment intent), greenfield vs retrofit
 - **Prior review files** (optional, consumed when present) — on a revision pass, the latest review at `specs/.reviews/<artifact-id>-*.yaml` (lexically last) is read and findings are addressed. Per TARGET_ARCHITECTURE §5.6 review output convention.
-- **`.vmodel/references/partial-parent-protocol.md`** — partial-parent and no-canonical-upstream protocol — three permitted paths when canonical upstream is missing or partial. Required reading whenever the canonical upstream (parent Requirements at branch scope, or Product Brief at root scope) is absent or only partially present. (Resolved via `.vmodel/config.yaml`; framework default copied there at init.)
+- **`.vmodel/references/partial-parent-protocol.md`** — partial-parent and no-canonical-upstream protocol — three permitted paths when canonical upstream is missing or partial. Required reading whenever the canonical upstream (parent Requirements at branch scope, or root product (PB / needs / PD) at root scope) is absent or only partially present. (Resolved via `.vmodel/config.yaml`; framework default copied there at init.)
 
 If any of the four primary inputs is unavailable, **HALT** (see HALT condition #1) and ask the user. Do not invent inputs.
 
@@ -68,7 +68,7 @@ Skip this step on greenfield (first author pass) — no review files yet.
 
 ### Step 0.5 — Canonical-upstream check (every run)
 
-Before drafting decomposition, verify whether the canonical upstream is fully present, partially present, or fully absent. Canonical upstream for architecture: the parent Requirements artifact (at branch scope) or the Product Brief (at root scope, where root Requirements would normally derive from PB). A pre-canonical input (e.g. `needs.md` from elicit-needs) is **not** canonical upstream — its presence triggers this check, not satisfies it.
+Before drafting decomposition, verify whether the canonical upstream is fully present, partially present, or fully absent. Canonical upstream for architecture: the parent Requirements artifact (at branch scope) or the root product (PB / needs / PD, at root scope, where root Requirements would normally derive from the root product). A pre-canonical input (e.g. an unrefined `needs.md` from elicit-needs that has not yet been promoted to a sign-off-ready root product) is **not** canonical upstream — its presence triggers this check, not satisfies it.
 
 If the canonical upstream is missing or partial:
 

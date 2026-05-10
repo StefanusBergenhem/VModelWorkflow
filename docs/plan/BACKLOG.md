@@ -4,30 +4,36 @@ Execution plan for the VModelWorkflow framework following the 2026-04-18 pivot. 
 
 ---
 
-## 1. Current State
+## 1. Current State (snapshot)
 
-- **Pivot committed 2026-04-18.** Pre-pivot design record preserved at `archive/pre-pivot-2026-04-18/`.
-- **Phase 0** — archival — **DONE** (commit `69330f3`, 2026-04-18).
-- **Phase 1** — foundation rewrite (this document + `TARGET_ARCHITECTURE.md` + `CLAUDE.md`) — **DONE**.
-- **Phase 2** — per-artifact documentation + cleanup — **DONE** (2026-04-22). Six artifact pages authored under the 5-section structure, landing-page rewrite against TARGET_ARCHITECTURE, domain-plugin machinery unwired, pre-pivot artifact pages archived. See §3.2.
-- **Phase 3** — schemas + traceability + Quality Bar — **DONE** (2026-04-23). Six per-artifact JSON Schemas (draft 2020-12), envelope + common-defs, traceability link-types + validation-rules catalogs, Quality Bar container + six per-artifact checklists, six minimal-example fixtures round-tripping clean through the schemas. `PHASE3_AUTHORING_PATTERN.md` archived to `archive/phase3/` on completion. See §3.3.
-- **Phase 4** — Product Descriptions for purpose-built tools — **CLOSED** (2026-04-26) without producing PDs. The vmodel-core PD pilot surfaced that PD is a category error: the actual gap is a missing **elicitation skill** at root scope (interview-style, anti-assumption / explanation / gap-finding / readback for joint agreement, DDD-flavoured). Framework retains its 6-artifact set. Phase 5 picks up `vmodel-skill-elicit-needs`; the vmodel-core PD draft is preserved as eval input for that skill. `PHASE4_AUTHORING_PATTERN.md` archived to `archive/phase4/` on closeout. See §3.4.
-- **Phase 5** — Skills (craft + framework) — **complete (closeout 2026-05-09)**. Five per-artifact author/review pairs + elicit-needs landed; product-brief author/review pair stays deferred (PB authored direct against schema until dogfooding shows formalisation value). Framework-skills closeout reabsorbed into Phase 6 build-flow design.
-- **Phase 6** — Build flow + central config + greenfield pilot — **substantially advanced (2026-05-09)**. `vmodel-core` greenfield dogfooding pilot at `/home/stefanus/repos/vmodel-core/`. Cluster 1 (Issue 22), Cluster 2 (Issues 13, 23), Cluster 3 (Issues 11/15/16/20/21), Cluster 4 (Issues 1/6/12/14/17/18 + Issue 9 folded in) — RESOLVED. **2026-05-09 session shipped: 6 build-side skills (plan-build, orchestrate-build, render-tests, implement-leaf, review-execution, retrospect-build), `vmodel-init` skill, `vmodel-skill-elicit-pd`, `.vmodel/` central-config pattern (config.yaml + references/ + .reviews/ + .build/), DD/TestSpec schema simplifications (drop `derived_from`), `## Open follow-ups` killed everywhere (DEFER markers single mechanism), per-skill bundled shared refs retired, pre-pivot skills archived to `archive/pre-pivot-skills/`, vmodel-core artifacts migrated.** **2026-05-10 session shipped: leaf-build triplet alignment pass — implement-leaf craft-aligned to source-code.html (AI-specific guards in pre-publish self-check; complexity targets to craft guide); render-tests craft-aligned to unit-test.html (AAA + one-Act, only-mock-types-you-own, no happy-path bias, state-verification preference); review-execution APPROVED writes no file (orchestrator infers from absence); per-task file ownership enforced (`render-report.yaml ← render-tests`, `review-ready.yaml ← implement-leaf` sole producer, `feedback.yaml ← review-execution` REJECTED-only); paths canonicalized to `.vmodel/.build/tasks/<task-id>/`; rejection taxonomy normalized with `-impl-bug` suffix and `regression` row added; orchestrate-build dispatch table updated.** **2026-05-10 (continued) shipped: wf-comparison pass — five-phase build-flow upgrade against `/home/stefanus/repos/dems/wf` patterns. (A) TOCs added to four reference files >100 lines + orchestrate-build SKILL.md persona reword; (B) task-contract enrichment — `acceptance_criteria` / `context_to_load` / `out_of_scope` populated mechanically by plan-build, copied verbatim into `current-task.yaml` (new template under orchestrate-build/templates), enforced by implement-leaf via refusal H + new "Contract enforcement" section; (C) scope-expansion HALT — new `build-blocked.yaml` template + `scope-expansion-halt.md` reference; orchestrator step 4a routes auto-amend (within `build.auto_amend.max_auto_amendments`, default 1) or escalates with target_layer derived from `suggested_resolution`; (D) per-gate progress checkpoint — new `build-progress.yaml` overwrite-on-update journal across 11 gates; orchestrator resume logic chooses silent-recover / resume-at-gate / restart; new implement-leaf "Resume mode" alongside greenfield/fix; (E) per-task workers as agents — three thin dispatch shells under `.claude/agents/` (`implement-leaf`, `render-tests`, `review-execution`) load canonical skills via Skill tool; orchestrate-build dispatches via Task tool for true within-stage parallelism (multiple concurrent Task calls in one tool-use message) and isolated context windows; `retrospect-build` stays a Skill invocation (single end-of-run). TARGET_ARCHITECTURE §11 + §16 updated; CLAUDE.md Build Flow section gained "Per-task worker agents" paragraph; new config knob `build.auto_amend.max_auto_amendments`.** Remaining: Clusters 5 (no-fabrication extensions) and 6 (process / UX, minus Issue 9); `docs/guide/skills-architecture.html` refresh still pending (banner extended to flag the new agent layer; full rewrite still deferred). See §3.6 (new).
-- Phase 7 — pending (gated on Phase 6 dogfooding signal).
+| Phase | Title | Status |
+|---|---|---|
+| 0 | Archival | **DONE** (2026-04-18) |
+| 1 | Foundation rewrite | **DONE** (2026-04-18) |
+| 2 | Per-artifact documentation | **DONE** (2026-04-22) |
+| 3 | Schemas + traceability + Quality Bar | **DONE** (2026-04-23) |
+| 4 | Product Descriptions | **CLOSED without producing PDs** (2026-04-26) — the gap was a missing elicitation skill, not a missing artifact type |
+| 5 | Skills (craft + framework) | **EFFECTIVE COMPLETE** (closeout 2026-05-09) — 5 author/review pairs + 2 elicit skills landed; PB pair + Haiku-floor evals deferred |
+| 6 | Build flow + central config + greenfield pilot | **SUBSTANTIALLY ADVANCED** (rolling, latest landing 2026-05-10) — see §3.6 |
+| 7 | Retrofit-specific additions | **PENDING** (gated on Phase 6 dogfooding signal) |
 
-**Preserved and operational:**
+**Active deliverables:**
 - 18 V-model skills installed: 12 spec-side (5 author/review pairs + elicit-needs + elicit-pd) + 6 build-side (plan-build, orchestrate-build, render-tests, implement-leaf, review-execution, retrospect-build) + vmodel-init.
-- 20 research documents in `research/` (system-level, implementation, detailed-design, pillar3) — reusable **as secondary substrate with an explicit safety-bias caveat** (authored pre-pivot with ASPICE/DO-178C framing; extract craft, discard framing).
+- 3 worker agents (`render-tests`, `implement-leaf`, `review-execution`) under `.claude/agents/` — thin dispatch shells loading the canonical skill via the Skill tool.
+- 6 per-artifact JSON Schemas (draft 2020-12) + envelope + common-defs + traceability catalogs + Quality Bar JSON + minimal fixtures. (Schemas + Quality Bars for `needs.md` and `product_description.md` pending — see §3.6 Cluster 7.)
+- 6 artifact craft pages under `docs/guide/artifacts/` (5-section structure). (`needs.html` and `product-description.html` pending — see §3.6 Cluster 7.)
+- `docs/guide/skills-architecture.html` rewritten for the post-pivot, post-build-flow world (2026-05-10).
+- `docs/guide/index.html` refreshed (2026-05-10) to reflect Phase 6 state, central config, walker tool, and 3-root-artifact treatment.
+- `scripts/walk-impact.py` shipped (2026-05-10) — candidate-set propagation walker (TARGET §8.3); 22-test TDD suite; `tests/test_walk_impact.py` + fixture tree under `tests/fixtures/walk-impact/specs/`.
+- `vmodel-core` greenfield dogfooding pilot active at `/home/stefanus/repos/vmodel-core/`.
+- 20 research documents in `research/` — secondary substrate with explicit safety-bias caveat (authored pre-pivot; extract craft, discard ASPICE/DO-178C framing).
 
-**Archived (2026-05-09):**
-- Pre-pivot skills (`develop-code`, `develop-code-workspace`, `derive-test-cases`, `derive-test-cases-workspace`, `vmodel-skill-review-code`, `vmodel-skill-review-code-workspace`, `combined-workspace`) → `archive/pre-pivot-skills/`. Superseded by build-side V-model skills.
-- Sync scripts (`scripts/sync-{authoring-discipline,partial-parent-protocol,requirements-shape-checklist}.sh`) — retired with the central reference resolution model.
-
-**Archived during Phase 2:**
-- Pre-pivot artifact HTML pages (`completeness-analysis`, `conops`, `stakeholder-needs`, `system-requirements`, `source-code`, `unit-test`) — moved to `archive/pre-pivot-2026-04-18/docs-guide-artifacts/`; superseded by the six post-pivot pages.
-- Domain translation layer — `docs/guide/domains/*.json` archived to `archive/pre-pivot-2026-04-18/domains/`; `js/domain.js` deleted; CSS and page wiring stripped. Plugin mechanism parked for post-Phase 2 revisit (see `TARGET_ARCHITECTURE §14`, §15).
-- `PHASE2_AUTHORING_PATTERN.md` — moved to `archive/phase2/` after Phase 2 completion. Historical reference for the authoring conventions established while pages were being written.
+**Recent landings (2026-05):**
+- 6 build-side skills + central config (`.vmodel/`) + vmodel-init + elicit-pd.
+- DD/TestSpec schema simplifications (drop `derived_from`); `## Open follow-ups` killed everywhere.
+- Pre-skill bundled shared refs retired; pre-pivot skills archived.
+- Leaf-build triplet alignment to source-code.html + unit-test.html craft + per-task file ownership enforcement.
+- wf-comparison five-phase upgrade: TOC/persona fixes, task-contract enrichment (`acceptance_criteria` / `context_to_load` / `out_of_scope`), scope-expansion HALT + `build-blocked.yaml` + auto-amend, per-gate `build-progress.yaml` + resume modes, per-task workers wrapped as agents for parallel isolated execution.
 
 ---
 
@@ -44,173 +50,191 @@ Architectural rationale — including the full Q8–Q15 and NQ-B/C/D/E decisions
 
 ## 3. Migration Phases
 
-### 3.1 Phase 1 — Foundation Rewrite (in progress)
+### 3.1 Phase 1 — Foundation Rewrite — DONE
 
 **Goal:** Align `BACKLOG.md`, `TARGET_ARCHITECTURE.md`, and `CLAUDE.md` with the new model so future sessions can pick up without needing the 2026-04-18 design transcript.
 
-**Tasks:**
-- [x] Rewrite `docs/plan/TARGET_ARCHITECTURE.md` against the 6-artifact model.
-- [x] Rewrite `docs/plan/BACKLOG.md` as the post-pivot execution plan.
-- [x] Update `CLAUDE.md` to remove pre-pivot framing and introduce the new plan + principles.
-
-**Deliverables:** This commit.
-
-**Success criteria:** A future Claude session loading `CLAUDE.md` + MEMORY.md + these two planning files can understand the framework and next steps without needing the 2026-04-18 session transcript.
-
-**Dependencies:** None (first commit after Phase 0).
+**Delivered:** Three planning files rewritten. Future sessions can load them and continue without the transcript.
 
 ### 3.2 Phase 2 — Per-artifact Documentation — DONE (2026-04-22)
 
-**Goal:** Rewrite `docs/guide/artifacts/*.html` for the six artifact types under the **5-section structure** (V-model context, best practices, anti-patterns, examples, Quality Bar). Whole document per artifact; no length target; information density over length.
+**Goal:** Rewrite `docs/guide/artifacts/*.html` for the six artifact types under the **5-section structure** (V-model context, best practices, anti-patterns, examples, Quality Bar).
 
-**Artifact pages** — all six authored under the 5-section structure:
+**Delivered:**
+- Six artifact pages: ADR (pattern-setter), Detailed Design, Product Brief, Requirements, Architecture, TestSpec.
+- Landing page rewritten against `TARGET_ARCHITECTURE`.
+- Pre-pivot artifact pages archived to `archive/pre-pivot-2026-04-18/docs-guide-artifacts/`.
+- Domain translation plugin machinery removed; JSON files archived.
+- `PHASE2_AUTHORING_PATTERN.md` archived to `archive/phase2/` on completion.
 
-- [x] **ADR** — 2026-04-19 (commit `8b4fea2`). Pattern-setter; established voice, section ordering, example style.
-- [x] **Detailed Design** — 2026-04-19 (commit `8328d33`). Compression exercise against the largest pre-pivot page; pre-pivot Section 8 "Test Strategy" removed.
-- [x] **Product Brief** — 2026-04-19. Consolidates pre-pivot `stakeholder-needs` + `conops` + `completeness-analysis` into one ~6.5k-word page. NFR Discovery Checklist (10 canonical dimensions) and Mermaid Onion Model introduced.
-- [x] **Requirements** — 2026-04-20. Eight Best-Practice subsections; seven worked examples in one session-management domain. Generalist-gap audit formalised as authoring step.
-- [x] **Architecture** — 2026-04-20. Greenfield page; nine Best-Practice subsections including dedicated Composition-patterns catalog; four Mermaid diagrams. `TARGET_ARCHITECTURE` §5.1 + §6 + §8.4 + §15 amended pre-authoring after industry-practice challenge to the wiring-as-leaf-sibling rule.
-- [x] **TestSpec** — 2026-04-21. Greenfield replacement for pre-pivot `unit-test.html`. Nine Best-Practice subsections with per-layer weight table; four §1 bridge cards; three Mermaid diagrams; empirical LLM testing data carried on page per "docs are superset of skills" rule; 13 anti-patterns.
+### 3.3 Phase 3 — Schemas + Traceability + Quality Bar — DONE (2026-04-23)
 
-**Cross-cutting tasks** — all complete as of 2026-04-22:
+**Goal:** Per-artifact schemas derived from the Phase 2 docs; traceability schema; **Quality Bar JSON extraction (canonical machine format)** per artifact. JSON Schema draft 2020-12 throughout.
 
-- [x] **Domain translation plugin machinery removed** — `js/domain.js` and `js/v-diagram.js` deleted; domain-switcher UI, `.domain-switcher` and `[data-term]` CSS, per-page translation hooks stripped.
-- [x] **Domain JSON files archived** — `docs/guide/domains/*.json` moved to `archive/pre-pivot-2026-04-18/domains/`; domains directory removed.
-- [x] **Pre-pivot artifact pages archived** — `completeness-analysis.html`, `conops.html`, `stakeholder-needs.html`, `system-requirements.html`, `source-code.html`, `unit-test.html` moved to `archive/pre-pivot-2026-04-18/docs-guide-artifacts/`. Pre-pivot validation script moved alongside.
-- [x] **Landing page rewrite** — `docs/guide/index.html` rewritten against `TARGET_ARCHITECTURE`: Introduction, Core Principles, Artifact Model, Per-Artifact Craft links, Workflows, Further Reading. E2E walkthrough, Three Pillars, DRTDD, Assurance Levels, domain vocabulary, and pre-pivot traceability sections removed along with stale inline artifact stubs.
-- [x] **Post-pivot artifact quality review** — light-edit pass against mid-senior audience fit, voice discipline, and TARGET alignment. Hard rule violations (HALT reference, DO-178C standards-defensive citation, residual `js/domain.js` script tag) removed. Voice trims and density trims applied across all six pages. `TARGET_ARCHITECTURE` reconciled: `affects` → `affected_scopes`; TestSpec `type` enum expanded from 5 to 11 values to match the craft page.
-
-**Deliverables (all produced):**
-- Six `docs/guide/artifacts/*.html` pages under the 5-section structure.
-- Rewritten `docs/guide/index.html`.
-- Pre-pivot artifact pages, domain plugin JSON, and domain plugin runtime archived.
-- `PHASE2_AUTHORING_PATTERN.md` — written during the phase and archived to `archive/phase2/` on Phase 2 completion.
-
-**Dependencies:** Phase 1. **Blocks:** Phase 3 (schemas + Quality Bar JSON derive from these HTML pages).
-
-### 3.3 Phase 3 — Schemas — DONE (2026-04-23)
-
-**Goal:** Per-artifact schemas derived from the Phase 2 docs; traceability schema; **Quality Bar JSON extraction (canonical machine format)** per artifact. All schemas in one phase. JSON Schema draft 2020-12 throughout (see `PHASE3_AUTHORING_PATTERN.md §2`, archived on Phase 3 completion).
-
-**Filename convention.** Tasks below originally listed `.schema.yaml`; Phase 3 landed on JSON Schema draft 2020-12 with `.schema.json` extensions (see archived `PHASE3_AUTHORING_PATTERN.md §2`). The `.json` suffix is the as-built state.
-
-**Tasks:**
-- [x] `schemas/artifacts/product-brief.schema.json` — new (commit `5b84d62`).
-- [x] `schemas/artifacts/requirements.schema.json` — new against post-pivot Requirements structure (commit `7742783`).
-- [x] `schemas/artifacts/architecture.schema.json` — new with mandatory Composition section (commit `a392c94`).
-- [x] `schemas/artifacts/adr.schema.json` — new with Nygard status vocabulary + reversibility sub-prompt + human-only-field `recovery_status` narrowing (commit `0dcba63`).
-- [x] `schemas/artifacts/detailed-design.schema.json` — new; pre-pivot Section 8 "Test Strategy" removed; DbC shape lifted into `$defs/public_interface_entry` (commit `3854f9e`).
-- [x] `schemas/artifacts/test-spec.schema.json` — new; load-bearing `verifies: minItems 1` at both artifact and per-case levels (commit `c103964`).
-- [x] `schemas/artifacts/envelope.schema.json` + `schemas/artifacts/common-defs.schema.json` — foundation; vocabulary ownership lock (envelope = shape; per-artifact = enum) landed in `4a6a4d7` after ADR's Nygard override (commits `a00181f`, `4a6a4d7`).
-- [x] `schemas/traceability/` — four files: `link-types.schema.json` + `link-types.catalog.json` (9 link types), `validation-rules.schema.json` + `validation-rules.catalog.json` (13 rules) (commit `ca07b4b`). Pre-pivot `link-types.yaml` + `trace.schema.yaml` archived alongside.
-- [x] **Quality Bar container + six per-artifact JSON files** — `quality-bar.schema.json` meta-schema + ADR exemplar (`d012dec`), Product Brief (`c3b6800`), Requirements (`1ae007e`), Detailed Design (`7a4920a`), Architecture (`81b20f7`), TestSpec (`d16972b`). Five parallel Sonnet subagent extractions; `applies_at` exercised root-only (Architecture) and across all three layers with one multi-value case (TestSpec).
-- [x] **Minimal-example fixtures per artifact** (task #13) — six Markdown fixtures under `schemas/artifacts/fixtures/`, round-tripping clean through their respective schema + envelope + common-defs registries. LinkSnip URL-shortener scenario with cross-references (REQS → PB, ARCH → PB+REQS, DD → ARCH+REQs, TS → DD) (commit `f194465`).
-- [x] **TRV-QB-001 activation** — Quality Bar cascade rule flipped from `deferred_until: phase_3_task_3_and_12` to active on Phase 3 closeout. Runtime enforcement deferred to Phase 5/6 tooling.
-
-**Deliverables (all produced):**
+**Delivered:**
 - Six per-artifact schemas + envelope + common-defs under `schemas/artifacts/`.
-- Four traceability schemas/catalogs under `schemas/traceability/`.
+- Four traceability files under `schemas/traceability/` (link-types catalog: 9 types; validation-rules catalog: 13 rules).
 - Seven files under `schemas/artifacts/quality-bar/` (one container schema + six data files).
-- Six minimal-example Markdown fixtures under `schemas/artifacts/fixtures/`.
-- `PHASE3_AUTHORING_PATTERN.md` — written during the phase, archived to `archive/phase3/` on Phase 3 completion.
+- Six minimal-example Markdown fixtures under `schemas/artifacts/fixtures/` round-tripping clean through their schemas.
+- TRV-QB-001 (Quality Bar cascade rule) activated.
+- `PHASE3_AUTHORING_PATTERN.md` archived to `archive/phase3/` on completion.
 
-**Success criteria (met):** All schemas mechanically validate `schemas/artifacts/fixtures/*.example.md` with zero errors via `jsonschema` (draft 2020-12) + `referencing`. Quality Bar JSON parses against the meta-schema and is consumable by a mechanical checker (per-group `kind`, per-item `applies_at` + `references`).
+### 3.4 Phase 4 — Product Descriptions — CLOSED without producing PDs (2026-04-26)
 
-**Dependencies:** Phase 2 (docs are source of truth; Quality Bar HTML sections authored there).
+**Closeout finding.** PD was a category error. The vmodel-core PD pilot surfaced that the gap was not a missing artifact type but a missing **elicitation skill** at root scope. The framework retains its 6-artifact set; the work was rerouted into Phase 5 as `vmodel-skill-elicit-needs`.
 
-### 3.4 Phase 4 — Product Descriptions — CLOSED (2026-04-26)
+**Delivered (as built):**
+- vmodel-core Product Brief draft (business-PB experiment) → `archive/phase4-business-pb-experiment/`.
+- vmodel-core Product Description draft → preserved at `docs/plan/phase4-tool-briefs/core/product_description.md` as eval input for elicit-needs.
+- `PHASE4_AUTHORING_PATTERN.md` archived to `archive/phase4/` on closeout.
 
-**Goal (original):** Kick off dogfooding by authoring Product Descriptions (PD) for the three purpose-built tool products defined in `TARGET_ARCHITECTURE §10`. Context only — does not depend on skills existing yet.
+**Cancelled:** PDs for `vmodel-author` and `vmodel-retrofit` (these tools, if still wanted, will be spec'd via the regular Specification workflow).
 
-**Pivot during Phase 4 (2026-04-26):** The original deliverable was Product Briefs (PB). Authoring the `vmodel-core` PB surfaced that the PB craft shape is implicitly business-product-flavoured and produces ceremonial overweight for engineering-internal / dogfooded products. A new artifact type — **Product Description (PD)** — was introduced as the engineering-flavoured alternative. See `archive/phase4/PHASE4_AUTHORING_PATTERN.md` Finding #9 for the full reasoning.
+### 3.5 Phase 5 — Skills (craft + framework) — EFFECTIVE COMPLETE (closeout 2026-05-09)
 
-**Closeout (2026-04-26):** PD was a category error. After authoring the `vmodel-core` PD draft and researching the AI-coding frontier on stakeholder-intent capture (codex sweep + web research), the load-bearing finding was that the gap surfaced by the vmodel-core experiment is *not* a missing artifact type — it is a missing **elicitation skill** at root scope. The vmodel-core PB experiment failed because vmodel-core's stakeholder = architect = framework author, so the translation layer collapsed. For products with non-architect stakeholders, the Product Brief shape is fit for purpose. The missing piece is an interactive AI skill that can take unstructured stakeholder narrative and produce structured root-Requirements through anti-assumption dialog, explanation-while-eliciting, active gap-finding (NFRs, edges, integrations), and readback for joint agreement (DDD-flavoured ubiquitous language). The framework retains its 6-artifact set; PD is *not* introduced. The work moves into Phase 5 as `vmodel-skill-elicit-needs` (see §3.5). The vmodel-core PD draft is preserved at `docs/plan/phase4-tool-briefs/core/product_description.md` as eval input for the new skill.
+**Original goal:** Build per-artifact authoring + review skills, plus framework skills (orchestration, traceability, retrofit), plus the stakeholder-elicitation skill carried over from Phase 4.
 
-**Tasks:**
-- [x] Product Brief for `vmodel-core` (business-PB experiment; archived to `archive/phase4-business-pb-experiment/`).
-- [x] Product Description for `vmodel-core` (PD pilot — surfaced the elicitation-skill reframe; preserved at `docs/plan/phase4-tool-briefs/core/product_description.md` as eval input for `vmodel-skill-elicit-needs`).
-- [-] Product Description for `vmodel-author` — **CANCELLED.** PD was a category error (see Closeout). vmodel-author is spec'd in Phase 5+ via the regular Specification workflow.
-- [-] Product Description for `vmodel-retrofit` — **CANCELLED.** PD was a category error (see Closeout). vmodel-retrofit is spec'd in Phase 5+ via the regular Specification workflow.
+**Revised goal (2026-05-01):** Per-artifact pairs + elicit-needs are sufficient to start the greenfield dogfooding pilot. Framework skills + closeout activities are deferred — building them before any forward-run signal would calcify wrong assumptions.
 
-**Deliverables (as built):** vmodel-core PD draft retained as eval input for the Phase 5 elicit-requirements skill. No PD craft doc, no PD schema, no PD Quality Bar — none authored, none needed. Closeout finding documented here and in `archive/phase4/PHASE4_AUTHORING_PATTERN.md` §7.
+**Delivered:** 11 spec-side skill directories under `.claude/skills/`:
+- `vmodel-skill-elicit-needs` (2026-04-29) — interview-style stakeholder elicitation; rough `needs.md` output; renamed from `elicit-requirements` to align with INCOSE Needs vs Requirements distinction. Decision γ — informal `needs.md` shape, promotion path TBD after pilot reps.
+- `vmodel-skill-author-requirements` + `vmodel-skill-review-requirements` (2026-04-27) — pattern-setter for the remaining pairs.
+- `vmodel-skill-author-architecture` + `vmodel-skill-review-architecture` (2026-04-30).
+- `vmodel-skill-author-detailed-design` + `vmodel-skill-review-detailed-design` (2026-04-30).
+- `vmodel-skill-author-testspec` + `vmodel-skill-review-testspec` (2026-05-01).
+- `vmodel-skill-author-adr` + `vmodel-skill-review-adr` (2026-05-01) — final per-artifact pair; smallest by design (single inward seam).
 
-**Dependencies:** Phase 2 docs (PB craft doc as informative reference).
+**Deferred (rolled into Phase 6 or later):**
+- ~~`vmodel-skill-author-product-brief` + `vmodel-skill-review-product-brief`.~~ Deferred indefinitely. `needs.md` from elicit-needs carries the root-scope upstream role; revisit alongside the elicit-needs decision γ.
+- ~~`vmodel-skill-traceability` + `vmodel-skill-orchestration` + `vmodel-skill-retrofit`.~~ Deferred. Orchestration was reabsorbed into Phase 6 build-flow design (now `vmodel-skill-orchestrate-build`). Traceability and retrofit await their respective tooling / pilot signal.
+- ~~Rewrite `docs/guide/skills-architecture.html`.~~ **DONE 2026-05-10** — full rewrite landed covering spec flow + build flow + handovers + 3 user workflows.
+- ~~Haiku-floor evaluation per skill.~~ Deferred until pilot signal.
 
-### 3.5 Phase 5 — Skills (craft + framework)
+**Phase 5 closeout signal (revised):** triggered by Phase 6 dogfooding signal — pilot reps will tell us whether to (a) finish the deferred items as-spec'd, (b) revise them, or (c) drop them.
 
-**Status: per-artifact pairs + elicit-needs complete (2026-05-01); closeout activities deferred until after Phase 6 dogfooding signal.**
+### 3.6 Phase 6 — Build Flow + Central Config + Greenfield Pilot — IN PROGRESS
 
-**Original goal:** Build per-artifact authoring + review skills, plus framework skills (orchestration, traceability, retrofit), plus the **stakeholder-elicitation skill** carried over from Phase 4 closeout.
+**Goal:** Build the AI-augmented build flow that consumes spec artifacts and produces code + tests. Establish a central project config (`.vmodel/`). Run a greenfield dogfooding pilot (`vmodel-core`) to validate the framework end-to-end.
 
-**Revised goal (2026-05-01):** Per-artifact skills + elicit-needs are sufficient to start the greenfield dogfooding pilot. Framework skills + closeout activities are deferred — building them before any forward-run signal would calcify wrong assumptions.
+**Note on phase scope.** This phase replaces the original "Phase 6 — Tools (purpose-built)" plan. Purpose-built tools (`vmodel-core`, `vmodel-author`, `vmodel-retrofit`) per `TARGET_ARCHITECTURE §10` are not the current critical path — the build-side skills + central config + dogfooding pilot are. Tool work is deferred until the pilot signal indicates which mechanical checks deserve productisation.
 
-**Tasks (elicitation skill — Phase 4 carryover):**
-- [x] `vmodel-skill-elicit-needs` — **DONE (2026-04-29)**. Renamed from `vmodel-skill-elicit-requirements` during authoring to align with the INCOSE Guide to Writing Requirements lifecycle (Stakeholder Real-World Expectations → Integrated Set of Needs → Design Input Requirements). Interview-style stakeholder elicitation. Distinct from `vmodel-skill-author-requirements`. **Different output** (rough `needs.md` in stakeholder voice, prototype-mode); **different input** (unstructured stakeholder narrative vs structured parent allocation). The `needs.md` shape is intentionally informal — not a tracked framework artifact yet. After pilot reps, re-evaluate for promotion to a 7th artifact, merger into Product Brief, or staying as transient elicitation output (decision γ — prototype before formalizing, mirrors Phase 4 lesson). **Behaviour:** anti-assumption (surface choices, never silently fill), explanation-while-eliciting (architect-concepts in stakeholder-accessible terms), active gap-finding (NFRs / edge cases / integrations), readback for joint agreement (DDD-flavoured ubiquitous language; structured as a fragile state-machine contract). Pilot eval input: `docs/plan/phase4-tool-briefs/core/product_description.md`. Lives at `.claude/skills/vmodel-skill-elicit-needs/`.
+**Delivered:**
 
-**Tasks (per-artifact skills):**
-- [-] ~~`vmodel-skill-author-product-brief` and `vmodel-skill-review-product-brief`.~~ **DEFERRED INDEFINITELY (2026-04-30).** `needs.md` from `vmodel-skill-elicit-needs` carries the root-scope upstream role for now. Re-evaluate alongside the elicit-needs decision γ (promote / merge / stay-transient) once pilot reps inform whether a formal Product Brief authoring skill is load-bearing or ceremonial. Framework still retains the Product Brief artifact type; only the authoring/review *skill pair* is skipped. If a formal PB is needed for a specific project it can be hand-authored against the existing `docs/guide/artifacts/product-brief.html` craft doc + `schemas/artifacts/product-brief.schema.json`.
-- [x] `vmodel-skill-author-requirements` and `vmodel-skill-review-requirements` — **DONE (2026-04-27)**. Pattern-setter for the remaining author/review pairs. See `docs/plan/PHASE5_AUTHORING_PATTERN.md` §2 for locked decisions (lean-fragile DoF, self-contained content, framework-neutral body, sister naming, project-local install, structured-verdict format with DESIGN_ISSUE > REJECTED precedence on the review side).
-- [x] `vmodel-skill-author-architecture` and `vmodel-skill-review-architecture` — **DONE (2026-04-30)**. 22 + 17 files, ~4075 lines pair total. 12 references per side; 68 `check_failed` IDs (10 anti-pattern + 58 check); 13 hard-reject + 1 override. Hard refusals A/B/C/D mirror architecture-vs-DD boundary, retrofit honesty, Composition completeness, and Spec Ambiguity Test meta-gate. ADR ↔ Architecture seam captured via `[NEEDS-ADR: ...]` stub mechanism. One documented exception: `quality-bar-gate.md` at 233 lines (over ~150 cap) accepted on single-source-of-truth catalog grounds.
-- [x] `vmodel-skill-author-detailed-design` and `vmodel-skill-review-detailed-design` (supersedes C2–C4) — **DONE (2026-04-30)**. 22 + 19 files, ~4120 lines pair total. 12 references per side; 7 templates author / 2 review; 2 examples per side. Hard refusals A/B/C/D: A — Overview narrowed to `verified | unknown` (schema-enforced); B — DD-without-parent-Architecture; C — code paraphrase / algorithmic postcondition / two-halves-rule violation; D — Spec Ambiguity Test override. Cross-artifact seams: Architecture → DD via leaf-allocation contract; DD → TestSpec via dedicated `testspec-traceability-{cues,checks}.md` files. Cleanest builder-skill audit (4 findings, all structural).
-- [x] `vmodel-skill-author-testspec` and `vmodel-skill-review-testspec` — **DONE (2026-05-01)**. 23 + 20 files, ~3945 lines pair total. 14 author / 15 review references — three upstream seams (DD ↔ leaf, Architecture ↔ branch, Requirements + Product Brief ↔ root) drove the higher count. Hard refusals A/B/C/D plus one derived-hard reject (`check.coverage-mutation.section-missing`) from the load-bearing QB group flag. Catalog: 13 anti-pattern + 53 check = 66 IDs.
-- [x] `vmodel-skill-author-adr` and `vmodel-skill-review-adr` — **DONE (2026-05-01, final per-artifact pair)**. 21 + 16 files, ~3235 lines pair total — smallest by design (single inward seam: `governing_adrs:` resolution from Architecture/DD/TestSpec). 11 references per side. Hard refusals A/B/C/D **plus E — threshold violation refusal** (the three-condition gate: load-bearing AND ≥2 real options AND contingent on changeable assumptions). Catalog: 11 anti-pattern + 40 check = 51 IDs; 20 hard-reject IDs.
+*Build-side skills (6):*
+- `vmodel-skill-plan-build` — derives task DAG from spec tree; populates `acceptance_criteria` / `context_to_load` / `out_of_scope` mechanically; emits `.vmodel/.build/tasks.yaml`.
+- `vmodel-skill-orchestrate-build` — pipeline state machine; layered execution (leaf unit → branch integration → root system); dispatches workers via Task tool; layer-typed escalation routing; resume is schema-validated.
+- `vmodel-skill-render-tests` — TestSpec → executable tests (TDD red phase). Layer-aware.
+- `vmodel-skill-implement-leaf` — TDD green + refactor for one leaf; greenfield / fix / resume modes; scope-expansion HALT via `build-blocked.yaml`.
+- `vmodel-skill-review-execution` — verdict at any layer (APPROVED / REJECTED / ESCALATE); confidence-tagged escalations routed to responsible spec layer. APPROVED writes no file (orchestrator infers from absence).
+- `vmodel-skill-retrospect-build` — bounded lessons extraction; refuses to fabricate.
 
-**Tasks (framework skills) — DEFERRED 2026-05-01:**
-- [-] ~~`vmodel-skill-traceability`~~ — **deferred to post-Phase 6.** A skill wrapping a tool that doesn't exist yet is shadow-boxing. Build `vmodel-core`'s traceability validator first; reassess whether a skill adds interpretive value over good error messages.
-- [-] ~~`vmodel-skill-orchestration`~~ — **dropped from Phase 5; tracked as harness/command work.** Current Claude Code doesn't reliably support skill-dispatching-skill; orchestration is a harness concern, not a skill.
-- [-] ~~`vmodel-skill-retrofit`~~ — **deferred to post-greenfield-pilot.** Designing retrofit without ever having lived through a forward run would bake in wrong assumptions about what's hard vs. easy. Phase 6 dogfooding (`vmodel-core` greenfield) generates the empirical signal needed for retrofit design (Phase 7).
+*Worker agents (3):* `.claude/agents/{render-tests,implement-leaf,review-execution}.md` — thin dispatch shells. Loaded by `orchestrate-build` via Task tool for parallel isolated execution.
 
-**Tasks (skills architecture rewrite) — DEFERRED 2026-05-01:**
-- [-] ~~Rewrite `docs/guide/skills-architecture.html` for the new 6-artifact model.~~ **Deferred until after dogfooding signal.** Documenting skills while their surface is still settling burns more than it saves; pilot run will inform what actually needs documenting.
+*Central config:* `.vmodel/config.yaml` + `.vmodel/references/` (shared reference docs, framework-shipped defaults overrideable per project) + `.vmodel/.reviews/` (committed verdict files) + `.vmodel/.build/` (gitignored runtime state).
 
-**Tasks (Haiku-floor evaluation) — DEFERRED 2026-05-01:**
-- [-] ~~Run `/skill-creator` Haiku evaluation on each shipped skill.~~ **Deferred until after dogfooding signal.** Real-use failure modes from the pilot are higher-signal than synthetic eval scenarios at this stage; let the pilot surface what to test for, then build the eval.
+*Init skill:* `vmodel-init` — scaffolds `.vmodel/`; migrate mode upgrades existing projects.
 
-**Deliverables (as-built):** 11 skill directories under `.claude/skills/` (5 author/review pairs + elicit-needs). Quality Bar JSON consumed.
+*Lightweight root product:* `vmodel-skill-elicit-pd` — third option alongside PB and needs.
 
-**Original success criteria (revised):**
-- ~~Each skill passes `/skill-creator` evaluation on Haiku at agreed thresholds.~~ — deferred to post-pilot.
-- Review skills reject artifacts that fail the Spec Ambiguity Test. — implemented; verified by pilot.
-- ~~Retrofit skill refuses to populate human-only fields with AI inference (tested adversarially).~~ — retrofit skill deferred; the per-artifact author skills already encode retrofit honesty (hard refusal A in ADR pair; equivalent in DD).
+*Schema simplifications:* DD drops `derived_from` (keeps `parent_architecture` only); TestSpec drops `derived_from` (keeps `verifies` only with layer convention); `## Open follow-ups` killed everywhere — DEFER markers single mechanism.
 
-**Phase 5 closeout signal (revised):** triggered by Phase 6 dogfooding signal — pilot reps will tell us whether to (a) finish the deferred items as-spec'd, (b) revise them based on pilot learnings, or (c) drop them entirely. Until then, Phase 5 remains "effective complete; closeout deferred."
+*Per-skill bundled copies of shared refs retired;* sync scripts removed.
 
-**Dependencies:** Phase 3 (schemas); Phase 2 docs.
+*Pre-pivot skills archived* (`develop-code`, `derive-test-cases`, `vmodel-skill-review-code` and their workspaces) → `archive/pre-pivot-skills/`.
 
-### 3.6 Phase 6 — Tools (purpose-built)
+*Per-task file contract* (leaf build):
+- `current-task.yaml` ← orchestrator
+- `render-report.yaml` ← render-tests
+- `build-progress.yaml` ← implement-leaf (overwrite-on-update gate journal)
+- `build-blocked.yaml` ← implement-leaf (scope-expansion HALT)
+- `review-ready.yaml` ← implement-leaf (sole producer; the impl handoff)
+- `feedback.yaml` ← review-execution (REJECTED only)
+- `ESC-NNN.yaml` ← review-execution (ESCALATE; mirror copy in `.vmodel/.build/escalations/`)
+- APPROVED writes no file (orchestrator infers from absence)
 
-**Goal:** Build the purpose-built tools from `TARGET_ARCHITECTURE §10`, each as its own project repo, using our framework (dogfooding).
+*Rejection taxonomy normalised:* `contract-violation`, `scope-violation`, `missing-implementation`, `wrong-assertion-is-impl-bug`, `integration-failure-impl-bug`, `regression`. The `-impl-bug` suffix disambiguates from cases that ESCALATE to spec layers.
 
-**Tasks:**
-- [ ] For each tool: execute Build workflow on its Product Brief (Phase 4) → Requirements → Architecture → Detailed Design → TestSpec → code + tests.
-  - Artifact parser, schema validator, traceability validator, Quality Bar structural runner, graph builder, query engine, scaffolder, renderer, topology discovery, gap report aggregator.
+*wf-comparison five-phase upgrade* (2026-05-10):
+- (A) TOCs added to four reference files >100 lines + orchestrate-build SKILL.md persona reword.
+- (B) Task-contract enrichment — `acceptance_criteria` / `context_to_load` / `out_of_scope` populated mechanically by plan-build, copied verbatim into `current-task.yaml`, enforced by implement-leaf via Refusal H + new "Contract enforcement" section.
+- (C) Scope-expansion HALT — new `build-blocked.yaml` template + `scope-expansion-halt.md` reference; orchestrator routes auto-amend (within `build.auto_amend.max_auto_amendments`, default 1) or escalates with `target_layer` derived from `suggested_resolution`.
+- (D) Per-gate progress checkpoint — new `build-progress.yaml` overwrite-on-update journal across 11 gates; orchestrator resume logic chooses silent-recover / resume-at-gate / restart; new implement-leaf "Resume mode" alongside greenfield/fix.
+- (E) Per-task workers wrapped as agents — three thin dispatch shells under `.claude/agents/`; `orchestrate-build` dispatches via Task tool for true within-stage parallelism and isolated context windows; `retrospect-build` stays a Skill invocation.
 
-**Deliverables:** Independently built tool repos; compiled binaries available; each project using the framework configures which tools are present.
+*TARGET_ARCHITECTURE §11 + §16 updated;* CLAUDE.md Build Flow section gained "Per-task worker agents" paragraph.
 
-**Success criteria:**
-- Each tool has a complete specification.
-- Each tool has a test suite derived from its TestSpec.
-- CLI contracts match `TARGET_ARCHITECTURE §10` (`--format json|text`, TTY-aware defaults, actionable errors).
+*Skills-architecture.html rewritten* (2026-05-10) — covers spec flow + build flow + handovers + 3 user workflows (greenfield, update, retrofit).
 
-**Dependencies:** Phase 5 (skills for authoring + reviewing specs); the Build workflow (deferred — see §4).
+*vmodel-core dogfooding pilot* — artifacts migrated to new schema; `.vmodel/` scaffolded; pilot continues.
 
-> **Note:** Phase 6 cannot complete until the Build workflow is designed. Phase 6 Product Briefs and specs (Phases 4+5 output) can be prepared now; actual code generation waits on the Build workflow design session.
+**Remaining in Phase 6:**
 
-### 3.7 Phase 7 — Retrofit-specific Additions
+- **Cluster 5 — no-fabrication extensions.** Tighten retrofit honesty in author skills based on dogfooding signal. Pending pilot reps.
+- **Cluster 6 — process / UX (minus Issue 9, folded into Cluster 4).** Quality-of-life improvements surfaced from pilot reps. Open.
+- **Cluster 7 — Root-product parity (needs.md / product_description.md).** Until 2026-05-10 the framework treated PB as a first-class root product but `needs.md` and `product_description.md` were second-class — schemas, Quality Bars, and HTML craft pages existed only for PB. The 2026-05-10 audit + wording-fix pass propagated three-option treatment across skills and references; the structural artifacts below remain. Per-item:
+  - [ ] **Schema** `schemas/artifacts/needs.schema.json` — derived from elicit-needs output shape; inherit envelope; mark `recovery_status` permitted. Source: existing `vmodel-core` `needs.md` + `vmodel-skill-elicit-needs/templates/`.
+  - [ ] **Schema** `schemas/artifacts/product-description.schema.json` — five mandatory sections (Product / Users / Smallest worthwhile slice / Out of scope / Open questions) per `vmodel-skill-elicit-pd/SKILL.md`.
+  - [ ] **Quality Bar** `schemas/artifacts/quality-bar/needs.quality-bar.json`.
+  - [ ] **Quality Bar** `schemas/artifacts/quality-bar/product-description.quality-bar.json`.
+  - [ ] **Craft page** `docs/guide/artifacts/needs.html` — 5-section structure (V-model context, best practices, anti-patterns, examples, Quality Bar). Sources: elicit-needs SKILL.md + `archive/phase4/PHASE4_AUTHORING_PATTERN.md` + INCOSE Needs vs Requirements distinction.
+  - [ ] **Craft page** `docs/guide/artifacts/product-description.html` — 5-section structure. Source: elicit-pd SKILL.md + the PD draft preserved at `docs/plan/phase4-tool-briefs/core/product_description.md`.
+  - [ ] **Author / review skill pair decision per type** — currently `elicit-needs` and `elicit-pd` produce these artifacts. Decide whether each also needs an `author-{needs,pd}` + `review-{needs,pd}` pair (revision flow) or whether re-invoking the elicit skill is sufficient. Tied to decision γ (elicit-needs promotion).
+  - [ ] **Fixtures** under `schemas/artifacts/fixtures/` — round-trip examples for both new artifact types (matches the PB fixture pattern).
+  - **Note.** The 2026-05-10 wording-fix pass is recorded under §1 active deliverables. The audit found 16 wording edits across 8 files (skills + references); structural files above remain pending.
+- **Candidate-set propagation walker** (`TARGET_ARCHITECTURE §8.3`) — **DONE (2026-05-10)**. `scripts/walk-impact.py` + 22-test TDD suite. CLI shape: `walk-impact.py <ID> --specs-root specs/ --format text|json`. Reads `derived_from`, `parent_architecture`, `governing_adrs`, `verifies` (envelope + per-case), `allocates` (per-child).
+- **Haiku-floor evaluation per skill** — deferred from Phase 5; rerun once pilot signal reveals real failure modes.
+- **PB author/review pair decision** — promote, merge into needs/PD, or stay deferred. Tied to elicit-needs decision γ. Folded into Cluster 7 above.
+
+**Closeout signal:** vmodel-core pilot completes a forward-run end-to-end without manual intervention beyond design review.
+
+### 3.6.1 Phase 6 next-session prep — vmodel-core greenfield dogfooding
+
+**Trigger.** This subsection is the session-start brief for the next conversation, which will resume vmodel-core dogfooding. The substantial 2026-05-10 work (skills-architecture.html rewrite, walker tool with TDD, 3-root-artifact propagation, index.html refresh, BACKLOG reformat) is committed; the next session picks up the actual greenfield build run.
+
+**Load at session start (in this order):**
+
+1. `CLAUDE.md` (auto-loaded).
+2. `docs/plan/BACKLOG.md` §1 + §3.6 + §3.6.1 (this subsection).
+3. `docs/plan/TARGET_ARCHITECTURE.md` §15 (central config) + §16 (build flow).
+4. `docs/guide/skills-architecture.html` (full skill catalog + workflows).
+5. `MEMORY.md` (auto-loaded).
+6. `~/repos/vmodel-core/.vmodel/config.yaml` + `~/repos/vmodel-core/specs/` tree (the actual project state).
+
+**Working directory for next session.** `/home/stefanus/repos/vmodel-core/`. The framework repo is the *reference*, not the workspace — all artifacts authored in `vmodel-core` exercise the framework's spec-flow + build-flow round-trip.
+
+**Concrete next-session deliverables (order TBD by what surfaces first):**
+
+1. **Root-product confirmation.** Inspect `vmodel-core/specs/` to confirm root product type (PB / needs / PD) and that the artifact passes its current Quality Bar.
+2. **Spec tree sanity walk.** Run `scripts/walk-impact.py PB --specs-root /home/stefanus/repos/vmodel-core/specs --format text` (and from a representative leaf) to confirm the traceability graph is healthy.
+3. **Plan-build dry run.** Invoke `/vmodel-skill-plan-build` against `vmodel-core`. Confirm `tasks.yaml` is populated with `acceptance_criteria` / `context_to_load` / `out_of_scope` for every leaf task.
+4. **Orchestrate-build first stage.** Pick one leaf, run `/vmodel-skill-orchestrate-build` constrained to that leaf. Capture the per-task file flow (current-task → render-report → review-ready → APPROVED-or-feedback). Real signal expected at this point: scope-expansion HALTs, escalations, contract-enforcement refusals.
+5. **Capture pilot signal.** Whatever surfaces feeds Cluster 5 / 6 / 7 prioritisation and the Haiku-floor eval design. Keep notes in `vmodel-core/.vmodel/.build/runs/&lt;run-id&gt;/retrospective.md`.
+
+**What is *not* in scope for next session:**
+
+- Building the needs/PD schemas + Quality Bars + craft pages (Cluster 7) — wait for pilot signal on whether the missing structural files actually bite during dogfooding.
+- Phase 7 work (topology discovery, gap aggregator, retrofit-specific skills, purpose-built tools).
+- Building author/review pairs for needs/PD — tied to decision γ which the pilot informs.
+
+**Open question entering the session.** Whether the framework's own architecture (`/home/stefanus/repos/VModelWorkflow/`) — already a working multi-component codebase — should also be retrofitted using the framework, in parallel with `vmodel-core` greenfield. Not a critical-path question; resolve only if it becomes the natural next step after the greenfield run produces signal.
+
+### 3.7 Phase 7 — Retrofit-specific Additions — PENDING
 
 **Goal:** Specialised retrofit capabilities beyond the generic Spec-workflow-reversed flow.
 
 **Tasks:**
-- [ ] Topology discovery — code → scope tree proposal (dependency analysis, bounded-context detection).
-- [ ] Recovery-status handling — enforce allowed states per field type; skill-level refusal of fabrication on human-only fields.
-- [ ] Gap report generation — aggregate the six gap categories from `TARGET_ARCHITECTURE §8.2`.
-- [ ] Legacy retrofit skills — code structure analysis, behaviour characterisation, requirement inference, design inference, gap analysis, cross-session handoff documents for large analyses.
+- [ ] **Topology discovery tool** — code → scope tree proposal (dependency analysis, package boundaries, bounded-context detection). Algorithm choice is itself a Phase 7 decision; pilot-driven.
+- [ ] **Recovery-status enforcement** — strengthen skill-level refusal of fabrication on human-only fields based on retrofit-pilot signal.
+- [ ] **Gap report aggregator** — compile the six gap categories from `TARGET_ARCHITECTURE §8.2` into a single retrofit deliverable.
+- [ ] **Dedicated retrofit author skill** — code-structure analysis, behaviour characterisation, requirement inference, design inference, gap analysis, cross-session handoff for large analyses. Per-artifact skills already encode retrofit honesty; this lifts recurring patterns.
+- [ ] **Purpose-built tools** (`vmodel-core`, `vmodel-author`, `vmodel-retrofit`) — productise the mechanical checks once pilot signal indicates which deserve productisation.
+- [ ] **Legacy pilot** — Java 17 / Gradle / JUnit 5 / ~100k LOC / ~10% coverage codebase retrofitted into a scope tree + DDs + Architectures + Requirements + gap report — without AI-fabricated rationale.
 
-**Deliverables:** Retrofit-ready skill + tool set; first-pilot retrofit possible.
+**Dependencies:** Phase 6 dogfooding signal. Specifically: vmodel-core greenfield pilot completes end-to-end, surfacing what actually deserves retrofit-specific support vs what the per-artifact skills already cover.
 
-**Success criteria:** A legacy Java 17 / Gradle / JUnit 5 codebase (pilot target) can be retrofitted into a scope tree + DDs + Architectures + Requirements + gap report — without AI-fabricated rationale.
-
-**Dependencies:** Phases 5 + 6.
+**Deferred companion deliverables** (out of Phase 7 critical path):
+- Web GUI for traceability (after framework stabilises).
+- Plan schemas (development plan, verification plan, CM plan, QA plan).
 
 ---
 
@@ -218,69 +242,40 @@ Architectural rationale — including the full Q8–Q15 and NQ-B/C/D/E decisions
 
 Items explicitly out of current phasing:
 
-- **Build workflow design** — separate design session.
-- **Human guards** — to revisit if uniform high rigor proves insufficient.
-- **Rigor tiers** — may return if human guards require them; not before.
+- **Human guards** — to revisit if uniform high rigor proves insufficient. (`TARGET_ARCHITECTURE §17 #2`)
+- **Rigor tiers** — may return if human guards require them; not before. (`TARGET_ARCHITECTURE §17 #1`)
 - **Web GUI for traceability** — after the framework stabilises.
 - **Plan schemas** — development plan, verification plan, CM plan, QA plan.
-- **C2–C4 detailed-design skills** — paused; superseded by Phase 5 structure.
+- **C2–C4 detailed-design skills** — superseded by Phase 5 structure; not returning.
 - **System test documentation + skills as separate artifacts** — folded into TestSpec at root scope.
 - **Review Record schema** as a separate artifact — deferred until a concrete need surfaces.
 - **Safety-level / assurance-level configuration** — removed by pivot; preserved in archive.
 - **Scaffold tool concept as a standalone design** — absorbed into the scaffolder in Tools (`TARGET_ARCHITECTURE §10`).
+- **Domain translation plugin** — JSON files archived; runtime removed; possible reintroduction post-content-stabilisation. (`TARGET_ARCHITECTURE §14`, §17 #7)
+- **Product-Brief author/review pair** — deferred indefinitely; revisit alongside elicit-needs decision γ.
 
 ---
 
-## 5. Preserved Content Inventory
+## 5. Operational Open Questions
 
-Content that survives the pivot verbatim or with minor adaptation:
+Questions tied to upcoming phases. Architectural open questions live in `TARGET_ARCHITECTURE §17`.
 
-**Documentation (pre-pivot outputs — inspection-only reference for Phase 2, not substrate; see §3.2):**
-- `docs/guide/artifacts/source-code.html` — reference only; content feeds the future Build-workflow / implementation doc (not a Phase 2 artifact-page target).
-- `docs/guide/artifacts/unit-test.html` — reference only; craft insights feed the TestSpec (unit-level) page.
-- `docs/guide/artifacts/detailed-design.html` — reference only; Layer 1/2/3 model worth mining for the new Detailed Design page.
-- `docs/guide/artifacts/adr.html` — reference only; closest to pattern, still replaced under the 5-section structure.
-- `docs/guide/domains/` — **to be archived** to `archive/pre-pivot-2026-04-18/domains/` as a Phase 2 task. Plugin mechanism deferred; may be reintroduced post-Phase 2 (see `TARGET_ARCHITECTURE §14`, §15).
+1. **Topology discovery algorithm choice.** Dependency analysis vs package boundaries vs bounded-context detection. Phase 7 decision; pilot-driven.
+2. **Scaffolder CLI shape.** Exact commands and options for the scaffolder tool. Phase 7 (folded into purpose-built-tools track).
+3. **Project config evolution.** `.vmodel/config.yaml` schema is in place; extensions (per-tool config sub-schemas, per-skill overrides) drop in as needed.
+4. **Legacy pilot start date.** When to attempt a pilot retrofit (Java 17 / Gradle / JUnit 5 / ~100k LOC / ~10% coverage). Depends on Phase 7 being at least partially operational.
+5. **elicit-needs promotion** (decision γ). After pilot reps: promote `needs.md` to a 7th artifact, merge into Product Brief, or keep as transient elicitation output. Resolution informs whether the deferred PB skill pair is needed.
+6. **Retrofit completeness threshold.** How many `unknown` fields make a retrofit "not useful" vs "partial but usable"? No principled answer today; real retrofit runs will inform.
 
-**Research (under `research/`):**
-- `system-level/01-standards-system-level-processes.md` — standards overview; reference material for any future translation layer work (§3.2 defers the plugin).
-- `system-level/02a–02d` (stakeholder craft) — feeds Product Brief authoring knowledge.
-- `system-level/03a–03d` (requirements craft) — feeds Requirements authoring.
-- `system-level/05a–05f` (architecture craft) — feeds Architecture authoring.
-- `system-level/06a` (AI at system level) — feeds upper-V skill design.
-- `implementation/*` (unit test, clean code, etc.) — feeds TestSpec and Build-workflow reference.
-- `detailed-design/*` (except archived `design-scaling-tiering.md`) — feeds Detailed Design authoring and retrofit.
-- `pillar3/*` — feeds skills architecture rewrite.
-
-**Skills (operational):**
-- `.claude/skills/develop-code/` — integrated into Phase 5 author-detailed-design skill or evolves as an implementation skill when Build workflow lands.
-- `.claude/skills/derive-test-cases/` — evolves into Phase 5 author-testspec skill.
-- `.claude/skills/vmodel-skill-review-code/` — role refined in Phase 5.
-
-**Schemas:**
-- `schemas/core/craft-skill.schema.yaml`, `schemas/core/vmodel-config.schema.yaml` — refresh in Phase 3 if needed.
-- `schemas/traceability/` — update in Phase 3 against `TARGET_ARCHITECTURE §7`.
-
-**Operational procedures to preserve:**
-- The "Research Before Documentation" discipline (three research categories: standards, craft, AI-specific; attributed claims, real sources, no fabrication). Reframe for new artifact set but preserve the rigor bar.
-- `/skill-creator` usage conventions and Haiku-baseline evaluation for all skills.
+**Resolved:**
+- ~~Quality Bar container format.~~ JSON Schema draft 2020-12; `schemas/artifacts/quality-bar/` layout (resolved 2026-04-23).
+- ~~Dogfooding kickoff order.~~ `vmodel-core` is the pattern-setter pilot (resolved 2026-04-23).
+- ~~Candidate-set propagation walker design.~~ BFS reverse over forward-link graph; pure tool (no LLM); shipped as `scripts/walk-impact.py` (resolved 2026-05-10).
+- ~~Three-root-artifact treatment.~~ PB / `needs.md` / `product_description.md` are first-class options; framework-wide wording propagated 2026-05-10. Structural artifacts (schemas, Quality Bars, craft pages) for needs/PD remain — see §3.6 Cluster 7.
 
 ---
 
-## 6. Operational Open Questions
-
-Questions tied to upcoming phases. Architectural open questions live in `TARGET_ARCHITECTURE §15`.
-
-1. **Quality Bar container format.** Structure for the canonical per-artifact checklist file. Resolved 2026-04-23 (commit `d012dec`): JSON Schema draft 2020-12; `schemas/artifacts/quality-bar/` layout; see `PHASE3_AUTHORING_PATTERN.md §2 Quality Bar container`. HTML Quality Bar sections from Phase 2 are the authoritative source for content.
-2. **Topology discovery algorithm choice.** Dependency analysis vs package boundaries vs bounded-context detection. Phase 7 decision; pilot-driven.
-3. **Scaffolder CLI shape.** Exact commands and options for the scaffolder tool. Phase 6.
-4. **Project config format (e.g., `.vmodel/tools.yaml`).** How projects declare available tools. Draft needed before Phase 5's framework skills reference it.
-5. ~~**Dogfooding kickoff order.**~~ Resolved 2026-04-23: three-product consolidation (`vmodel-core`, `vmodel-author`, `vmodel-retrofit`) per §3.4 update. `vmodel-core` is the pattern-setter pilot; `vmodel-author` and `vmodel-retrofit` follow once the pattern is locked.
-6. **Legacy pilot start date.** When to attempt a pilot retrofit (Java 17 / Gradle / JUnit 5 / ~100k LOC / ~10% coverage). Depends on Phases 5 + 7 being at least partially operational.
-
----
-
-## 7. Guiding Principles (cross-reference)
+## 6. Guiding Principles (cross-reference)
 
 The ten core principles are defined in `TARGET_ARCHITECTURE §3`. This list is a quick index; the canonical wording is there.
 
@@ -299,34 +294,37 @@ The ten core principles are defined in `TARGET_ARCHITECTURE §3`. This list is a
 
 - **Discuss before writing.** Explain approach, show structure visually, motivate choices, get approval.
 - **Small increments.** One concept at a time.
-- **Model-tier aware.** Skills must work on cheapest viable tier; test with baseline comparison.
-- **Follow agentskills.io SKILL.md format.**
-- **Use `/skill-creator`** for skill development: draft, test, evaluate, iterate.
 - **Dispatch concrete execution to subagents** — keep main conversation focused on design and alignment.
+- **Skill invocations are tool calls, not references.** When the user types `/skill-name`, invoke via the `Skill` tool first; project conventions layer on top of the skill's mandatory flow, do not replace it.
+- **Skill design is model-tier-aware.** Skills must work on the cheapest viable tier. Validation pending Phase 5 closeout (Haiku-floor evals deferred to post-pilot).
 
 ---
 
-## 8. Build Order (summary)
+## 7. Build Order (summary)
 
 ```
-Phase 0 (done) → Phase 1 (this commit) → Phase 2 (docs)
-                                          │
-                                          ▼
-                                        Phase 3 (schemas)
-                                          │
-                             ┌────────────┴────────────┐
-                             ▼                         ▼
-                        Phase 4 (tool PBs)       Phase 5 (skills)
-                                                       │
-                                                       ▼ (needs Build workflow, deferred)
-                                                   Phase 6 (tools)
-                                                       │
-                                                       ▼
-                                                   Phase 7 (retrofit additions)
+Phase 0 (done) → Phase 1 (done) → Phase 2 (done) → Phase 3 (done)
+                                                        │
+                                       ┌────────────────┴────────────────┐
+                                       ▼                                 ▼
+                                  Phase 4 (closed                  Phase 5 (effective
+                                  without producing PDs)            complete; closeout
+                                       │                            deferred to pilot)
+                                       └────────────────┬────────────────┘
+                                                        ▼
+                                            Phase 6 — Build flow +
+                                            central config +
+                                            greenfield pilot
+                                            (substantially advanced; rolling)
+                                                        │
+                                                        ▼ (gated on pilot signal)
+                                            Phase 7 — Retrofit additions
+                                                       + purpose-built tools
+                                                       (pending)
 ```
 
-**Critical path:** 0 → 1 → 2 → 3 → 5 → 6 → 7. Phase 4 can proceed in parallel with Phase 5. Phase 6 gates on the **Build workflow** design (separate effort — see §4 Deferred).
+**Critical path:** 0 → 1 → 2 → 3 → 5 → 6 → 7. Phase 4 closed without producing its original deliverable; the work was rerouted into Phase 5 as `vmodel-skill-elicit-needs`. Phase 6 absorbed the original "Tools (purpose-built)" plan and replaced it with build-flow + central config + dogfooding; tools moved into Phase 7 alongside the retrofit additions.
 
 ---
 
-*Last updated: 2026-05-10 (continued) — wf-comparison five-phase build-flow upgrade landed: TOC + persona fixes (A); task-contract enrichment with acceptance_criteria/context_to_load/out_of_scope and new current-task.yaml template (B); scope-expansion HALT with build-blocked.yaml + auto-amend routing (C); per-gate progress checkpoint with build-progress.yaml + resume modes (D); per-task workers wrapped as agents under .claude/agents/ for parallel isolated context (E). TARGET §11+§16 + CLAUDE.md updated.*
+*Last updated: 2026-05-10 (continued) — added §3.6 Cluster 7 (root-product parity tasks for needs.md / product_description.md) reflecting the same-day audit + 16 wording-fix edits across 8 skill files; added §3.6.1 next-session brief for vmodel-core greenfield dogfooding pickup; marked candidate-set propagation walker DONE (scripts/walk-impact.py + 22-test TDD suite); marked three-root-artifact treatment resolved. Earlier same-day: full BACKLOG reformat reflecting build-flow shipment and central-config landing. Phase 6 absorbed the original "Tools (purpose-built)" plan; tools moved into Phase 7. Phase 5 closeout tightened. Skills-architecture.html rewrite marked DONE.*
