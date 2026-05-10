@@ -9,3 +9,8 @@ __pycache__/
 *.pyc
 .env
 .env.local
+
+# V-model build flow transient state
+.vmodel/.build/pipeline-state.yaml
+.vmodel/.build/runs/
+.vmodel/.build/tasks/*/log.txt

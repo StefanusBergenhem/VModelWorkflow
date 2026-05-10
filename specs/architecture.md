@@ -4,39 +4,6 @@ title: "vmodel-core — Root Architecture"
 artifact_type: architecture
 scope: ""
 parent_scope: null
-derived_from:
-  - REQ-001
-  - REQ-002
-  - REQ-003
-  - REQ-004
-  - REQ-005
-  - REQ-006
-  - REQ-007
-  - REQ-008
-  - REQ-009
-  - REQ-010
-  - REQ-011
-  - REQ-012
-  - REQ-013
-  - REQ-014
-  - REQ-015
-  - REQ-016
-  - REQ-017
-  - REQ-018
-  - REQ-019
-  - REQ-020
-  - REQ-021
-  - REQ-022
-  - REQ-023
-  - REQ-024
-  - REQ-025
-  - REQ-026
-  - REQ-027
-  - REQ-028
-  - REQ-029
-  - REQ-030
-  - REQ-031
-  - REQ-032
 governing_adrs:
   - ADR-001-implement-vmodel-core-in-go
   - ADR-002-embed-canonical-schemas-in-binary

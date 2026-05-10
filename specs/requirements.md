@@ -7,8 +7,6 @@ parent_scope: null
 status: draft
 date: "2026-05-03"
 version: 1
-derived_from:
-  - NEEDS-vmodel-core
 ---
 
 # Requirements — vmodel-core

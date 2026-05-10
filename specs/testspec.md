@@ -5,8 +5,6 @@ artifact_type: test-spec
 scope: ""
 parent_scope: null
 level: system
-derived_from:
-  - ARCH
 verifies:
   - ARCH.interfaces.IValidationCLI
   - ARCH.interfaces.IReportCLI
@@ -731,14 +729,6 @@ The case set below is grouped by derivation seed (validation surface / reporting
    No silent gaps; all are surfaced inline.
 
    **SAT verdict:** pass.
-
-### Open follow-ups carried forward
-
-- **TC-023 / TC-026 threshold binding.** When the REQ-022 and REQ-023 follow-ups resolve (stakeholder sets fail / goal / stretch / wish from pilot calibration), revise this artifact to bind the chosen threshold values into TC-023's and TC-026's `expected.threshold` and flip both cases from declarative-shape to executable gate. TC-026 has a transitive dependency on TC-023 — REQ-022's threshold must land before TC-026's "highest N" oracle becomes evaluable.
-- **TC-022 subcommand binding.** When `[DEFER-DD: cli-adapter — version-query subcommand surface]` resolves in the cli-adapter Detailed Design, revise TC-022's step 1 to name the literal subcommand string.
-- **TC-007 / TC-008 HTML literal-string assertions.** When the reporter Detailed Design specifies the HTML template structure (`[DEFER-DD: reporter — HTML report template structure]`), revise TC-007 / TC-008 to bind the literal locale-stable phrasing.
-- **Leaf TestSpecs.** Per-component leaf TestSpecs are authored from each child's Detailed Design; this root TestSpec declares the seam coverage explicitly so leaf TestSpecs can verify component internals without duplicating seam cases.
-- **Replacement on Product Brief authoring.** When a vmodel-core Product Brief is authored (resolving `issues_found.md` Issue 1 / decision γ), this hybrid artifact is replaced by a true root-layer TestSpec (PB-vocabulary user-journey cases) and a complementary branch-layer TestSpec at the same scope (level: integration). Cases here either move (rephrased) or migrate.
 
 ### Review history
 
