@@ -63,7 +63,7 @@ expect(result).toEqual(1735689600)
 ```
 
 Never recompute the expected value using the same formula as the implementation
-(mirror test anti-pattern — `derive-test-cases/references/ai-testing-failures.md §1`).
+(Mirror Test anti-pattern — `unit-test.html` §3.5 *Common Anti-Patterns*).
 Hardcode the value from the TestSpec.
 
 ---

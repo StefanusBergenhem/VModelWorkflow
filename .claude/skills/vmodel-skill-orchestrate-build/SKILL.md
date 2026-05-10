@@ -20,7 +20,8 @@ The skill is self-contained. The `references/` and `templates/` directories carr
 | Tasks file | `.vmodel/.build/tasks.yaml` | Produced by `vmodel-skill-plan-build`. Required before INITIALIZE. |
 | Pipeline state | `.vmodel/.build/pipeline-state.yaml` | Written and read by this skill. Created on INITIALIZE. |
 | Escalation files | `.vmodel/.build/escalations/ESC-NNN.yaml` | Written by this skill on escalation. |
-| Per-task verdict files | `.vmodel/.build/tasks/<task-id>/review-ready.yaml` | Written by `render-tests` / `review-execution`. Read-only here. |
+| Per-task render report | `.vmodel/.build/tasks/<task-id>/render-report.yaml` | Written by `render-tests` (manifest of cases rendered + skipped + compile/red checks). Read-only here. |
+| Per-task review-ready file | `.vmodel/.build/tasks/<task-id>/review-ready.yaml` | Written by `implement-leaf` after the green-phase + refactor cycle (the implementation handoff). Read-only here. |
 | Per-task feedback files | `.vmodel/.build/tasks/<task-id>/feedback.yaml` | Written by `review-execution` on REJECTED. Read-only here. |
 
 ---
@@ -95,8 +96,10 @@ For every sub-skill dispatch:
 8. Gate check. Proceed only when gate conditions are met.
 
 **Context envelope — render-tests (leaf):** sub-skill SKILL.md + `config.yaml` + `specs/<scope>/testspec.md` + `specs/<scope>/detailed_design.md`.
-**Context envelope — implement-leaf:** sub-skill SKILL.md + `config.yaml` + `.vmodel/.build/tasks/<task-id>/current-task.yaml` + `feedback.yaml` (if exists, fix mode).
-**Context envelope — review-execution:** sub-skill SKILL.md + `config.yaml` + `.vmodel/.build/tasks/<task-id>/review-ready.yaml` + git diff of worktree vs build branch.
+**Context envelope — implement-leaf:** sub-skill SKILL.md + `config.yaml` + `.vmodel/.build/tasks/<task-id>/current-task.yaml` + the rendered test files in the worktree + `feedback.yaml` (if exists, fix mode).
+**Context envelope — review-execution (leaf):** sub-skill SKILL.md + `config.yaml` + `.vmodel/.build/tasks/<task-id>/current-task.yaml` + `.vmodel/.build/tasks/<task-id>/review-ready.yaml` (impl handoff) + the layer's spec artifacts (`specs/<scope>/detailed_design.md` + `specs/<scope>/testspec.md`) + git diff of worktree vs build branch + test result log.
+**Context envelope — review-execution (branch):** sub-skill SKILL.md + `config.yaml` + `.vmodel/.build/tasks/<task-id>/current-task.yaml` + `specs/<scope>/architecture.md` + `specs/<scope>/testspec.md` + integration test result log + git diff.
+**Context envelope — review-execution (root):** sub-skill SKILL.md + `config.yaml` + `.vmodel/.build/tasks/<task-id>/current-task.yaml` + root `requirements.md` + root product artifact + root `testspec.md` + system test result log.
 **Context envelope — render-tests (branch/root):** sub-skill SKILL.md + `config.yaml` + `specs/<scope>/testspec.md` + `specs/<scope>/architecture.md`.
 **Context envelope — retrospect-build:** sub-skill SKILL.md + `config.yaml` + `pipeline-state.yaml` + `tasks.yaml` + all `ESC-NNN.yaml` files.
 
@@ -104,13 +107,12 @@ For every sub-skill dispatch:
 
 1. For tasks with `status: pending` and dependencies satisfied, create worktree at `.vmodel/.build/worktrees/<task-id>`.
 2. Write `current-task.yaml` from the task contract in `tasks.yaml`.
-3. Dispatch `render-tests`. On completion, check verdict file at `.vmodel/.build/tasks/<task-id>/review-ready.yaml`.
-4. Dispatch `implement-leaf`. On completion, check for test results in the task directory.
-5. Dispatch `review-execution`. Read verdict:
-   - `APPROVED` → merge worktree to build branch, mark `completed`, clean up worktree.
-   - `REJECTED` with `review_attempts < max_review_attempts` → increment `review_attempts`, re-dispatch `implement-leaf` in fix mode.
-   - `REJECTED` with `review_attempts >= max_review_attempts` → write `ESC-NNN.yaml`, mark `escalated`, propagate `blocked` to dependents (respect dep strength: `required` blocks; `optional`/`helpful` may proceed).
-   - `ESCALATE` (sub-skill writes explicit escalation signal) → write `ESC-NNN.yaml`, mark `escalated`, propagate blocked.
+3. Dispatch `render-tests`. On completion, check `render-report.yaml` at `.vmodel/.build/tasks/<task-id>/render-report.yaml` — verify `compile_check: passed` and `red_phase_check: all_red`. If render-tests HALTed (e.g., weak oracle), treat as ESCALATE → testspec.
+4. Dispatch `implement-leaf`. On completion, verify `review-ready.yaml` exists at `.vmodel/.build/tasks/<task-id>/review-ready.yaml`. Absent file = sub-skill failure; mark `escalated` and surface to user.
+5. Dispatch `review-execution`. Determine verdict by inspecting the task dir AFTER the dispatch returns:
+   - **APPROVED** = neither `feedback.yaml` nor a new `ESC-NNN.yaml` was written by review-execution (review-execution emits a single stdout line `APPROVED <task-id>` for the orchestrator log; no verdict file is created). Merge worktree to build branch, mark `completed`, clean up worktree.
+   - **REJECTED** = `feedback.yaml` exists. If `review_attempts < max_review_attempts`, increment `review_attempts` and re-dispatch `implement-leaf` in fix mode. If `review_attempts >= max_review_attempts`, write `ESC-NNN.yaml`, mark `escalated`, propagate `blocked` to dependents (respect dep strength: `required` blocks; `optional`/`helpful` may proceed).
+   - **ESCALATE** = a new `ESC-NNN.yaml` is present in the task dir (and copy in `.vmodel/.build/escalations/`). Mark `escalated`, propagate blocked.
 6. Run up to `build.parallel.max_concurrent` tasks simultaneously within a stage.
 
 See `references/parallelism-and-worktrees.md` for worktree lifecycle and cleanup rules.
@@ -195,7 +197,7 @@ Stop and hand control back to the user when:
 5. **Escalation count >= `build.max_escalations`** (default 5) — clear signal that specs need work. List open escalations and instruct human resolution before resuming.
 6. **Critical mass blocked** — when `escalated` tasks cause `blocked` status on ≥ 50% of remaining tasks, HALT with a summary rather than continuing to a near-empty pipeline.
 7. **Worktree creation fails** — HALT for that task only; other tasks continue. Report and ask whether to skip or abort.
-8. **Sub-skill returns no verdict file** — report missing file, mark task `escalated`, continue other tasks.
+8. **Sub-skill returns no expected output** — for `render-tests`: missing `render-report.yaml`. For `implement-leaf`: missing `review-ready.yaml`. (For `review-execution`: APPROVED is signalled by the *absence* of a verdict file, so absence is not a failure — only treat as failure if the sub-skill exited with an error or never ran.) Report missing output, mark task `escalated`, continue other tasks.
 
 On halt: produce a structured handover (current phase, completed tasks, open escalations, specific human action required).
 

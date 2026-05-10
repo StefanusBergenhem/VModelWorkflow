@@ -1,5 +1,5 @@
 # review-ready.yaml — emitted by vmodel-skill-implement-leaf
-# Written to: .vmodel/.build/<task-id>/review-ready.yaml
+# Written to: .vmodel/.build/tasks/<task-id>/review-ready.yaml
 # Consumed by: vmodel-skill-review-execution (or human reviewer)
 #
 # Instructions:
@@ -39,11 +39,16 @@ notes: >
   <Required. State any deviations from the DD with rationale, escalations from
   fix mode (finding IDs addressed or escalated), or "none" if nothing to note.>
 
-# Fix mode only — add this block when mode: fix
+# Fix mode only — add this block when mode: fix.
+# Each entry references a failure from the prior feedback.yaml's `failures[]` list
+# (review-execution emits failures with `type`, `location`, `required_fix`, `spec_ref`).
 # feedback_addressed:
-#   - finding_id: F-001
-#     type: contract-violation
+#   - location: <file:line from feedback failure>
+#     type: contract-violation                    # taxonomy from feedback-taxonomy.md
 #     action: rewrote <function-name> postcondition on_failure path
-#   - finding_id: F-003
-#     type: wrong-assertion
-#     action: escalated to vmodel-skill-render-tests; not modified
+#   - location: <file:line>
+#     type: integration-failure-impl-bug
+#     action: re-implemented <child>.<method> to honor named seam behaviour
+#   - location: <file:line>
+#     type: regression
+#     action: reverted offending change at <commit-or-line>; <previously-passing test> restored

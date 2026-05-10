@@ -1,6 +1,10 @@
 # Feedback Taxonomy
 
-Full rejection type definitions. Used by review-execution when populating `failures[].type` in `feedback.yaml`. Also consumed by implement-leaf to understand what kind of fix is required.
+Full rejection type definitions. Used by review-execution when populating `failures[].type` in `feedback.yaml`. Also consumed by implement-leaf to understand what kind of fix is required (mirror at `vmodel-skill-implement-leaf/references/fix-mode-taxonomy.md`).
+
+**Contents.** §1 Rejection Type Table · §2 Type Exclusivity Rules ·
+§3 `required_fix` Discipline · §4 How impl-leaf Responds to Each Type ·
+§5 Attempt Counter and Escalation Trigger.
 
 ---
 

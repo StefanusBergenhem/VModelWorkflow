@@ -20,6 +20,7 @@ Provided by the orchestrator in the context envelope:
 |:------|:------|
 | `config.yaml` | `.vmodel/config.yaml` — paths, test commands, model keys |
 | `current-task.yaml` | Task contract written by orchestrator to `.vmodel/.build/tasks/<task-id>/current-task.yaml` |
+| `review-ready.yaml` | Implementation handoff at `.vmodel/.build/tasks/<task-id>/review-ready.yaml` (leaf only — written by `vmodel-skill-implement-leaf`) — names the files changed, contracts implemented, lint/coverage/test status |
 | Git diff of worktree vs build branch | Implementation delta under review |
 | Test result log | `.vmodel/.build/tasks/<task-id>/test-results.log` or equivalent piped from the test runner |
 | Layer-appropriate spec artifacts (see below) | Loaded per layer |
@@ -66,6 +67,11 @@ When the test result is all-pass, do not stop at "green tests." Check:
 - Error matrix: every error class in the DD has a corresponding test; no error class is uncovered.
 - Thread-safety: if DD requires thread-safety, does the implementation demonstrate it (e.g., synchronisation, immutable types)? A green-test suite that doesn't cover the thread-safety property is not sufficient.
 - No contract-invisible behaviour: the implementation does not expose behaviour not sanctioned by the DD (gold plating).
+- **AI-specific guards** (mirror of the impl's pre-publish self-check; LLM failure modes from `source-code.html` §3.4 / `unit-test.html` §3.7):
+  - No hardcoded credentials, API keys, tokens, or other secrets in the diff. Treat as `scope-violation` (the impl introduced a non-DD-sanctioned literal).
+  - No tautological tests in the rendered tests (the test recomputes the expected value using the same logic as the implementation). If found, ESCALATE → testspec with `wrong-assertion` issue type.
+  - No assertion-free tests (only structural assertions like `assertNotNull`, "doesn't throw"). ESCALATE → testspec with `wrong-assertion` issue type.
+  - Spot-check external library calls in the diff for hallucinated APIs (methods that don't exist in the pinned library version). If a call cannot be resolved against documented APIs, treat as `contract-violation` and reference the calling function in `required_fix`.
 
 **Branch layer:**
 - Interface contracts in ARCH: every component boundary contract (data types, call sequences, error propagation) observable in the integration test results.
@@ -87,13 +93,26 @@ When the routing is ambiguous (more than one branch could apply), set `confidenc
 
 ### Step 4 — Write verdict file and stop
 
-Write exactly one verdict file to `.vmodel/.build/tasks/<task-id>/` per the templates:
+Verdict files live at `.vmodel/.build/tasks/<task-id>/` (REJECTED) and
+`.vmodel/.build/escalations/` (ESCALATE):
 
-- **APPROVED** → `review-ready.yaml` (use `templates/feedback.yaml.tmpl` with `verdict: APPROVED`, empty `failures`)
-- **REJECTED** → `feedback.yaml` (use `templates/feedback.yaml.tmpl`)
-- **ESCALATE** → `ESC-NNN.yaml` (use `templates/escalation.yaml.tmpl`; increment NNN by reading `.vmodel/.build/escalations/` for the last sequence)
+- **APPROVED** → write **no file**. The implementation handoff
+  (`review-ready.yaml` from `vmodel-skill-implement-leaf`) is already on disk
+  and remains as the record of what was implemented. The orchestrator infers
+  APPROVED from the absence of `feedback.yaml` and any new ESC-NNN.yaml after
+  this skill exits. State the verdict in stdout (one line: `APPROVED <task-id>`)
+  for the orchestrator's log.
+- **REJECTED** → `.vmodel/.build/tasks/<task-id>/feedback.yaml`
+  (use `templates/feedback.yaml.tmpl`).
+- **ESCALATE** → `.vmodel/.build/escalations/ESC-NNN.yaml` (also place a copy
+  at `.vmodel/.build/tasks/<task-id>/ESC-NNN.yaml` so the task dir is
+  self-contained). Use `templates/escalation.yaml.tmpl`; increment NNN by
+  reading `.vmodel/.build/escalations/` for the last sequence.
 
-Do not write both feedback.yaml and ESC-NNN.yaml for the same task invocation. One verdict, one file. If the situation warrants both REJECTED and ESCALATE, ESCALATE takes precedence (spec issue is the higher-priority signal).
+Do not write both feedback.yaml and ESC-NNN.yaml for the same task
+invocation. One verdict per invocation. If the situation warrants both
+REJECTED and ESCALATE, ESCALATE takes precedence (spec issue is the
+higher-priority signal).
 
 ---
 
@@ -101,7 +120,12 @@ Do not write both feedback.yaml and ESC-NNN.yaml for the same task invocation. O
 
 ### APPROVED
 
-All tests pass AND all contract checks pass. Write `review-ready.yaml` with `verdict: APPROVED` and empty `failures` list. The orchestrator reads this file and merges the worktree.
+All tests pass AND all contract checks pass. Do **not** write a verdict file —
+emit one stdout line `APPROVED <task-id>` and exit. The implementation's
+`review-ready.yaml` (already on disk, written by `vmodel-skill-implement-leaf`)
+remains as the record of what was implemented. The orchestrator reads no
+`feedback.yaml` and no new ESC-NNN.yaml in the task dir as the APPROVED
+signal, then merges the worktree.
 
 ### REJECTED
 

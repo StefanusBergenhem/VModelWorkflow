@@ -45,14 +45,16 @@ Ask for anything missing. HALT (refusal A) if DD or rendered tests are absent.
 | Governing ADRs | paths in DD front-matter `governing_adrs` | Yes — refusal B if referenced but unreadable |
 | `.vmodel/config.yaml` | project root | Yes — for `commands.test`, `commands.lint`, `build.retry.max_review_attempts` |
 | Project conventions | `.vmodel/references/` + project-side `conventions.md` | Optional; match existing patterns when present |
-| `feedback.yaml` (fix mode) | `.vmodel/.build/<task-id>/feedback.yaml` | Fix mode only — refusal C if missing in fix mode |
+| `feedback.yaml` (fix mode) | `.vmodel/.build/tasks/<task-id>/feedback.yaml` | Fix mode only — refusal C if missing in fix mode |
 
 ## Output
 
 Source code file(s) implementing the leaf scope, plus one YAML status file.
 
-**`review-ready.yaml`** written to `.vmodel/.build/<task-id>/review-ready.yaml`.
-Template: `templates/review-ready.yaml.tmpl`.
+**`review-ready.yaml`** written to `.vmodel/.build/tasks/<task-id>/review-ready.yaml`.
+Template: `templates/review-ready.yaml.tmpl`. This is the implementation handoff;
+`vmodel-skill-review-execution` reads it (alongside the git diff and test
+results) to produce the verdict.
 
 ## Procedure
 
@@ -159,4 +161,3 @@ emits the structured handover, and does not write `review-ready.yaml`.
 | E | `max_review_attempts` exhausted, rejections remain | HALT. Surface unresolvable entries; escalate to architecture review or spec revision. |
 | F | User requests a feature not in the DD | HALT. "Not in DD. Add to DD first, then re-invoke." |
 | G | Test is wrong — fixing it would make tests pass but violate DD | HALT. Escalate to `vmodel-skill-author-testspec` / `vmodel-skill-render-tests`; do not weaken or delete. |
-| H | Integration failure surfaces (unit-level tests pass, composition fails) | HALT. Escalate to architecture review; this layer cannot resolve integration concerns. |

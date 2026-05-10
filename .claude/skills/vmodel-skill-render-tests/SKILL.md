@@ -28,8 +28,8 @@ Do **not** activate this skill for:
 
 - Deriving or authoring TestSpec cases — that is `vmodel-skill-author-testspec`'s job
 - Reviewing a TestSpec for quality — that is `vmodel-skill-review-testspec`'s job
-- Writing implementation code — that is `develop-code`'s job
-- Reviewing rendered tests against a design — that is `vmodel-skill-review-code`'s job
+- Writing implementation code — that is `vmodel-skill-implement-leaf`'s job (for leaf scope; the rendered tests are this skill's red-phase handoff to it)
+- Reviewing rendered tests against the implementation and spec layer — that is `vmodel-skill-review-execution`'s job (it checks `VERIFIES` traceability and oracle adequacy at review time)
 
 ## Inputs
 
@@ -178,13 +178,47 @@ notes: ""
 
 ## Self-check before delivering
 
+**Coverage and traceability**
+
 1. Every case in the TestSpec has either a rendered test or a skipped entry with reason.
 2. Every rendered test has a `VERIFIES` comment with case ID and upstream IDs.
-3. Every assertion uses a hardcoded expected value from the TestSpec — no logic recomputation.
-4. No test passes before implementation exists (red phase intact).
-5. Test names come from TestSpec `title:` — no invented names.
-6. Test doubles are limited to 2 at leaf; named and contract-annotated at branch/root.
-7. No tests exist that are not derived from a TestSpec case.
+3. No tests exist that are not derived from a TestSpec case.
+4. No happy-path bias: every error / boundary / fault-injection case in the
+   TestSpec is rendered, not just functional cases (`unit-test.html` §3.7
+   names this as the most common AI-test failure mode).
+
+**Assertion adequacy** (`unit-test.html` §3.5 *Anti-Patterns*)
+
+5. Every assertion uses a hardcoded expected value from the TestSpec — no
+   logic recomputation. Mirror Test = test recomputes the expected value with
+   the same formula as the implementation; that test catches no bug.
+6. No assertion-free tests (`assertNotNull` alone, "doesn't throw" alone).
+   These are weak oracles — surface as HALT #2.
+7. No test passes before implementation exists (red phase intact).
+
+**Test structure** (`unit-test.html` §3.3)
+
+8. Arrange / Act / Assert structure visible on every test, with one Act per
+   test (no compound tests).
+9. Test names come from TestSpec `title:` — no invented names.
+10. No conditional logic (`if`/`else`/loops) in test bodies. Multiple cases
+    use parameterization; multiple Acts split into separate tests.
+
+**Test doubles** (`unit-test.html` §3.4)
+
+11. Test doubles limited to 2 at leaf; only for infrastructure collaborators
+    (clock, filesystem, HTTP, database). Domain collaborators use real
+    instances or simple fakes.
+12. **Only mock types you own** (Freeman & Pryce). Do not mock third-party
+    library types directly — wrap them behind a domain-defined interface
+    first, mock the interface. If the TestSpec asks for a third-party-typed
+    mock, raise it and ask whether to introduce the wrapper.
+13. Fakes at branch carry a `// CONTRACT: <child-component>` comment naming
+    the contract they honour.
+14. Prefer state verification (assert on observable post-state) over behaviour
+    verification (assert on calls received). Use behaviour verification only
+    when the interaction itself is the observable behaviour (e.g.,
+    notification sent).
 
 ## HALT conditions
 

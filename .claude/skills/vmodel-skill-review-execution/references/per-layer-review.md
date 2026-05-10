@@ -2,6 +2,9 @@
 
 What each layer reviews, what it compares against, and which verdict types are in-lane.
 
+**Contents.** §1 Layer Summary Table · §2 Leaf Layer Review · §3 Branch Layer
+Review · §4 Root Layer Review · §5 Lane Discipline.
+
 ---
 
 ## §1 Layer Summary Table
