@@ -38,7 +38,7 @@ coverage_mutation_bar:
 
 This document specifies the root-scope TestSpec for **vmodel-core** — the deterministic CLI that validates VModelWorkflow spec artifacts and reports on spec-tree state. It derives cases from `specs/architecture.md` (ARCH; status `draft`, 7 children, 8 interfaces) under the two governing ADRs already accepted: ADR-001 (Go implementation) and ADR-002 (compile-time `embed.FS` bundling, no runtime override). Coverage of the eight architectural interfaces (two external + six internal) and the load-bearing composition invariants (byte-stable emit, halt-and-report, embed.FS-only) is pursued through cases that drive the production binary as a subprocess and observe outputs at its external boundary, with seeded fixture spec trees standing in for adopter input.
 
-**Layer / level note (honest hybrid).** This artifact's `scope: ""` places it at root; per `references/per-layer-weight.md` the `level:` field follows scope, hence `level: system`. Cases use the *branch* template shape (fixtures-rich preconditions + cross-child observable expected) rather than the root template's *user-journey narrative in PB vocabulary* shape. Reason: vmodel-core has no Product Brief at this date (a known gap — see `dogfood_findings.md` Issue 1 / decision γ; `specs/requirements.md` *Open gaps*), so the canonical root-layer parent (Requirements + Product Brief) is unavailable and the next-best parent is `specs/architecture.md`. The "user vocabulary" of vmodel-core at v1 is verdict-records, finding-records, exit codes, and HTML reports — there is no separate consumer-vocabulary distinct from requirements vocabulary to recast cases into. When a Product Brief is authored and a true root-layer TestSpec replaces this artifact, the system-level cases here either move to that artifact (rephrased in PB vocabulary) or migrate to a branch TestSpec at the same scope (with `level: integration`) and this hybrid retires.
+**Layer / level note (honest hybrid).** This artifact's `scope: ""` places it at root; per `references/per-layer-weight.md` the `level:` field follows scope, hence `level: system`. Cases use the *branch* template shape (fixtures-rich preconditions + cross-child observable expected) rather than the root template's *user-journey narrative in PB vocabulary* shape. Reason: vmodel-core has no Product Brief at this date (a known gap — see `dogfood_findings.md` Issue 1 / decision γ), so the canonical root-layer parent (Requirements + Product Brief) is unavailable and the next-best parent is `specs/architecture.md`. The "user vocabulary" of vmodel-core at v1 is verdict-records, finding-records, exit codes, and HTML reports — there is no separate consumer-vocabulary distinct from requirements vocabulary to recast cases into. When a Product Brief is authored and a true root-layer TestSpec replaces this artifact, the system-level cases here either move to that artifact (rephrased in PB vocabulary) or migrate to a branch TestSpec at the same scope (with `level: integration`) and this hybrid retires.
 
 **Coverage / mutation bar (project-policy fill-in).** All four threshold / tool / frequency / blocking values are placeholder `"TBD-by-project-policy"` per `references/coverage-mutation-bar.md` — the author does not invent numbers. For a branch / system testspec, project policy substituting *contract-test pass rate* and *user-journey pass rate* for line-coverage and mutation-score is consistent with the per-layer guidance in `coverage-mutation-bar.md`; the structural slot uses the `branch` metric as the most informative structural coverage flavour for cross-child code paths.
 
@@ -50,10 +50,10 @@ This document specifies the root-scope TestSpec for **vmodel-core** — the dete
 
 These will land in the leaf TestSpecs to be authored once each child's Detailed Design exists. The root TestSpec verifies the seams; the leaves verify the components.
 
-**Open follow-ups inherited upstream.** Several upstream gaps shape this TestSpec:
+**Inherited upstream gaps.** Several upstream deferrals shape this TestSpec:
 
 - REQ-022 / REQ-023 NFR target slots are pending pilot calibration. The performance case (TC-023) declares the measurement *shape* and uses a placeholder threshold; the case is not executable as a CI gate until project policy sets the threshold.
-- The CLI ergonomic shape beyond exit codes and output formats is deferred per `requirements.md` *Open gaps* and `architecture.md` *Open follow-ups* (`[DEFER-DD: cli-adapter — subcommand and flag structure]`). Cases here state subcommand names abstractly (e.g., "in whole-tree validation mode") rather than literal flag strings; a downstream revision will bind the literal subcommand surface once the cli-adapter DD lands.
+- The CLI ergonomic shape beyond exit codes and output formats is deferred per REQ-024 `follow_up:` and architecture inline `[DEFER-DD: cli-adapter — subcommand and flag structure]`. Cases here state subcommand names abstractly (e.g., "in whole-tree validation mode") rather than literal flag strings; a downstream revision will bind the literal subcommand surface once the cli-adapter DD lands.
 - The release-surface and binary-signing decisions are deferred to DD; this TestSpec does not cover supply-chain attestation cases at v1.
 
 ## Cases
@@ -145,7 +145,9 @@ The case set below is grouped by derivation seed (validation surface / reporting
   type: fault-injection
   verifies:
     - "ARCH.interfaces.IValidationCLI.postconditions.on_precondition_failure"
+    - "ARCH.interfaces.IValidationCLI.errors.system-error"
     - "ARCH.interfaces.IArtifactLoad.errors.ErrParseFailure"
+    - "ARCH.interfaces.IValidate.errors.ErrSystemError"
     - "REQ-001"
     - "REQ-004"
     - "REQ-005"
@@ -173,6 +175,7 @@ The case set below is grouped by derivation seed (validation surface / reporting
   type: error
   verifies:
     - "ARCH.interfaces.IValidationCLI.postconditions.on_precondition_failure"
+    - "ARCH.interfaces.IValidationCLI.errors.system-error"
     - "ARCH.interfaces.IArtifactLoad.errors.ErrTargetUnreadable"
     - "REQ-005"
     - "REQ-028"
@@ -195,6 +198,7 @@ The case set below is grouped by derivation seed (validation surface / reporting
   type: error
   verifies:
     - "ARCH.interfaces.IValidationCLI.postconditions.on_precondition_failure"
+    - "ARCH.interfaces.IValidationCLI.errors.system-error"
     - "ARCH.interfaces.IArtifactLoad.errors.ErrTargetNotFound"
     - "REQ-005"
     - "REQ-027"
@@ -467,6 +471,7 @@ The case set below is grouped by derivation seed (validation surface / reporting
     - "ARCH.interfaces.IValidate"
     - "ARCH.decomposition.validation-engine.allocates.REQ-017"
     - "REQ-017"
+    - "IC-011"
   preconditions:
     - "Environment: in-process."
     - "Fixture: 'qb-structural' — an architecture artifact failing exactly two structural Quality Bar items selected from the bundled architecture-Quality-Bar checklist (e.g., 'Composition section non-empty' fails AND 'every interface entry carries a non-empty errors enum' fails); semantic Quality Bar items are not in vmodel-core's scope (IC-011) and are not exercised by this case."
@@ -599,6 +604,8 @@ The case set below is grouped by derivation seed (validation surface / reporting
   verifies:
     - "ARCH.interfaces.IValidationCLI.quality_attributes.latency"
     - "REQ-022"
+    - "IC-002"
+    - "IC-012"
   preconditions:
     - "Environment: production-like — commodity CI runner per IC-012 (CI-runner profile pinned: GitHub-hosted ubuntu-22.04 runner image, 2-vCPU x 7GB)."
     - "Workload: 60 sequential single-artifact validation invocations against a representative artifact (1.5 KB requirements artifact with no rule violations); cold start each time (process exits between invocations per IC-002)."
@@ -632,6 +639,8 @@ The case set below is grouped by derivation seed (validation surface / reporting
     - "ARCH.interfaces.IValidationCLI.quality_attributes.scale"
     - "ARCH.decomposition.graph-builder.allocates.REQ-023"
     - "REQ-023"
+    - "REQ-022"
+    - "IC-012"
   preconditions:
     - "Environment: production-like — commodity CI runner per IC-012 (CI-runner profile pinned: GitHub-hosted ubuntu-22.04 runner image, 2-vCPU x 7GB; same profile as TC-023)."
     - "Workload: a single whole-tree validation run against each of five synthetic spec-tree fixtures of N well-formed artifacts at N ∈ {50, 100, 200, 500, 1000}; each fixture's artifacts are split across all six artifact_type values and four scope levels, with valid traceability links to peers and zero rule violations."
@@ -702,7 +711,7 @@ The case set below is grouped by derivation seed (validation surface / reporting
 | 9 | mystery guest | Pass — every fixture is named explicitly (`clean-root`, `broken-link-single`, `subtree-isolation`, `halt-on-parse`, `non-existent-path`, `coverage-fixture`, `completeness-fixture`, `inventory-fixture`, `impact-fixture`, `ref-integrity`, `completeness-violation`, `cycle-derived-from`, `retrofit-fabrication`, `cascade-violation`, `envelope-violation`, `per-type-violation`, `qb-structural`, `mixed-findings`, `sample-set`, `build-version-manifest`, plus five scale fixtures `scale-N-{50,100,200,500,1000}`); each case names what the fixture contains. |
 | 10 | ice-cream-cone coverage | Acknowledged hybrid — see *Layer / level note* in Overview. The test pyramid for vmodel-core is intended to have leaf TestSpecs (one per child component) carrying the bulk of cases at unit level, with this artifact as the seam-coverage layer. Leaf TestSpecs are not yet authored (waiting on each child's Detailed Design). |
 | 11 | coverage-as-quality-metric | Pass — `coverage_mutation_bar:` declares both structural coverage and mutation score (placeholder values); per-layer note in Overview that branch / system testspecs typically substitute contract-test pass rate for mutation. |
-| 12 ★ | orphan tests (refusal B) | Pass — artifact-level `verifies:` is non-empty; every case `verifies:` is non-empty; every `verifies:` element targets an existing artifact identifier (ARCH interface clauses; ARCH decomposition allocations; REQ identifiers; IC identifiers). The empty-scope `ARCH.interfaces.<name>` form (used because the architecture's id is plain `ARCH` and root scope is `""`) was confirmed acceptable by adversarial review on 2026-05-04 — every link resolves; the hyphen-suffix form `ARCH-<scope>.interfaces.<name>` from `references/architecture-traceability-cues.md` degenerates ungracefully at empty scope (`ARCH-.interfaces.<name>`), and the plain prefix is the natural empty-scope encoding. Framework-level resolver / convention clarification tracked in `dogfood_findings.md`. |
+| 12 ★ | orphan tests (refusal B) | Pass — artifact-level `verifies:` is non-empty; every case `verifies:` is non-empty; every `verifies:` element targets an existing artifact identifier (ARCH interface clauses; ARCH decomposition allocations; REQ identifiers; IC identifiers). The empty-scope `ARCH.interfaces.<name>` form (used because the architecture's id is plain `ARCH` and root scope is `""`) was confirmed acceptable by adversarial review on 2026-05-04 — every link resolves; the hyphen-suffix form from `references/architecture-traceability-cues.md` (where a non-empty scope follows the prefix-with-hyphen) degenerates ungracefully at empty scope (the dash collapses against the dotted suffix), and the plain prefix is the natural empty-scope encoding. Framework-level resolver / convention clarification tracked in `dogfood_findings.md`. |
 | 13 ★ | fabricated retrofit intent (refusal A) | Pass (greenfield — no `recovery_status` declared, no retrofit posture). |
 
 ### Quality Bar checklist (`references/quality-bar-checklist.md`)

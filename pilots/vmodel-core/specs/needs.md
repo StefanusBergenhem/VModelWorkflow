@@ -156,15 +156,9 @@ plumbing under both and not user-facing capabilities themselves.
   - **Validation:** produces JSON (default for AI callers, machine-parseable) and text (default for human / CI terminal consumption, human-readable).
   - **Reporting:** produces HTML (self-contained, browseable, aligned with the "human seeking understanding" consumer per turn 6).
 
-  Whether reporting also produces JSON / text variants is deferred to Open gaps.
+  Whether reporting also produces JSON / text variants is deferred (see REQ-025 `follow_up:` in requirements.md).
 
   *Confirmed: yes (readback turn 10, 2026-05-01).*
-
-## Open gaps
-
-- **CLI ergonomic shape beyond exit codes and output formats — pending pilot evidence and codex pattern hardening.** PD §3 *CLI ergonomics* enumerates a set of working hypotheses (verb/subcommand structure, errors-are-actionable, non-interactive-by-default, idempotency, stdin acceptance, progressive `--help`, structured-data-on-success, `--yes`/`--force` flags, structured stderr logs, `--verbose`/`--quiet`). PD itself flags these as drawn from a single practitioner observation (Zakariasson 2026) and explicitly working-hypothesis-status pending corroboration. Not promoted to Interfaces / integrations at v1; revisit once pilot evidence and `pat-cli-design-for-ai-agents` codex pattern page are in place.
-
-- **Reporting output formats beyond HTML.** Whether the four reporting output types (coverage / completeness / inventory / impact) also need JSON variants (for programmatic dashboard ingestion) or text variants (for terminal viewing) is unconfirmed. PD §3 implies all three formats for gap-report; the stakeholder-anchored v1 answer is HTML-only unless probed and confirmed otherwise.
 
 ## Success metrics
 

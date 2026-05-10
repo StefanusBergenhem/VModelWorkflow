@@ -494,3 +494,19 @@ Even for a project quite small like this one, the architecture.md is above 30k t
 
 ### Issue 23 - unclear what the testspec should verify. is it requirements? or is it architecture?
 
+### Issue 24 — `check-typed-error-coverage` script doesn't know about the leaf-testspec deferral pattern
+
+**Where surfaced.** Running `scripts/check-typed-error-coverage.py` against the pilot's root spec tree on 2026-05-10 produced 12 findings (typed errors declared in interface specs but no testspec case verifies them). Investigation: 9 of those 12 errors are internal-component errors (`IArtifactLoad.ErrIOFailure`, `IEmit.ErrInvalidVerdict`/`ErrSinkWrite`/`ErrUnsupportedFormat`, `IFrameworkResources.ErrUnknownArtifactType`, `IGraphBuild.ErrMalformedFrontMatter`, `IReport.ErrInvalidParameters`/`ErrUnknownReportType`, `IValidate.ErrPreconditionFailed`) that the root testspec explicitly defers to per-component leaf testspecs (testspec.md "Inherited upstream gaps" section, architectural choice documented at draft time). 3 of 12 mapped cleanly to existing root cases (TC-004, TC-005, TC-025) and were added in 2026-05-10 fixup; 1 remaining (`IReportCLI.errors.system-error`) is a real root-layer gap.
+
+**The gap.**
+
+The script treats the spec tree as a single layer and complains about every typed error not verified at the root, even when the architectural choice explicitly defers internal-interface error coverage to leaf testspecs (which don't yet exist because leaf DDs haven't been authored). This produces high noise once non-leaf-coverable errors are excluded.
+
+**Suggested resolution.**
+
+1. **Script side.** Extend `check-typed-error-coverage.py` to accept a per-interface coverage-layer declaration (e.g., `coverage_layer: leaf` in the interface YAML), and skip findings for errors whose interface is declared leaf-covered when only the root testspec exists.
+2. **Spec-author side.** When the root testspec defers component errors to leaf testspecs, declare it explicitly in the interface YAML so the check script can honour the deferral.
+3. **Real-gap action.** `IReportCLI.errors.system-error` should be covered by a new root-layer case (TC-027: "Reporting invocation against an unreadable input produces verdict=system-error with exit code 2") modelled on TC-005. Track as a follow-up; do not fabricate the case at this migration pass.
+
+**Pairs with.** Issue 17 (ID encoding), Issue 20 (typed-error case coverage discipline) — both surface from mechanical-check scripts whose assumptions don't perfectly match the spec-tree state.
+

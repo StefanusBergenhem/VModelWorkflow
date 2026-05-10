@@ -13,7 +13,7 @@ version: 1
 
 # Requirements — vmodel-core
 
-This document specifies the root-scope requirements for **vmodel-core** — the deterministic CLI that validates VModelWorkflow spec artifacts and reports on spec-tree state. It is refined directly from `specs/needs.md` (the elicit-needs output for this scope, 2026-05-01), with framework material in `references/` (TARGET_ARCHITECTURE, BACKLOG, schemas) used to fill detail only where needs.md is silent and not in conflict; where needs.md and framework references conflict, needs.md supersedes. The document scope is the whole product at v1; per the framework, vmodel-core is a child product within VModelWorkflow's three-product structure (`TARGET §10`), but is treated here as effective root because no parent-scope (VModelWorkflow-level) Requirements artifact yet exists. The placeholder upstream id `NEEDS-vmodel-core` is used in `derived_from` because needs.md is not in the canonical artifact set; this is a deliberate, documented gap (see *Open gaps*).
+This document specifies the root-scope requirements for **vmodel-core** — the deterministic CLI that validates VModelWorkflow spec artifacts and reports on spec-tree state. It is refined directly from `specs/needs.md` (the elicit-needs output for this scope, 2026-05-01), with framework material in `references/` (TARGET_ARCHITECTURE, BACKLOG, schemas) used to fill detail only where needs.md is silent and not in conflict; where needs.md and framework references conflict, needs.md supersedes. The document scope is the whole product at v1; per the framework, vmodel-core is a child product within VModelWorkflow's three-product structure (`TARGET §10`), but is treated here as effective root because no parent-scope (VModelWorkflow-level) Requirements artifact yet exists. The placeholder upstream id `NEEDS-vmodel-core` is used in `derived_from` because needs.md is not in the canonical artifact set; this is a deliberate, documented gap (tracked in `dogfood_findings.md` Issue 1 — pending elicit-needs decision γ).
 
 ## Glossary
 
@@ -590,8 +590,9 @@ inherited_constraints:
   rationale: |
     The framework canonical schema set publishes a per-artifact schema for
     each of the six artifact types; per-type schemas tighten the envelope and
-    add type-specific structure (e.g. requirements adds REQS- id pattern,
-    scope, parent_scope, and the requirement-block $defs). Per-type schema
+    add type-specific structure (e.g. requirements adds the `REQ-<NNN>` per-
+    requirement id pattern, scope, parent_scope, and the requirement-block
+    $defs). Per-type schema
     validation is the structural rigor mechanism (TARGET §6).
   derived_from: [IC-010]
 ```
@@ -955,7 +956,7 @@ inherited_constraints:
   rationale: |
     needs.md (turn 10) commits the rendering surface for validation: exit
     codes 0/1/2 (REQ-028) and output formats JSON (default for AI callers) and
-    text (default for human / CI). needs.md (turn 9 + Open gaps) defers the
+    text (default for human / CI). needs.md (turn 9) defers the
     rest of the CLI ergonomic shape to pilot evidence; per the upstream-input
     rule (needs.md supersedes framework references on conflict), TARGET §10's
     broader AI-ergonomic CLI patterns do not bind at v1 unless needs.md
@@ -969,7 +970,7 @@ inherited_constraints:
   derived_from: [NEEDS-vmodel-core, IC-006]
   follow_up:
     - owner: stakeholder (framework author)
-      action: "Promote committed CLI ergonomic patterns from Open gaps into this requirement (or an additional interface requirement) once pilot evidence and the codex CLI-for-AI-agents pattern page are in place."
+      action: "Promote committed CLI ergonomic patterns (subcommand / resource-verb structure, non-interactive default, idempotency, --dry-run / --yes / --force, stdin acceptance, progressive --help, structured-data-on-success, --verbose / --quiet) into this requirement (or an additional interface requirement) once pilot evidence and the engineering-codex `pat-cli-design-for-ai-agents` pattern page are in place."
     - owner: stakeholder (framework author)
       action: "Author a product-scope ADR setting the CLI deprecation notice period before v1 release; the ADR's accepted notice period replaces the 'pending' clause in this requirement's versioning field."
 ```
@@ -1048,8 +1049,8 @@ inherited_constraints:
   rationale: |
     needs.md (turn 10) commits the rendering surface for reporting: HTML (self-
     contained, browseable, aligned with the 'human seeking understanding'
-    consumer per turn 6). needs.md (Open gaps) defers whether reporting also
-    produces JSON or text variants. Per the upstream-input rule, only HTML is
+    consumer per turn 6). needs.md defers whether reporting also produces
+    JSON or text variants (deferral captured in this requirement's `follow_up:`). Per the upstream-input rule, only HTML is
     committed at v1. Versioning is shared with REQ-024 because the two
     surfaces ship as one binary under one stable-contract commitment (IC-006);
     no needs.md decision separates reporting versioning from validation
@@ -1134,71 +1135,3 @@ inherited_constraints:
     is fail, and 2 if V is system-error.
   derived_from: [NEEDS-vmodel-core, REQ-027]
 ```
-
-## Open gaps and follow-ups
-
-These items are surfaced rather than silently passed, per the no-fabrication
-discipline (`references/rationale-and-traceability.md`). Each has an owner and
-an action; the document remains in `status: draft` until the gaps that block
-v1 baselining are closed (or explicitly accepted as v1.x).
-
-- **`derived_from` placeholder `NEEDS-vmodel-core` is not in the canonical
-  artifact set.**
-  - *Owner*: framework author.
-  - *Action*: resolve as part of elicit-needs decision γ (`dogfood_findings.md`
-    Issue 1, Issue 2). Two coherent paths: (a) author a vmodel-core
-    Product Brief and re-anchor `derived_from` to `PB`; (b) promote `needs.md`
-    into the canonical artifact set with its own id pattern, and update this
-    document and the schemas accordingly. Until then, the traceability rule
-    `TRV-REF-001` will produce a finding on this artifact when run by
-    vmodel-core itself — that finding is a deliberate pilot data point.
-
-- **No parent-scope (VModelWorkflow-level) Requirements artifact exists.**
-  - *Owner*: framework author.
-  - *Action*: per `dogfood_findings.md` Issue 2, framework-level needs should be
-    elicited first, then per-product needs cascaded down. When a parent-scope
-    Requirements is authored, this document's `parent_scope` and `derived_from`
-    must be revised; some constraints currently scoped here may move up.
-
-- **NFR target slots (`fail`/`goal`/`stretch`/`wish`) are pending pilot
-  calibration on REQ-022 and REQ-023.**
-  - *Owner*: framework author (in dogfooding pilot role).
-  - *Action*: set the four target slots per NFR from pilot calibration; revise
-    this document to baselined `status: active` once thresholds are committed.
-
-- **CLI ergonomic shape beyond exit codes and output formats is deferred.**
-  - *Owner*: framework author.
-  - *Action*: revisit once pilot evidence and the engineering-codex
-    `pat-cli-design-for-ai-agents` pattern page are in place; promote
-    committed patterns into REQ-024 (or as additional interface requirements)
-    at that point. Patterns currently deferred include: subcommand /
-    resource-verb structure, non-interactive default, idempotency,
-    `--dry-run` / `--yes` / `--force`, stdin acceptance for inputs,
-    progressive `--help`, structured-data-on-success rendering, and
-    `--verbose` / `--quiet`.
-
-- **Reporting output formats beyond HTML are deferred.**
-  - *Owner*: framework author.
-  - *Action*: decide whether the four reporting outputs also need JSON
-    (programmatic dashboard ingestion) or text (terminal viewing) variants;
-    promote into REQ-025 or split into per-format interface requirements.
-
-- **Open-source licence is not yet selected.**
-  - *Owner*: framework author.
-  - *Action*: author a product-scope ADR selecting a specific licence (per
-    IC-008) before v1 release.
-
-- **CLI deprecation notice period is not yet committed.**
-  - *Owner*: framework author.
-  - *Action*: author a product-scope ADR setting the minimum deprecation
-    notice period for v1 surface elements before v1 release; the version
-    label (v1) and compatibility regime (additive-only-within-major) are
-    committed by REQ-024 (and shared by REQ-025), so only the notice period
-    needs the ADR. Until the ADR is accepted, no deprecation may begin.
-
-- **Success metrics are deliberately unset at v1.**
-  - *Owner*: framework author.
-  - *Action*: per needs.md (turn 11), specific metrics for vmodel-core's
-    production success will be set from pilot evidence (framework-author
-    dogfooding, Phase 5 skill usage data, CI integration signal). Not a
-    blocker for v1; tracked as living follow-up.

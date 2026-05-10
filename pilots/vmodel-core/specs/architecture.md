@@ -116,7 +116,7 @@ decomposition:
       - "Owns aggregation logic for the four v1 report types (REQ-018..REQ-021)."
       - "Owns HTML rendering; hands rendered HTML to the emitter."
     allocates: [REQ-018, REQ-019, REQ-020, REQ-021]
-    likely_change_driver: "report types added beyond the four at v1; output formats beyond HTML may be added per requirements.md *Open gaps*."
+    likely_change_driver: "report types added beyond the four at v1; output formats beyond HTML may be added per REQ-025 `follow_up:`."
     rationale: "html/template (stdlib) is the templating mechanism per ADR-001 Propagation — context-aware escape gives safe-by-default output. HTML structure: `[DEFER-DD: reporter — HTML report template structure]`."
 
   - id: emitter
@@ -170,7 +170,7 @@ interfaces:
       operation: "vmodel-core <reporting-subcommand> [flags] [params]  (subcommand and flag shape per [DEFER-DD: cli-adapter — subcommand and flag structure])"
       summary_postcondition: "Emits one self-contained HTML document on stdout with byte-identical output for byte-identical input (REQ-029); exit code 0 on success / 2 on system-error (REQ-025 error_handling)."
       key_invariants: [REQ-029, IC-003, IC-002]
-      rationale: "Shares CLI subprocess shape with IValidationCLI per IC-006. HTML output (REQ-025) targets human readers; JSON/text variants deferred per requirements.md *Open gaps*."
+      rationale: "Shares CLI subprocess shape with IValidationCLI per IC-006. HTML output (REQ-025) targets human readers; JSON/text variants deferred per REQ-025 `follow_up:`."
     detail: ./architecture/interfaces/IReportCLI.md
 
   # =========================================================================
@@ -221,7 +221,7 @@ interfaces:
       operation: "Report(set ArtifactSet, graph TraceabilityGraph, request ReportRequest) (HTMLDocument, error)"
       summary_postcondition: "Returns one self-contained HTML document (REQ-018..REQ-021) with byte-identical output for byte-identical input (REQ-029); typed errors (ErrUnknownReportType / ErrInvalidParameters) on precondition failure with no HTML emitted."
       key_invariants: [REQ-029, REQ-025]
-      rationale: "[DEFER-ADR: reporter entrypoint shape (one entrypoint vs per-type)] Output-format extension (JSON/text variants per requirements.md *Open gaps*) deferred."
+      rationale: "[DEFER-ADR: reporter entrypoint shape (one entrypoint vs per-type)] Output-format extension (JSON/text variants per REQ-025 `follow_up:`) deferred."
     detail: ./architecture/interfaces/IReport.md
 
   - name: IEmit
@@ -302,7 +302,7 @@ sequenceDiagram
     Res-->>Val: bundled content
     Val->>Val: schema-validate · run rule classes · run QB structural
     Val-->>Emit: stream of finding-records (channel)
-    Emit->>Emit: compute verdict; stable-sort findings
+    Emit->>Emit: compute verdict — stable-sort findings
     Emit->>Out: write JSON or text bytes
     Out-->>Caller: stdout bytes
     CLI-->>Caller: process exit code (0 pass / 1 fail)
@@ -409,7 +409,7 @@ flowchart TB
 | **IC-005** — re-download-and-replace update | Realised by build-pipeline shape — every release is a complete new binary. |
 | **IC-006** — CLI as stable contract | Realised by IValidationCLI + IReportCLI; versioning per REQ-024. |
 | **IC-007** — no relaxation modes | Realised by ADR-002; structurally enforced at IFrameworkResources (no override entrypoint exists). |
-| **IC-008** — open-source distribution | Architecture-neutral; satisfied at release-surface step (license decision pending per requirements.md *Open gaps*). |
+| **IC-008** — open-source distribution | Architecture-neutral; satisfied at release-surface step (licence decision pending per IC-008 itself: "deferred to a product-scope ADR"). |
 | **REQ-029** — byte-identical output | Realised by emitter as sole producer of bytes; load-bearing invariant on IEmit; enforced by *re-run-and-diff* fitness function. |
 | **REQ-030 / REQ-031 / REQ-032** | Realised by embedded-resources + IFrameworkResources + cli-adapter version-query path. |
 
