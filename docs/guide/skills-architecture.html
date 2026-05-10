@@ -253,6 +253,17 @@
 
   <!-- ===================== SECTION 1: OVERVIEW ===================== -->
   <section id="sa-intro">
+    <div class="stub-banner" style="background: #fff3cd; border: 1px solid #ffc107; padding: 1em; margin-bottom: 2em;">
+      <h3 style="margin-top: 0;">⚠ Pre-pivot content — refresh pending</h3>
+      <p>This page predates the 2026-04-18 framework pivot and the 2026-05 build-flow shipment. It still references archived skills (<code>vmodel-skill-develop-code</code>, <code>vmodel-skill-review-code</code>, <code>vmodel-skill-derive-test-cases</code>) and the old <code>.vmodel/pipeline/</code> path layout. The current authoritative sources are:</p>
+      <ul>
+        <li><strong>Framework architecture:</strong> <code>docs/plan/TARGET_ARCHITECTURE.md</code> §16 (Build Flow) and §5 (artifact set).</li>
+        <li><strong>Skill catalog:</strong> <code>.claude/skills/vmodel-skill-*/SKILL.md</code> — 18 V-model skills (12 spec-side + 6 build-side + vmodel-init).</li>
+        <li><strong>Per-task file contract</strong> (leaf build): see TARGET_ARCHITECTURE §16 *Per-task file contract*. Files live at <code>.vmodel/.build/tasks/&lt;task-id&gt;/</code>; producers are unique per file; APPROVED writes no file.</li>
+      </ul>
+      <p>This page is preserved as a design-record snapshot. A full rewrite is tracked in <code>docs/plan/BACKLOG.md</code>.</p>
+    </div>
+
     <h2>Skills Architecture</h2>
     <p class="lead">A detailed design for the AI skills, agents, and orchestration that drive V-model compliant development. This document defines <em>what</em> each component does, <em>how</em> they compose, and <em>where</em> the boundaries are.</p>
 

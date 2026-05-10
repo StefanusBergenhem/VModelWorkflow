@@ -922,6 +922,22 @@ Escalations are **typed by target spec layer**: DD / TestSpec / Architecture / A
 
 No spec artifact is silently modified by the build flow. All escalations are filed under `.vmodel/.build/` before routing.
 
+### Per-task file contract (leaf build)
+
+Files in `.vmodel/.build/tasks/<task-id>/` are the producer/consumer interface between the three leaf-build skills. Each file has exactly one producer:
+
+| File | Producer | Consumer | Purpose |
+|---|---|---|---|
+| `current-task.yaml` | `orchestrate-build` | `render-tests`, `implement-leaf`, `review-execution` | Task contract from `tasks.yaml`. |
+| `render-report.yaml` | `render-tests` | `orchestrate-build` (manifest) | Cases rendered, cases skipped, compile and red-phase checks. |
+| `review-ready.yaml` | `implement-leaf` | `review-execution` | Implementation handoff: files changed, contracts implemented, lint/coverage/test status. Sole producer is implement-leaf. |
+| `feedback.yaml` | `review-execution` | `implement-leaf` (fix mode) | REJECTED only — `failures[]` with type, location, description, required_fix, spec_ref. |
+| `ESC-NNN.yaml` | `review-execution` | `orchestrate-build` → spec-side author skill | Escalation file; copy lives in `.vmodel/.build/escalations/`. |
+
+**APPROVED writes no file.** review-execution emits a single stdout line `APPROVED <task-id>`; the orchestrator infers APPROVED from the absence of `feedback.yaml` and any new `ESC-NNN.yaml` after dispatch. The implementation's `review-ready.yaml` remains as the record of what was implemented.
+
+**Rejection taxonomy** (canonical names): `contract-violation`, `scope-violation`, `missing-implementation`, `wrong-assertion-is-impl-bug`, `integration-failure-impl-bug`, `regression`. The `-impl-bug` suffix disambiguates from cases that ESCALATE to spec layers — `wrong-assertion` (test contradicts DD) ESCALATES to TestSpec and never lands in `feedback.yaml`.
+
 ### No build-side artifact
 
 A Verification Report artifact was considered and dropped. The build flow produces code, test results, and retrospective lessons — no new artifact type.

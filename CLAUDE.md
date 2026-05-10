@@ -243,6 +243,8 @@ The build flow runs after spec authoring and produces code + tests with V-model 
 
 Escalations are typed by target spec layer and confidence-tagged. High-confidence routes auto-fire; low-confidence surfaces to human gating.
 
+**Per-task file contract (leaf build).** Files in `.vmodel/.build/tasks/<task-id>/` have exactly one producer each: `render-report.yaml` ← render-tests, `review-ready.yaml` ← implement-leaf (sole producer; the impl handoff), `feedback.yaml` ← review-execution (REJECTED only), `ESC-NNN.yaml` ← review-execution (escalations; mirror copy in `.vmodel/.build/escalations/`). **APPROVED writes no file** — orchestrator infers APPROVED from the absence of feedback/ESC after dispatch. Rejection taxonomy: `contract-violation`, `scope-violation`, `missing-implementation`, `wrong-assertion-is-impl-bug`, `integration-failure-impl-bug`, `regression`. See `TARGET_ARCHITECTURE §16` for full table.
+
 No build-side artifact yet — Verification Report was considered and dropped (no current need).
 
 ---
