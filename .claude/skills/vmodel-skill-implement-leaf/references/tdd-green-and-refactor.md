@@ -7,7 +7,8 @@ status: active
 # TDD Green Phase and Refactor
 
 **Contents.** DD parse order · Read sequence · Writing minimum code · Test loop ·
-Refactor discipline · Complexity limits · Clean code rules · Cross-links.
+Refactor discipline · Complexity limits · Clean code rules · Algorithm
+postcondition discipline · AI-specific risks · Cross-links.
 
 ---
 
@@ -140,26 +141,41 @@ Interface entry:
 implementation path that produces the specified typed error. Verify with a quick
 trace: for each matrix row, find the code path that throws/returns it.
 
-**Complexity limits.** From `develop-code` precursor — enforced here:
+**Complexity limits.** Aligned with the craft guide (`source-code.html` §3.1
+*Complexity Constraints* and §3.2 *Function Design*):
 
 | Metric | Target | Hard limit |
 |---|---|---|
-| Function length | 20 lines | 50 lines |
+| Function length | 5–15 lines | 50 lines |
+| File length | — | 500 lines |
 | Cyclomatic complexity | — | 10 per function |
 | Nesting depth | — | 3 levels |
-| Parameters | 3 | 5 (use parameter object above 5) |
+| Parameters | 0–3 | 5 (use parameter object above 5) |
 
 Exceeding hard limits is a HALT condition, not a style warning. If the DD cannot
 be implemented within limits, the DD needs decomposition — escalate.
 
-**Clean code rules (lifted from `develop-code`).**
+**Clean code rules.**
 
-- No null returns. Use Optional, empty collection, or Null Object.
-- No empty catch blocks. At minimum: log and re-throw.
-- Fail-fast at boundaries: validate inputs at the public API surface.
+- No null returns where DD forbids null. Use Optional, empty collection, or Null
+  Object.
+- No empty catch blocks. At minimum: log and re-throw or convert to typed error.
+- Fail-fast at boundaries: validate inputs at the public API surface (the
+  defensive stance, when the DD says so).
 - Error messages include context: operation + input + expected state.
 - Resource cleanup mandatory: try-with-resources, defer, RAII.
-- Names reveal intent; one word per concept; domain vocabulary.
+- Names reveal intent; one word per concept; domain vocabulary from the project
+  glossary.
+- No magic numbers. When a numeric or string literal carries domain meaning,
+  extract a named constant.
+- Beware primitive obsession. When a primitive (`String`, `int`, `double`)
+  carries a domain concept (email, temperature, money), a value object is the
+  right shape — but only if the DD specifies one. Implementing inside the DD's
+  chosen types is the rule; raise an issue against the DD if a primitive is
+  load-bearing for a domain concept.
+- Comments explain *why*, not *what*. If a comment paraphrases the code, delete
+  the comment and improve the names. Public-API doc comments stating contracts
+  (preconditions, postconditions, exceptions) are exempt.
 - No dead code. No commented-out code. No TODO stubs for unspecified features.
 - DRY, KISS, YAGNI.
 - SOLID: Single Responsibility, Open/Closed, Liskov, Interface Segregation,
@@ -182,6 +198,47 @@ The DD's algorithm postconditions are *result properties*, never steps:
 Both halves are required for transformation results (e.g., sort: ordered AND
 permutation). Specifying only one half lets degenerate implementations pass
 review.
+
+---
+
+## 7. AI-specific risks
+
+The implementer is an LLM. The craft guide (`source-code.html` §3.4
+*AI-Assisted Development*) catalogues the LLM failure modes that pass tests
+but fail in production. Apply these guards at refactor time, not only at
+review time.
+
+**When generating a call to an external library:** verify that the method
+name, signature, and return type exist in the actual library version pinned
+in the project. Plausible-but-fictional methods (correct package, wrong
+method) are the most common LLM correctness failure. Tooling: read the
+library's published API docs or local sources; do not trust training-data
+recall.
+
+**When using a configuration framework:** verify each property name against
+the framework's actual configuration schema. Hallucinated config keys
+compile and run silently broken — the framework treats unknown keys as
+no-ops.
+
+**When code computes a range or boundary:** explicitly reason about
+inclusive vs exclusive endpoints. `>` vs `>=`, `<` vs `<=`, off-by-one in
+loop bounds, and inclusive-end-date semantics are the most common LLM
+logic errors. State the boundary intent in a one-line comment when the DD
+does not nail it down — *why*-comment, not *what*-comment.
+
+**When example code in training data includes credentials, API keys,
+tokens, or other secrets:** never copy them into the implementation. Use
+config injection, environment variables, or a secret manager.
+Hardcoded secrets are a known LLM failure mode and a security finding.
+
+**When the DD does not constrain a choice the implementation must make:**
+do not invent a default that a senior reviewer would push back on
+(timeouts, retry counts, cache TTLs, page sizes, log levels). Surface the
+gap as a `[DEFER-DD: ...]` marker in `review-ready.yaml` `notes:` and pick
+the most conservative defensible default for the green run.
+
+These guards are also enforced in the SKILL.md *Pre-publish self-check*
+under the *AI-specific guards* group.
 
 ---
 

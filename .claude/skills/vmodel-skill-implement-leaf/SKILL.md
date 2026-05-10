@@ -29,7 +29,7 @@ Do **not** activate this skill for:
 
 - Authoring or revising spec artifacts — use the appropriate author skills
 - Rendering test files from TestSpec cases — use `vmodel-skill-render-tests`
-- Reviewing the resulting code — use `vmodel-skill-review-code`
+- Reviewing the resulting code or build output — use `vmodel-skill-review-execution`
 - Non-leaf scopes — implementation at non-leaf scope is architecture-level wiring
   (out of scope here)
 
@@ -103,20 +103,52 @@ Summary:
 Before writing `review-ready.yaml`, verify each item. Fail = do not emit, fix
 first.
 
+**Contract & DD compliance**
 ```
 [ ] Every Public Interface entry has a corresponding implementation
-[ ] No implementation feature absent from the DD
+[ ] No implementation feature absent from the DD (no gold plating)
 [ ] Each ADR constraint is honoured
-[ ] Complexity limits met (function ≤50 lines, cyclomatic ≤10, nesting ≤3)
-[ ] Error handling follows DD's error matrix (no null returns, no empty catches)
+[ ] Error handling follows DD's error matrix (no null returns where forbidden,
+    no empty catches, typed errors only)
 [ ] Thread-safety per DD's spec (Goetz category honoured)
 [ ] Data structure invariants enforced in constructors / factory methods
-[ ] No test weakened or deleted to achieve green
-[ ] Lint: clean
+```
+
+**Code quality (from craft guide)**
+```
+[ ] Complexity: function length ≤50 lines (target 5–15), cyclomatic ≤10,
+    nesting ≤3, parameters ≤5 (target 0–3; parameter object above 5),
+    file ≤500 lines
+[ ] No magic numbers — numeric/string literals carrying domain meaning are
+    named constants
+[ ] Comments explain *why*, not *what* — no comments restating the code
+[ ] Resources cleaned up (try-with-resources / defer / RAII as language allows)
+[ ] No dead code, no commented-out code, no TODO stubs for unspecified features
+```
+
+**AI-specific guards (LLM failure modes from craft guide §3.4)**
+```
+[ ] Every external API call (method, signature, return type) verified against
+    the actual library version in use — no plausible-but-fictional methods
+[ ] Every configuration property name verified against its framework's actual
+    schema — no hallucinated keys
+[ ] Boundary conditions inspected for off-by-one (inclusive vs exclusive,
+    `>` vs `>=`, range endpoints)
+[ ] No hardcoded credentials, API keys, tokens, or other secrets — use config
+    injection / environment variables / secret managers
+```
+
+**Test & build hygiene**
+```
+[ ] No test weakened, disabled, or deleted to achieve green
+[ ] Lint: clean (no suppressions added without DD-cited justification)
 [ ] Coverage thresholds met (if configured)
 ```
 
 ## Refusals
+
+Each row below is a HALT condition. When the condition fires, the skill stops,
+emits the structured handover, and does not write `review-ready.yaml`.
 
 | ID | Condition | Action |
 |---|---|---|
