@@ -33,6 +33,8 @@ build:
     max_concurrent: 4
   retry:
     max_review_attempts: 3
+  auto_amend:
+    max_auto_amendments: 1
   models:
     plan: opus
     implement: sonnet

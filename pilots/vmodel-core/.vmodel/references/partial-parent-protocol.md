@@ -15,12 +15,12 @@ Author skills are sometimes invoked at a scope where the canonical upstream arti
 The protocol fires whenever **at least one canonical upstream is missing or pre-canonical**. Two trigger conditions:
 
 - **Full absence.** No canonical upstream exists at all. Examples:
-  - Authoring root Requirements when no Product Brief exists.
+  - Authoring root Requirements when no root product (PB / needs / PD) exists.
   - Authoring leaf Detailed Design when the parent Architecture has not been authored.
   - Authoring branch Architecture when the branch Requirements has not been authored.
 
 - **Partial absence.** The artifact has multiple canonical parents and at least one is missing. Example:
-  - Authoring root TestSpec which canonically derives from Product Brief + root Requirements + root Architecture, when only Requirements + Architecture exist.
+  - Authoring root TestSpec which canonically derives from root product (PB / needs / PD) + root Requirements + root Architecture, when only Requirements + Architecture exist.
 
 A pre-canonical artifact (e.g., `needs.md` from elicit-needs) is **not** a canonical upstream. Citing it as `derived_from` triggers this protocol — the gap is real, the pre-canonical artifact is the workaround, and the resolution path is named below.
 
@@ -77,10 +77,10 @@ The same rule applies to every author skill:
 
 | Skill | Most common partial-parent case |
 |---|---|
-| author-requirements | Root requirements with no Product Brief; branch requirements with no parent requirements |
-| author-architecture | Branch architecture with no parent requirements; root architecture with no Product Brief |
+| author-requirements | Root requirements with no root product (PB / needs / PD); branch requirements with no parent requirements |
+| author-architecture | Branch architecture with no parent requirements; root architecture with no root product (PB / needs / PD) |
 | author-detailed-design | Leaf DD with no parent Architecture |
-| author-testspec | Root TestSpec with PB absent; leaf TestSpec with DD absent |
+| author-testspec | Root TestSpec with root product absent; leaf TestSpec with DD absent |
 | author-adr | ADR scope-tagged at a scope where Architecture has not been authored |
 
 Path choices and *Overview* documentation are uniform across all five.

@@ -4,6 +4,8 @@ title: "vmodel-core — Root Architecture"
 artifact_type: architecture
 scope: ""
 parent_scope: null
+derived_from:
+  - REQS
 governing_adrs:
   - ADR-001-implement-vmodel-core-in-go
   - ADR-002-embed-canonical-schemas-in-binary
@@ -16,7 +18,7 @@ version: 3
 
 ## Overview
 
-Root-scope architecture for **vmodel-core** — the deterministic CLI that validates VModelWorkflow spec artifacts and reports on spec-tree state. Refines `specs/requirements.md` (REQ-001..REQ-032) under ADR-001 (Go) and ADR-002 (compile-time `embed.FS` bundling of the framework canonical rule catalog, schema set, and Quality Bar checklist set, no runtime override). vmodel-core is a child product of VModelWorkflow per `TARGET §10`; treated here as effective root because no parent-scope Architecture exists yet (`issues_found.md` Issue 2).
+Root-scope architecture for **vmodel-core** — the deterministic CLI that validates VModelWorkflow spec artifacts and reports on spec-tree state. Refines `specs/requirements.md` (REQ-001..REQ-032) under ADR-001 (Go) and ADR-002 (compile-time `embed.FS` bundling of the framework canonical rule catalog, schema set, and Quality Bar checklist set, no runtime override). vmodel-core is a child product of VModelWorkflow per `TARGET §10`; treated here as effective root because no parent-scope Architecture exists yet (`dogfood_findings.md` Issue 2).
 
 **Architecture-as-hypothesis bet:** the embedded rule catalog, schema set, and Quality Bar checklist set evolve at framework cadence — propagated by re-download-and-replace per IC-005 — while parser, graph-builder, validation-engine, CLI surface, and emitter stay stable across multiple framework releases. The bet motivates `embedded-resources` as a distinct child and the rebuild-per-framework-release stance of ADR-002.
 

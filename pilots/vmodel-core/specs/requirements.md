@@ -4,6 +4,8 @@ title: "vmodel-core — Root Requirements"
 artifact_type: requirements
 scope: ""
 parent_scope: null
+derived_from:
+  - NEEDS-vmodel-core
 status: draft
 date: "2026-05-03"
 version: 1
@@ -1143,7 +1145,7 @@ v1 baselining are closed (or explicitly accepted as v1.x).
 - **`derived_from` placeholder `NEEDS-vmodel-core` is not in the canonical
   artifact set.**
   - *Owner*: framework author.
-  - *Action*: resolve as part of elicit-needs decision γ (`issues_found.md`
+  - *Action*: resolve as part of elicit-needs decision γ (`dogfood_findings.md`
     Issue 1, Issue 2). Two coherent paths: (a) author a vmodel-core
     Product Brief and re-anchor `derived_from` to `PB`; (b) promote `needs.md`
     into the canonical artifact set with its own id pattern, and update this
@@ -1153,7 +1155,7 @@ v1 baselining are closed (or explicitly accepted as v1.x).
 
 - **No parent-scope (VModelWorkflow-level) Requirements artifact exists.**
   - *Owner*: framework author.
-  - *Action*: per `issues_found.md` Issue 2, framework-level needs should be
+  - *Action*: per `dogfood_findings.md` Issue 2, framework-level needs should be
     elicited first, then per-product needs cascaded down. When a parent-scope
     Requirements is authored, this document's `parent_scope` and `derived_from`
     must be revised; some constraints currently scoped here may move up.
