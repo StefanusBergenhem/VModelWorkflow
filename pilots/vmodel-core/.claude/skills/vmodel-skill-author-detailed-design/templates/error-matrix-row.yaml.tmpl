@@ -1,0 +1,34 @@
+# One row per error class the leaf can produce or encounter.
+# Render as the Error Handling matrix in the markdown body, OR embed as YAML list.
+# Schema: $defs/error_matrix_row — required: error, detection, caller_receives.
+# Each row corresponds to a robustness test row in the sibling TestSpec.
+
+- error: "<<ErrorClass>>"                # exception type / error code / sentinel name / result variant
+  detection: "<<how detected>>"          # precondition check, downstream status, timeout, invariant violation, sensor reading
+  containment: "<<where contained>>"     # which function / layer / boundary catches it; OR 'propagate' (delegates upward)
+  recovery: <<fail-fast | retry | fallback | compensate | propagate>>
+  # fail-fast    — detect at boundary; raise / return error / signal safe state
+  # retry        — bounded budget mandatory; specify max attempts, backoff, jitter, idempotency assumption
+  # fallback     — alternate path; specify under what conditions, what alternate, what degradation
+  # compensate   — undo partial work; specify which side effects, which not, time bound
+  # propagate    — translate at boundary into domain error and re-raise
+  caller_receives: "<<exception / typed result / sentinel / error code / structured variant>>"
+
+  # === STATE-AFTER-ERROR (stateful leaves only) ===
+  # Optional sixth field — required when the leaf is stateful.
+  # state_after_error: "<<no mutation | bounded mutation to X | compensated | quarantined | best-effort cleanup>>"
+
+  # === SIDE-EFFECT-ON-FAILURE (when applicable) ===
+  # Optional — when the failure path produces side effects (logged event, partial reservation
+  # released by background sweep, audit trail emitted), state them here.
+  # failure_side_effects:
+  #   - "<<...>>"
+
+  # === TEST TARGET ===
+  # Optional traceability cue for the sibling TestSpec.
+  # test_target: "[ROBUSTNESS-TEST]" or "[NEEDS-TEST: <description>]"
+
+  # === BOUNDED-RETRY POLICY (recovery: retry only) ===
+  # max_attempts: <<integer>>
+  # backoff: "<<linear | exponential | constant>> with <<base>> and <<jitter>>"
+  # idempotency: "<<assumption — what makes the retry safe>>"

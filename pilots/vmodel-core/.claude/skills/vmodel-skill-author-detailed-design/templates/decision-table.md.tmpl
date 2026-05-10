@@ -1,0 +1,30 @@
+<!--
+Decision table — for rule-based logic in the Algorithms section.
+Use when the function's behaviour is N inputs (boolean or small-cardinality)
+producing 1 of M outcomes. Coverage is mechanically checkable: rule masks must
+partition the 2^N (or product) input space.
+
+The TestSpec derives one robustness test per rule.
+-->
+
+| <<input_1>> | <<input_2>> | <<input_3>> | → Outcome |
+|:---:|:---:|:---:|---|
+| F | * | * | <<Outcome A>> |
+| T | F | * | <<Outcome B>> |
+| T | T | F | <<Outcome C>> |
+| T | T | T | <<Outcome D>> |
+
+<!--
+Legend:
+  T   — input is true (or "in this equivalence class")
+  F   — input is false (or "in the other equivalence class")
+  *   — don't-care; rule applies regardless of this input
+
+Rationale: <<one sentence explaining why this rule structure is the contract,
+not the implementation. Cite the forcing constraint (REQ / ADR / external rule).>>
+
+Coverage check: <<rule_count>> rules cover <<2^N>> input combinations.
+The union of (T/F/*)-masks across rules must exhaust the input space, with no
+overlap between rules. When two rules overlap, the table is ambiguous;
+when the union is incomplete, the table is under-specified.
+-->

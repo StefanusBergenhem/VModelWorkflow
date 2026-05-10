@@ -1,0 +1,59 @@
+# One entry per externally visible function / class / type.
+# Embed inside the detailed_design.md `public_interface:` block.
+# Schema: $defs/public_interface_entry — required: name, signature.
+# Quality Bar asserts populated entries are complete (all 9 contract elements).
+
+- name: <<functionName>>                  # camelCase / snake_case / PascalCase per team convention
+  signature: "<<name(param: Type, ...) -> ReturnType>>"   # language-neutral
+  description: "<<one to two sentences — what this function does at the contract level>>"
+
+  preconditions:
+    # What the caller MUST guarantee on the way in.
+    # State "none beyond callable" explicitly when no preconditions apply.
+    - "<<value range, state condition, relationship constraint, unit>>"
+    - "<<...>>"
+
+  postconditions:
+    on_success:
+      # Property of the return / post-state. Not steps the implementation takes.
+      # Both halves where applicable: ordered AND permutation; filtered AND complete.
+      - "<<...>>"
+    on_failure:
+      # Typed error + state guarantee — 'no mutation', 'bounded mutation to X', 'compensated within Nms'.
+      - "<<...>>"
+
+  invariants:
+    # Properties that hold before and after every public call.
+    # Examples: idempotency under same key, ordering preservation, non-mutation of input.
+    - "<<...>>"
+
+  errors:
+    # Typed error enum — one entry per distinguishable error.
+    # Each entry has a stable `error` name; raised_when and meaning are recommended.
+    - error: "<<ErrorClass>>"
+      raised_when: "<<precondition violation, state, downstream failure>>"
+      meaning: "<<one-line human-readable>>"
+
+  side_effects:
+    # I/O, shared-state mutation, observable reads, logging at non-debug, metrics emission.
+    # State "none" explicitly when no side effects.
+    - "<<...>>"
+
+  thread_safety: <<immutable | thread-safe | conditionally-thread-safe | thread-compatible | thread-hostile>>
+  # immutable                  — state cannot change after construction
+  # thread-safe                — concurrent calls safe; supplier handles synchronisation
+  # conditionally-thread-safe  — some ops safe; others require external sync per a documented protocol
+  # thread-compatible          — caller must serialise
+  # thread-hostile             — single-threaded only
+
+  nullability:
+    # Per parameter and return: state whether null is permitted and what it means in domain terms.
+    - "<<paramName>>: <<may be null = absent value | must not be null>>"
+    - "return: <<may be null = no result | must not be null>>"
+
+  complexity_notes: "<<O(...) in <<dimension>>>>"
+  # Only when complexity is part of the contract (latency budget, real-time, adversary input, bounded retry).
+  # Omit when implementation is free to choose its complexity profile.
+
+  # === RETROFIT-ONLY ===
+  # rationale_status: <<verified | unknown>>   # NEVER 'reconstructed' — refusal A

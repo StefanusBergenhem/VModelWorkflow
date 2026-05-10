@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vmodelworkflow.dev/schemas/traceability/link-types/v1",
+  "title": "V-Model traceability — link-types catalog schema",
+  "description": "Validates the shape of link-types.catalog.json. The catalog enumerates every traceability link type defined in TARGET_ARCHITECTURE §7: the seven canonical forward links, one reserved entry for the future Build workflow (realizes), and a reverse-derived block documenting tool-computed inverses. Schema is intentionally narrow — it validates catalog shape only. ID-format enforcement for targets lives inside per-artifact schemas; cross-artifact resolution is a runtime concern of the traceability validator tool.",
+
+  "type": "object",
+  "required": ["$schema", "version", "link_types", "reverse_derived"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "const": "https://vmodelworkflow.dev/schemas/traceability/link-types/v1"
+    },
+    "version": {
+      "description": "Monotonic integer version of the catalog shape + content. Bumped when link-type entries are added, renamed, or structurally changed.",
+      "type": "integer",
+      "minimum": 1
+    },
+    "link_types": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/link_type" }
+    },
+    "reverse_derived": {
+      "description": "Tool-computed reverse links. Never stored in artifact front-matter. Listed here so skills and tools know which inverse queries are supported (and that they should not look for stored values).",
+      "type": "array",
+      "items": { "$ref": "#/$defs/reverse_entry" }
+    }
+  },
+
+  "$defs": {
+    "link_name": {
+      "description": "snake_case name matching the field or block that carries the link in the source artifact.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+
+    "artifact_type_enum": {
+      "type": "string",
+      "enum": [
+        "product-brief",
+        "requirements",
+        "architecture",
+        "adr",
+        "detailed-design",
+        "test-spec"
+      ]
+    },
+
+    "source_kind_enum": {
+      "description": "artifact = spec-side artifact (one of the six canonical types). build_artifact = future Build-workflow artifact (code file, test file, deployment config). Reserved for forward compatibility.",
+      "type": "string",
+      "enum": ["artifact", "build_artifact"]
+    },
+
+    "target_kind_enum": {
+      "description": "artifact = the link points at another artifact by id. scope = the link points at a node in the scope tree (used by ADR scope_tags / affected_scopes).",
+      "type": "string",
+      "enum": ["artifact", "scope"]
+    },
+
+    "cardinality_enum": {
+      "type": "string",
+      "enum": ["single", "list"]
+    },
+
+    "granularity_enum": {
+      "description": "artifact = link addresses the target as a whole. field_allowed = link may address a specific field inside the target (TARGET §7 reserves this for verifies only).",
+      "type": "string",
+      "enum": ["artifact", "field_allowed"]
+    },
+
+    "status_enum": {
+      "description": "active = in use today. reserved = declared for forward compatibility, not emitted by any spec-side artifact (realizes, pending Build workflow).",
+      "type": "string",
+      "enum": ["active", "reserved"]
+    },
+
+    "link_type": {
+      "type": "object",
+      "required": [
+        "name",
+        "description",
+        "source_kind",
+        "source_carrier",
+        "target_kind",
+        "cardinality",
+        "required_on_source",
+        "granularity",
+        "status"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "$ref": "#/$defs/link_name" },
+        "description": { "type": "string", "minLength": 1 },
+        "source_kind": { "$ref": "#/$defs/source_kind_enum" },
+        "source_artifact_types": {
+          "description": "When source_kind = 'artifact', the set of artifact types permitted as source. Omitted when source_kind = 'build_artifact'.",
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/artifact_type_enum" }
+        },
+        "source_carrier": {
+          "description": "Where inside the source artifact the link is carried. Canonical values: front_matter, decomposition_child, test_case_or_artifact. Tools use this to locate the link during parse.",
+          "type": "string",
+          "minLength": 1
+        },
+        "target_kind": { "$ref": "#/$defs/target_kind_enum" },
+        "target_artifact_types": {
+          "description": "When target_kind = 'artifact', the set of artifact types permitted as target. Omitted when target_kind = 'scope'.",
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/artifact_type_enum" }
+        },
+        "cardinality": { "$ref": "#/$defs/cardinality_enum" },
+        "required_on_source": { "type": "boolean" },
+        "granularity": { "$ref": "#/$defs/granularity_enum" },
+        "status": { "$ref": "#/$defs/status_enum" },
+        "notes": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [
+        {
+          "description": "source_kind = artifact requires source_artifact_types.",
+          "if": {
+            "required": ["source_kind"],
+            "properties": { "source_kind": { "const": "artifact" } }
+          },
+          "then": { "required": ["source_artifact_types"] }
+        },
+        {
+          "description": "source_kind = build_artifact forbids source_artifact_types (build artifacts are not spec-side).",
+          "if": {
+            "required": ["source_kind"],
+            "properties": { "source_kind": { "const": "build_artifact" } }
+          },
+          "then": { "not": { "required": ["source_artifact_types"] } }
+        },
+        {
+          "description": "target_kind = artifact requires target_artifact_types.",
+          "if": {
+            "required": ["target_kind"],
+            "properties": { "target_kind": { "const": "artifact" } }
+          },
+          "then": { "required": ["target_artifact_types"] }
+        },
+        {
+          "description": "target_kind = scope forbids target_artifact_types (scope references live in the scope tree, not the artifact registry).",
+          "if": {
+            "required": ["target_kind"],
+            "properties": { "target_kind": { "const": "scope" } }
+          },
+          "then": { "not": { "required": ["target_artifact_types"] } }
+        }
+      ]
+    },
+
+    "reverse_entry": {
+      "type": "object",
+      "required": ["name", "from", "stored", "description"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "$ref": "#/$defs/link_name" },
+        "from": {
+          "description": "Name of the forward link this reverse is computed from. Must match a link_types entry in this catalog (cross-reference checked at tool load, not by this schema).",
+          "$ref": "#/$defs/link_name"
+        },
+        "stored": {
+          "description": "Always false. Reverse links are derived from the forward graph, never written into artifact front-matter. The field is retained (rather than inferred) so consumers fail loudly if a future revision tries to flip it.",
+          "type": "boolean",
+          "const": false
+        },
+        "description": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

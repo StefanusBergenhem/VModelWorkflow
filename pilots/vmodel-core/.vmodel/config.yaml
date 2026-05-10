@@ -1,0 +1,40 @@
+version: 1
+
+project:
+  name: vmodel-core
+  description: V-model framework reference implementation
+  language: go
+  scope_root: specs/
+
+paths:
+  references: .vmodel/references/
+  reviews: .vmodel/.reviews/
+  build: .vmodel/.build/
+  defer_index: .vmodel/defer-index.md
+  src: src/
+  tests: tests/
+
+artifacts:
+  root_product:
+    type: needs
+    file: needs.md
+
+commands:
+  test_unit: "go test ./..."
+  test_integration: ""
+  test_system: ""
+  lint: "golangci-lint run"
+  build: "go build ./..."
+  coverage: "go test ./... -coverprofile=coverage.out"
+
+build:
+  parallel:
+    enabled: true
+    max_concurrent: 4
+  retry:
+    max_review_attempts: 3
+  models:
+    plan: opus
+    implement: sonnet
+    review: sonnet
+    retrospect: sonnet

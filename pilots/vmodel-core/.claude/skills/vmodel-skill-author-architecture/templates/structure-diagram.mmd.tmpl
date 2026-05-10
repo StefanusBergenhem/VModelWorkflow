@@ -1,0 +1,33 @@
+%% Mermaid Structure Diagram — one per Architecture artifact, mandatory.
+%% Reads in one direction (top-to-bottom or left-to-right); externals on the periphery; persistence explicit.
+%% Each internal box matches a Decomposition entry id. External actors and stores are visually distinct.
+
+flowchart TB
+    %% External actors and dependencies
+    <<EXT_CLIENT>>["<<external client>>"]
+    <<EXT_DEP>>["<<external dependency>>"]
+
+    %% Internal children (one box per Decomposition entry)
+    <<C1>>["<<child 1 name>>"]
+    <<C2>>["<<child 2 name>>"]
+    <<C3>>["<<child 3 name>>"]
+
+    %% Persistent stores (cylinders)
+    <<DB>>[("<<persistence — e.g., Postgres checkout schema>>")]
+    <<BUS>>[("<<event bus — topic family>>")]
+
+    %% Edges read in the direction of the happy path
+    <<EXT_CLIENT>> --> <<C1>>
+    <<C1>> --> <<C2>>
+    <<C2>> --> <<C3>>
+    <<C3>> --> <<DB>>
+    <<C3>> --> <<BUS>>
+    <<C2>> --> <<EXT_DEP>>
+
+    %% Visual classes — distinguish internal / external / store
+    classDef internal fill:#eef,stroke:#557,stroke-width:2px
+    classDef external fill:#fff7e6,stroke:#c79a2f,stroke-width:1px
+    classDef store    fill:#f0f7f0,stroke:#4a7
+    class <<C1>>,<<C2>>,<<C3>> internal
+    class <<EXT_CLIENT>>,<<EXT_DEP>> external
+    class <<DB>>,<<BUS>> store

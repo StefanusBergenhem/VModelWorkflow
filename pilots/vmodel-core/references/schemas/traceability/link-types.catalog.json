@@ -1,0 +1,147 @@
+{
+  "$schema": "https://vmodelworkflow.dev/schemas/traceability/link-types/v1",
+  "version": 1,
+
+  "link_types": [
+    {
+      "name": "derived_from",
+      "description": "Refinement / breakdown lineage. The source artifact was produced by refining one or more parent-layer artifacts.",
+      "source_kind": "artifact",
+      "source_artifact_types": ["requirements", "architecture", "detailed-design", "test-spec"],
+      "source_carrier": "front_matter",
+      "target_kind": "artifact",
+      "target_artifact_types": ["product-brief", "requirements", "architecture", "detailed-design"],
+      "cardinality": "list",
+      "required_on_source": true,
+      "granularity": "artifact",
+      "status": "active",
+      "notes": "Per TARGET §7, derived_from points at the parent spec at the layer above. A TestSpec at a given layer derives from that layer's own spec (Requirements at branches, DD at leaves, PB/Requirements at root) — not from a layer below."
+    },
+    {
+      "name": "allocates",
+      "description": "Parent architecture assigns responsibility to a child for one or more requirements at the parent's scope.",
+      "source_kind": "artifact",
+      "source_artifact_types": ["architecture"],
+      "source_carrier": "decomposition_child",
+      "target_kind": "artifact",
+      "target_artifact_types": ["requirements"],
+      "cardinality": "list",
+      "required_on_source": true,
+      "granularity": "artifact",
+      "status": "active",
+      "notes": "Carried per child entry inside the architecture Decomposition section. Target ids are individual REQ ids (per-requirement), not the REQS artifact id."
+    },
+    {
+      "name": "verifies",
+      "description": "A TestSpec (artifact level) or test case (per-case level) verifies a spec element — a requirement, architecture child or interface, or a Detailed Design element.",
+      "source_kind": "artifact",
+      "source_artifact_types": ["test-spec"],
+      "source_carrier": "test_case_or_artifact",
+      "target_kind": "artifact",
+      "target_artifact_types": ["requirements", "architecture", "detailed-design"],
+      "cardinality": "list",
+      "required_on_source": true,
+      "granularity": "field_allowed",
+      "status": "active",
+      "notes": "Field-level granularity is the sole exception to the artifact-level default (TARGET §7) — test cases legitimately target specific preconditions, postconditions, or error paths. Anti-orphan rule: non-empty verifies is enforced inline by test-spec.schema.json at both artifact and per-case level (minItems 1)."
+    },
+    {
+      "name": "governing_adrs",
+      "description": "Source artifact is subject to one or more ADRs whose decisions constrain it.",
+      "source_kind": "artifact",
+      "source_artifact_types": ["requirements", "architecture", "detailed-design", "test-spec"],
+      "source_carrier": "front_matter",
+      "target_kind": "artifact",
+      "target_artifact_types": ["adr"],
+      "cardinality": "list",
+      "required_on_source": false,
+      "granularity": "artifact",
+      "status": "active"
+    },
+    {
+      "name": "supersedes",
+      "description": "ADR lineage forward — the source ADR replaces a predecessor that is no longer in force.",
+      "source_kind": "artifact",
+      "source_artifact_types": ["adr"],
+      "source_carrier": "front_matter",
+      "target_kind": "artifact",
+      "target_artifact_types": ["adr"],
+      "cardinality": "single",
+      "required_on_source": false,
+      "granularity": "artifact",
+      "status": "active",
+      "notes": "When set, the superseded ADR must carry a matching superseded_by pointing back (bi-directional consistency checked at validation time, not by this catalog)."
+    },
+    {
+      "name": "superseded_by",
+      "description": "ADR lineage backward — the source ADR has been replaced by a newer one.",
+      "source_kind": "artifact",
+      "source_artifact_types": ["adr"],
+      "source_carrier": "front_matter",
+      "target_kind": "artifact",
+      "target_artifact_types": ["adr"],
+      "cardinality": "single",
+      "required_on_source": false,
+      "granularity": "artifact",
+      "status": "active"
+    },
+    {
+      "name": "scope_tags",
+      "description": "Primary scopes the ADR applies to — where the decision is load-bearing.",
+      "source_kind": "artifact",
+      "source_artifact_types": ["adr"],
+      "source_carrier": "front_matter",
+      "target_kind": "scope",
+      "cardinality": "list",
+      "required_on_source": true,
+      "granularity": "artifact",
+      "status": "active"
+    },
+    {
+      "name": "affected_scopes",
+      "description": "Downstream scopes bound by an ADR even when they are not its primary target.",
+      "source_kind": "artifact",
+      "source_artifact_types": ["adr"],
+      "source_carrier": "front_matter",
+      "target_kind": "scope",
+      "cardinality": "list",
+      "required_on_source": false,
+      "granularity": "artifact",
+      "status": "active"
+    },
+    {
+      "name": "realizes",
+      "description": "A Build-side artifact (code file, test file, deployment config) realizes a spec-side artifact. Reserved for the future Build workflow; not emitted by any spec-side artifact today.",
+      "source_kind": "build_artifact",
+      "source_carrier": "front_matter",
+      "target_kind": "artifact",
+      "target_artifact_types": ["architecture", "detailed-design", "test-spec"],
+      "cardinality": "list",
+      "required_on_source": false,
+      "granularity": "artifact",
+      "status": "reserved",
+      "notes": "Forward-compatibility hook per TARGET §7 and §8.4. Activated when the Build workflow is designed."
+    }
+  ],
+
+  "reverse_derived": [
+    {
+      "name": "derives",
+      "from": "derived_from",
+      "stored": false,
+      "description": "Inverse of derived_from — parent artifact's children. Tool-computed from the forward graph; never stored in front-matter."
+    },
+    {
+      "name": "verified_by",
+      "from": "verifies",
+      "stored": false,
+      "description": "Inverse of verifies — a requirement, architecture child, or DD element lists the TestSpec cases that verify it. Tool-computed from the forward graph."
+    },
+    {
+      "name": "realized_by",
+      "from": "realizes",
+      "stored": false,
+      "description": "Inverse of realizes — a spec-side artifact lists the build-side artifacts that implement or exercise it. Tool-computed; empty today until the Build workflow lands."
+    }
+  ]
+}
