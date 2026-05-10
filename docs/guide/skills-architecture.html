@@ -259,7 +259,8 @@
       <ul>
         <li><strong>Framework architecture:</strong> <code>docs/plan/TARGET_ARCHITECTURE.md</code> §16 (Build Flow) and §5 (artifact set).</li>
         <li><strong>Skill catalog:</strong> <code>.claude/skills/vmodel-skill-*/SKILL.md</code> — 18 V-model skills (12 spec-side + 6 build-side + vmodel-init).</li>
-        <li><strong>Per-task file contract</strong> (leaf build): see TARGET_ARCHITECTURE §16 *Per-task file contract*. Files live at <code>.vmodel/.build/tasks/&lt;task-id&gt;/</code>; producers are unique per file; APPROVED writes no file.</li>
+        <li><strong>Agent catalog (new 2026-05-10):</strong> <code>.claude/agents/{implement-leaf,render-tests,review-execution}.md</code> — three thin dispatch shells that wrap the corresponding canonical skills. The orchestrator dispatches them via the Task tool to give each per-task worker an isolated context window and enable true within-stage parallelism. <code>retrospect-build</code> remains a Skill invocation (single end-of-run). See TARGET_ARCHITECTURE §11 for the skill / agent split rationale.</li>
+        <li><strong>Per-task file contract</strong> (leaf build): see TARGET_ARCHITECTURE §16 *Per-task file contract*. Files live at <code>.vmodel/.build/tasks/&lt;task-id&gt;/</code>; producers are unique per file; APPROVED writes no file. <strong>New 2026-05-10:</strong> <code>current-task.yaml</code> (orchestrator-written task envelope carrying <code>acceptance_criteria</code> / <code>context_to_load</code> / <code>out_of_scope</code>), <code>build-blocked.yaml</code> (implement-leaf scope-expansion HALT; orchestrator auto-amends within budget or escalates), and <code>build-progress.yaml</code> (overwrite-on-update gate journal driving silent-recover / resume-at-gate / restart on resume).</li>
       </ul>
       <p>This page is preserved as a design-record snapshot. A full rewrite is tracked in <code>docs/plan/BACKLOG.md</code>.</p>
     </div>

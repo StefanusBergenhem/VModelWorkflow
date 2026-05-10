@@ -1,12 +1,12 @@
 ---
 name: vmodel-skill-orchestrate-build
-description: Pipeline state machine for the V-model build flow. Reads .vmodel/.build/tasks.yaml (from plan-build), dispatches sub-skills (render-tests, implement-leaf, review-execution) per task, manages parallel execution within stages, runs branch integration test stages bottom-up, runs root system test stage, handles layer-typed escalations, dispatches retrospect-build at end. State persists to pipeline-state.yaml; resume is schema-validated. Use when running or resuming a V-model build flow. Triggers — orchestrate build, run build pipeline, dispatch build tasks, resume build, run V-model build.
+description: Pipeline state machine for the V-model build flow. Reads .vmodel/.build/tasks.yaml (from plan-build), dispatches per-task worker agents (render-tests, implement-leaf, review-execution) via the Task tool for isolated parallel execution and the retrospect-build skill at end-of-run, manages parallel execution within stages, runs branch integration test stages bottom-up, runs root system test stage, handles layer-typed escalations. State persists to pipeline-state.yaml; resume is schema-validated. Use when running or resuming a V-model build flow. Triggers — orchestrate build, run build pipeline, dispatch build tasks, resume build, run V-model build.
 type: skill
 ---
 
 # Skill: orchestrate-build
 
-You are the Build Pipeline Controller. You are a thin state machine executor. You read state, decide the next valid transition, assemble the minimal context envelope, dispatch the sub-skill, read its verdict, update state, and check the gate. You do NOT implement, test, or review. You are stateless between dispatches — all state lives in `pipeline-state.yaml`.
+The orchestrator is a thin state machine executor for the build pipeline. It reads pipeline state, decides the next valid transition, assembles the minimal context envelope, dispatches the sub-skill or sub-agent, reads its verdict, updates state, and checks the gate. The orchestrator does not implement, test, or review. It is stateless between dispatches — all state lives in `pipeline-state.yaml`.
 
 The skill is self-contained. The `references/` and `templates/` directories carry all transition rules, escalation routing, and worktree lifecycle rules. No external lookups are needed.
 
@@ -23,6 +23,9 @@ The skill is self-contained. The `references/` and `templates/` directories carr
 | Per-task render report | `.vmodel/.build/tasks/<task-id>/render-report.yaml` | Written by `render-tests` (manifest of cases rendered + skipped + compile/red checks). Read-only here. |
 | Per-task review-ready file | `.vmodel/.build/tasks/<task-id>/review-ready.yaml` | Written by `implement-leaf` after the green-phase + refactor cycle (the implementation handoff). Read-only here. |
 | Per-task feedback files | `.vmodel/.build/tasks/<task-id>/feedback.yaml` | Written by `review-execution` on REJECTED. Read-only here. |
+| Per-task current-task | `.vmodel/.build/tasks/<task-id>/current-task.yaml` | Written by this skill at every dispatch (greenfield, fix, resume). Carries the contract (`acceptance_criteria`, `context_to_load`, `out_of_scope`) plus `mode` / `attempt` / optional resume hint. |
+| Per-task build-blocked | `.vmodel/.build/tasks/<task-id>/build-blocked.yaml` | Written by `implement-leaf` when it hits a contract boundary it cannot cross. Read by this skill to decide auto-amend vs escalate. |
+| Per-task build-progress | `.vmodel/.build/tasks/<task-id>/build-progress.yaml` | Written by `implement-leaf` at every gate boundary. Read by this skill on resume to choose recovery path (silent-recover, resume-at-gate, restart). |
 
 ---
 
@@ -84,34 +87,118 @@ Before acting, always check whether `pipeline-state.yaml` exists.
 
 ### Dispatch Protocol
 
-For every sub-skill dispatch:
+For every dispatch (per-task agent via Task tool, or retrospect-build skill via Skill tool):
 
 1. Read state. Verify the gate for this transition.
 2. Announce: `"Dispatching <sub-skill> for task <task-id> — transitioning from <old> to <new>."`
 3. Assemble context envelope (minimum needed — see per-sub-skill list below).
 4. Select model from `config.yaml → models.<phase>`. Pass as `model` parameter. Omit if key absent.
-5. Dispatch sub-skill. Wait for completion.
+5. Dispatch via Task tool with the corresponding agent type:
+   - render-tests dispatches → subagent_type: render-tests
+   - implement-leaf dispatches → subagent_type: implement-leaf
+   - review-execution dispatches → subagent_type: review-execution
+   - retrospect-build still dispatches via Skill tool (single invocation, end of run)
+
+   The Task tool gives each dispatched agent an isolated context window. This
+   is what makes within-stage parallelism real (multiple Task calls in one
+   message run concurrently).
+
+   For parallel dispatch within a stage: emit multiple Task tool calls in a
+   single message (one per task in the slot batch up to build.parallel.max_concurrent).
+   Wait for all to settle before reading verdict files.
 6. Read verdict from the on-disk verdict file. Do NOT retain sub-skill output inline — it goes to disk in the task directory, not into orchestrator context.
 7. Update `pipeline-state.yaml`. Append history entry.
 8. Gate check. Proceed only when gate conditions are met.
 
-**Context envelope — render-tests (leaf):** sub-skill SKILL.md + `config.yaml` + `specs/<scope>/testspec.md` + `specs/<scope>/detailed_design.md`.
-**Context envelope — implement-leaf:** sub-skill SKILL.md + `config.yaml` + `.vmodel/.build/tasks/<task-id>/current-task.yaml` + the rendered test files in the worktree + `feedback.yaml` (if exists, fix mode).
-**Context envelope — review-execution (leaf):** sub-skill SKILL.md + `config.yaml` + `.vmodel/.build/tasks/<task-id>/current-task.yaml` + `.vmodel/.build/tasks/<task-id>/review-ready.yaml` (impl handoff) + the layer's spec artifacts (`specs/<scope>/detailed_design.md` + `specs/<scope>/testspec.md`) + git diff of worktree vs build branch + test result log.
-**Context envelope — review-execution (branch):** sub-skill SKILL.md + `config.yaml` + `.vmodel/.build/tasks/<task-id>/current-task.yaml` + `specs/<scope>/architecture.md` + `specs/<scope>/testspec.md` + integration test result log + git diff.
-**Context envelope — review-execution (root):** sub-skill SKILL.md + `config.yaml` + `.vmodel/.build/tasks/<task-id>/current-task.yaml` + root `requirements.md` + root product artifact + root `testspec.md` + system test result log.
-**Context envelope — render-tests (branch/root):** sub-skill SKILL.md + `config.yaml` + `specs/<scope>/testspec.md` + `specs/<scope>/architecture.md`.
-**Context envelope — retrospect-build:** sub-skill SKILL.md + `config.yaml` + `pipeline-state.yaml` + `tasks.yaml` + all `ESC-NNN.yaml` files.
+**Dispatch envelope — render-tests (any layer):**
+- worktree_root, task_id, layer (leaf | branch | root)
+- testspec_path (absolute), parent_spec_path (DD for leaf, ARCH for branch/root)
+- config_path (.vmodel/config.yaml absolute)
+
+**Dispatch envelope — implement-leaf:**
+- worktree_root, task_id, current_task_path (absolute)
+- mode (greenfield | fix | resume), attempt
+- feedback_path (when mode == fix)
+- resume_from_step (when mode == resume)
+- config_path
+
+**Dispatch envelope — review-execution (leaf):**
+- worktree_root, task_id, layer: leaf
+- current_task_path, review_ready_path
+- spec_paths: detailed_design_path + testspec_path
+- git_diff_command (the orchestrator-computed diff command for the worktree)
+- test_log_path
+- config_path
+
+**Dispatch envelope — review-execution (branch):**
+- worktree_root, task_id, layer: branch
+- current_task_path
+- spec_paths: architecture_path + testspec_path
+- integration_test_log_path
+- git_diff_command
+- config_path
+
+**Dispatch envelope — review-execution (root):**
+- worktree_root, task_id, layer: root
+- current_task_path
+- spec_paths: requirements_path + root_product_path + testspec_path + architecture_path
+- system_test_log_path
+- config_path
+
+**Skill invocation — retrospect-build (single, end of run, NOT via Task tool):**
+- Load via Skill tool with: pipeline_state_path, tasks_yaml_path, escalations_dir_path, config_path
+- Reason for skill (not agent): runs once at end of run with no parallelism need; orchestrator session is fine.
+
+### Parallel dispatch via Task tool
+
+The orchestrator's true parallelism for a stage comes from emitting multiple
+Task tool calls in a single message. Each call dispatches one agent
+(implement-leaf / review-execution / render-tests) into an isolated context.
+
+Discipline:
+1. Compute the slot batch — the next N pending tasks in the stage where
+   N = min(build.parallel.max_concurrent, count(pending tasks)).
+2. Emit one Task call per slot in a single tool-use message. Each call:
+   - subagent_type: <render-tests | implement-leaf | review-execution>
+   - description: "<task-id> <phase>"
+   - prompt: the full dispatch envelope (per E.2 above) as a structured prompt
+3. Wait for all dispatched agents to return. Read each task's verdict files
+   from disk; do NOT inspect agent stdout for state — verdicts are file-based.
+4. Update task_states for each settled task; refill slots from the next
+   pending tasks until the stage is done.
+
+Sequential fallback (build.parallel.enabled: false): emit one Task call at
+a time. Same envelope shape; no batching.
+
+Why agents, not skills, for the per-task workers:
+- Isolated context window per task → orchestrator's context budget is not
+  consumed by sub-skill output.
+- True parallelism within a stage → multiple Task calls in one message run
+  concurrently.
+- Failure isolation → one agent crash does not affect siblings.
 
 ### Task Execution Loop (per task, per stage)
 
 1. For tasks with `status: pending` and dependencies satisfied, create worktree at `.vmodel/.build/worktrees/<task-id>`.
-2. Write `current-task.yaml` from the task contract in `tasks.yaml`.
-3. Dispatch `render-tests`. On completion, check `render-report.yaml` at `.vmodel/.build/tasks/<task-id>/render-report.yaml` — verify `compile_check: passed` and `red_phase_check: all_red`. If render-tests HALTed (e.g., weak oracle), treat as ESCALATE → testspec.
-4. Dispatch `implement-leaf`. On completion, verify `review-ready.yaml` exists at `.vmodel/.build/tasks/<task-id>/review-ready.yaml`. Absent file = sub-skill failure; mark `escalated` and surface to user.
-5. Dispatch `review-execution`. Determine verdict by inspecting the task dir AFTER the dispatch returns:
+2. Write `current-task.yaml` from the task contract in `tasks.yaml`. Copy verbatim:
+   `task_id`, `build_run_id`, `scope`, `task_type`, `detailed_design`, `testspec`, `governing_adrs`, `acceptance_criteria`, `context_to_load`, `out_of_scope`, `depends_on`. Set `mode: greenfield` and `attempt: 1` on first dispatch. On fix-mode re-dispatch (after a REJECTED): set `mode: fix`, increment `attempt`, **append** the fix-mode entry to `out_of_scope`: `"Do not weaken, disable, or delete tests to satisfy feedback — escalate as ESC if the feedback is itself wrong."` (the four planner entries stay; the fifth is appended once). Initialise `files_to_touch: []`, `files_to_touch_max_amendments: <build.auto_amend.max_auto_amendments>`, `amendments_used: 0`. Template: `templates/current-task.yaml.tmpl`.
+3. Dispatch the `render-tests` agent (Task tool, subagent_type: render-tests). On completion, check `render-report.yaml` at `.vmodel/.build/tasks/<task-id>/render-report.yaml` — verify `compile_check: passed` and `red_phase_check: all_red`. If render-tests HALTed (e.g., weak oracle), treat as ESCALATE → testspec.
+4. Dispatch the `implement-leaf` agent (Task tool, subagent_type: implement-leaf). On completion, verify `review-ready.yaml` exists at `.vmodel/.build/tasks/<task-id>/review-ready.yaml`. Absent file is not necessarily a failure — see step 4a (build-blocked). On resume after a crash, the dispatch envelope may be a resume-mode envelope per `references/pipeline-state-machine.md §Idempotency on Resume`. If neither `review-ready.yaml` nor `build-blocked.yaml` exists and the agent exited normally, mark `escalated` and surface to user.
+4a. **Check for `build-blocked.yaml`** in the task dir. If present:
+    - Read `suggested_resolution`, `blocker_type`, `needed_writes`, `needed_reads`.
+    - If `suggested_resolution == amend-contract` AND `amendments_used < build.auto_amend.max_auto_amendments` AND scope is clearly within the leaf's directory pattern (heuristic: every `needed_writes[].path` is within `<config.paths.src>/<scope>/**`):
+      → **Auto-amend.** Append `needed_writes[].path` entries to `current-task.yaml.files_to_touch`; append `needed_reads[].path` entries to `current-task.yaml.context_to_load`; increment `amendments_used`; append a history entry to `pipeline-state.yaml` with `type: contract-amendment` (include the amended paths and the blocker reason). Re-dispatch `implement-leaf` (NOT in fix mode — same `attempt` counter, mode unchanged).
+    - Otherwise (suggested_resolution != amend-contract, OR amendments exhausted, OR paths outside the scope's source directory):
+      → Treat as ESCALATE. Write `ESC-NNN.yaml` with `target_layer` derived from `suggested_resolution`:
+        - `escalate-to-dd` → `detailed-design`
+        - `escalate-to-architecture` → `architecture`
+        - `escalate-to-testspec` → `testspec`
+        - `escalate-to-adr` → `adr`
+        - `amend-contract` over budget → `detailed-design` with `routing_note: "auto-amend exhausted (amendments_used=N >= max=M); blocker: <blocker_type>"`.
+      → Mark task `escalated`; propagate `blocked` to dependents per dep strength.
+5. Dispatch the `review-execution` agent (Task tool, subagent_type: review-execution). Determine verdict by inspecting the task dir AFTER the dispatch returns:
    - **APPROVED** = neither `feedback.yaml` nor a new `ESC-NNN.yaml` was written by review-execution (review-execution emits a single stdout line `APPROVED <task-id>` for the orchestrator log; no verdict file is created). Merge worktree to build branch, mark `completed`, clean up worktree.
-   - **REJECTED** = `feedback.yaml` exists. If `review_attempts < max_review_attempts`, increment `review_attempts` and re-dispatch `implement-leaf` in fix mode. If `review_attempts >= max_review_attempts`, write `ESC-NNN.yaml`, mark `escalated`, propagate `blocked` to dependents (respect dep strength: `required` blocks; `optional`/`helpful` may proceed).
+   - **REJECTED** = `feedback.yaml` exists. If `review_attempts < max_review_attempts`, increment `review_attempts` and re-dispatch `implement-leaf` in fix mode (per step 2's fix-mode rules). If `review_attempts >= max_review_attempts`, write `ESC-NNN.yaml`, mark `escalated`, propagate `blocked` to dependents (respect dep strength: `required` blocks; `optional`/`helpful` may proceed).
    - **ESCALATE** = a new `ESC-NNN.yaml` is present in the task dir (and copy in `.vmodel/.build/escalations/`). Mark `escalated`, propagate blocked.
 6. Run up to `build.parallel.max_concurrent` tasks simultaneously within a stage.
 
@@ -215,6 +302,9 @@ On halt: produce a structured handover (current phase, completed tasks, open esc
 - **Verdict files, not inline output.** Sub-skill verdicts are on disk; orchestrator reads the file, not the sub-skill's text stream.
 - **Context hygiene at stage boundaries.** Re-read SKILL.md; write compact summary; discard prior stage details.
 - **Dep-strength-aware blocking.** `optional`/`helpful` deps: dependent task MAY proceed when upstream escalates. `required` deps: dependent task MUST block.
+- **Auto-amendment is bounded.** `current-task.yaml.amendments_used <= build.auto_amend.max_auto_amendments` strictly. Escalate beyond that, never silently amend twice.
+- **Per-task workers are agents, not skills.** `render-tests`, `implement-leaf`, and `review-execution` are dispatched as agents via the Task tool to give each task an isolated context window. `retrospect-build` is the only sub-step still loaded as a skill (single invocation, end of run).
+- **Within-stage parallelism uses concurrent Task calls.** Emit all parallel agent dispatches in a single tool-use message. Do not serialise them.
 
 ---
 
@@ -225,3 +315,9 @@ On halt: produce a structured handover (current phase, completed tasks, open esc
 - `references/parallelism-and-worktrees.md` — worktree lifecycle (create → run → merge/escalate → cleanup), concurrency limits, orphan detection
 - `templates/pipeline-state.yaml.tmpl` — canonical pipeline-state.yaml schema (v1)
 - `templates/escalation.yaml.tmpl` — ESC-NNN.yaml shape
+- `templates/current-task.yaml.tmpl` — per-task contract envelope handed to render-tests / implement-leaf / review-execution
+- `vmodel-skill-implement-leaf/templates/build-blocked.yaml.tmpl` — handler input for the auto-amend / escalate decision in step 4a
+- `vmodel-skill-implement-leaf/templates/build-progress.yaml.tmpl` — per-gate progress checkpoint read on resume
+- `.claude/agents/implement-leaf.md` — agent shell that loads `vmodel-skill-implement-leaf`
+- `.claude/agents/render-tests.md` — agent shell that loads `vmodel-skill-render-tests`
+- `.claude/agents/review-execution.md` — agent shell that loads `vmodel-skill-review-execution`

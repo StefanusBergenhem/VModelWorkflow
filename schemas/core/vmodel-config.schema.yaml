@@ -192,6 +192,17 @@ build:
         Max review-implementation rejection cycles before escalating to a
         spec-layer skill. Once exceeded, an ESC-NNN.yaml is created.
 
+  auto_amend:
+    max_auto_amendments:
+      type: integer
+      required: false
+      default: 1
+      description: >
+        Max times orchestrator may auto-expand a task's files_to_touch /
+        context_to_load in response to a build-blocked.yaml with
+        suggested_resolution: amend-contract. Beyond this, the blocker
+        escalates as a DESIGN_ISSUE to detailed-design.
+
   models:
     plan:
       type: string
@@ -279,6 +290,8 @@ component_override:
 #     max_concurrent: 4
 #   retry:
 #     max_review_attempts: 3
+#   auto_amend:
+#     max_auto_amendments: 1
 #   models:
 #     plan: "opus"
 #     implement: "sonnet"

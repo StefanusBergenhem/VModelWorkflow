@@ -12,10 +12,19 @@ postcondition discipline · AI-specific risks · Cross-links.
 
 ---
 
+**Progress checkpoint reminders.** After every gate boundary in this document,
+overwrite `build-progress.yaml` with the new `last_step`, `last_step_at`, and
+updated `gates` block. See SKILL.md §Progress checkpointing for the full step
+list.
+
+---
+
 ## 1. DD parse order
 
 Parse the DD completely before writing any code. Partial reads produce partial
 implementations.
+
+→ Update `build-progress.yaml`: `last_step: dd-parsed` after parsing complete.
 
 Read in this order — each section informs the next:
 
@@ -108,6 +117,10 @@ refusal G — escalate to `vmodel-skill-render-tests`; do not weaken or delete.
 If tests pass but implementation violates a DD contract the tests do not cover,
 fix the implementation anyway. The DD is the spec; test coverage is not
 exhaustive.
+
+→ Update `build-progress.yaml`:
+  - `last_step: red-confirmed` after the first test run confirms expected failures.
+  - `last_step: green-passing` once all tests pass for the first time.
 
 ---
 

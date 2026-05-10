@@ -139,6 +139,41 @@ Assign a `complexity` estimate per leaf using the heuristic in
 Each leaf task gets id: `build-<scope-flattened>` where `<scope-flattened>`
 replaces `/` with `-`. Example: scope `app/checkout` → id `build-app-checkout`.
 
+### Step 6.5 — Populate per-task contract fields
+
+For every leaf task, populate three contract fields. All three are mechanical
+lookups — no inference, no fabrication.
+
+**`acceptance_criteria`** — one entry per case in the leaf's `testspec.md`.
+Format: `"<TS-id>.<case-id>: <case title>"`. If the case has no `title`,
+emit `"<TS-id>.<case-id>"` instead. Order matches case order in the testspec.
+The list must be non-empty (a leaf with zero cases is excluded by refusal B
+upstream).
+
+**`context_to_load`** — read-only allowlist. Populate in this exact order:
+
+1. `specs/<scope>/detailed_design.md` — the leaf's own DD.
+2. `specs/<scope>/testspec.md` — the leaf's own TestSpec.
+3. `specs/<parent_scope>/architecture.md` — only when `parent_scope` is
+   non-empty.
+4. For each ADR in `governing_adrs`: the resolved ADR file path. Resolve via
+   the ADR's front-matter `path` (or `file`) field if present; otherwise emit
+   the glob `**/adrs/<adr-id>.md` and surface the unresolved path as a
+   plan-report ambiguity.
+5. For each entry in `depends_on[]`: append both
+   `specs/<dep-scope>/detailed_design.md` and
+   `specs/<dep-scope>/testspec.md`.
+6. `.vmodel/references/**` — the shared references glob.
+
+No other entries. Any addition outside this set is refusal E.
+
+**`out_of_scope`** — fixed standard set, populated verbatim (no
+paraphrasing). The exact strings are listed in
+`references/tasks-schema.md §"Standard out_of_scope entries"`. Plan-build
+emits entries 1–4. The 5th entry (fix-mode tests-must-not-be-weakened) is
+appended later by the orchestrator at fix-mode dispatch — plan-build never
+emits it.
+
 ### Step 7 — Build branch test stages
 
 For each branch scope (from Step 2), emit one `branch_test_stages` entry.
@@ -220,6 +255,15 @@ can proceed without it.
 **D — No cycle breaking.** If the dependency graph contains a cycle, HALT and
 report. Do not silently drop edges to break cycles. The cycle represents a
 real architectural contradiction that must be resolved in the spec.
+
+**E — No fabricated context.** Do not add files to `context_to_load` that are
+not derivable from spec front-matter (the six-rule set in Step 6.5). If an
+ADR path cannot be resolved, surface as ambiguity in the plan report and use
+a glob pattern (`**/adrs/<adr-id>.md`); do not invent a path. Do not add
+project source files, third-party config files, or "potentially useful"
+documents to `context_to_load`. If implement-leaf needs more, that is
+handled by the orchestrator's auto-amend mechanism on a `build-blocked.yaml`
+emission — not by the planner guessing ahead.
 
 ## HALT conditions
 

@@ -6,6 +6,20 @@ status: active
 
 # Parallelism and Worktrees
 
+## Contents
+
+- [Concurrency model](#concurrency-model)
+- [Worktree lifecycle](#worktree-lifecycle)
+  - [Create](#create)
+  - [Merge (on APPROVED)](#merge-on-approved)
+  - [Cleanup](#cleanup)
+- [Orphan detection](#orphan-detection)
+- [Sub-skill working directory](#sub-skill-working-directory)
+- [Sequential fallback](#sequential-fallback)
+- [Build branch](#build-branch)
+
+---
+
 ## Concurrency model
 
 The orchestrator dispatches multiple tasks simultaneously within a stage, up to `build.parallel.max_concurrent` (read from `config.yaml`; default: 3). Tasks within a stage have no mutual dependencies, making them safe to parallelize.

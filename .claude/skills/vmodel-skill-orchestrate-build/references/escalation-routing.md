@@ -6,6 +6,17 @@ status: active
 
 # Escalation Routing
 
+## Contents
+
+- [What routing does](#what-routing-does)
+- [Routing Table](#routing-table)
+- [Dependency-strength and blocking propagation](#dependency-strength-and-blocking-propagation)
+- [ESC file routing fields](#esc-file-routing-fields)
+- [Required action patterns](#required-action-patterns)
+- [Scope-expansion routing](#scope-expansion-routing)
+
+---
+
 ## What routing does
 
 An escalation file carries a `target_layer` field. This routes the issue to the right spec artifact for human resolution. Wrong routing wastes the human's time — they open the wrong document and find nothing actionable.
@@ -83,3 +94,35 @@ Each `issue_type` implies a standard `required_action` pattern:
 | `contract-violation` | "Update <artifact-id> to either fix the contract clause or align the implementation with it." |
 
 Write concrete, actionable `required_action` text — name the specific clause, field, or section where the change belongs. "Fix the DD" is not actionable; "Clarify the postcondition of `CartService.addItem()` — currently silent on duplicate SKU handling" is.
+
+---
+
+## Scope-expansion routing
+
+When `implement-leaf` emits `build-blocked.yaml`, the orchestrator first decides
+whether to auto-amend the contract (see `vmodel-skill-orchestrate-build/SKILL.md`
+§Task Execution Loop step 4a). If the blocker cannot be auto-amended, route as
+ESCALATE using the mapping below from the `suggested_resolution` field:
+
+| `suggested_resolution`      | `target_layer`     | Notes |
+|:----------------------------|:-------------------|:------|
+| `escalate-to-dd`            | `detailed-design`  | DD does not specify what to do for the case the implementation hit. |
+| `escalate-to-architecture`  | `architecture`     | Inter-leaf interface contract is unclear or contradictory. |
+| `escalate-to-testspec`      | `testspec`         | A rendered test contradicts the DD. Pair with `blocker_type: test-defect`. |
+| `escalate-to-adr`           | `adr`              | Cross-cutting decision not captured by any ADR. |
+| `amend-contract` (over budget) | `detailed-design` | Auto-amend exhausted. Set `routing_note: "auto-amend exhausted (amendments_used=N >= max=M); blocker: <blocker_type>"`. |
+
+`issue_type` follows the existing taxonomy:
+
+- `blocker_type: scope-expansion` → `issue_type: gap` (typically — the spec
+  did not list the file the impl needs to touch).
+- `blocker_type: missing-context` → `issue_type: gap`.
+- `blocker_type: contradiction` → `issue_type: contradiction`.
+- `blocker_type: test-defect` → `issue_type: contract-violation` (test asserts
+  something the DD does not specify).
+- `blocker_type: external-dep` → `issue_type: new-decision-needed` (the
+  external dep needs an ADR).
+
+`confidence: high` on these routings — they are mechanically derived from
+`suggested_resolution`. If `suggested_resolution` is missing or inconsistent
+with `blocker_type`, downgrade to `confidence: low` and add a `routing_note`.

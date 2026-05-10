@@ -180,6 +180,9 @@ scripts/                — Mechanical check scripts (check-*.py, index-deferred
                           build-side (6): plan-build, orchestrate-build, render-tests,
                           implement-leaf, review-execution, retrospect-build
                           + vmodel-init
+.claude/agents/         — 3 dispatch-shell agents that wrap per-task workers
+                          (implement-leaf, render-tests, review-execution) for
+                          parallel isolated execution by orchestrate-build
 ```
 
 ### Project consumer (e.g. vmodel-core)
@@ -246,6 +249,15 @@ Escalations are typed by target spec layer and confidence-tagged. High-confidenc
 **Per-task file contract (leaf build).** Files in `.vmodel/.build/tasks/<task-id>/` have exactly one producer each: `render-report.yaml` ← render-tests, `review-ready.yaml` ← implement-leaf (sole producer; the impl handoff), `feedback.yaml` ← review-execution (REJECTED only), `ESC-NNN.yaml` ← review-execution (escalations; mirror copy in `.vmodel/.build/escalations/`). **APPROVED writes no file** — orchestrator infers APPROVED from the absence of feedback/ESC after dispatch. Rejection taxonomy: `contract-violation`, `scope-violation`, `missing-implementation`, `wrong-assertion-is-impl-bug`, `integration-failure-impl-bug`, `regression`. See `TARGET_ARCHITECTURE §16` for full table.
 
 No build-side artifact yet — Verification Report was considered and dropped (no current need).
+
+**Per-task worker agents.** `render-tests`, `implement-leaf`, and
+`review-execution` are dispatched as agents via the Task tool (in
+`.claude/agents/`), not invoked as skills directly. Each agent is a thin
+shell that loads the canonical skill in an isolated context window. This
+gives within-stage parallelism (multiple concurrent Task calls in one
+orchestrator message) and failure isolation (an agent crash does not affect
+siblings or the orchestrator). The skill remains the canonical source of
+procedure, references, and templates; the agent is purely a dispatch shell.
 
 ---
 

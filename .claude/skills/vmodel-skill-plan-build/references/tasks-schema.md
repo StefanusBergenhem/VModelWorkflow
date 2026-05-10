@@ -6,6 +6,21 @@ and consumed by `vmodel-skill-orchestrate-build`.
 
 ---
 
+## Contents
+
+- [Top-level fields](#top-level-fields)
+- [`tasks` list](#tasks-list)
+  - [Task fields](#task-fields)
+  - [`depends_on` entry fields](#depends_on-entry-fields)
+- [`stages` list](#stages-list)
+- [`branch_test_stages` list](#branch_test_stages-list)
+- [`root_test_stage`](#root_test_stage)
+- [Status values](#status-values)
+- [Invariants (schema-level)](#invariants-schema-level)
+- [Versioning](#versioning)
+
+---
+
 ## Top-level fields
 
 ```yaml
@@ -36,6 +51,18 @@ tasks:
     detailed_design: DD-app-checkout
     testspec: TS-app-checkout
     governing_adrs: []
+    acceptance_criteria:
+      - "TS-app-checkout.case-001: validates positive cart total"
+    context_to_load:
+      - specs/app/checkout/detailed_design.md
+      - specs/app/checkout/testspec.md
+      - specs/app/architecture.md
+      - .vmodel/references/**
+    out_of_scope:
+      - "Do not modify any file under specs/ — spec artifacts are read-only during build."
+      - "Do not modify rendered test files in this leaf's worktree to make tests pass — if a test is wrong, escalate via build-blocked.yaml with blocker_type: test-defect."
+      - "Do not implement features absent from the DD's Public Interface — gold-plating is a contract violation."
+      - "Do not modify other leaves' source implementations — sibling and dependency leaves are the responsibility of their own implement-leaf invocations."
     files_to_touch: []
     depends_on:
       - id: build-app-cart
@@ -55,10 +82,41 @@ tasks:
 | `detailed_design` | string | yes | ID of the leaf's `detailed_design.md` artifact (from its front-matter `id` field). |
 | `testspec` | string | yes | ID of the leaf's `testspec.md` artifact. |
 | `governing_adrs` | list | no | IDs of ADRs governing this leaf. Copied from the DD's `governing_adrs` front-matter field. Empty list if none. |
+| `acceptance_criteria` | list of strings | yes | One entry per TestSpec case in the leaf's `testspec.md`. Format: `"<TS-id>.<case-id>: <case title>"` (or `"<TS-id>.<case-id>"` if the case lacks a `title`). Mechanical derivation from testspec cases. Plan-build populates; orchestrator passes through to `current-task.yaml`; implement-leaf reads but does not modify; review-execution uses to confirm coverage. May be empty only when the leaf's testspec has zero cases — but those leaves are excluded by refusal B, so in practice non-empty. |
+| `context_to_load` | list of file paths | yes | Read-only allowlist of files implement-leaf is permitted to consult. Mechanical derivation from spec tree (see "Derivation rules for `context_to_load`" below). Plan-build populates; implement-leaf MUST refuse to read source files outside this list (project source files implementing the scope are read implicitly and may be opened for refactor — see implement-leaf's enforcement rules). Never empty. |
+| `out_of_scope` | list of strings | yes | Declarative "do NOT" statements that constrain implement-leaf. Standard set populated verbatim by plan-build (see "Standard `out_of_scope` entries" below). The fix-mode entry is appended by the orchestrator at fix-mode dispatch. Never empty. |
 | `files_to_touch` | list | yes | Always `[]` when emitted by the planner. The implement-leaf skill populates this after reading the DD. Do not pre-populate. |
 | `depends_on` | list | no | Ordered list of dependency edges. See below. Empty list if no dependencies. |
 | `estimates.complexity` | string | yes | One of: `low`, `medium`, `high`. Derived via the complexity heuristic in `references/dependency-inference.md §complexity-heuristic`. |
 | `status` | string | yes | Always `pending` when emitted by the planner. The orchestrator updates this field during execution. |
+
+#### Derivation rules for `context_to_load`
+
+Plan-build populates this list mechanically — no inference, no fabrication:
+
+1. The leaf's own DD: `specs/<scope>/detailed_design.md`.
+2. The leaf's own TestSpec: `specs/<scope>/testspec.md`.
+3. The parent ARCH (when `parent_scope` is non-empty): `specs/<parent_scope>/architecture.md`.
+4. For every entry in `governing_adrs`: the resolved ADR file path. Use the path from the ADR's front-matter when resolvable; otherwise emit a glob `**/adrs/<adr-id>.md` and surface the unresolved path as an ambiguity in the plan report.
+5. For every entry in `depends_on[]`: the dependency leaf's DD and TestSpec — `specs/<dep-scope>/detailed_design.md` and `specs/<dep-scope>/testspec.md`. Interfaces must be readable to wire correctly.
+6. The shared references directory glob: `.vmodel/references/**`.
+
+No other files are added by the planner. Adding files outside this derivation set is refusal E (see SKILL.md Hard Refusals).
+
+#### Standard `out_of_scope` entries
+
+Plan-build emits this fixed set verbatim on every leaf task. No paraphrasing.
+
+1. `"Do not modify any file under specs/ — spec artifacts are read-only during build."`
+2. `"Do not modify rendered test files in this leaf's worktree to make tests pass — if a test is wrong, escalate via build-blocked.yaml with blocker_type: test-defect."`
+3. `"Do not implement features absent from the DD's Public Interface — gold-plating is a contract violation."`
+4. `"Do not modify other leaves' source implementations — sibling and dependency leaves are the responsibility of their own implement-leaf invocations."`
+
+A fifth entry is appended by the orchestrator at fix-mode dispatch (attempt > 1):
+
+5. `"Do not weaken, disable, or delete tests to satisfy feedback — escalate as ESC if the feedback is itself wrong."`
+
+This entry is NOT in plan-build's output — only the orchestrator adds it, and only on fix-mode dispatch.
 
 ### `depends_on` entry fields
 
@@ -189,6 +247,9 @@ The planner does not read or mutate these beyond setting the initial `pending`.
 4. Stage `tasks` arrays are non-overlapping and collectively cover all task IDs.
 5. `after_stage` in branch and root stages is ≤ `max(stages[].stage_id)`.
 6. `files_to_touch` is `[]` in planner output — never pre-populated.
+7. `acceptance_criteria` is non-empty on every leaf task (leaves with zero TestSpec cases are excluded by refusal B).
+8. `context_to_load` is non-empty on every leaf task (rules 1, 2, and 6 above always apply).
+9. `out_of_scope` contains the four standard entries verbatim (the fifth fix-mode entry is added by the orchestrator, not the planner).
 
 ---
 

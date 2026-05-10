@@ -6,6 +6,17 @@ status: active
 
 # Pipeline State Machine
 
+## Contents
+
+- [State Diagram](#state-diagram)
+- [Transition Table](#transition-table)
+- [Guard Conditions Summary](#guard-conditions-summary)
+- [History Entry Format](#history-entry-format)
+- [Stage Boundary Rules](#stage-boundary-rules)
+- [Idempotency on Resume](#idempotency-on-resume)
+
+---
+
 ## State Diagram
 
 ```
@@ -170,9 +181,33 @@ When resuming at `executing_leaf_stage_N`:
 
 - Tasks with `status: completed` → skip (already done).
 - Tasks with `status: in_progress` → check whether worktree exists on disk.
-  - Worktree exists → the previous dispatch was in progress; re-dispatch from the last-known sub-skill step using the on-disk context files.
-  - Worktree does not exist → the state file is ahead of reality (crash before worktree creation); reset to `status: pending` and re-dispatch.
+  - **Worktree absent** → state file is ahead of reality (crash before worktree
+    creation); reset to `status: pending` and re-dispatch.
+  - **Worktree exists** → read `build-progress.yaml` in the task dir to decide
+    recovery path:
+      - `last_step == review-ready-written` AND `review-ready.yaml` exists →
+        treat as completed-up-to-review; proceed to dispatch `review-execution`
+        without re-running `implement-leaf`. Attempt counter unchanged.
+      - `last_step ∈ {self-check-passed, coverage-met, lint-clean, refactored,
+        green-passing}` AND `review-ready.yaml` absent → re-dispatch
+        `implement-leaf` in resume mode (envelope adds `mode: resume`,
+        `resume_from_step: <last_step>`). Attempt counter unchanged.
+      - `last_step` earlier than `green-passing` OR `build-progress.yaml`
+        absent → re-dispatch `implement-leaf` as a fresh attempt; increment
+        attempt counter; the previous worktree contents are kept (do not
+        wipe — the skill may use them as starting code).
 - Tasks with `status: escalated` or `blocked` → skip.
 - Tasks with `status: pending` → normal dispatch.
 
 The `review_attempts` counter is authoritative on resume — do not reset it.
+
+### Resume modes for implement-leaf
+
+Three cases drive what envelope the orchestrator hands to `implement-leaf` on
+resume:
+
+| Case | Worktree | `last_step` | `review-ready.yaml` | Action |
+|---|---|---|---|---|
+| Silent recover | exists | `review-ready-written` | present | Skip `implement-leaf`; dispatch `review-execution` directly. Attempt unchanged. |
+| Resume at gate | exists | `self-check-passed`, `coverage-met`, `lint-clean`, `refactored`, or `green-passing` | absent | Re-dispatch `implement-leaf` with `mode: resume` + `resume_from_step` in `current-task.yaml`. Attempt unchanged. |
+| Restart attempt | exists | earlier than `green-passing` OR `build-progress.yaml` absent | absent | Re-dispatch `implement-leaf` as fresh attempt; increment attempt counter; keep worktree contents. |

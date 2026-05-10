@@ -1,0 +1,48 @@
+# .vmodel/.build/tasks/<task-id>/current-task.yaml
+# Written by vmodel-skill-orchestrate-build per task at dispatch time.
+# Read by render-tests, implement-leaf, review-execution.
+# Mode-aware: orchestrator appends mode-specific entries to out_of_scope at dispatch.
+
+task_id: build-<scope>
+build_run_id: <id from tasks.yaml>
+scope: <scope path relative to scope_root>
+task_type: leaf-implementation     # or branch-integration | root-system
+mode: greenfield                   # greenfield | fix
+attempt: 1                         # increments on fix-mode re-dispatch
+
+detailed_design: <DD-id>
+testspec: <TS-id>
+governing_adrs: []
+
+# --- Contract (copied verbatim from tasks.yaml; orchestrator adds fix-mode out_of_scope) ---
+
+acceptance_criteria:
+  - "<TS-id>.<case-id>: <title>"
+
+context_to_load:
+  - <path>
+
+out_of_scope:
+  - "<verbatim string from plan-build>"
+  # Fix-mode addition (appended by orchestrator on attempt > 1):
+  # - "Do not weaken, disable, or delete tests to satisfy feedback — escalate as ESC if the feedback is itself wrong."
+
+# --- Files (implement-leaf populates files_to_touch on first scan) ---
+
+files_to_touch: []                 # implement-leaf populates after parsing DD
+files_to_touch_max_amendments: 1   # from config: build.max_auto_amendments (default 1)
+amendments_used: 0                 # incremented by orchestrator on auto-amend
+
+# --- Dependencies (informational) ---
+
+depends_on:
+  - id: build-<dep-scope>
+    strength: critical             # or: helpful
+
+# --- Resume hint (orchestrator sets these on detecting a mid-attempt crash) ---
+# Present only when implement-leaf is being re-dispatched in resume mode.
+# When set, implement-leaf re-runs gates from resume_from_step forward and writes
+# review-ready.yaml without re-running TDD red / re-implementing.
+#
+# resume_mode: false                 # true when orchestrator detects mid-attempt crash
+# resume_from_step: <last_step from build-progress.yaml>

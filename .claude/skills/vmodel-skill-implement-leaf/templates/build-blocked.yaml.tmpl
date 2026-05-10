@@ -1,0 +1,49 @@
+# build-blocked.yaml — emitted by vmodel-skill-implement-leaf
+# Written to: .vmodel/.build/tasks/<task-id>/build-blocked.yaml
+# Read by: vmodel-skill-orchestrate-build (auto-amend or escalate decision).
+#
+# Emitted ONLY when implement-leaf cannot proceed without violating its
+# contract (out_of_scope, context_to_load, files_to_touch boundaries).
+
+task_id: build-<scope>
+build_run_id: <id from pipeline state>
+attempt: <N>                       # current attempt number from current-task.yaml
+
+status: blocked
+
+# Blocker classification — drives orchestrator routing decision.
+# Valid values:
+#   scope-expansion       — needs to write a file outside files_to_touch / scope dir
+#   missing-context       — needs to read a file outside context_to_load
+#   contradiction         — DD and ADR conflict; cannot satisfy both
+#   test-defect           — rendered test is wrong (assertion contradicts DD)
+#   external-dep          — needs an external resource (library, schema, env) not present
+blocker_type: scope-expansion
+
+blocker_description: "<one-sentence description of the blocker>"
+
+# What files implement-leaf needs but cannot legally read.
+# Required when blocker_type: missing-context. Otherwise: omit or [].
+needed_reads:
+  - path: <file path>
+    reason: "<why this file is needed and why it falls outside context_to_load>"
+
+# What files implement-leaf needs to write but cannot legally write.
+# Required when blocker_type: scope-expansion. Otherwise: omit or [].
+needed_writes:
+  - path: <file path>
+    reason: "<why this file must be modified and why it falls outside files_to_touch>"
+
+# Suggested resolution path. Orchestrator reads this as input to its routing decision.
+# Valid values:
+#   amend-contract        — small expansion within auto-amend policy; orchestrator may auto-add
+#   escalate-to-dd        — DD does not specify what's needed; needs a DD revision
+#   escalate-to-architecture — interface or composition issue; needs an ARCH revision
+#   escalate-to-testspec  — test is wrong; needs a TestSpec revision (or render-tests rerun)
+#   escalate-to-adr       — needs a new ADR or a revision of an existing one
+suggested_resolution: amend-contract
+
+# Evidence supporting the blocker. At least one entry required.
+evidence:
+  - file: <path>:<line>
+    quote: "<verbatim excerpt>"

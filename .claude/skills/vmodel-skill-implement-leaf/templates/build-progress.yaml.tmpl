@@ -1,0 +1,43 @@
+# build-progress.yaml — emitted by vmodel-skill-implement-leaf
+# Written to: .vmodel/.build/tasks/<task-id>/build-progress.yaml
+# Updated at every gate boundary during the build attempt.
+# Read by: vmodel-skill-orchestrate-build on resume to decide recovery path.
+#
+# Overwrite-on-update — not append-only. The current value of last_step is
+# what matters; previous gate states live in the gates block.
+
+task_id: build-<scope>
+build_run_id: <id from pipeline state>
+attempt: <N>                       # matches current-task.yaml.attempt
+
+# last_step is the SINGLE most important field.
+# Valid values, in order of progression:
+#   started                — implement-leaf began
+#   dd-parsed              — DD read and parsed
+#   contract-checked       — contract enforcement check passed (context_to_load, out_of_scope)
+#   files-planned          — files_to_touch populated (greenfield) or fix targets identified
+#   red-confirmed          — tests run, all expected failures confirmed (TDD red)
+#   green-passing          — all tests now pass (TDD green)
+#   refactored             — refactor pass complete; tests still passing
+#   lint-clean             — lint command passed
+#   coverage-met           — coverage check passed (or skipped if not configured)
+#   self-check-passed      — pre-publish self-check passed
+#   review-ready-written   — review-ready.yaml emitted; implement-leaf done
+last_step: started
+
+last_step_at: "<ISO 8601 UTC>"
+
+# Per-gate status. Each value: not-yet | passed | warnings | failed
+# Implement-leaf updates these at each gate transition.
+gates:
+  red_phase: not-yet
+  green_phase: not-yet
+  refactor: not-yet
+  lint: not-yet
+  coverage: not-yet
+  self_check: not-yet
+
+files_written: []                  # paths under the worktree
+
+# Optional one-line note about the current step.
+note: ""

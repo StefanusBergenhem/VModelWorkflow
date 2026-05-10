@@ -19,6 +19,25 @@ tasks:
     testspec: "{{ testspec_id }}"         # id from testspec.md front-matter
     governing_adrs:                       # from DD front-matter; empty list if none
       {{ governing_adrs | yaml_list_items }}
+    acceptance_criteria:                  # one entry per TestSpec case in this leaf's testspec.md
+                                          # format: "<TS-id>.<case-id>: <case title>" (or "<TS-id>.<case-id>" if no title)
+      - "{{ ts_id }}.{{ case_id }}: {{ case_title }}"
+    context_to_load:                      # read-only allowlist for implement-leaf (mechanical derivation)
+                                          # see references/tasks-schema.md "Derivation rules for context_to_load"
+      - "specs/{{ scope }}/detailed_design.md"        # this leaf's DD
+      - "specs/{{ scope }}/testspec.md"               # this leaf's TestSpec
+      - "specs/{{ parent_scope }}/architecture.md"    # parent ARCH (omit if parent_scope empty)
+      # - "specs/{{ adr_path }}"                      # one entry per governing ADR (use **/adrs/<adr-id>.md if path unresolved)
+      # - "specs/{{ dep_scope }}/detailed_design.md"  # per depends_on entry
+      # - "specs/{{ dep_scope }}/testspec.md"         # per depends_on entry
+      - ".vmodel/references/**"                       # shared reference docs
+    out_of_scope:                         # standard set, populated verbatim — no paraphrasing
+      - "Do not modify any file under specs/ — spec artifacts are read-only during build."
+      - "Do not modify rendered test files in this leaf's worktree to make tests pass — if a test is wrong, escalate via build-blocked.yaml with blocker_type: test-defect."
+      - "Do not implement features absent from the DD's Public Interface — gold-plating is a contract violation."
+      - "Do not modify other leaves' source implementations — sibling and dependency leaves are the responsibility of their own implement-leaf invocations."
+      # NOTE: a 5th entry ("Do not weaken, disable, or delete tests ...") is appended by the
+      #       orchestrator at fix-mode dispatch (attempt > 1). Plan-build never emits it.
     files_to_touch: []                    # AUTHOR LEAVES EMPTY — implement-leaf populates
     depends_on:                           # omit block if no dependencies
       - id: "build-{{ dep_scope_flattened }}"

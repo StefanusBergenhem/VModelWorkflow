@@ -4,6 +4,20 @@ Rules for deriving `depends_on` edges and `strength` values in tasks.yaml.
 
 ---
 
+## Contents
+
+- [Governing principle](#governing-principle)
+- [Rule 1: Interface-production (critical)](#rule-1-interface-production-critical)
+- [Rule 2: ADR-ordering signals (helpful)](#rule-2-adr-ordering-signals-helpful)
+- [Rule 3: Ambiguity protocol](#rule-3-ambiguity-protocol)
+- [Rule 4: Cross-branch dependencies](#rule-4-cross-branch-dependencies)
+- [Rule 5: `derived_from` is not sufficient for `critical`](#rule-5-derived_from-is-not-sufficient-for-critical)
+- [Strength summary](#strength-summary)
+- [Complexity heuristic](#complexity-heuristic)
+- [DEFER markers](#defer-markers)
+
+---
+
 ## Governing principle
 
 The dependency graph must be derivable from spec artifacts without human

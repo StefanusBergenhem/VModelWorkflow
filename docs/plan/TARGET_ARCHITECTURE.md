@@ -768,6 +768,11 @@ Three-layer model:
 - **6 build-side:** `vmodel-skill-plan-build`, `vmodel-skill-orchestrate-build`, `vmodel-skill-render-tests`, `vmodel-skill-implement-leaf`, `vmodel-skill-review-execution`, `vmodel-skill-retrospect-build`.
 - **1 init:** `vmodel-init`.
 
+**3 worker agents** (as of 2026-05-10) under `.claude/agents/`:
+- `implement-leaf`, `render-tests`, `review-execution` — thin dispatch shells that load the corresponding canonical skill via the Skill tool.
+
+**Skill / agent split.** Skills are the canonical source of procedure, references, and templates — they remain the artifact a human reads to understand the craft. Agents are dispatch shells: they exist so the orchestrator can use the Task tool to run a worker in an isolated context window, enabling true within-stage parallelism (multiple concurrent Task calls in one orchestrator message) and failure isolation (a worker crash does not affect siblings or the orchestrator). `vmodel-skill-orchestrate-build` dispatches the three workers as agents and `vmodel-skill-retrospect-build` as a skill (single end-of-run invocation, no parallelism need). All other skills are user-invoked or invoked via Skill tool from within an agent.
+
 See §16 for build-side skill details. The detailed skill-architecture HTML at `docs/guide/skills-architecture.html` is pre-pivot and needs rewriting (deferred — see BACKLOG §3.5).
 
 ---
@@ -913,6 +918,8 @@ plan-build
         └─► retrospect-build
 ```
 
+**Dispatch mechanism (as of 2026-05-10).** `render-tests`, `implement-leaf`, and `review-execution` are dispatched as **agents** via the Task tool (one Task call per task in a parallel batch, all calls emitted in a single tool-use message). `retrospect-build` is invoked as a **skill** (single end-of-run, no parallelism). Within-stage parallelism is bounded by `build.parallel.max_concurrent`. See §11 (Skills Architecture) for the skill / agent split rationale.
+
 ### Escalation routing
 
 Escalations are **typed by target spec layer**: DD / TestSpec / Architecture / ADR / Requirements / root product. Each escalation is confidence-tagged:
@@ -928,8 +935,10 @@ Files in `.vmodel/.build/tasks/<task-id>/` are the producer/consumer interface b
 
 | File | Producer | Consumer | Purpose |
 |---|---|---|---|
-| `current-task.yaml` | `orchestrate-build` | `render-tests`, `implement-leaf`, `review-execution` | Task contract from `tasks.yaml`. |
+| `current-task.yaml` | `orchestrate-build` | `render-tests`, `implement-leaf`, `review-execution` | Task contract — copies `acceptance_criteria`, `context_to_load`, `out_of_scope` from `tasks.yaml` verbatim; carries `mode`, `attempt`, `amendments_used`, optional `resume_from_step`. |
 | `render-report.yaml` | `render-tests` | `orchestrate-build` (manifest) | Cases rendered, cases skipped, compile and red-phase checks. |
+| `build-progress.yaml` | `implement-leaf` | `orchestrate-build` (resume only) | Overwrite-on-update gate journal (`last_step` across red / green / refactor / lint / coverage / self-check / review-ready-written). Read on resume to choose silent-recover vs resume-at-gate vs restart. |
+| `build-blocked.yaml` | `implement-leaf` | `orchestrate-build` | Scope-expansion HALT — `blocker_type` (`scope-expansion`, `missing-context`, `contradiction`, `test-defect`, `external-dep`), `needed_writes`/`needed_reads`, `suggested_resolution`. |
 | `review-ready.yaml` | `implement-leaf` | `review-execution` | Implementation handoff: files changed, contracts implemented, lint/coverage/test status. Sole producer is implement-leaf. |
 | `feedback.yaml` | `review-execution` | `implement-leaf` (fix mode) | REJECTED only — `failures[]` with type, location, description, required_fix, spec_ref. |
 | `ESC-NNN.yaml` | `review-execution` | `orchestrate-build` → spec-side author skill | Escalation file; copy lives in `.vmodel/.build/escalations/`. |
@@ -937,6 +946,35 @@ Files in `.vmodel/.build/tasks/<task-id>/` are the producer/consumer interface b
 **APPROVED writes no file.** review-execution emits a single stdout line `APPROVED <task-id>`; the orchestrator infers APPROVED from the absence of `feedback.yaml` and any new `ESC-NNN.yaml` after dispatch. The implementation's `review-ready.yaml` remains as the record of what was implemented.
 
 **Rejection taxonomy** (canonical names): `contract-violation`, `scope-violation`, `missing-implementation`, `wrong-assertion-is-impl-bug`, `integration-failure-impl-bug`, `regression`. The `-impl-bug` suffix disambiguates from cases that ESCALATE to spec layers — `wrong-assertion` (test contradicts DD) ESCALATES to TestSpec and never lands in `feedback.yaml`.
+
+### Task contract enrichment (as of 2026-05-10)
+
+Each leaf task in `tasks.yaml` carries three fields populated mechanically by `plan-build` and copied verbatim into each per-task `current-task.yaml`:
+
+- **`acceptance_criteria`** — one entry per TestSpec case, format `"<TS-id>.<case-id>: <case title>"`. Implement-leaf reads to verify coverage; review-execution uses to confirm coverage was met.
+- **`context_to_load`** — read-only allowlist of files implement-leaf may consult: own DD + TS, parent ARCH, governing ADRs, dependency leaves' DD + TS (interface readability), `.vmodel/references/**`. Source files in the project tree are read implicitly. Reading anything outside this list is refusal H.
+- **`out_of_scope`** — declarative do-not list (no spec mutation, no rendered-test mutation to satisfy failing tests, no gold-plating, no sibling-leaf source mutation). One additional entry is appended by orchestrator on fix-mode dispatch (no test weakening).
+
+`plan-build` populates these from spec-tree front-matter only. Refusal E forbids fabricated context entries; ambiguous ADR paths fall back to glob `**/adrs/<adr-id>.md` with surfaced ambiguity.
+
+### Scope-expansion HALT and auto-amendment (as of 2026-05-10)
+
+When implement-leaf cannot proceed without violating its contract — needing to read a file outside `context_to_load`, write a file outside `files_to_touch`, or cross an `out_of_scope` boundary — it emits `build-blocked.yaml` and halts. Orchestrator routes:
+
+- **Auto-amend** (when `suggested_resolution: amend-contract` AND `amendments_used < build.auto_amend.max_auto_amendments` AND scope is within the leaf's source directory): append needed paths to `files_to_touch` / `context_to_load`, increment `amendments_used`, log to pipeline-state history, re-dispatch implement-leaf same-attempt.
+- **Escalate** (otherwise): write `ESC-NNN.yaml` with `target_layer` derived from `suggested_resolution` (`escalate-to-{dd|architecture|testspec|adr}`); over-budget amendments route to `detailed-design` with routing-note explaining auto-amend exhausted.
+
+Auto-amendment is bounded — `amendments_used <= build.auto_amend.max_auto_amendments` strictly (default 1). Never silently amend twice.
+
+### Progress checkpointing and resume modes (as of 2026-05-10)
+
+Implement-leaf overwrites `build-progress.yaml` after every gate boundary with `last_step`, `last_step_at`, and per-gate status. On resume, orchestrator reads it and chooses:
+
+- **Silent-recover** (`last_step == review-ready-written` AND `review-ready.yaml` exists) — proceed directly to `review-execution`; attempt counter unchanged.
+- **Resume-at-gate** (`last_step ∈ {self-check-passed, coverage-met, lint-clean, refactored, green-passing}` AND `review-ready.yaml` absent) — re-dispatch implement-leaf with `mode: resume` + `resume_from_step: <last_step>`; skip earlier work, re-validate gates from the resume point forward.
+- **Restart** (earlier `last_step` OR `build-progress.yaml` absent) — fresh attempt, increment counter, prior worktree contents kept as starting code.
+
+This makes mid-attempt crashes recoverable without wasting completed work. The journal is overwrite-on-update, not append-only — current state is what matters.
 
 ### No build-side artifact
 

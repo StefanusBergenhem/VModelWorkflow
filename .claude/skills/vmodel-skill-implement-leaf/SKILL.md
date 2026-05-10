@@ -46,6 +46,8 @@ Ask for anything missing. HALT (refusal A) if DD or rendered tests are absent.
 | `.vmodel/config.yaml` | project root | Yes — for `commands.test`, `commands.lint`, `build.retry.max_review_attempts` |
 | Project conventions | `.vmodel/references/` + project-side `conventions.md` | Optional; match existing patterns when present |
 | `feedback.yaml` (fix mode) | `.vmodel/.build/tasks/<task-id>/feedback.yaml` | Fix mode only — refusal C if missing in fix mode |
+| `current-task.yaml` | `.vmodel/.build/tasks/<task-id>/current-task.yaml` | Yes — carries the contract (`acceptance_criteria`, `context_to_load`, `out_of_scope`) plus `mode` / `attempt` / optional resume hint |
+| Resume hint | `current-task.yaml` `mode: resume` + `resume_from_step` field | Set by orchestrator on detecting a mid-attempt crash — triggers Resume mode |
 
 ## Output
 
@@ -55,6 +57,40 @@ Source code file(s) implementing the leaf scope, plus one YAML status file.
 Template: `templates/review-ready.yaml.tmpl`. This is the implementation handoff;
 `vmodel-skill-review-execution` reads it (alongside the git diff and test
 results) to produce the verdict.
+
+**`build-progress.yaml`** written to `.vmodel/.build/tasks/<task-id>/build-progress.yaml`.
+Template: `templates/build-progress.yaml.tmpl`. Overwrite-on-update at every gate
+boundary; the orchestrator reads this on resume to decide recovery path.
+
+**`build-blocked.yaml`** written to `.vmodel/.build/tasks/<task-id>/build-blocked.yaml`
+ONLY when the implementation hits a contract boundary it cannot cross
+(scope-expansion, missing-context, contradiction, test-defect, external-dep).
+Template: `templates/build-blocked.yaml.tmpl`. When this file is emitted, do NOT
+emit `review-ready.yaml`. The orchestrator decides auto-amend vs escalate.
+
+## Contract enforcement
+
+The orchestrator-supplied `current-task.yaml` carries three contract fields that
+constrain this skill's behaviour. Enforcement is mandatory:
+
+- **`acceptance_criteria`** — informational list of TestSpec case references the
+  implementation must satisfy. Use to verify coverage before emitting
+  `review-ready.yaml`. Do not cite as design source — the DD is the spec.
+
+- **`context_to_load`** — read-only allowlist of spec / reference files. Refuse
+  to Read any file outside this list except:
+    (a) source code files in the project (the implementation surface)
+    (b) the rendered test files in the worktree
+  Reading anything else (other leaves' source, unrelated specs, third-party
+  config) is a scope violation — emit `build-blocked.yaml` (see Refusal H and
+  the *Scope-expansion HALT* section).
+
+- **`out_of_scope`** — declarative do-not list. Treat each entry as a HALT
+  trigger if the natural implementation would require crossing the boundary.
+  Emit `build-blocked.yaml` with the matching `blocker_type`.
+
+→ Full procedure for emitting `build-blocked.yaml` and choosing
+`suggested_resolution`: `references/scope-expansion-halt.md`.
 
 ## Procedure
 
@@ -86,6 +122,26 @@ Summary:
 9. Run the pre-publish self-check (see Pre-publish self-check below).
 10. Write `review-ready.yaml`.
 
+At every gate boundary, overwrite `build-progress.yaml` with the new
+`last_step` value (see *Progress checkpointing* below). At any point during
+steps 1–10 a contract boundary may surface — see *Scope-expansion HALT*.
+
+### Resume mode
+
+Triggered when `current-task.yaml` has `mode: resume` and `resume_from_step` is
+set (orchestrator sets these on detecting a mid-attempt crash with all gates
+green but no `review-ready.yaml`).
+
+Procedure:
+
+1. Read `build-progress.yaml`; verify `last_step` matches `resume_from_step`.
+2. Re-run all gates from `resume_from_step` forward. Do not redo earlier work.
+3. Specifically: do not re-run TDD red; do not re-implement; just re-validate
+   gates (lint, coverage, self-check) and write `review-ready.yaml`.
+4. Update `build-progress.yaml` at each gate as in greenfield mode.
+5. If a gate fails on resume (e.g., lint passes initially but the resumed
+   environment fails), drop to a fresh attempt: emit ESC if no progress.
+
 ### Fix mode
 
 Full procedure: `references/fix-mode-taxonomy.md`.
@@ -99,6 +155,66 @@ Summary:
 5. Re-emit `review-ready.yaml` with `notes:` referencing addressed feedback entries.
 6. If attempt count reaches `build.retry.max_review_attempts` and rejections remain
    unresolvable at this layer, HALT and surface escalation (refusal E).
+
+## Scope-expansion HALT
+
+When the implementation hits a contract boundary it cannot cross — needing to
+read a file outside `context_to_load`, write a file outside `files_to_touch`,
+or violate an `out_of_scope` rule — emit `build-blocked.yaml` and halt.
+
+Detection points:
+
+1. On first scan of the DD: if the DD requires touching files clearly outside
+   the scope's source directory (per project conventions), emit before writing
+   any code.
+2. During the green/refactor loop: if a needed change crosses a boundary, halt
+   immediately. Do not silently expand.
+3. On reading: if a piece of context (a sibling's interface, a config schema,
+   a library version document) is required and not in `context_to_load`, halt.
+
+Procedure:
+
+1. Stop work. Do not continue speculatively.
+2. Fill `templates/build-blocked.yaml.tmpl` with the specific blocker.
+3. Choose `suggested_resolution` honestly:
+   - `amend-contract` only when the expansion is small (1–2 files) and clearly
+     within the spirit of the DD.
+   - `escalate-to-dd` when the DD genuinely does not say what to do.
+   - `escalate-to-architecture` when interface contracts between leaves are
+     unclear or contradictory.
+   - `escalate-to-testspec` when a rendered test contradicts the DD.
+4. Write to `.vmodel/.build/tasks/<task-id>/build-blocked.yaml`.
+5. Do NOT write `review-ready.yaml`. Do NOT commit partial code.
+
+Auto-amendment is the orchestrator's call, not yours. Even if you suggest
+`amend-contract`, do not modify your own `context_to_load` or `files_to_touch`.
+
+→ Full reference: `references/scope-expansion-halt.md`.
+
+## Progress checkpointing
+
+After every gate boundary, overwrite `build-progress.yaml` in the task dir
+with the new `last_step`, `last_step_at` (current UTC ISO 8601), and updated
+`gates` block. This is mandatory — the orchestrator uses it to decide how to
+resume after an interrupted attempt.
+
+Gate boundaries that update `last_step`:
+
+- `started`               → after first read of `current-task.yaml`
+- `dd-parsed`             → after DD parsing complete
+- `contract-checked`      → after enforcing `context_to_load` / `out_of_scope`
+- `files-planned`         → after populating `files_to_touch`
+- `red-confirmed`         → after running tests and verifying expected failures
+- `green-passing`         → after tests pass for the first time
+- `refactored`            → after refactor pass; tests still green
+- `lint-clean`            → after lint passes
+- `coverage-met`          → after coverage threshold met (or skipped)
+- `self-check-passed`     → after pre-publish self-check passes
+- `review-ready-written`  → after writing `review-ready.yaml`
+
+Overwrite-on-update — not append. Latest state is authoritative.
+
+Template: `templates/build-progress.yaml.tmpl`.
 
 ## Pre-publish self-check
 
@@ -161,3 +277,4 @@ emits the structured handover, and does not write `review-ready.yaml`.
 | E | `max_review_attempts` exhausted, rejections remain | HALT. Surface unresolvable entries; escalate to architecture review or spec revision. |
 | F | User requests a feature not in the DD | HALT. "Not in DD. Add to DD first, then re-invoke." |
 | G | Test is wrong — fixing it would make tests pass but violate DD | HALT. Escalate to `vmodel-skill-author-testspec` / `vmodel-skill-render-tests`; do not weaken or delete. |
+| H | Scope expansion required — implementation needs to read or write a file outside the contract's allowlist (`context_to_load` / `files_to_touch`) or violates an `out_of_scope` rule | HALT. Emit `build-blocked.yaml` per the *Scope-expansion HALT* section. Do not proceed; do not write `review-ready.yaml`. |
