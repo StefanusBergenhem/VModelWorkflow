@@ -54,13 +54,13 @@ Do **not** activate this skill for:
 
 A YAML file written to:
 
-    specs/.reviews/<artifact-id>-YYYY-MM-DD-NN.yaml
+    ${paths.reviews}/<artifact-id>-YYYY-MM-DD-NN.yaml
 
 (per TARGET_ARCHITECTURE §5.6 review output convention) plus a short Markdown summary in chat that references the file path.
 
 The YAML shape is `templates/verdict.md.tmpl` (skill self-contained). Each finding follows `templates/finding.yaml.tmpl`. The chat summary is human-friendly rendering — the file is the source of truth.
 
-**Naming.** `<artifact-id>` is the reviewed artifact's id from its front-matter. `NN` is a zero-padded 2-digit sequence; pick the next available sequence for the date by listing existing files in `specs/.reviews/` and incrementing.
+**Naming.** `<artifact-id>` is the reviewed artifact's id from its front-matter. `NN` is a zero-padded 2-digit sequence; pick the next available sequence for the date by listing existing files in `${paths.reviews}/` and incrementing.
 
 ## Cross-cutting authoring discipline
 
@@ -136,6 +136,37 @@ When halting, return: `{ status: not-reviewable | missing-inputs | malformed-doc
 ## Review procedure — eight-step sweep
 
 The author skill authors in 13 steps; the review skill condenses to 8 sweeps. Read the document once before any sweep. Then run in this order:
+
+### Step 0.5 — Shape detection (selective reference loading)
+
+Before loading references, emit a one-line shape declaration that gates which references apply. This avoids the ~25k-token cost of loading references that don't apply to this Architecture's shape (per dogfood Issues 27 / 33 / 34).
+
+For this skill, the flags are:
+
+- **`is_retrofit`**: true if front-matter declares `recovery_status:`; false otherwise.
+- **`is_root_scope`**: true if this Architecture sits at the root of the spec tree (its parent is the root product PB / needs / PD, not another Architecture); false at branch scope.
+
+State the flag values out loud in one sentence (e.g., "Shape: is_retrofit=false, is_root_scope=true") before proceeding.
+
+References named under "Always load" below are pulled unconditionally. References named under "Conditional" are pulled ONLY when their guarding flag fires. If a finding emerges during review that a conditional reference would inform, load it retroactively — the conditional list is an opening default, not a hard exclusion.
+
+**Always load** (core checks applicable to every Architecture review):
+
+→ See `references/decomposition-checks.md`
+→ See `references/interface-contract-checks.md`
+→ See `references/composition-patterns-checks.md`
+→ See `references/data-and-persistence-checks.md`
+→ See `references/resilience-checks.md`
+→ See `references/observability-and-security-checks.md`
+→ See `references/adr-traceability-checks.md`
+→ See `references/evolution-and-fitness-functions-checks.md`
+→ See `references/anti-patterns-catalog.md`
+→ See `references/quality-bar-gate.md`
+
+**Conditional** (load only when the named flag is set):
+
+→ See `references/deployment-intent-checks.md` — load only if `is_root_scope = true` (deployment intent is a root-scope concern; branch Architectures do not author it)
+→ See `references/retrofit-discipline-checks.md` — load only if `is_retrofit = true`
 
 ### Step 1 — Decomposition sweep
 
@@ -251,7 +282,7 @@ Before emitting:
 - [ ] The `summary` field cites the dominant findings, not every finding.
 - [ ] If meta-gate fires, the upstream-traceability question is answered explicitly (DESIGN_ISSUE vs REJECTED).
 - [ ] If `governing_adrs:` non-empty, every entry was checked for resolution and body-citation.
-- [ ] Verdict file written to `specs/.reviews/<artifact-id>-YYYY-MM-DD-NN.yaml` with the correct next-available sequence for the date
+- [ ] Verdict file written to `${paths.reviews}/<artifact-id>-YYYY-MM-DD-NN.yaml` with the correct next-available sequence for the date
 - [ ] Chat summary references the file path
 
 ## Pointers

@@ -52,11 +52,11 @@ The mechanism appears once, in `rationale`, citing ADR-001 by id. `purpose` and 
     - "Emit a single self-contained HTML file under reports/."
 ```
 
-Fires `arch.adr-bound-mechanism-leaked` from `scripts/check-adr-landing.py`. The mechanism appears in `responsibilities`, conflating *what is owned* with *how it is realised*. Even though the ADR is cited, the citation is in the wrong field — a downstream reader treats the mechanism as architecturally load-bearing rather than rationale-load-bearing.
+Fires `arch.adr-bound-mechanism-leaked` from `${paths.scripts}/check-adr-landing.py`. The mechanism appears in `responsibilities`, conflating *what is owned* with *how it is realised*. Even though the ADR is cited, the citation is in the wrong field — a downstream reader treats the mechanism as architecturally load-bearing rather than rationale-load-bearing.
 
 ## Mechanical detection
 
-`scripts/check-adr-landing.py` reads the governing ADR's `propagation.bindings:` block, walks each binding's `name`, and flags any matching name that appears outside `rationale` in the architecture artifact bound by `governing_adrs`. The check runs at Step 13 (Pre-publish mechanical self-check) of architecture authoring.
+`${paths.scripts}/check-adr-landing.py` reads the governing ADR's `propagation.bindings:` block, walks each binding's `name`, and flags any matching name that appears outside `rationale` in the architecture artifact bound by `governing_adrs`. The check runs at Step 13 (Pre-publish mechanical self-check) of architecture authoring.
 
 The script does not enforce that bindings ARE cited in `rationale` — that is a coverage check belonging to the matched review skill. It only flags placement defects: bindings appearing in the wrong field.
 

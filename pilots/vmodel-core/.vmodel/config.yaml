@@ -9,6 +9,7 @@ project:
 paths:
   references: .vmodel/references/
   reviews: .vmodel/.reviews/
+  scripts: ../../scripts/
   build: .vmodel/.build/
   defer_index: .vmodel/defer-index.md
   src: src/

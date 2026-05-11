@@ -32,6 +32,8 @@ Fix: derive the TestSpec from the spec FIRST, then map existing tests against it
 Tell: error / happy ratio < 1:2; many `functional` cases, no `error` / `boundary` / `fault-injection`.
 Fix: walk the parent spec's preconditions, error-matrix rows, and downstream-failure paths; emit cases for each.
 
+**Legitimate-non-fit (the opposite anti-pattern's mirror).** When the parent DD's error matrix has one or two rows exhaustively covered AND failure modes outside the DD are structurally impossible at runtime (e.g., bundle absence is build-time-only, network access is forbidden by invariant), no amount of honest authoring lifts the ratio above 1:2. The right move is to name the non-fit in the TestSpec's *Overview* — cite which DD rows are covered, which modes are out-of-scope-with-rationale. Fabricating "robustness" cases for non-existent failure modes is the actual anti-pattern (`coverage-as-quality-metric` close cousin). See Quality Bar Group 2 — the gate is honest exhaustion, not the bare ratio.
+
 ## Oracle quality (3)
 
 ### 5. Weak assertions ★ (refusal C) — `anti-pattern.weak-assertions`

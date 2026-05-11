@@ -157,7 +157,7 @@ If any answer is No → DD fails regardless of other items.
 
 | Identifier | Severity | Conditional gating |
 |---|---|---|
-| `check.mermaid.parser-breaking-chars` | soft_reject | Mermaid block present (state machine in stateful leaf). Cross-ref: `scripts/check-mermaid.py` rules `mermaid.semicolon-in-message`, `mermaid.angle-bracket-in-message`, `mermaid.unquoted-alias-special-char` |
+| `check.mermaid.parser-breaking-chars` | soft_reject | Mermaid block present (state machine in stateful leaf). Cross-ref: `${paths.scripts}/check-mermaid.py` rules `mermaid.semicolon-in-message`, `mermaid.angle-bracket-in-message`, `mermaid.unquoted-alias-special-char` |
 
 Bundles author-script findings: semicolon in message text, unquoted `<…>` placeholders, participant aliases containing `/`, `:`, or `,` without surrounding double quotes. One finding per check; the script's rule IDs identify the specific occurrences.
 

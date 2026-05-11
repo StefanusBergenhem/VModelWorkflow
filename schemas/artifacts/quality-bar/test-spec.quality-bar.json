@@ -32,7 +32,7 @@
         },
         {
           "id": "QB-TS-derivation-discipline-005",
-          "prompt": "Is the error-path-to-happy-path case ratio \u2265 1:2?"
+          "prompt": "Is the error-path-to-happy-path case ratio \u2265 1:2 when the parent spec's error surface supports it; otherwise has the author named the non-fit and the reason in the Overview, citing which error-matrix rows are covered and which failure modes are out-of-scope-with-rationale?"
         }
       ]
     },

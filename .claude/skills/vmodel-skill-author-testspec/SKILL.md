@@ -40,7 +40,7 @@ Expected upstream context (ask if missing):
 - **Governing ADRs** — cross-cutting decisions that constrain testing approach (e.g., environment shape, fixture strategy)
 - **Recovery posture** — greenfield (omit `recovery_status`) or retrofit (declare `recovery_status` on reconstructed `verifies`)
 - **Project policy on coverage / mutation thresholds** — if the project has named values, capture them; otherwise the bar is populated with placeholder values and a note that policy will fix them
-- **Prior review files** (optional, consumed when present) — on a revision pass, the latest review at `specs/.reviews/<artifact-id>-*.yaml` (lexically last) is read and findings are addressed. Per TARGET_ARCHITECTURE §5.6 review output convention.
+- **Prior review files** (optional, consumed when present) — on a revision pass, the latest review at `${paths.reviews}/<artifact-id>-*.yaml` (lexically last) is read and findings are addressed. Per TARGET_ARCHITECTURE §5.6 review output convention.
 - **`.vmodel/references/partial-parent-protocol.md`** — partial-parent and no-canonical-upstream protocol — three permitted paths when canonical upstream is missing or partial. Required reading whenever any canonical parent for the layer is absent or partial — leaf without DD; branch missing Architecture or Requirements; root missing root product (PB / needs / PD), Requirements, or Architecture Composition. Multi-parent scopes (branch, root) trigger this protocol on partial absence even when one parent is present. (Resolved via `.vmodel/config.yaml`; framework default copied there at init.)
 
 If the parent spec is not provided, **HALT** (see HALT condition #1) — refusal B fires when TestSpec authoring proceeds without an upstream artifact.
@@ -61,7 +61,7 @@ Author the document in this order. Each step has its own reference file with the
 
 ### Step 0 — Read prior review (revision pass only)
 
-If `specs/.reviews/<artifact-id>-*.yaml` contains review files for this artifact:
+If `${paths.reviews}/<artifact-id>-*.yaml` contains review files for this artifact:
 1. Pick the lexically last (latest review run by date + sequence).
 2. Walk every finding.
 3. For each finding, decide: apply (revise this artifact), push back with rationale (finding is wrong), or defer with explicit marker (out of scope here, named follow-up).
@@ -91,6 +91,40 @@ If the canonical upstream is missing or partial:
 If the canonical upstream is fully present (all parents for the layer), *Overview* says so in one short clause ("(canonical parents present)") and the protocol is satisfied without further action.
 
 → See `.vmodel/references/partial-parent-protocol.md`
+
+### Step 0.6 — Shape detection (selective reference loading)
+
+Before loading craft references, emit a one-line shape declaration that gates which references apply. This avoids the ~30k-token cost of loading references that don't apply to this TestSpec's shape (per dogfood Issues 27 / 33 / 34).
+
+For this skill, the flags are:
+
+- **`layer`**: `leaf` | `branch` | `root`. Determined by scope position (leaf scope → `unit`, branch scope → `integration`, root scope → `system`).
+- **`is_retrofit`**: true if this TestSpec is being authored retrofit-style with `recovery_status:` declared; false if greenfield.
+- **`uses_test_doubles`**: true if any case will name a test double (dummy / stub / spy / mock / fake) in preconditions; default false until Step 7 demands otherwise.
+
+State the flag values out loud in one sentence (e.g., "Shape: layer=leaf, is_retrofit=false, uses_test_doubles=true") before Step 1.
+
+References named under "Always load" below are pulled unconditionally. References named under "Conditional" are pulled ONLY when their guarding flag fires. If a finding emerges during authoring that a conditional reference would inform, load it retroactively — the conditional list is an opening default, not a hard exclusion.
+
+**Always load** (core craft applicable to every TestSpec):
+
+→ See `references/testspec-purpose-and-shape.md`
+→ See `references/derivation-strategies.md`
+→ See `references/per-layer-weight.md`
+→ See `references/case-quality.md`
+→ See `references/verifies-traceability.md`
+→ See `references/coverage-mutation-bar.md`
+→ See `references/anti-patterns.md`
+→ See `references/quality-bar-checklist.md`
+
+**Conditional** (load only when the named flag is set):
+
+→ See `references/dd-traceability-cues.md` — load only if `layer = leaf`
+→ See `references/architecture-traceability-cues.md` — load only if `layer ∈ {branch, root}`
+→ See `references/requirements-traceability-cues.md` — load only if `layer ∈ {branch, root}`
+→ See `references/integration-and-system-specifics.md` — load only if `layer ∈ {branch, root}`
+→ See `references/test-double-discipline.md` — load only if `uses_test_doubles = true`
+→ See `references/retrofit-discipline.md` — load only if `is_retrofit = true`
 
 ### Step 1 — Locate the layer and parent spec
 
@@ -131,9 +165,21 @@ For every case: the title is a scenario (not a method name); the type is from th
 
 → See `references/case-quality.md` (F.I.R.S.T., AAA, oracle specificity), `references/verifies-traceability.md`
 
-Implicit-verifies self-check: when a case mentions an upstream identifier (REQ-NNN, IC-NNN, ADR-NNN, ARCH.<path>) in `preconditions:` or `expected:` text, that identifier MUST appear in the case's `verifies:` list. Mechanically detected by `scripts/check-implicit-verifies.py` at Step 11.
+Implicit-verifies self-check: when a case mentions an upstream identifier (REQ-NNN, IC-NNN, ADR-NNN, ARCH.<path>) in `preconditions:` or `expected:` text, that identifier MUST appear in the case's `verifies:` list. Mechanically detected by `${paths.scripts}/check-implicit-verifies.py` at Step 11.
 
-Typed-error enum coverage: every entry in a parent interface's `errors:` enum requires at least one case under the `error` or `fault-injection` strategy. Roll-up cases (one case covering multiple errors via shared halt-and-report path) are permissible when the parent contract treats them uniformly, but each rolled-up code MUST be cited in the case's `verifies:` list. Mechanically detected by `scripts/check-typed-error-coverage.py` at Step 11.
+Typed-error enum coverage: every entry in a parent interface's `errors:` enum requires at least one case under the `error` or `fault-injection` strategy. Mechanically detected by `${paths.scripts}/check-typed-error-coverage.py` at Step 11.
+
+Two sub-rules:
+
+- **Roll-up coverage** — one case covering multiple errors via a shared halt-and-report path is permissible when the parent contract treats the codes uniformly. Each rolled-up code MUST appear in the case's `verifies:` list (one case, many verifies).
+- **Dual-citation at the leaf seam** — when a leaf TestSpec closes an ARCH-level typed-error declared on the DD's `derived_from: [ARCH-IF-<NAME>]` interface, the case's `verifies:` SHOULD list BOTH the DD-level error path AND the ARCH-level error path. The script will accept either alone (the DD→ARCH link is followed automatically), but explicit dual-citation is the canonical form because it makes the cross-layer trace readable without invoking the script. Worked example for a leaf case verifying `ErrUnknownArtifactType`:
+
+  ```yaml
+  verifies:
+    - "DD-embedded-resources.public_interface.Schema.errors.ErrUnknownArtifactType"
+    - "DD-embedded-resources.error_handling.ErrUnknownArtifactType"
+    - "ARCH.interfaces.IFrameworkResources.errors.ErrUnknownArtifactType"
+  ```
 
 → See `references/verifies-traceability.md`
 → See `references/architecture-traceability-cues.md`
@@ -168,9 +214,10 @@ Run the skill's mechanical check scripts before the Quality Bar gate. Each findi
 
 Scripts for this skill:
 
-- `scripts/check-implicit-verifies.py <specs-root>` — case-level upstream-id citation completeness (every REQ/IC/ADR/ARCH ID mentioned in `preconditions:` or `expected:` text must appear in the case's `verifies:`)
-- `scripts/check-typed-error-coverage.py <specs-root>` — typed-error enum coverage from parent interfaces (every `errors:` enum entry has at least one covering case)
-- `scripts/check-id-encoding.py <specs-root>` — detects malformed empty-scope id forms (`TS-`, `TC--NNN`, `ARCH-.interfaces.X`) per TARGET §5.4 empty-scope rule
+- `${paths.scripts}/check-schema-validation.py <specs-root>` — validates front-matter against the per-artifact JSON Schema (composes the envelope) and embedded YAML blocks against the matching `$defs` member (`public_interface_entry`, `data_structure_entry`, `interface`, `decomposition_child`, `requirement`, `test_case`). Catches missing required front-matter fields (e.g., missing `title:`) and schema-invalid YAML entries that other scripts do not detect.
+- `${paths.scripts}/check-implicit-verifies.py <specs-root>` — case-level upstream-id citation completeness (every REQ/IC/ADR/ARCH ID mentioned in `preconditions:` or `expected:` text must appear in the case's `verifies:`)
+- `${paths.scripts}/check-typed-error-coverage.py <specs-root>` — typed-error enum coverage from parent interfaces (every `errors:` enum entry has at least one covering case)
+- `${paths.scripts}/check-id-encoding.py <specs-root>` — detects malformed empty-scope id forms (`TS-`, `TC--NNN`, `ARCH-.interfaces.X`) per TARGET §5.4 empty-scope rule
 
 Verify also: when the partial-parent protocol fired (Step 0.5), *Overview* explicitly names the chosen path (a/b/c); under path (b), a `[DEFER-DD: ...]` marker names the canonical-parent replacement inline; declared `level:` matches scope position; case shape matches the actual parent type used; no fabricated upstream ids in `derived_from` or `verifies`.
 
@@ -275,4 +322,4 @@ That's it — one file. The skill does not create directories, schemas, validato
 - `templates/retrofit-stub.yaml.tmpl` — retrofit case scaffold with `# HUMAN-ONLY` markers
 - `examples/good-leaf-expiry-calculator.md` — worked example, leaf scope, eight cases across strategies, populated bar
 - `examples/bad-orphan-and-fabricated.md` — counter-example with annotated refusal trips
-- `scripts/index-deferred-items.py` — informational cross-artifact deferred-items index for the spec tree (Phase 6 Cluster 4)
+- `${paths.scripts}/index-deferred-items.py` — informational cross-artifact deferred-items index for the spec tree (Phase 6 Cluster 4)

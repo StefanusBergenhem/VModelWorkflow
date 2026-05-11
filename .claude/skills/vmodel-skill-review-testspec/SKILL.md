@@ -47,13 +47,13 @@ Do **not** activate this skill for:
 
 A YAML file written to:
 
-    specs/.reviews/<artifact-id>-YYYY-MM-DD-NN.yaml
+    ${paths.reviews}/<artifact-id>-YYYY-MM-DD-NN.yaml
 
 (per TARGET_ARCHITECTURE §5.6 review output convention) plus a short Markdown summary in chat that references the file path.
 
 The YAML shape is `templates/verdict.md.tmpl` (skill self-contained). Each finding follows `templates/finding.yaml.tmpl`. The chat summary is human-friendly rendering — the file is the source of truth.
 
-**Naming.** `<artifact-id>` is the reviewed artifact's id from its front-matter. `NN` is a zero-padded 2-digit sequence; pick the next available sequence for the date by listing existing files in `specs/.reviews/` and incrementing.
+**Naming.** `<artifact-id>` is the reviewed artifact's id from its front-matter. `NN` is a zero-padded 2-digit sequence; pick the next available sequence for the date by listing existing files in `${paths.reviews}/` and incrementing.
 
 ## Cross-cutting authoring discipline
 
@@ -135,6 +135,41 @@ When halting, return: `{ status: not-reviewable | missing-inputs | malformed-doc
 ## Review procedure — eight-step sweep
 
 Read the document once before any sweep. Then run in this order:
+
+### Step 0.5 — Shape detection (selective reference loading)
+
+Before loading references, emit a one-line shape declaration that gates which references apply. This avoids the ~25k-token cost of loading references that don't apply to this TestSpec's shape (per dogfood Issues 27 / 33 / 34).
+
+For this skill, the flags are:
+
+- **`layer`**: `leaf` | `branch` | `root`. Read from the artifact's `level` field (`unit` → leaf, `integration` → branch, `system` → root) and confirm against scope position.
+- **`is_retrofit`**: true if front-matter declares `recovery_status:`; false otherwise.
+- **`uses_test_doubles`**: true if any case's `preconditions:` field names a test double (dummy / stub / spy / mock / fake); false otherwise.
+
+State the flag values out loud in one sentence (e.g., "Shape: layer=leaf, is_retrofit=false, uses_test_doubles=true") before proceeding.
+
+References named under "Always load" below are pulled unconditionally. References named under "Conditional" are pulled ONLY when their guarding flag fires. `per-layer-weight-checks.md` is always loaded but only the layer's slice is consulted. If a finding emerges during review that a conditional reference would inform, load it retroactively — the conditional list is an opening default, not a hard exclusion.
+
+**Always load** (core checks applicable to every TestSpec review):
+
+→ See `references/testspec-shape-checks.md`
+→ See `references/derivation-strategy-checks.md`
+→ See `references/per-layer-weight-checks.md` — load always, but pull only the layer's slice
+→ See `references/case-quality-checks.md`
+→ See `references/oracle-checks.md`
+→ See `references/verifies-traceability-checks.md`
+→ See `references/coverage-mutation-bar-checks.md`
+→ See `references/anti-patterns-catalog.md`
+→ See `references/quality-bar-gate.md`
+
+**Conditional** (load only when the named flag is set):
+
+→ See `references/dd-traceability-checks.md` — load only if `layer = leaf`
+→ See `references/architecture-traceability-checks.md` — load only if `layer ∈ {branch, root}`
+→ See `references/requirements-traceability-checks.md` — load only if `layer ∈ {branch, root}`
+→ See `references/integration-and-system-checks.md` — load only if `layer ∈ {branch, root}`
+→ See `references/test-double-discipline-checks.md` — load only if `uses_test_doubles = true`
+→ See `references/retrofit-discipline-checks.md` — load only if `is_retrofit = true`
 
 ### Step 1 — Shape and metadata sweep
 
@@ -253,7 +288,7 @@ Several checks apply only under stated conditions:
 - [ ] If meta-gate fires, the upstream-traceability question is answered explicitly (DESIGN_ISSUE vs REJECTED)
 - [ ] If `governing_adrs:` non-empty, every entry was checked for resolution
 - [ ] If retrofit mode, `recovery_status` discipline was applied per layer
-- [ ] Verdict file written to `specs/.reviews/<artifact-id>-YYYY-MM-DD-NN.yaml` with the correct next-available sequence for the date
+- [ ] Verdict file written to `${paths.reviews}/<artifact-id>-YYYY-MM-DD-NN.yaml` with the correct next-available sequence for the date
 - [ ] Chat summary references the file path
 
 ## Pointers

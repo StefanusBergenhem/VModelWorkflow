@@ -44,13 +44,13 @@ Do **not** activate this skill for:
 
 A YAML file written to:
 
-    specs/.reviews/<artifact-id>-YYYY-MM-DD-NN.yaml
+    ${paths.reviews}/<artifact-id>-YYYY-MM-DD-NN.yaml
 
 (per TARGET_ARCHITECTURE §5.6 review output convention) plus a short Markdown summary in chat that references the file path.
 
 The YAML shape is `templates/verdict.md.tmpl` (skill self-contained). Each finding follows `templates/finding.yaml.tmpl`. The chat summary is human-friendly rendering — the file is the source of truth.
 
-**Naming.** `<artifact-id>` is the reviewed artifact's id from its front-matter. `NN` is a zero-padded 2-digit sequence; pick the next available sequence for the date by listing existing files in `specs/.reviews/` and incrementing.
+**Naming.** `<artifact-id>` is the reviewed artifact's id from its front-matter. `NN` is a zero-padded 2-digit sequence; pick the next available sequence for the date by listing existing files in `${paths.reviews}/` and incrementing.
 
 ## Cross-cutting authoring discipline
 
@@ -125,6 +125,38 @@ When halting, return: `{ status: not-reviewable | missing-inputs | malformed-doc
 ## Review procedure — eight-step sweep
 
 The author skill authors in 13 steps; the review skill condenses to 8 sweeps. Read the document once before any sweep. Then run in this order:
+
+### Step 0.5 — Shape detection (selective reference loading)
+
+Before loading references, emit a one-line shape declaration that gates which references apply. This avoids the ~25k-token cost of loading references that don't apply to this DD's shape (per dogfood Issues 27 / 33 / 34).
+
+For this skill, the flags are:
+
+- **`is_retrofit`**: true if the DD's front-matter declares `recovery_status:`; false otherwise.
+- **`has_state_machine`**: true if the DD's State section carries substantive content (state inventory + transition table or a Mermaid `stateDiagram-v2` block); false if the DD is stateless (one-line absence assertion).
+- **`has_nontrivial_algorithms`**: true if the Algorithms section is ≥30 lines OR contains a YAML or Mermaid block; false if it is one or two short paragraphs of result-property statements.
+
+State the flag values out loud in one sentence (e.g., "Shape: is_retrofit=false, has_state_machine=false, has_nontrivial_algorithms=true") before proceeding.
+
+References named under "Always load" below are pulled unconditionally. References named under "Conditional" are pulled ONLY when their guarding flag fires. If a finding emerges during review that a conditional reference would inform, load it retroactively — the conditional list is an opening default, not a hard exclusion.
+
+**Always load** (core checks applicable to every DD review):
+
+→ See `references/dd-shape-checks.md`
+→ See `references/function-contract-checks.md`
+→ See `references/data-and-invariant-checks.md`
+→ See `references/error-handling-checks.md`
+→ See `references/rationale-checks.md`
+→ See `references/adr-traceability-checks.md`
+→ See `references/testspec-traceability-checks.md`
+→ See `references/anti-patterns-catalog.md`
+→ See `references/quality-bar-gate.md`
+
+**Conditional** (load only when the named flag is set):
+
+→ See `references/state-and-concurrency-checks.md` — load only if `has_state_machine = true`
+→ See `references/algorithm-checks.md` — load only if `has_nontrivial_algorithms = true` (the heuristic: Algorithms section ≥ 30 lines OR contains a YAML/Mermaid block)
+→ See `references/retrofit-discipline-checks.md` — load only if `is_retrofit = true`
 
 ### Step 1 — Shape and metadata sweep
 
@@ -244,7 +276,7 @@ Several checks apply only under stated conditions:
 - [ ] If meta-gate fires, the upstream-traceability question is answered explicitly (DESIGN_ISSUE vs REJECTED)
 - [ ] If `governing_adrs:` non-empty, every entry was checked for resolution and body-citation
 - [ ] If retrofit mode, the Overview-narrowing schema rule was checked
-- [ ] Verdict file written to `specs/.reviews/<artifact-id>-YYYY-MM-DD-NN.yaml` with the correct next-available sequence for the date
+- [ ] Verdict file written to `${paths.reviews}/<artifact-id>-YYYY-MM-DD-NN.yaml` with the correct next-available sequence for the date
 - [ ] Chat summary references the file path
 
 ## Pointers

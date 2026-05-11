@@ -36,7 +36,7 @@ Expected upstream context (ask if missing):
 - **Derived-from set** — at least one Requirement (REQ-…) plus optionally sibling DDs, ARCH interfaces, or ADRs that shape the contract; an empty `derived_from` is an orphan design
 - **Governing ADRs** — cross-cutting decisions that constrain choices at this leaf (often inherited from the parent Architecture's `governing_adrs`)
 - **Recovery posture** — greenfield (omit `recovery_status`) or retrofit (declare `recovery_status` and supply source-code references)
-- **Prior review files** (optional, consumed when present) — on a revision pass, the latest review at `specs/.reviews/<artifact-id>-*.yaml` (lexically last) is read and findings are addressed. Per TARGET_ARCHITECTURE §5.6 review output convention.
+- **Prior review files** (optional, consumed when present) — on a revision pass, the latest review at `${paths.reviews}/<artifact-id>-*.yaml` (lexically last) is read and findings are addressed. Per TARGET_ARCHITECTURE §5.6 review output convention.
 - **`.vmodel/references/partial-parent-protocol.md`** — partial-parent and no-canonical-upstream protocol — three permitted paths when canonical upstream is missing or partial. Required reading whenever the canonical upstream (parent Architecture) is absent or only partially present. (Resolved via `.vmodel/config.yaml`; framework default copied there at init.)
 
 If the parent Architecture is not provided, **HALT** (see HALT condition #1) — refusal B fires when DD authoring proceeds without a parent allocation.
@@ -57,7 +57,7 @@ Author the document in this order. Each step has its own reference file with the
 
 ### Step 0 — Read prior review (revision pass only)
 
-If `specs/.reviews/<artifact-id>-*.yaml` contains review files for this artifact:
+If `${paths.reviews}/<artifact-id>-*.yaml` contains review files for this artifact:
 1. Pick the lexically last (latest review run by date + sequence).
 2. Walk every finding.
 3. For each finding, decide: apply (revise this artifact), push back with rationale (finding is wrong), or defer with explicit marker (out of scope here, named follow-up).
@@ -80,6 +80,37 @@ If the canonical upstream is missing or partial:
 If the canonical upstream is fully present, *Overview* says so in one short clause ("(canonical parent present)") and the protocol is satisfied without further action.
 
 → See `.vmodel/references/partial-parent-protocol.md`
+
+### Step 0.6 — Shape detection (selective reference loading)
+
+Before loading craft references, emit a one-line shape declaration that gates which references apply. This avoids the ~30k-token cost of loading references that don't apply to this DD's shape (per dogfood Issues 27 / 33 / 34) — observed pilot cost: ~178k for a stateless greenfield DD session, of which ~30k was always-loaded references.
+
+For this skill, the flags are:
+
+- **`is_retrofit`**: true if this DD is being authored retrofit-style with `recovery_status:` declared in front-matter; false if greenfield.
+- **`has_state_machine`**: true if the leaf is stateful and will carry a state machine (state inventory + transition table or Mermaid diagram); false if stateless (Step 7 will be a one-line absence assertion).
+
+State the flag values out loud in one sentence (e.g., "Shape: is_retrofit=false, has_state_machine=false") before Step 1.
+
+References named under "Always load" below are pulled unconditionally during the relevant Step. References named under "Conditional" are pulled ONLY when their guarding flag fires. If a finding emerges during authoring that a conditional reference would inform, load it retroactively — the conditional list is an opening default, not a hard exclusion.
+
+**Always load** (core craft applicable to every DD):
+
+→ See `references/dd-purpose-and-shape.md`
+→ See `references/function-contracts.md`
+→ See `references/data-structures-by-invariant.md`
+→ See `references/algorithms.md`
+→ See `references/error-handling.md`
+→ See `references/rationale-capture.md`
+→ See `references/adr-extraction-cues.md`
+→ See `references/testspec-traceability-cues.md`
+→ See `references/anti-patterns.md`
+→ See `references/quality-bar-checklist.md`
+
+**Conditional** (load only when the named flag is set):
+
+→ See `references/state-and-concurrency.md` — load only if `has_state_machine = true`
+→ See `references/retrofit-discipline.md` — load only if `is_retrofit = true`
 
 ### Step 1 — Locate the leaf in the parent Architecture
 
@@ -165,8 +196,9 @@ Run the skill's mechanical check scripts before the Quality Bar gate. Each findi
 
 Scripts for this skill:
 
-- `scripts/check-mermaid.py <specs-root>` — state diagram syntax (when state machines are authored)
-- `scripts/check-id-encoding.py <specs-root>` — detects malformed empty-scope id forms (`TS-`, `TC--NNN`, `ARCH-.interfaces.X`) per TARGET §5.4 empty-scope rule
+- `${paths.scripts}/check-schema-validation.py <specs-root>` — validates front-matter against the per-artifact JSON Schema (composes the envelope) and embedded YAML blocks against the matching `$defs` member (`public_interface_entry`, `data_structure_entry`, `interface`, `decomposition_child`, `requirement`, `test_case`). Catches missing required front-matter fields (e.g., missing `title:`) and schema-invalid YAML entries that other scripts do not detect.
+- `${paths.scripts}/check-mermaid.py <specs-root>` — state diagram syntax (when state machines are authored)
+- `${paths.scripts}/check-id-encoding.py <specs-root>` — detects malformed empty-scope id forms (`TS-`, `TC--NNN`, `ARCH-.interfaces.X`) per TARGET §5.4 empty-scope rule
 
 Verify also: when the partial-parent protocol fired (Step 0.5), *Overview* explicitly names the chosen path (a/b/c); under path (b), a `[DEFER-DD: ...]` marker names the canonical-parent replacement inline; no fabricated upstream ids in `derived_from` or `parent_architecture`.
 
@@ -271,4 +303,4 @@ That's it — one file. The skill does not create directories, schemas, validato
 - `templates/governing-adr-reference.yaml.tmpl` — front-matter list + body-citation pattern
 - `examples/good-dequeue-service.md` — worked example, all seven sections, greenfield, governing ADR
 - `examples/bad-fabricated-retrofit.md` — counter-example, fabricated retrofit on a session-token validator with annotated tells
-- `scripts/index-deferred-items.py` — informational cross-artifact deferred-items index for the spec tree (Phase 6 Cluster 4)
+- `${paths.scripts}/index-deferred-items.py` — informational cross-artifact deferred-items index for the spec tree (Phase 6 Cluster 4)

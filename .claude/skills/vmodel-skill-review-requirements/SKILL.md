@@ -49,13 +49,13 @@ Do **not** activate this skill for:
 
 A YAML file written to:
 
-    specs/.reviews/<artifact-id>-YYYY-MM-DD-NN.yaml
+    ${paths.reviews}/<artifact-id>-YYYY-MM-DD-NN.yaml
 
 (per TARGET_ARCHITECTURE §5.6 review output convention) plus a short Markdown summary in chat that references the file path.
 
 The YAML shape is `templates/verdict.md.tmpl` (skill self-contained). Each finding follows `templates/finding.yaml.tmpl`. The chat summary is human-friendly rendering — the file is the source of truth.
 
-**Naming.** `<artifact-id>` is the reviewed artifact's id from its front-matter. `NN` is a zero-padded 2-digit sequence; pick the next available sequence for the date by listing existing files in `specs/.reviews/` and incrementing.
+**Naming.** `<artifact-id>` is the reviewed artifact's id from its front-matter. `NN` is a zero-padded 2-digit sequence; pick the next available sequence for the date by listing existing files in `${paths.reviews}/` and incrementing.
 
 ## Cross-cutting authoring discipline
 
@@ -112,6 +112,34 @@ The full catalog of `check_failed` identifiers lives in `references/quality-bar-
 ## Orchestration — eight steps
 
 Read the document once before any sweep. Then run in this order:
+
+### Step 0.5 — Shape detection (selective reference loading)
+
+Before loading references, emit a one-line shape declaration that gates which references apply. This avoids the ~25k-token cost of loading references that don't apply to this Requirements doc's shape (per dogfood Issues 27 / 33 / 34).
+
+For this skill, the flags are:
+
+- **`is_retrofit`**: true if front-matter declares `recovery_status:`; false otherwise.
+
+State the flag value out loud in one sentence (e.g., "Shape: is_retrofit=false") before proceeding.
+
+References named under "Always load" below are pulled unconditionally. There is no dedicated `retrofit-discipline-checks.md` reference in this skill — retrofit honesty checks live inside `quality-bar-gate.md` and `constraints-and-glossary-checks.md`. When `is_retrofit = true`, walk those references' retrofit-honesty sections; when `is_retrofit = false`, skip them. If a finding emerges during review that a conditional check would inform, apply it retroactively.
+
+**Always load** (core checks applicable to every Requirements review):
+
+→ See `references/constraints-and-glossary-checks.md`
+→ See `references/statement-quality-checks.md`
+→ See `references/ears-conformance.md`
+→ See `references/nfr-five-elements-checks.md`
+→ See `references/interface-five-dimensions-checks.md`
+→ See `references/rationale-and-traceability-checks.md`
+→ See `references/requirement-types-classification.md`
+→ See `references/anti-patterns-catalog.md`
+→ See `references/quality-bar-gate.md`
+
+**Conditional** (load only when the named flag is set):
+
+→ Retrofit-honesty sub-sections of `quality-bar-gate.md` and `constraints-and-glossary-checks.md` — consult only if `is_retrofit = true` (no dedicated `retrofit-discipline-checks.md` reference exists in this skill).
 
 ### Step 1 — Structural / vocabulary pre-check
 
@@ -203,7 +231,7 @@ Before emitting:
 - [ ] Verdict matches the decision table (no manual overrides).
 - [ ] No `recommended_action` field contains specific replacement wording.
 - [ ] The `summary` field cites every `hard_reject` finding; soft-rejects only when they cluster (≥3 in one category).
-- [ ] Verdict file written to `specs/.reviews/<artifact-id>-YYYY-MM-DD-NN.yaml` with the correct next-available sequence for the date
+- [ ] Verdict file written to `${paths.reviews}/<artifact-id>-YYYY-MM-DD-NN.yaml` with the correct next-available sequence for the date
 - [ ] Chat summary references the file path
 
 ## Pointers

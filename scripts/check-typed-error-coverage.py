@@ -54,6 +54,93 @@ def _is_testspec(fm: dict | None, path: Path) -> bool:
     return False
 
 
+def _is_detailed_design(fm: dict | None, path: Path) -> bool:
+    if fm and str(fm.get("artifact_type", "")).lower() in {
+        "detailed-design",
+        "detailed_design",
+    }:
+        return True
+    if path.name == "detailed_design.md":
+        return True
+    return False
+
+
+_DD_TO_ARCH_INTERFACE_RE = re.compile(r"^ARCH-IF-([A-Za-z0-9_-]+)$")
+
+
+def _collect_dd_arch_interface_links(md_files: list[Path]) -> dict[str, list[str]]:
+    """Return {DD-id: [ARCH interface name, ...]} from DD front-matter `derived_from`.
+
+    A leaf DD whose `derived_from` list names ARCH-IF-<NAME> entries declares
+    that the DD's typed errors close the corresponding ARCH interface's error
+    rows. Used by `_synthesize_arch_level_verifies` below to broaden a leaf
+    TestSpec's `verifies` from DD-level error paths to the implied ARCH-level
+    error rows.
+    """
+    out: dict[str, list[str]] = {}
+    for md in md_files:
+        try:
+            text = md.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            continue
+        fm, _body, _end = parse_yaml_frontmatter(text)
+        if not _is_detailed_design(fm, md):
+            continue
+        if not fm:
+            continue
+        dd_id = fm.get("id")
+        if not isinstance(dd_id, str):
+            continue
+        derived = fm.get("derived_from") or []
+        if not isinstance(derived, list):
+            continue
+        iface_names: list[str] = []
+        for entry in derived:
+            if not isinstance(entry, str):
+                continue
+            m = _DD_TO_ARCH_INTERFACE_RE.match(entry.strip())
+            if m:
+                iface_names.append(m.group(1))
+        if iface_names:
+            out[dd_id] = iface_names
+    return out
+
+
+# Captures DD-level error verifies. Two shapes:
+#   DD-<scope>.public_interface.<fn>.errors.<code>
+#   DD-<scope>.error_handling.<code>
+_DD_ERROR_VERIFIES_RE = re.compile(
+    r"^(DD-[A-Za-z0-9_-]+)"
+    r"\.(?:public_interface\.[A-Za-z0-9_-]+\.errors\.([A-Za-z0-9_-]+)"
+    r"|error_handling\.([A-Za-z0-9_-]+))$"
+)
+
+
+def _synthesize_arch_level_verifies(
+    verified: set[str], dd_to_arch: dict[str, list[str]]
+) -> set[str]:
+    """Broaden DD-level error verifies to the implied ARCH-level paths.
+
+    For every verifies-id matching a DD-level error path, look up the DD's
+    ARCH interface names (from `derived_from`) and synthesize the
+    corresponding `ARCH.interfaces.<NAME>.errors.<CODE>` ids. Returns the
+    augmented verified set (original ∪ synthesized).
+    """
+    augmented = set(verified)
+    for v in list(verified):
+        m = _DD_ERROR_VERIFIES_RE.match(v)
+        if not m:
+            continue
+        dd_id = m.group(1)
+        code = m.group(2) or m.group(3)
+        if not code:
+            continue
+        iface_names = dd_to_arch.get(dd_id, [])
+        for iface in iface_names:
+            augmented.add(f"ARCH.interfaces.{iface}.errors.{code}")
+    return augmented
+
+
 def _collect_error_codes_from_block(
     block: dict, interface_name: str | None = None
 ) -> list[tuple[str, int]]:
@@ -226,11 +313,19 @@ def main() -> int:
     try:
         expected = _collect_expected_codes(md_files)
         verified = _collect_verified_codes(md_files)
+        dd_to_arch = _collect_dd_arch_interface_links(md_files)
     except (OSError, UnicodeDecodeError):
         return 2
 
     if not expected:
         return 0
+
+    # Broaden leaf-correct DD-level verifies to the implied ARCH-level paths,
+    # so a layer-correct authoring pass (leaf cites DD only) closes the ARCH
+    # interface's error row automatically. The dual-citation discipline still
+    # applies — authors SHOULD list both for explicit traceability — but the
+    # check no longer flags an honest single-cite as uncovered.
+    verified = _synthesize_arch_level_verifies(verified, dd_to_arch)
 
     findings: list[tuple[Path, int, str, str]] = []
     for expected_id, (path, line) in sorted(expected.items()):

@@ -131,7 +131,7 @@ Stable identifiers used across all findings. Two namespaces visible here:
 | `check.decomposition.depth-test-not-applied` | soft_reject | non-trivial scope only |
 | `check.decomposition.bounded-context-fracture-ignored` | soft_reject | — |
 | `check.responsibility.implementation-prescription` | **hard_reject** ★ (refusal B) | — |
-| `check.responsibility.adr-bound-mechanism-leaked` | soft_reject | governing ADR with `propagation.bindings:` exists. Cross-ref: `scripts/check-adr-landing.py` rule `arch.adr-bound-mechanism-leaked` |
+| `check.responsibility.adr-bound-mechanism-leaked` | soft_reject | governing ADR with `propagation.bindings:` exists. Cross-ref: `${paths.scripts}/check-adr-landing.py` rule `arch.adr-bound-mechanism-leaked` |
 
 ### `check.interface.*` (Interfaces card)
 
@@ -167,7 +167,7 @@ Stable identifiers used across all findings. Two namespaces visible here:
 
 | Identifier | Severity | Conditional gating |
 |---|---|---|
-| `check.mermaid.parser-breaking-chars` | soft_reject | Mermaid block present. Cross-ref: `scripts/check-mermaid.py` rules `mermaid.semicolon-in-message`, `mermaid.angle-bracket-in-message`, `mermaid.unquoted-alias-special-char` |
+| `check.mermaid.parser-breaking-chars` | soft_reject | Mermaid block present. Cross-ref: `${paths.scripts}/check-mermaid.py` rules `mermaid.semicolon-in-message`, `mermaid.angle-bracket-in-message`, `mermaid.unquoted-alias-special-char` |
 
 Bundles author-script findings: semicolon in sequence-diagram message text, unquoted `<…>` placeholders in message text, participant aliases containing `/`, `:`, or `,` without surrounding double quotes. One finding per check; the script's rule IDs identify the specific occurrences.
 

@@ -28,7 +28,7 @@ When any "Yes" cannot be honestly answered, do not ship — surface the gap.
 - [ ] Every error-matrix row / precondition / typed error has an `error` case.
 - [ ] Every invariant has a `property` case.
 - [ ] Every state-machine transition has a `state-transition` case.
-- [ ] Error / happy ratio is at least 1:2.
+- [ ] Error / happy ratio is at least 1:2 **when the parent spec's error surface supports it**; otherwise the author names the legitimate-non-fit in the Overview, citing which error-matrix rows are covered and which failure modes are out-of-scope-with-rationale. The check is on honest exhaustion, not on the bare ratio — a leaf whose DD error matrix has one row, exhaustively covered, passes even at 1:3 or 1:4. Fabricating "robustness" cases for non-existent failure modes is the anti-pattern (`coverage-as-quality-metric` close cousin); silently passing a poor ratio is the other anti-pattern. The escape valve is **honest naming**, not the bare numbers.
 
 ## Group 3 — Per-layer weight
 

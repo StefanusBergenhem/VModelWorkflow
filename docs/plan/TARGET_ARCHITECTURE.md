@@ -852,7 +852,7 @@ Every project gets a `.vmodel/` directory at the project root, created by `vmode
 Schema: `schemas/core/vmodel-config.schema.yaml`. Fields:
 
 - **Project metadata** — name, version, description.
-- **Paths** — `references` (shared reference docs), `reviews`, `build`, `defer_index`, `src`, `tests`; optional per-component path overrides.
+- **Paths** — `references` (shared reference docs), `reviews`, `scripts` (mechanical-check scripts), `build`, `defer_index`, `src`, `tests`; optional per-component path overrides. Skills resolve script invocations via `${paths.scripts}/<name>.py` — never as bare `scripts/<name>.py`, which is ambiguous between a skill-bundled subdirectory and the repo-root scripts directory.
 - **`artifacts.root_product`** — one of `product_brief` / `needs` / `product_description`. Declares which root-product type this project uses.
 - **Commands** — CLI invocations for registered tools (vmodel-core, vmodel-author, vmodel-retrofit).
 - **Build flow settings** — parallelism limits, escalation routing policy.

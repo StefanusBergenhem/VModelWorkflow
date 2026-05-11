@@ -70,6 +70,16 @@ paths:
     description: "Directory for spec-side review verdict files (.yaml)."
     default: ".vmodel/.reviews/"
 
+  scripts:
+    type: string
+    required: true
+    description: >
+      Directory of mechanical-check scripts (check-*.py, index-deferred-items.py, etc.).
+      Skills resolve script invocations via this path: <paths.scripts>/<name>.py.
+      Framework default points at the repo-root scripts/ directory shipped by the
+      framework; projects may override (e.g., a vendored copy under .vmodel/scripts/).
+    default: "scripts/"
+
   build:
     type: string
     required: true
@@ -266,6 +276,7 @@ component_override:
 # paths:
 #   references: ".vmodel/references/"
 #   reviews: ".vmodel/.reviews/"
+#   scripts: "scripts/"
 #   build: ".vmodel/.build/"
 #   defer_index: ".vmodel/defer-index.md"
 #   src: "src/"

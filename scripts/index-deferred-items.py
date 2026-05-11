@@ -34,8 +34,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lib.spec_parser import find_md_files, parse_yaml_frontmatter  # noqa: E402
 
 
-# Inline defer markers. Permissive on the description (any non-bracket chars).
+# Owning inline defer markers. Permissive on the description (any
+# non-bracket chars). Square brackets are reserved for the OWNING form per
+# authoring-discipline.md Rule 6 — the artifact that carries the marker is
+# where the deferred decision will be answered.
 _DEFER_RE = re.compile(r"\[DEFER-(DD|ADR):\s*([^\]]+)\]")
+
+# Cite-form defer references — guillemet delimiters distinguish a reference
+# to another artifact's owning marker from an owning marker itself. Body
+# convention is "<owner-artifact-id> — <topic>" but the regex only requires
+# the DEFER-(DD|ADR): prefix; the body is captured permissively.
+_DEFER_CITE_RE = re.compile(r"«DEFER-(DD|ADR):\s*([^»]+)»")
 
 
 # Header for the per-artifact open-follow-ups section. Match `## Open follow-ups`,
@@ -74,6 +83,7 @@ def _artifact_id_from_fm(fm: dict | None) -> str | None:
 
 
 def _extract_defer_markers(text: str) -> list[dict]:
+    """Owning markers — square-bracket form [DEFER-(DD|ADR): ...]."""
     out: list[dict] = []
     for m in _DEFER_RE.finditer(text):
         kind = m.group(1)  # DD | ADR
@@ -82,6 +92,28 @@ def _extract_defer_markers(text: str) -> list[dict]:
         out.append(
             {
                 "type": f"DEFER-{kind}",
+                "line": line_no,
+                "description": body,
+            }
+        )
+    return out
+
+
+def _extract_defer_citations(text: str) -> list[dict]:
+    """Cite-form references — guillemet form «DEFER-(DD|ADR): owner-id — topic».
+
+    Per authoring-discipline.md Rule 6, cite-form names another artifact's
+    owning deferral without creating a second owner. Reported separately so
+    the index can distinguish owners from cross-references.
+    """
+    out: list[dict] = []
+    for m in _DEFER_CITE_RE.finditer(text):
+        kind = m.group(1)
+        body = m.group(2).strip()
+        line_no = text[: m.start()].count("\n") + 1
+        out.append(
+            {
+                "type": f"DEFER-{kind}-cite",
                 "line": line_no,
                 "description": body,
             }
@@ -137,8 +169,9 @@ def _walk(specs_root: Path) -> list[dict]:
         fm, body, _ = parse_yaml_frontmatter(text)
 
         markers = _extract_defer_markers(text)
+        citations = _extract_defer_citations(text)
         follow_ups = _extract_open_follow_ups(text)
-        if not markers and not follow_ups:
+        if not markers and not citations and not follow_ups:
             continue
 
         scope = _scope_from_fm_or_path(fm, md, specs_root)
@@ -154,6 +187,7 @@ def _walk(specs_root: Path) -> list[dict]:
                 "artifact_id": artifact_id,
                 "path": rel_path,
                 "defer_markers": markers,
+                "defer_citations": citations,
                 "open_follow_ups": follow_ups,
             }
         )
@@ -182,6 +216,7 @@ def main() -> int:
     items = _walk(args.specs_root)
 
     total_markers = sum(len(it["defer_markers"]) for it in items)
+    total_citations = sum(len(it.get("defer_citations", [])) for it in items)
     total_follow_ups = sum(len(it["open_follow_ups"]) for it in items)
 
     payload = {
@@ -189,6 +224,7 @@ def main() -> int:
         "summary": {
             "artifacts_with_pending_items": len(items),
             "total_defer_markers": total_markers,
+            "total_defer_citations": total_citations,
             "total_open_follow_ups": total_follow_ups,
         },
         "items": items,

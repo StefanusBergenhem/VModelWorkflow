@@ -102,7 +102,7 @@ When the count grows beyond ~4 upstream elements per case → the case is doing 
 
 ## Implicit-verifies rule
 
-When a case's `preconditions:` or `expected:` text mentions a specific upstream identifier (`REQ-\d+`, `IC-\d+`, `ADR-\d+`, `ARCH\.\w+`), that identifier MUST appear in the case's `verifies:` list. The text reference is the case's commitment to verifying that upstream content; omitting it from `verifies:` produces a silent traceability gap. Pre-publish self-check: `scripts/check-implicit-verifies.py` greps each case for upstream-id patterns and cross-references against `verifies:`.
+When a case's `preconditions:` or `expected:` text mentions a specific upstream identifier (`REQ-\d+`, `IC-\d+`, `ADR-\d+`, `ARCH\.\w+`), that identifier MUST appear in the case's `verifies:` list. The text reference is the case's commitment to verifying that upstream content; omitting it from `verifies:` produces a silent traceability gap. Pre-publish self-check: `${paths.scripts}/check-implicit-verifies.py` greps each case for upstream-id patterns and cross-references against `verifies:`.
 
 Granularity convention: a parent ID in `verifies:` covers any sub-path mentioned in prose (`ARCH.interfaces.IValidate` covers `ARCH.interfaces.IValidate.errors.ErrInvalidVerdict`). A specific sub-path in `verifies:` covers itself only.
 

@@ -52,7 +52,7 @@ Expected upstream context (the user provides at least one):
 - Governing architectural decisions (ADRs) that constrain this scope
 - A glossary in flight (or an empty glossary that this skill will seed)
 - Inherited constraints (regulatory, contractual, organisational, technical)
-- **Prior review files** (optional, consumed when present) — on a revision pass, the latest review at `specs/.reviews/<artifact-id>-*.yaml` (lexically last) is read and findings are addressed. Per TARGET_ARCHITECTURE §5.6 review output convention.
+- **Prior review files** (optional, consumed when present) — on a revision pass, the latest review at `${paths.reviews}/<artifact-id>-*.yaml` (lexically last) is read and findings are addressed. Per TARGET_ARCHITECTURE §5.6 review output convention.
 - **`.vmodel/references/partial-parent-protocol.md`** — partial-parent and no-canonical-upstream protocol — three permitted paths when canonical upstream is missing or partial. Required reading whenever the canonical upstream (Product Brief at root, or parent Requirements at branch / leaf-allocated scope) is absent or only partially present. (Resolved via `.vmodel/config.yaml`; framework default copied there at init.)
 
 If none of these are provided, **ask the user** what the upstream specification is. Do not invent one.
@@ -73,7 +73,7 @@ Author the document in this order. Each step has its own reference file with the
 
 ### Step 0 — Read prior review (revision pass only)
 
-If `specs/.reviews/<artifact-id>-*.yaml` contains review files for this artifact:
+If `${paths.reviews}/<artifact-id>-*.yaml` contains review files for this artifact:
 1. Pick the lexically last (latest review run by date + sequence).
 2. Walk every finding.
 3. For each finding, decide: apply (revise this artifact), push back with rationale (finding is wrong), or defer with explicit marker (out of scope here, named follow-up).
@@ -96,6 +96,34 @@ If the canonical upstream is missing or partial:
 If the canonical upstream is fully present, *Overview* says so in one short clause ("(canonical parent present)") and the protocol is satisfied without further action.
 
 → See `.vmodel/references/partial-parent-protocol.md`
+
+### Step 0.6 — Shape detection (selective reference loading)
+
+Before loading craft references, emit a one-line shape declaration that gates which references apply. This avoids the ~30k-token cost of loading references that don't apply to this Requirements doc's shape (per dogfood Issues 27 / 33 / 34).
+
+For this skill, the flags are:
+
+- **`is_retrofit`**: true if this Requirements doc is being authored retrofit-style with `recovery_status:` declared; false if greenfield.
+
+State the flag value out loud in one sentence (e.g., "Shape: is_retrofit=false") before Step 1.
+
+References named under "Always load" below are pulled unconditionally. This skill has no dedicated `retrofit-discipline.md` reference — retrofit honesty is woven into `rationale-and-traceability.md` (Step 6 / Step 7) and `statement-quality.md`. When `is_retrofit = true`, walk the retrofit sub-sections in those references; when false, skip them. If a finding emerges during authoring that a conditional sub-section would inform, apply it retroactively.
+
+**Always load** (core craft applicable to every Requirements doc):
+
+→ See `references/constraints-and-glossary.md`
+→ See `references/requirement-types.md`
+→ See `references/ears-templates.md`
+→ See `references/statement-quality.md`
+→ See `references/nfr-five-elements.md`
+→ See `references/interface-five-dimensions.md`
+→ See `references/rationale-and-traceability.md`
+→ See `references/anti-patterns.md`
+→ See `references/quality-bar-checklist.md`
+
+**Conditional** (load only when the named flag is set):
+
+→ Retrofit-honesty sub-sections of `rationale-and-traceability.md` and `statement-quality.md` — consult only if `is_retrofit = true` (no dedicated `retrofit-discipline.md` reference exists in this skill).
 
 ### Step 1 — Glossary first
 
@@ -185,8 +213,9 @@ Run the skill's mechanical check scripts before the Quality Bar gate. Each findi
 
 Scripts for this skill:
 
-- `scripts/check-requirement-shape.py <path-to-requirements.md>` — checks atomicity (compound `shall`/`must`), EARS shape, and the implementation-prescription vocabulary heuristic.
-- `scripts/check-id-encoding.py <path-to-requirements.md>` — detects malformed empty-scope id forms (`TS-`, `TC--NNN`, `ARCH-.interfaces.X`) per TARGET §5.4 empty-scope rule.
+- `${paths.scripts}/check-schema-validation.py <specs-root>` — validates front-matter against the per-artifact JSON Schema (composes the envelope) and embedded YAML blocks against the matching `$defs` member (`public_interface_entry`, `data_structure_entry`, `interface`, `decomposition_child`, `requirement`, `test_case`). Catches missing required front-matter fields (e.g., missing `title:`) and schema-invalid YAML entries that other scripts do not detect.
+- `${paths.scripts}/check-requirement-shape.py <path-to-requirements.md>` — checks atomicity (compound `shall`/`must`), EARS shape, and the implementation-prescription vocabulary heuristic.
+- `${paths.scripts}/check-id-encoding.py <path-to-requirements.md>` — detects malformed empty-scope id forms (`TS-`, `TC--NNN`, `ARCH-.interfaces.X`) per TARGET §5.4 empty-scope rule.
 
 Verify also: when the partial-parent protocol fired (Step 0.5), *Overview* explicitly names the chosen path (a/b/c); under path (b), a `[DEFER-DD: ...]` marker names the canonical-parent replacement inline; no fabricated upstream ids in `derived_from`.
 
@@ -245,4 +274,4 @@ That's it — one file. The skill does not create directories, schemas, validato
 - `templates/*.tmpl` — fill-in-the-blank scaffolds for the artifact and each requirement type
 - `examples/good-session-service.md` — worked example, honest
 - `examples/bad-fabricated-rationale.md` — counter-example with annotations
-- `scripts/index-deferred-items.py` — informational cross-artifact deferred-items index for the spec tree (Phase 6 Cluster 4)
+- `${paths.scripts}/index-deferred-items.py` — informational cross-artifact deferred-items index for the spec tree (Phase 6 Cluster 4)

@@ -130,7 +130,7 @@ Mistargeting these at the branch is over-coverage; the leaf already has them. Br
 
 Every entry in a parent interface's `errors:` enum requires at least one case under the `error` or `fault-injection` strategy. The case's `verifies:` resolves to `ARCH.interfaces.<name>.errors.<code>`. Roll-up cases (one case covering multiple errors via shared halt-and-report path) are permissible when the parent interface contract treats them uniformly, but each rolled-up error code MUST be cited explicitly in the case's `verifies:` list.
 
-Missing-error coverage is a soft-reject (`testspec.typed-error-uncovered`), not refusal. Mechanical detection: `scripts/check-typed-error-coverage.py` enumerates the parent's `errors:` enum and lists every code with no covering case.
+Missing-error coverage is a soft-reject (`testspec.typed-error-uncovered`), not refusal. Mechanical detection: `${paths.scripts}/check-typed-error-coverage.py` enumerates the parent's `errors:` enum and lists every code with no covering case.
 
 ## Empty-scope worked example
 

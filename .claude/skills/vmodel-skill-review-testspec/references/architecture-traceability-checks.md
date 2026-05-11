@@ -38,7 +38,7 @@ When the TestSpec is non-leaf (branch OR root), walk the parent Architecture's C
 
 **recommended_action:** *"Derive an error or fault-injection case per typed-error code. Cover every code in the enum, not just the most visible failure path."*
 
-**Cross-link:** `scripts/check-typed-error-coverage.py` rule `testspec.typed-error-uncovered` mechanically detects uncovered codes; the review skill aggregates one finding per code under this check ID.
+**Cross-link:** `${paths.scripts}/check-typed-error-coverage.py` rule `testspec.typed-error-uncovered` mechanically detects uncovered codes; the review skill aggregates one finding per code under this check ID.
 
 ## check.architecture-traceability.quality-attribute-unallocated (soft)
 

@@ -41,7 +41,7 @@ Expected upstream context (ask if missing):
 - **Scope tag(s)** — the scope(s) this decision primarily applies to (non-empty)
 - **Recovery posture** — greenfield (omit `recovery_status`) or retrofit (declare `recovery_status` on human-only fields per `retrofit-discipline.md`)
 - **Supersession context** — if this ADR replaces an older one, the predecessor's id
-- **Prior review files** (optional, consumed when present) — on a revision pass, the latest review at `specs/.reviews/<artifact-id>-*.yaml` (lexically last) is read and findings are addressed. Per TARGET_ARCHITECTURE §5.6 review output convention.
+- **Prior review files** (optional, consumed when present) — on a revision pass, the latest review at `${paths.reviews}/<artifact-id>-*.yaml` (lexically last) is read and findings are addressed. Per TARGET_ARCHITECTURE §5.6 review output convention.
 - **`.vmodel/references/partial-parent-protocol.md`** — partial-parent and no-canonical-upstream protocol — three permitted paths when canonical upstream is missing or partial. For ADR, the canonical upstream is either an Architecture stub at the relevant `scope_tags` (extraction origin) or an external/organisational policy artifact (pre-existing-policy origin). Required reading whenever neither origin is available, or when the Architecture at `scope_tags` has not yet been authored. (Resolved via `.vmodel/config.yaml`; framework default copied there at init.)
 
 If the threshold is not met, **HALT** (HALT condition #2) — refusal E fires; offer to record the choice inline in Architecture or Detailed Design instead.
@@ -62,7 +62,7 @@ Author the document in this order. Each step has its own reference file with the
 
 ### Step 0 — Read prior review (revision pass only)
 
-If `specs/.reviews/<artifact-id>-*.yaml` contains review files for this artifact:
+If `${paths.reviews}/<artifact-id>-*.yaml` contains review files for this artifact:
 1. Pick the lexically last (latest review run by date + sequence).
 2. Walk every finding.
 3. For each finding, decide: apply (revise this artifact), push back with rationale (finding is wrong), or defer with explicit marker (out of scope here, named follow-up).
@@ -90,6 +90,35 @@ If the canonical upstream is missing or partial:
 If the canonical upstream is fully present (the marker is being consumed, or the policy is in hand), *Context* says so in one short clause naming the consumed marker or cited policy.
 
 → See `.vmodel/references/partial-parent-protocol.md`
+
+### Step 0.6 — Shape detection (selective reference loading)
+
+Before loading craft references, emit a one-line shape declaration that gates which references apply. This avoids the ~30k-token cost of loading references that don't apply to this ADR's shape (per dogfood Issues 27 / 33 / 34).
+
+For this skill, the flags are:
+
+- **`is_retrofit`**: true if this ADR is being authored retrofit-style with `recovery_status:` declared (e.g., capturing a pre-existing decision whose rationale is lost); false if greenfield.
+
+State the flag value out loud in one sentence (e.g., "Shape: is_retrofit=false") before Step 1.
+
+References named under "Always load" below are pulled unconditionally. References named under "Conditional" are pulled ONLY when their guarding flag fires. If a finding emerges during authoring that a conditional reference would inform, load it retroactively — the conditional list is an opening default, not a hard exclusion.
+
+**Always load** (core craft applicable to every ADR):
+
+→ See `references/adr-purpose-and-shape.md`
+→ See `references/canonical-fields-and-body.md`
+→ See `references/context-and-drivers.md`
+→ See `references/alternatives-discipline.md`
+→ See `references/decision-and-rationale.md`
+→ See `references/consequences-and-reversibility.md`
+→ See `references/propagation-and-completeness.md`
+→ See `references/immutability-and-supersession.md`
+→ See `references/extraction-cues.md`
+→ See `references/anti-patterns.md`
+
+**Conditional** (load only when the named flag is set):
+
+→ See `references/retrofit-discipline.md` — load only if `is_retrofit = true`
 
 ### Step 1 — Threshold check (refusal E intake)
 
@@ -141,7 +170,7 @@ When route (a) materialises a new requirement at this scope, apply the requireme
 
 → See `.vmodel/references/requirements-shape-checklist.md`
 
-When a route binds a specific library, protocol, or framework to a child architecture or interface, declare the binding in a structured `propagation.bindings:` YAML block within this ADR's Propagation section. Each entry: `name` (the bound mechanism), `scope` (the child architecture entry name it binds to), `kind` (`library` / `protocol` / `framework`). Downstream architecture authors land the binding in the matching child's `rationale`, citing this ADR by id; structured declaration enables `scripts/check-adr-landing.py` to detect leaks at author time.
+When a route binds a specific library, protocol, or framework to a child architecture or interface, declare the binding in a structured `propagation.bindings:` YAML block within this ADR's Propagation section. Each entry: `name` (the bound mechanism), `scope` (the child architecture entry name it binds to), `kind` (`library` / `protocol` / `framework`). Downstream architecture authors land the binding in the matching child's `rationale`, citing this ADR by id; structured declaration enables `${paths.scripts}/check-adr-landing.py` to detect leaks at author time.
 
 → See `templates/propagation-bindings.yaml.tmpl`
 
@@ -165,9 +194,10 @@ Run the skill's mechanical check scripts before the Quality Bar gate. Each findi
 
 Scripts for this skill:
 
-- `scripts/check-requirement-shape.py <specs-root>` — when this ADR materialises new requirements via Propagation route (a)
-- `scripts/check-adr-landing.py <specs-root>` — verifies bindings declared in this ADR's `propagation.bindings:` YAML are reflected correctly in any architecture artifact that lists this ADR in `governing_adrs`
-- `scripts/check-id-encoding.py <specs-root>` — detects malformed empty-scope id forms (`TS-`, `TC--NNN`, `ARCH-.interfaces.X`) per TARGET §5.4 empty-scope rule
+- `${paths.scripts}/check-schema-validation.py <specs-root>` — validates front-matter against the per-artifact JSON Schema (composes the envelope) and embedded YAML blocks against the matching `$defs` member (`public_interface_entry`, `data_structure_entry`, `interface`, `decomposition_child`, `requirement`, `test_case`). Catches missing required front-matter fields (e.g., missing `title:`) and schema-invalid YAML entries that other scripts do not detect.
+- `${paths.scripts}/check-requirement-shape.py <specs-root>` — when this ADR materialises new requirements via Propagation route (a)
+- `${paths.scripts}/check-adr-landing.py <specs-root>` — verifies bindings declared in this ADR's `propagation.bindings:` YAML are reflected correctly in any architecture artifact that lists this ADR in `governing_adrs`
+- `${paths.scripts}/check-id-encoding.py <specs-root>` — detects malformed empty-scope id forms (`TS-`, `TC--NNN`, `ARCH-.interfaces.X`) per TARGET §5.4 empty-scope rule
 
 Verify also: when the partial-parent protocol fired (Step 0.5), *Context* explicitly names the chosen path (a/b/c); under path (b), a `[DEFER-ADR: ...]` marker names the canonical-parent replacement inline; `scope_tags` cites only existing scope ids; no fabricated upstream ids in supersedes / governing_adrs cross-links.
 
@@ -278,4 +308,4 @@ That's it — one file. The skill does not create directories, schemas, validato
 - `examples/good-postgres-job-queue.md` — fully populated ADR with annotations
 - `examples/bad-redis-async-queue.md` — counter-example with annotated refusal trips (B + C)
 - `examples/bad-fabricated-retrofit.md` — retrofit fabrication anti-example with refusal A trips, and the corrected honest-unknown version
-- `scripts/index-deferred-items.py` — informational cross-artifact deferred-items index for the spec tree (Phase 6 Cluster 4)
+- `${paths.scripts}/index-deferred-items.py` — informational cross-artifact deferred-items index for the spec tree (Phase 6 Cluster 4)

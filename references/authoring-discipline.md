@@ -121,7 +121,18 @@ A `[DEFER-<TARGET>: <topic>]` marker names a deferred decision and the artifact 
 - **Inline `<TBD>` placeholder, no marker** when the gap is parametric (numeric threshold / factual value to be calibrated). Tooling locates `<TBD>` by section context.
 - None fit — push back on the marker. Likely artificial, or a decision whose alternatives haven't been thought about.
 
-**Rationale.** Markers were drifting to mean "this artifact is missing", inflating perceived scope and reading like a TOC of artifacts to create. Every leaf already has a mandatory DD; every decision-shaped cross-cutting gap has an ADR home; everything else is a parameter or a section in an existing artifact.
+**Ownership semantics.** A `[DEFER-DD: ...]` / `[DEFER-ADR: ...]` bracket marker is an **owning** marker — the artifact that carries it owns the deferred decision and is where the decision will be answered. The marker should appear exactly once in the spec tree per topic. Two artifacts authoring the same owning marker is a duplication defect.
+
+**Cite-form for cross-references.** A downstream artifact that needs to reference (but not own) another artifact's deferred decision uses the cite form, which is mechanically distinguishable from the owning form:
+
+```
+«DEFER-DD: <owner-artifact-id> — <topic>»
+«DEFER-ADR: <owner-artifact-id> — <topic>»
+```
+
+Guillemet delimiters `«…»` (instead of square brackets) and a mandatory `<owner-artifact-id>` segment naming the artifact that owns the deferral. The cite form does NOT create a second owning marker; `scripts/index-deferred-items.py` reports cite-form occurrences separately as cross-references, not as additional owners. Use the cite form (not prose paraphrase around the bracket marker) when an upstream deferred decision is genuinely load-bearing for the current artifact's narrative.
+
+**Rationale.** Markers were drifting to mean "this artifact is missing", inflating perceived scope and reading like a TOC of artifacts to create. The cite-form distinction lets downstream artifacts reference upstream deferrals without inflating the index's apparent surface area of unresolved gaps. Every leaf already has a mandatory DD; every decision-shaped cross-cutting gap has an ADR home; everything else is a parameter or a section in an existing artifact.
 
 ---
 
