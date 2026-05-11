@@ -45,7 +45,8 @@
         "architecture",
         "adr",
         "detailed-design",
-        "test-spec"
+        "test-spec",
+        "architecture-interface-detail"
       ]
     },
 

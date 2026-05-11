@@ -18,8 +18,8 @@ governing_adrs:
   - ADR-001-implement-vmodel-core-in-go
   - ADR-002-embed-canonical-schemas-in-binary
 status: draft
-date: "2026-05-03"
-version: 1
+date: "2026-05-12"
+version: 2
 coverage_mutation_bar:
   structural_coverage:
     threshold_pct: "TBD-by-project-policy"
@@ -643,7 +643,7 @@ The case set below is grouped by derivation seed (validation surface / reporting
     - "IC-012"
   preconditions:
     - "Environment: production-like — commodity CI runner per IC-012 (CI-runner profile pinned: GitHub-hosted ubuntu-22.04 runner image, 2-vCPU x 7GB; same profile as TC-023)."
-    - "Workload: a single whole-tree validation run against each of five synthetic spec-tree fixtures of N well-formed artifacts at N ∈ {50, 100, 200, 500, 1000}; each fixture's artifacts are split across all six artifact_type values and four scope levels, with valid traceability links to peers and zero rule violations."
+    - "Workload: a single whole-tree validation run against each of five synthetic spec-tree fixtures of N well-formed artifacts at N ∈ {50, 100, 200, 500, 1000}; each fixture's artifacts are split across all seven artifact_type values and four scope levels, with valid traceability links to peers and zero rule violations."
     - "Embedded-resources: production embed.FS bundle."
     - "Output format: JSON."
     - "Measurement boundary: wall-clock time from subprocess invocation start to verdict-record emission, captured at the test harness's process boundary, per REQ-022 meter."

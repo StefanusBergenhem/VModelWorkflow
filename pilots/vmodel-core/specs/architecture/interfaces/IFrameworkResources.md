@@ -1,19 +1,21 @@
 ---
 id: ARCH-IF-IFrameworkResources
+title: "vmodel-core — IFrameworkResources interface detail"
+artifact_type: architecture-interface-detail
 belongs_to: ARCH
 kind: architecture-interface-detail
 subject: IFrameworkResources
 scope: ""
 status: draft
-date: "2026-05-04"
-version: 3
+date: "2026-05-12"
+version: 4
 ---
 
 # IFrameworkResources — interface detail
 
 ```yaml
 preconditions:
-  - "artifactType (where applicable) is one of the six framework-canonical types."
+  - "artifactType (where applicable) is one of the seven framework-canonical types."
 
 postconditions:
   on_success:
@@ -31,7 +33,7 @@ invariants:
   - "Returned content is read-only; mutating it is undefined behaviour."
 
 errors:
-  - { code: "ErrUnknownArtifactType", meaning: "artifactType is not one of the six framework-canonical types." }
+  - { code: "ErrUnknownArtifactType", meaning: "artifactType is not one of the seven framework-canonical types." }
 
 quality_attributes:
   determinism: "content bound at build time; runtime accessor is a pure function over (binary bytes)."

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vmodelworkflow.dev/schemas/artifacts/envelope/v1",
   "title": "V-Model artifact envelope",
-  "description": "Universal front-matter shape common to all six V-Model artifact types (Product Brief, Requirements, Architecture, ADR, Detailed Design, TestSpec). Per-artifact schemas extend this envelope via allOf, add type-specific fields (scope, parent_scope, derived_from, governing_adrs, scope_tags, affected_scopes, …), and tighten constraints on id. Validating front-matter against the envelope alone answers 'is this a recognisable V-Model artifact?'; validating against the per-artifact schema answers 'is it a well-formed instance of its type?'.",
+  "description": "Universal front-matter shape common to every V-Model artifact: the six core standalone types (Product Brief, Requirements, Architecture, ADR, Detailed Design, TestSpec) plus bundle-detail types that compose into a helicopter parent (currently architecture-interface-detail; further bundle subtypes may be added). Per-artifact schemas extend this envelope via allOf, add type-specific fields (scope, parent_scope, derived_from, governing_adrs, scope_tags, affected_scopes, belongs_to, kind, subject, …), and tighten constraints on id. Validating front-matter against the envelope alone answers 'is this a recognisable V-Model artifact?'; validating against the per-artifact schema answers 'is it a well-formed instance of its type?'.",
 
   "type": "object",
 

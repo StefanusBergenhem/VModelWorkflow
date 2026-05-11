@@ -1,12 +1,14 @@
 ---
 id: ARCH-IF-IValidate
+title: "vmodel-core — IValidate interface detail"
+artifact_type: architecture-interface-detail
 belongs_to: ARCH
 kind: architecture-interface-detail
 subject: IValidate
 scope: ""
 status: draft
-date: "2026-05-04"
-version: 3
+date: "2026-05-12"
+version: 4
 ---
 
 # IValidate — interface detail

@@ -190,23 +190,19 @@ Architectural rationale — including the full Q8–Q15 and NQ-B/C/D/E decisions
 
 **Closeout signal:** vmodel-core pilot completes a forward-run end-to-end without manual intervention beyond design review.
 
-### 3.6.1 Phase 6 next-session prep — Issue 25 resolution, then `validation-engine` DD
+### 3.6.1 Phase 6 next-session prep — `DD-validation-engine` authoring
 
-**Closed prep (this section's previous content).** The 2026-05-11 session that authored `TS-embedded-resources` is complete. The V-pair for the `embedded-resources` leaf is closed (DD + TestSpec + APPROVED review + post-review tighten + 6 new dogfood findings logged: Issues 29–34). Outcomes against the previous prep's expectations:
+**Closed prep (this section's previous content).** The 2026-05-11 V-pair for `embedded-resources` is closed (DD + TestSpec + APPROVED review + 6 new dogfood findings logged: Issues 29–34). The 2026-05-12 session resolved the gating decision: **Issue 25 closed — Option 1 taken**, `architecture-interface-detail` promoted to a first-class artifact type. Propagation landed in one pass across framework (Rule 8 template, QB schema enums, new QB JSON for the seventh type, new fixture, link-types + validation-rules schema enum fixes, envelope description, architecture.html Rule-8 example correction) and pilot (Glossary + IC-010/IC-011/REQ-016 rationale in `requirements.md` v2, `DD-embedded-resources` v2 ArtifactType seven-member enum + bundle layout, `TS-embedded-resources` v2 enumerate-list growth, 8 interface detail files now schema-valid via `artifact_type` + `title` addition, root testspec workload fixture seven-types, pilot CLAUDE.md closure note). All 14 canonical-type artifacts in the pilot validate clean (the 2 ADR failures are pre-existing schema-required-field drift, unrelated). Full provenance in pilot `dogfood_findings_archive.md` 2026-05-12 entry. `DD-validation-engine` authoring is unblocked.
 
-- ✓ Issue 24's noisy finding on `IFrameworkResources.ErrUnknownArtifactType` cleared by TC-007 / TC-008 dual-citing the ARCH-level path. Issue 30 captured the dual-citation discipline gap.
-- ✓ First leaf-TestSpec rep landed; surfaced four new shape-gap findings (Issues 29 / 30 / 31 / 32) in the author and review skills.
-- ✓ Issue 27's session-cost pattern repeats: TestSpec session cost was 150k (Issue 34), comparable to DD's 178k. Full V-pair: ~328k parent-context + ~100k review subagent isolated. Lower than DD authoring as predicted but eaten by review dispatch + 5-finding drafting.
-- ✗ Issue 28 (pre-built schema-validation script) not taken — TestSpec authoring went ahead without it; the new script is still pending.
+**Surprise surfaced during execution.** The link-types catalog already named `architecture-interface-detail` as a valid source on the `belongs_to` link, but the link-types *schema* enum was still six. The catalog was silently invalid against its own schema — i.e. nothing in the build pipeline was validating catalog against schema (or the schema-against-catalog mismatch was being lived with). Worth threading into the dogfooding signal next time a mechanical-check tooling question comes up. Also discovered: every Rule-8 detail file in every project was envelope-invalid because the discipline doc's Rule 8 template omitted `artifact_type` + `title` — both required by envelope. This was undetected because no project had run schema validation against detail files (Issue 28 pre-built script gap).
 
-**Trigger for next session.** With one V-pair landed, the natural next step is the *second* leaf DD: `validation-engine`. This is the most load-bearing leaf in the pilot — it consumes from `embedded-resources` (now spec-complete), implements IC-009 / IC-010 / IC-011, and depends on a still-unresolved framework decision: **Issue 25 (six-vs-seven schemas)**. The framework's REQ-016 names six canonical artifact types; the framework actually publishes seven schemas (including `architecture-interface-detail`). `DD-validation-engine` cannot be authored without resolving which contract holds — REQ-016 amendment, schema retraction, or split into validate-known-six-only-plus-out-of-set-handling. **This is the next-session gating decision.**
+**Trigger for next session.** With Issue 25 resolved, the natural next step is the second leaf DD: `validation-engine`. Most load-bearing leaf in the pilot — consumes from `embedded-resources` (spec-complete), implements IC-009 / IC-010 / IC-011, dispatches per-artifact-type validation across the now-seven canonical types.
 
-**Working directory for next session.** Framework root (`/home/stefanus/repos/VModelWorkflow/`) for the Issue 25 framework decision; then `pilots/vmodel-core/` for `DD-validation-engine` authoring.
+**Working directory for next session.** `pilots/vmodel-core/` for `DD-validation-engine` authoring.
 
-**Two-step next-session deliverable.**
+**Single-step next-session deliverable.**
 
-1. **Resolve Issue 25** (framework-scope decision). Options: (a) amend REQ-016 to seven types; (b) retract `architecture-interface-detail` as a canonical schema (treat as architecture detail-file convention only); (c) split — six canonical *artifact* types plus a separate *detail-file* schema with its own validation seam. Decision should consider impact on the `validate` CLI behaviour (REQ-015 / REQ-016 / REQ-017 acceptance phrasing) and on the `ArtifactType` enum in `DD-embedded-resources` (already pinned to six per the canonical-set; growing requires a coordinated requirements + DD amendment).
-2. **Author `DD-validation-engine`** via `/vmodel-skill-author-detailed-design` once (1) is resolved. Expected to be ~3–4× the surface of `DD-embedded-resources`: schema-library selection (currently DEFER-ADR in parent ARCH), rule-engine dispatch, halt-and-report semantics (IC-007), per-artifact validation strategy.
+1. **Author `DD-validation-engine`** via `/vmodel-skill-author-detailed-design`. Expected ~3–4× the surface of `DD-embedded-resources`: schema-library selection (currently DEFER-ADR in parent ARCH; resolving may surface a new ADR), rule-engine dispatch, halt-and-report semantics (IC-007), per-artifact-type validation strategy across the seven canonical types (now including `architecture-interface-detail` — relevant because validation-engine will dispatch on `artifact_type` against the seven-element ArtifactType enum from `DD-embedded-resources`).
 
 **Load at session start (in this order):**
 
@@ -215,17 +211,15 @@ Architectural rationale — including the full Q8–Q15 and NQ-B/C/D/E decisions
 3. `docs/plan/BACKLOG.md` §1 + §3.6 + §3.6.1 (this subsection).
 4. `docs/plan/TARGET_ARCHITECTURE.md` §5.3 (DD shape, governing_adrs propagation) + §6 (Spec Ambiguity Test) + §16 (build flow).
 5. `pilots/vmodel-core/CLAUDE.md` — pilot working-context.
-6. `pilots/vmodel-core/dogfood_findings.md` Issue 25 (six-vs-seven schemas — *the* gating decision).
-7. `pilots/vmodel-core/specs/requirements.md` REQ-015 / REQ-016 / REQ-017 (validation requirements) — the contract under amendment.
-8. `pilots/vmodel-core/specs/architecture/interfaces/IValidate.md` — interface contract `DD-validation-engine` will realise.
-9. `pilots/vmodel-core/specs/embedded-resources/detailed_design.md` — upstream-spec dependency for `validation-engine` (consumes Schema / EnvelopeSchema / QualityBarChecklist accessors).
-10. Schema set at `schemas/artifacts/` (count the publishing surface) + `references/schemas/` (symlink target in pilot).
+6. `pilots/vmodel-core/specs/requirements.md` REQ-010..REQ-017 + IC-009 / IC-010 / IC-011 (validation requirements `DD-validation-engine` realises).
+7. `pilots/vmodel-core/specs/architecture/interfaces/IValidate.md` — interface contract `DD-validation-engine` will realise.
+8. `pilots/vmodel-core/specs/embedded-resources/detailed_design.md` — upstream-spec dependency for `validation-engine` (consumes Schema / EnvelopeSchema / QualityBarChecklist / RuleCatalog accessors over the now-seven-element ArtifactType enum).
+9. `pilots/vmodel-core/specs/architecture.md` `validation-engine` Decomposition entry + any `[DEFER-ADR: …]` markers still owned at that leaf (notably schema-library selection).
 
 **Expected signal during the next session:**
 
-- Issue 25 resolution surfaces whether the framework's canonical-artifact-type contract is internally consistent or whether REQ-016's text drifted from publishing reality.
-- `DD-validation-engine` exercises the larger-leaf shape: multiple deferred ADRs in upstream ARCH (schema-library selection), per-artifact-type dispatch, validation result composition. Likely surfaces shape gaps in `vmodel-skill-author-detailed-design` that the simpler `embedded-resources` did not stress.
-- Session token cost (Issue 27 / 34 baseline) likely higher than DD-embedded-resources (~178k) given the load-bearing-decision count. Watch for ≥200k.
+- `DD-validation-engine` exercises the larger-leaf shape: multiple deferred ADRs in upstream ARCH (schema-library selection — likely needs an ADR before authoring can finish), per-artifact-type dispatch across seven types, validation result composition, halt-and-report semantics (IC-007). Likely surfaces shape gaps in `vmodel-skill-author-detailed-design` that the simpler `embedded-resources` did not stress.
+- Session token cost (Issue 27 baseline 178k) likely higher than DD-embedded-resources given the load-bearing-decision count. Watch for ≥200k.
 - Issue 28 (schema-validation script) becomes more painful at the larger DD — possible session pivot to take Issue 28 first.
 
 **What is *not* in scope for next session:**
@@ -236,7 +230,7 @@ Architectural rationale — including the full Q8–Q15 and NQ-B/C/D/E decisions
 - Cluster 7 needs/PD structural artifacts — pilot signal still inconclusive; revisit after `validation-engine` V-pair lands.
 - Issues 29–34 framework-side fixes — log them, defer until pilot has 2–3 leaf V-pairs (let pattern stabilise before authoring fixes).
 
-**Open question entering the session.** Whether to take Issue 28 (pre-built schema-validation script) *before* `DD-validation-engine`. Arguments for *before*: the validation cost is higher per session at larger DDs (Issue 27 / 34 cost scales with surface), and a working script benefits every author skill across every artifact going forward. Arguments for *after*: `DD-validation-engine` is the more load-bearing critical path; doing Issue 28 first introduces 0.5–1 session of pure tooling work. Stakeholder call.
+**Open question entering the session.** Whether to take Issue 28 (pre-built schema-validation script) *before* `DD-validation-engine`. Arguments for *before*: validation cost scales with DD surface (Issue 27 / 34), and a working script benefits every author skill across every artifact going forward — and would have caught the Issue 25 envelope-invalidity of detail files before this session. Arguments for *after*: `DD-validation-engine` is the more load-bearing critical path; Issue 28 introduces 0.5–1 session of pure tooling work. Stakeholder call.
 
 ### 3.7 Phase 7 — Retrofit-specific Additions — PENDING
 
@@ -347,4 +341,4 @@ Phase 0 (done) → Phase 1 (done) → Phase 2 (done) → Phase 3 (done)
 
 ---
 
-*Last updated: 2026-05-10 (continued) — added §3.6 Cluster 7 (root-product parity tasks for needs.md / product_description.md) reflecting the same-day audit + 16 wording-fix edits across 8 skill files; added §3.6.1 next-session brief for vmodel-core greenfield dogfooding pickup; marked candidate-set propagation walker DONE (scripts/walk-impact.py + 22-test TDD suite); marked three-root-artifact treatment resolved. Earlier same-day: full BACKLOG reformat reflecting build-flow shipment and central-config landing. Phase 6 absorbed the original "Tools (purpose-built)" plan; tools moved into Phase 7. Phase 5 closeout tightened. Skills-architecture.html rewrite marked DONE.*
+*Last updated: 2026-05-12 — Issue 25 (six-vs-seven schemas) resolved via Option 1 (architecture-interface-detail promoted to a first-class artifact type). Framework + pilot propagation landed in one pass: Rule 8 template, new QB JSON for the seventh type, new fixture, link-types + validation-rules schema enum corrections, envelope description, architecture.html Rule-8 example correction, pilot Glossary + DD-embedded-resources ArtifactType enum growth + 8 interface detail files now schema-valid + TS-embedded-resources enumerate-list growth + root testspec workload-fixture update. §3.6.1 rewritten — `DD-validation-engine` authoring is unblocked. Earlier: 2026-05-10 (continued) — added §3.6 Cluster 7 (root-product parity tasks for needs.md / product_description.md) reflecting the same-day audit + 16 wording-fix edits across 8 skill files; added §3.6.1 next-session brief for vmodel-core greenfield dogfooding pickup; marked candidate-set propagation walker DONE (scripts/walk-impact.py + 22-test TDD suite); marked three-root-artifact treatment resolved. Earlier same-day: full BACKLOG reformat reflecting build-flow shipment and central-config landing. Phase 6 absorbed the original "Tools (purpose-built)" plan; tools moved into Phase 7. Phase 5 closeout tightened. Skills-architecture.html rewrite marked DONE.*

@@ -1,12 +1,14 @@
 ---
 id: ARCH-IF-IValidationCLI
+title: "vmodel-core — IValidationCLI interface detail"
+artifact_type: architecture-interface-detail
 belongs_to: ARCH
 kind: architecture-interface-detail
 subject: IValidationCLI
 scope: ""
 status: draft
-date: "2026-05-04"
-version: 3
+date: "2026-05-12"
+version: 4
 ---
 
 # IValidationCLI — interface detail

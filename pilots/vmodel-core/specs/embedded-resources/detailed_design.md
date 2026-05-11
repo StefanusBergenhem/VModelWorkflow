@@ -13,8 +13,8 @@ derived_from:
 governing_adrs:
   - ADR-002-embed-canonical-schemas-in-binary
 status: draft
-date: "2026-05-11"
-version: 1
+date: "2026-05-12"
+version: 2
 ---
 
 # Detailed Design — embedded-resources
@@ -83,7 +83,7 @@ public_interface:
       Return the per-artifact JSON Schema corresponding to artifactType
       (REQ-030); consumed by validation-engine to satisfy REQ-016.
     preconditions:
-      - "artifactType is one of the six canonical enum values (see Data Structures: ArtifactType)."
+      - "artifactType is one of the seven canonical enum values (see Data Structures: ArtifactType)."
     postconditions:
       on_success:
         - "Returned Schema wraps the bytes of bundle/artifacts/<artifactType>.schema.json as synced into the binary at build time."
@@ -93,7 +93,7 @@ public_interface:
     invariants: []
     errors:
       - error: "ErrUnknownArtifactType"
-        raised_when: "artifactType is not one of the six canonical enum members."
+        raised_when: "artifactType is not one of the seven canonical enum members."
         meaning: "Caller bug — input outside the closed enum (the enum is the contract; relaxation by a non-canonical value is structurally refused per IC-007)."
     side_effects:
       - "None."
@@ -102,7 +102,7 @@ public_interface:
       - "artifactType: must not be the zero value of ArtifactType."
       - "return Schema: zero value on the error branch; non-zero on success."
       - "return error: nil on success; non-nil ErrUnknownArtifactType on the precondition-violation branch."
-    complexity_notes: "O(1) lookup over the closed enum (six entries)."
+    complexity_notes: "O(1) lookup over the closed enum (seven entries)."
 
   - name: EnvelopeSchema
     signature: "EnvelopeSchema() Schema"
@@ -132,7 +132,7 @@ public_interface:
       artifactType (REQ-030); consumed by validation-engine to satisfy REQ-017
       (structural-rigor items only).
     preconditions:
-      - "artifactType is one of the six canonical enum values."
+      - "artifactType is one of the seven canonical enum values."
     postconditions:
       on_success:
         - "Returned QBChecklist wraps the bytes of bundle/artifacts/quality-bar/<artifactType>.quality-bar.json as synced into the binary at build time."
@@ -142,7 +142,7 @@ public_interface:
     invariants: []
     errors:
       - error: "ErrUnknownArtifactType"
-        raised_when: "artifactType is not one of the six canonical enum members."
+        raised_when: "artifactType is not one of the seven canonical enum members."
         meaning: "Caller bug — input outside the closed enum."
     side_effects:
       - "None."
@@ -187,9 +187,12 @@ data_structures:
       QualityBarChecklist. The enum membership is the rendered form of
       REQ-016 / REQ-017 over the canonical artifact set; values match the
       `artifact_type` const values published in the framework's per-artifact
-      JSON Schemas.
+      JSON Schemas. The closed set is fixed at this DD's version; growing it
+      (when the framework publishes an additional bundle-detail type — e.g.
+      `architecture-decomposition-detail`) is a coordinated requirements
+      (Glossary) + DD amendment, not a unilateral DD edit.
     fields:
-      - { name: "value", type: "enum string", invariant: "Exactly one of: product-brief | requirements | architecture | adr | detailed-design | test-spec. Strings match the per-artifact schema's `artifact_type` const value byte-for-byte (no aliasing, no case-folding)." }
+      - { name: "value", type: "enum string", invariant: "Exactly one of: product-brief | requirements | architecture | adr | detailed-design | test-spec | architecture-interface-detail. Strings match the per-artifact schema's `artifact_type` const value byte-for-byte (no aliasing, no case-folding)." }
     ownership: "Defined at the embedded-resources scope; used by both this leaf and any caller passing artifactType to Schema / QualityBarChecklist."
     lifetime: "Compile-time constant — closed set fixed at binary build time."
     returned_semantics: "Pass-by-value; not returned by any accessor."
@@ -247,8 +250,8 @@ data_structures:
     fields:
       - { name: "rule_catalog_bytes",        type: "byte sequence",  invariant: "Bytes of bundle/traceability/validation-rules.catalog.json synced at build time." }
       - { name: "envelope_schema_bytes",     type: "byte sequence",  invariant: "Bytes of bundle/artifacts/envelope.schema.json synced at build time." }
-      - { name: "per_artifact_schemas",      type: "map from ArtifactType to byte sequence; key-uniqueness assumed", invariant: "Domain equals the six-element ArtifactType enum; each value is the bytes of bundle/artifacts/<artifactType>.schema.json synced at build time." }
-      - { name: "per_artifact_qb_checklists", type: "map from ArtifactType to byte sequence; key-uniqueness assumed", invariant: "Domain equals the six-element ArtifactType enum; each value is the bytes of bundle/artifacts/quality-bar/<artifactType>.quality-bar.json synced at build time." }
+      - { name: "per_artifact_schemas",      type: "map from ArtifactType to byte sequence; key-uniqueness assumed", invariant: "Domain equals the seven-element ArtifactType enum; each value is the bytes of bundle/artifacts/<artifactType>.schema.json synced at build time." }
+      - { name: "per_artifact_qb_checklists", type: "map from ArtifactType to byte sequence; key-uniqueness assumed", invariant: "Domain equals the seven-element ArtifactType enum; each value is the bytes of bundle/artifacts/quality-bar/<artifactType>.quality-bar.json synced at build time." }
       - { name: "version_manifest",          type: "VersionManifest", invariant: "All three version fields non-empty." }
     ownership: "Constructed once at the composition root by NewEmbeddedResources; held by the FrameworkResources instance; never published outside the leaf."
     lifetime: "Process lifetime — bound at binary load."
@@ -270,6 +273,7 @@ bundle/
     product-brief.schema.json
     requirements.schema.json
     architecture.schema.json
+    architecture-interface-detail.schema.json
     adr.schema.json
     detailed-design.schema.json
     test-spec.schema.json
@@ -277,13 +281,14 @@ bundle/
       product-brief.quality-bar.json
       requirements.quality-bar.json
       architecture.quality-bar.json
+      architecture-interface-detail.quality-bar.json
       adr.quality-bar.json
       detailed-design.quality-bar.json
       test-spec.quality-bar.json
   version-manifest.json
 ```
 
-File names mirror the framework canonical paths (`schemas/artifacts/`, `schemas/traceability/`, `schemas/artifacts/quality-bar/`) so the build pipeline's sync step is a 1:1 copy with no transformation. `version-manifest.json` is generated by the build pipeline (per ADR-002 Propagation) from the synced source versions; its shape is the three fields named in Data Structures: VersionManifest.
+File names mirror the framework canonical paths (`schemas/artifacts/`, `schemas/traceability/`, `schemas/artifacts/quality-bar/`) so the build pipeline's sync step is a 1:1 copy with no transformation. `version-manifest.json` is generated by the build pipeline (per ADR-002 Propagation) from the synced source versions; its shape is the three fields named in Data Structures: VersionManifest. The bundle carries one entry per ArtifactType enum member for both the schema set and the Quality Bar checklist set; when the closed set grows (see Data Structures: ArtifactType), the sync step adds the corresponding files and the dispatch in `Schema` / `QualityBarChecklist` extends without contract change.
 
 **(2) Dispatch from ArtifactType to bytes — result property only.** For `Schema(artifactType)` and `QualityBarChecklist(artifactType)`, the result property is: given an artifactType in the closed enum, return the bytes whose underlying source file in the bundle layout is `bundle/artifacts/<artifactType>.schema.json` or `bundle/artifacts/quality-bar/<artifactType>.quality-bar.json` respectively. The implementer chooses the dispatch mechanism (compile-time map literal, switch on enum value, or generated lookup); the contract is the byte-identical-across-lifetime postcondition.
 
@@ -297,7 +302,7 @@ Stateless between calls. The constructed `FrameworkResources` instance is immuta
 
 | Error | Detection | Containment | Recovery | Caller receives |
 |---|---|---|---|---|
-| `ErrUnknownArtifactType` | Precondition check at boundary on `Schema(artifactType)` / `QualityBarChecklist(artifactType)`; the supplied `artifactType` does not match any of the six canonical enum members. | Reject at the leaf's boundary. | fail-fast | The zero value of the corresponding return type (`Schema` or `QBChecklist`) together with a non-nil `ErrUnknownArtifactType`; no state mutation (leaf is stateless). |
+| `ErrUnknownArtifactType` | Precondition check at boundary on `Schema(artifactType)` / `QualityBarChecklist(artifactType)`; the supplied `artifactType` does not match any of the seven canonical enum members. | Reject at the leaf's boundary. | fail-fast | The zero value of the corresponding return type (`Schema` or `QBChecklist`) together with a non-nil `ErrUnknownArtifactType`; no state mutation (leaf is stateless). |
 
 One row. Other failure modes do not exist at this leaf's runtime scope:
 
@@ -310,8 +315,8 @@ One row. Other failure modes do not exist at this leaf's runtime scope:
 - **TestSpec cues (leaf scope — unit).**
   - Contract test per accessor: success-path postconditions on `NewEmbeddedResources`, `RuleCatalog`, `Schema(t)`, `EnvelopeSchema`, `QualityBarChecklist(t)`, `Versions`.
   - Robustness test for the error matrix row: `Schema` and `QualityBarChecklist` invoked with an out-of-enum `artifactType` return the zero value plus `ErrUnknownArtifactType`.
-  - Property test on the byte-identical-across-lifetime postcondition: for every accessor, two successive calls on the same instance return values whose underlying bytes compare byte-identical; for `Schema(t)` and `QualityBarChecklist(t)`, parameterised across the six enum values.
+  - Property test on the byte-identical-across-lifetime postcondition: for every accessor, two successive calls on the same instance return values whose underlying bytes compare byte-identical; for `Schema(t)` and `QualityBarChecklist(t)`, parameterised across the seven enum values.
   - Property test on `VersionManifest`: all three version fields are non-empty strings.
   - Thread-safety property test: concurrent calls from N goroutines (N small) on every accessor return values whose underlying bytes compare byte-identical to those returned from a single-threaded baseline.
 - **Out of scope at this leaf's TestSpec.** REQ-031's sandbox acceptance (no network, no filesystem outside binary) is a process-level system test belonging to the root TestSpec, not to this leaf's unit-test surface. The leaf's invariant is verified by *absence of code paths* that read outside `embed.FS` or open network sockets — a fitness-function check in the build pipeline, not a unit test.
-- **ArtifactType enum membership is closed at six per REQ-016.** Growing the enum (e.g., to address `architecture-interface-detail` bundle files at validation time) requires a requirements amendment to REQ-016 / REQ-017 and the Glossary's *Framework canonical schema set* and *Framework canonical Quality Bar checklist set* entries. This DD does not extend the enum unilaterally.
+- **ArtifactType enum membership is closed at seven per requirements Glossary v2 (2026-05-12).** The seventh member, `architecture-interface-detail`, was added to resolve dogfood Issue 25 — the framework publishes seven per-artifact schemas (six standalone types plus one bundle-detail type for Rule-8 architecture bundles), and the requirements Glossary now names all seven. Further enum growth (e.g. a future `architecture-decomposition-detail` bundle subtype) remains a coordinated requirements + DD amendment, not a unilateral DD edit.

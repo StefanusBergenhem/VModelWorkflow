@@ -1,12 +1,14 @@
 ---
 id: ARCH-IF-IArtifactLoad
+title: "vmodel-core — IArtifactLoad interface detail"
+artifact_type: architecture-interface-detail
 belongs_to: ARCH
 kind: architecture-interface-detail
 subject: IArtifactLoad
 scope: ""
 status: draft
-date: "2026-05-04"
-version: 3
+date: "2026-05-12"
+version: 4
 ---
 
 # IArtifactLoad — interface detail

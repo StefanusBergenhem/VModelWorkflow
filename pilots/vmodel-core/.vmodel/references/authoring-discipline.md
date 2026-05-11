@@ -175,16 +175,20 @@ An Architecture artifact at non-leaf scope MAY be authored as a helicopter file 
 
 ```yaml
 ---
-id: ARCH-IF-<NAME>                  # globally unique
-belongs_to: <helicopter-id>         # back-link to the architecture artifact
-kind: architecture-interface-detail # subtype within the bundle
-subject: <element-id>               # e.g. interface name
+id: ARCH-IF-<NAME>                          # globally unique
+title: "<helicopter-scope> — <NAME> interface detail"
+artifact_type: architecture-interface-detail # envelope discriminator (required)
+belongs_to: <helicopter-id>                  # back-link to the architecture artifact
+kind: architecture-interface-detail          # subtype within the bundle (mirrors artifact_type for this kind)
+subject: <element-id>                        # e.g. interface name
 scope: <scope-of-the-helicopter>
 status: ...
 date: ...
 version: ...
 ---
 ```
+
+The detail file is a **first-class artifact** alongside the six standalone types — the envelope requires `artifact_type`, the per-detail-kind schema (`schemas/artifacts/architecture-interface-detail.schema.json`) pins it to the const value `architecture-interface-detail`, and a per-detail-kind Quality Bar checklist (`schemas/artifacts/quality-bar/architecture-interface-detail.quality-bar.json`) applies. Tooling that enumerates "artifact types" today sees seven: the six core types plus this one bundle-detail type. Future bundle subtypes (`architecture-decomposition-detail`, …) each land as their own artifact type when they are introduced.
 
 **Helicopter interface entry — slim form.** Keep `name, from, to, protocol, contract.operation, contract.summary_postcondition, contract.key_invariants, contract.rationale, detail`.
 

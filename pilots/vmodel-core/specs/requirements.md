@@ -7,8 +7,8 @@ parent_scope: null
 derived_from:
   - NEEDS-vmodel-core
 status: draft
-date: "2026-05-03"
-version: 1
+date: "2026-05-12"
+version: 2
 ---
 
 # Requirements — vmodel-core
@@ -161,15 +161,24 @@ glossary:
     definition: |
       The set of JSON schemas that define artifact-front-matter shape, published
       in the framework `references/schemas/artifacts/`: one universal envelope
-      schema, six per-artifact schemas (product-brief, requirements,
-      architecture, adr, detailed-design, test-spec), and one quality-bar
-      container schema.
+      schema, seven per-artifact schemas — six core standalone types (product-
+      brief, requirements, architecture, adr, detailed-design, test-spec) and
+      one bundle-detail type (architecture-interface-detail) — and one quality-
+      bar container schema. Further bundle-detail types may be added as new
+      bundle subtypes are introduced; vmodel-core's schema-validation behaviour
+      is type-generic (REQ-016 dispatches on the artifact's declared
+      `artifact_type`, whichever is published).
 
   - term: "Framework canonical Quality Bar checklist set"
     definition: |
-      The six per-artifact-type Quality Bar JSON files published in
+      The per-artifact-type Quality Bar JSON files published in
       `references/schemas/artifacts/quality-bar/`, each enumerating the
-      structural and semantic rigor items for one artifact type.
+      structural and semantic rigor items for one artifact type. One file per
+      type published in the framework canonical schema set — currently seven
+      (one for each of the six core types plus one for architecture-interface-
+      detail). vmodel-core's Quality-Bar runner (REQ-017) is type-generic: it
+      evaluates the structural-rigor items in whichever checklist matches the
+      artifact's declared `artifact_type`.
 ```
 
 ## Inherited Constraints
@@ -297,7 +306,7 @@ inherited_constraints:
     derived_requirements: [REQ-010, REQ-011, REQ-012, REQ-013, REQ-014]
 
   - id: IC-010
-    source: "framework: references/schemas/artifacts/envelope.schema.json plus the six per-artifact schemas (product-brief, requirements, architecture, adr, detailed-design, test-spec)"
+    source: "framework: references/schemas/artifacts/envelope.schema.json plus the seven per-artifact schemas (product-brief, requirements, architecture, adr, detailed-design, test-spec, architecture-interface-detail)"
     summary: |
       vmodel-core validates artifact front-matter against the framework's
       universal envelope schema, and against the per-artifact schema selected
@@ -310,7 +319,7 @@ inherited_constraints:
     derived_requirements: [REQ-015, REQ-016]
 
   - id: IC-011
-    source: "framework: references/schemas/artifacts/quality-bar/ — the six per-artifact-type quality-bar JSON files"
+    source: "framework: references/schemas/artifacts/quality-bar/ — the per-artifact-type quality-bar JSON files (one per artifact_type in the framework canonical schema set; currently seven)"
     summary: |
       vmodel-core evaluates the structural-rigor items in each artifact's
       Quality Bar checklist. Items requiring interpretation (the semantic-rigor
@@ -588,12 +597,14 @@ inherited_constraints:
     the artifact against the per-artifact schema corresponding to the artifact's
     declared `artifact_type`.
   rationale: |
-    The framework canonical schema set publishes a per-artifact schema for
-    each of the six artifact types; per-type schemas tighten the envelope and
-    add type-specific structure (e.g. requirements adds the `REQ-<NNN>` per-
-    requirement id pattern, scope, parent_scope, and the requirement-block
-    $defs). Per-type schema
-    validation is the structural rigor mechanism (TARGET §6).
+    The framework canonical schema set publishes one per-artifact schema per
+    type in the set (currently seven — see Glossary); per-type schemas tighten
+    the envelope and add type-specific structure (e.g. requirements adds the
+    `REQ-<NNN>` per-requirement id pattern, scope, parent_scope, and the
+    requirement-block $defs). The dispatch is type-generic — vmodel-core
+    selects the schema by the artifact's declared `artifact_type`, whichever
+    of the published set that resolves to. Per-type schema validation is the
+    structural rigor mechanism (TARGET §6).
   derived_from: [IC-010]
 ```
 

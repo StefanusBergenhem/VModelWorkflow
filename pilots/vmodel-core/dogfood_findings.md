@@ -514,28 +514,6 @@ The script treats the spec tree as a single layer and complains about every type
 
 ## 2026-05-11
 
-### Issue 25 — REQ-016 names six canonical artifact types but the framework publishes a seventh schema (`architecture-interface-detail`)
-
-**Where surfaced.** Authoring `DD-embedded-resources` (the leaf DD that owns typed accessors over `embed.FS` for the rule catalog, schema set, and Quality Bar checklist set). Defining the `ArtifactType` closed enum required reconciling two upstream sources:
-
-- **`specs/requirements.md` REQ-016 + Glossary.** The *Framework canonical schema set* glossary entry names exactly **six** per-artifact schemas: `product-brief, requirements, architecture, adr, detailed-design, test-spec`. REQ-016 obliges vmodel-core to validate each artifact against the per-artifact schema corresponding to its `artifact_type`.
-- **Framework `schemas/artifacts/`.** Publishes **seven** per-artifact schema files. The seventh — `architecture-interface-detail.schema.json` — has its own `artifact_type` const value (`architecture-interface-detail`) and is the canonical shape for the Rule-8 architecture bundle's per-interface detail files (`<scope>/architecture/interfaces/<NAME>.md`).
-
-**The gap.** The seventh schema exists structurally (Rule 8 architecture bundle files in the pilot tree right now would be subject to it, e.g. `IFrameworkResources.md`), but is not enumerated in REQ-016's contract or the Glossary. Two clean outcomes; one wrong one:
-
-1. **Amend REQ-016 + Glossary to seven types.** Treat `architecture-interface-detail` as a first-class artifact type subject to vmodel-core schema validation. The cost is small (one Glossary entry, one phrase in REQ-016, an enum member to add in `DD-embedded-resources`). This is most likely the right outcome — interface detail files are real artifacts in the spec tree and there is a real schema for them.
-2. **Mark `architecture-interface-detail` as a non-validated sub-shape of `architecture`.** Treat the interface detail files as fragments of the parent architecture artifact for validation purposes; do not publish them as a distinct `artifact_type` to vmodel-core. Requires retracting the `artifact_type: architecture-interface-detail` const from `architecture-interface-detail.schema.json` (or making it internal-only).
-3. **(Wrong.)** Quietly grow the `DD-embedded-resources` ArtifactType enum to seven without amending REQ-016. This is DD inventing past its upstream and would silently fail the requirements / DD trace test.
-
-**Pilot decision for this session.** `DD-embedded-resources` pins the ArtifactType enum at six per REQ-016 (no DD invention). The seventh schema's runtime addressability through `IFrameworkResources` is blocked on the requirements amendment.
-
-**Suggested resolution.** Pick outcome (1) or (2) at framework scope, then propagate:
-
-- **If (1):** amend `requirements.md` REQ-016, REQ-017, and the *Framework canonical schema set* / *Framework canonical Quality Bar checklist set* Glossary entries to name seven types. Amend `DD-embedded-resources` ArtifactType enum and bundle layout to include `architecture-interface-detail.schema.json`. (There is no `architecture-interface-detail.quality-bar.json` today — decide whether QB applies to detail files too.)
-- **If (2):** retract or internalise the `artifact_type` const in `architecture-interface-detail.schema.json`; document the interface-detail files as validation-scope-internal sub-shapes of `architecture` in the schema reference.
-
-**Pairs with.** Issue 16 (architecture skill: where do ADR-bound library / protocol bindings land) — both concern the gap between what the schemas publish as first-class artifact types and what the requirements layer enumerates.
-
 ### Issue 27 — Authoring a "simple" leaf DD consumes 178k tokens of session context
 
 **Where surfaced.** Authoring `DD-embedded-resources` on 2026-05-11. The leaf is one of the simplest in the architecture: stateless, one error code, six accessors with shared shape, sub-megabyte data, every load-bearing decision inherited from ADR-002 / `IFrameworkResources`. Total message-channel context after authoring + mechanical-check sweep + dogfood-finding logging: 178k tokens (per `/context` 21% of a 1M-token window).

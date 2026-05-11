@@ -1,0 +1,136 @@
+{
+  "$schema": "https://vmodelworkflow.dev/schemas/artifacts/quality-bar/v1",
+  "artifact_type": "architecture-interface-detail",
+  "version": 1,
+  "extracted_from": "docs/guide/artifacts/architecture.html",
+  "extracted_at": "2026-05-12",
+
+  "groups": [
+    {
+      "id": "bundle-integrity",
+      "title": "Bundle integrity",
+      "kind": "checklist",
+      "load_bearing": true,
+      "items": [
+        {
+          "id": "QB-AID-bundle-integrity-001",
+          "prompt": "Does the detail file declare artifact_type: architecture-interface-detail in front-matter? (Required by envelope; without it the file is envelope-invalid.)",
+          "references": { "fields": ["artifact_type"] }
+        },
+        {
+          "id": "QB-AID-bundle-integrity-002",
+          "prompt": "Does belongs_to resolve to an architecture artifact in the spec corpus, and does that artifact's helicopter interface roster contain an entry whose detail: field points back to this file's path?",
+          "references": {
+            "fields": ["belongs_to", "detail"],
+            "rules": ["TRV-REF-001"]
+          }
+        },
+        {
+          "id": "QB-AID-bundle-integrity-003",
+          "prompt": "Does kind equal architecture-interface-detail (matching the artifact_type for this bundle subtype)?",
+          "references": { "fields": ["kind"] }
+        },
+        {
+          "id": "QB-AID-bundle-integrity-004",
+          "prompt": "Does subject equal the name field of the helicopter interface entry that links here? (The detail file documents exactly one interface; the back-link must agree.)",
+          "references": { "fields": ["subject"] }
+        },
+        {
+          "id": "QB-AID-bundle-integrity-005",
+          "prompt": "Does scope equal the scope of the helicopter Architecture this detail file belongs to?",
+          "references": { "fields": ["scope"] }
+        }
+      ]
+    },
+
+    {
+      "id": "contract-completeness",
+      "title": "Contract completeness — load-bearing",
+      "kind": "checklist",
+      "load_bearing": true,
+      "items": [
+        {
+          "id": "QB-AID-contract-completeness-001",
+          "prompt": "Are preconditions present as a non-empty list of predicates (or a single explicit statement that the only precondition is being callable)?",
+          "references": { "fields": ["preconditions"] }
+        },
+        {
+          "id": "QB-AID-contract-completeness-002",
+          "prompt": "Is postconditions.on_success present as a non-empty list of guarantees the supplier makes on the success branch?",
+          "references": { "fields": ["postconditions", "postconditions.on_success"] }
+        },
+        {
+          "id": "QB-AID-contract-completeness-003",
+          "prompt": "When the interface can fail by precondition violation or downstream failure, are postconditions.on_precondition_failure and postconditions.on_downstream_failure present and distinguished from on_success? (Silence is not an answer for interfaces with named errors.)",
+          "references": {
+            "fields": [
+              "postconditions.on_precondition_failure",
+              "postconditions.on_downstream_failure",
+              "errors"
+            ]
+          }
+        },
+        {
+          "id": "QB-AID-contract-completeness-004",
+          "prompt": "Are invariants stated for properties that hold across repeat or concurrent calls (e.g. idempotency, byte-stability, read-only-on-spec-tree)? (Empty list is acceptable only when the interface genuinely has no cross-call invariant.)",
+          "references": { "fields": ["invariants"] }
+        },
+        {
+          "id": "QB-AID-contract-completeness-005",
+          "prompt": "Is the errors list typed — each entry carries code + meaning, with http: present when the protocol has HTTP semantics?",
+          "references": { "fields": ["errors"] }
+        },
+        {
+          "id": "QB-AID-contract-completeness-006",
+          "prompt": "Are quality_attributes named for any NFR budget the interface carries (latency, throughput, determinism, availability)? (Empty acceptable only when the interface inherits all budgets transparently from the parent's Quality Attributes section.)",
+          "references": { "fields": ["quality_attributes"] }
+        },
+        {
+          "id": "QB-AID-contract-completeness-007",
+          "prompt": "Are authentication and authorisation stated explicitly (including the explicit \"n/a — in-process call\" form for in-process interfaces)? (Silence is the wrong answer at any externally callable boundary.)",
+          "references": { "fields": ["authentication", "authorisation"] }
+        },
+        {
+          "id": "QB-AID-contract-completeness-008",
+          "prompt": "Are version and deprecation_policy stated (free-form is acceptable; \"internal — inherits parent\" is acceptable for in-process boundaries that share the parent's versioning)?",
+          "references": { "fields": ["version", "deprecation_policy"] }
+        }
+      ]
+    },
+
+    {
+      "id": "retrofit-discipline",
+      "title": "Retrofit discipline",
+      "kind": "checklist",
+      "load_bearing": false,
+      "items": [
+        {
+          "id": "QB-AID-retrofit-discipline-001",
+          "prompt": "Is observed contract content (signatures, error codes inferred from code) marked recovery_status: reconstructed with evidence (file/line, commit, schema)? (For greenfield detail files: recovery_status absent.)",
+          "references": { "fields": ["recovery_status"] }
+        },
+        {
+          "id": "QB-AID-retrofit-discipline-002",
+          "prompt": "Is human-only content (rationale on the helicopter slim entry, version-policy intent) marked verified or unknown only — never reconstructed?",
+          "references": {
+            "fields": ["recovery_status"],
+            "rules": ["TRV-RETRO-001"]
+          }
+        }
+      ]
+    },
+
+    {
+      "id": "spec-ambiguity-test",
+      "title": "Spec Ambiguity Test — meta-gate",
+      "kind": "meta_gate",
+      "load_bearing": true,
+      "items": [
+        {
+          "id": "QB-AID-spec-ambiguity-test-001",
+          "prompt": "Could a junior engineer or mid-tier AI, reading only the helicopter slim entry plus this detail file (and the governing ADRs cited from the helicopter), write the integration test suite for this interface and the implementation contract for the leaf that realises it — without asking clarifying questions?"
+        }
+      ]
+    }
+  ]
+}

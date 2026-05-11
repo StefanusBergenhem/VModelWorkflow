@@ -13,7 +13,7 @@
       "const": "https://vmodelworkflow.dev/schemas/artifacts/quality-bar/v1"
     },
     "artifact_type": {
-      "description": "Which of the six canonical spec artifact types this Quality Bar applies to. Matches the filename stem of the HTML source (e.g., \"adr\" for docs/guide/artifacts/adr.html).",
+      "description": "Which canonical artifact type this Quality Bar applies to. One of the six core types or a bundle-detail type (architecture-interface-detail). Filename convention matches the artifact_type stem (e.g., \"adr\" → schemas/artifacts/quality-bar/adr.quality-bar.json, sourced from docs/guide/artifacts/adr.html); bundle-detail QBs source their content from a section of the parent type's HTML page (e.g., architecture-interface-detail sourced from docs/guide/artifacts/architecture.html Rule-8 section).",
       "$ref": "#/$defs/artifact_type_enum"
     },
     "version": {
@@ -64,14 +64,15 @@
         "architecture",
         "adr",
         "detailed-design",
-        "test-spec"
+        "test-spec",
+        "architecture-interface-detail"
       ]
     },
 
     "artifact_id_prefix_enum": {
-      "description": "Uppercase prefix used inside per-item IDs. Matches the artifact id prefix convention established by the per-artifact schemas (PB, REQS, ARCH, ADR, DD, TS).",
+      "description": "Uppercase prefix used inside per-item IDs. Matches the artifact id prefix convention established by the per-artifact schemas (PB, REQS, ARCH, ADR, DD, TS, AID for architecture-interface-detail).",
       "type": "string",
-      "enum": ["PB", "REQS", "ARCH", "ADR", "DD", "TS"]
+      "enum": ["PB", "REQS", "ARCH", "ADR", "DD", "TS", "AID"]
     },
 
     "scope_level_enum": {
@@ -140,7 +141,7 @@
         "id": {
           "description": "QB-{ARTIFACT}-{group-slug}-{NNN}. Artifact prefix uppercase from artifact_id_prefix_enum; group slug matches the owning group's id; NNN is 3-digit zero-padded sequence starting at 001, reset per group. IDs are local to the file — not referenced from other artifacts.",
           "type": "string",
-          "pattern": "^QB-(PB|REQS|ARCH|ADR|DD|TS)-[a-z0-9]+(-[a-z0-9]+)*-[0-9]{3}$"
+          "pattern": "^QB-(PB|REQS|ARCH|ADR|DD|TS|AID)-[a-z0-9]+(-[a-z0-9]+)*-[0-9]{3}$"
         },
         "prompt": {
           "description": "The Yes/No review question, plain-text form of the HTML <li>. Passing answer is Yes. Strip any <code> or <em> markup; preserve the substantive wording verbatim.",

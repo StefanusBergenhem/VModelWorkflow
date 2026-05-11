@@ -60,6 +60,16 @@ Replaced drifted local copies of `references/schemas/`, `references/framework/TA
 
 CLAUDE.md slimmed (107 → ~45 lines): historical timeline extracted to this file; main CLAUDE.md retains only current-state essentials.
 
+## 2026-05-12 — Issue 25 resolved (six-vs-seven schemas → seven first-class types)
+
+Framework decision: Option 1 — `architecture-interface-detail` promoted to a first-class artifact type. Propagation in one pass across framework + pilot:
+
+- Framework: `references/authoring-discipline.md` Rule 8 template now requires `artifact_type` + `title` (the two envelope-required fields the previous template omitted, leaving Rule-8 detail files envelope-invalid in every project). `schemas/artifacts/quality-bar/quality-bar.schema.json` enum + id-prefix + regex extended (new prefix `AID`). New `schemas/artifacts/quality-bar/architecture-interface-detail.quality-bar.json` (4 groups, 16 items, meta-gate). New `schemas/artifacts/fixtures/architecture-interface-detail.example.md`. `link-types.schema.json` and `validation-rules.schema.json` `artifact_type_enum` extended (catalogs already had the type — the schemas were the laggards). `envelope.schema.json` description rephrased to "six core standalone types plus bundle-detail types". `validation-rules.catalog.json` TRV-QB-001 applies-to extended. `docs/guide/artifacts/architecture.html` Rule-8 example's detail-file front-matter corrected (was `parent_artifact` / `interface_name`; now `belongs_to` / `subject` per the actual schema); new paragraph names the detail file as a first-class artifact.
+- Pilot: `requirements.md` v2 — Glossary `Framework canonical schema set` and `Framework canonical Quality Bar checklist set` entries name seven; IC-010 / IC-011 sources extended; REQ-016 rationale rephrased to be type-generic. `DD-embedded-resources` v2 — `ArtifactType` enum seven members; bundle layout adds `architecture-interface-detail.schema.json` + `.quality-bar.json`; "six" → "seven" across signatures, complexity_notes, error-matrix, data-structure invariants, closing Note. 8 interface detail files in `specs/architecture/interfaces/` now carry `artifact_type` + `title` and validate against the per-type schema (previously envelope-invalid at every file). `TS-embedded-resources` v2 — parameterised `enumerate:` lists grown to seven; six-enum → seven-enum across titles and prose; closing Note rephrased. Root `testspec.md` v2 — workload fixture "six artifact_type values" → seven. `CLAUDE.md` open-decision bullet replaced with closure note.
+- Validation: all 14 spec-tree artifacts with the canonical seven types now pass per-type schema validation (the 2 ADR pre-existing failures are unrelated schema-required-field drift, out of Issue 25's scope). New QB JSON + new fixture both validate clean.
+- Dogfood findings: Issue 25 moved from `dogfood_findings.md` to `dogfood_findings_archive.md` with full `**Fixed:**` provenance line. Surprise during execution: discovered that the link-types catalog already named the seventh type in `belongs_to.source_artifact_types`, but the link-types schema enum still had only six — i.e. the catalog had been silently invalid against its own schema. Fixed.
+- `DD-validation-engine` authoring (next session) is unblocked.
+
 ---
 
 ## Open follow-ups (carried forward — track as work begins, not authoring artifacts)

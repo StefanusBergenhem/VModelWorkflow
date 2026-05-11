@@ -1,12 +1,14 @@
 ---
 id: ARCH-IF-IReportCLI
+title: "vmodel-core — IReportCLI interface detail"
+artifact_type: architecture-interface-detail
 belongs_to: ARCH
 kind: architecture-interface-detail
 subject: IReportCLI
 scope: ""
 status: draft
-date: "2026-05-04"
-version: 3
+date: "2026-05-12"
+version: 4
 ---
 
 # IReportCLI — interface detail

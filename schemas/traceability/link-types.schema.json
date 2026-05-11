@@ -44,12 +44,13 @@
         "architecture",
         "adr",
         "detailed-design",
-        "test-spec"
+        "test-spec",
+        "architecture-interface-detail"
       ]
     },
 
     "source_kind_enum": {
-      "description": "artifact = spec-side artifact (one of the six canonical types). build_artifact = future Build-workflow artifact (code file, test file, deployment config). Reserved for forward compatibility.",
+      "description": "artifact = spec-side artifact (one of the canonical types — six core standalone types plus bundle-detail types). build_artifact = future Build-workflow artifact (code file, test file, deployment config). Reserved for forward compatibility.",
       "type": "string",
       "enum": ["artifact", "build_artifact"]
     },

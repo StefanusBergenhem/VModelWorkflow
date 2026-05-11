@@ -18,8 +18,8 @@ verifies:
 governing_adrs:
   - ADR-002-embed-canonical-schemas-in-binary
 status: draft
-date: "2026-05-11"
-version: 1
+date: "2026-05-12"
+version: 2
 coverage_mutation_bar:
   structural_coverage:
     threshold_pct: "TBD-by-project-policy"
@@ -47,7 +47,7 @@ The 14 cases below cover three strategy slices: **contract / functional** (one p
 - The `NewEmbeddedResources` precondition *"Called from the composition root; not invoked from inner-domain code."* This is design-time discipline (enforced by `ARCH` Composition / Wiring), not a runtime check; calling the constructor from a unit test produces a working instance because that is what the unit test exists to do.
 - Decode posture (eager vs lazy). The DD declares it the implementer's choice; pinning a specific posture in a test would over-constrain the implementation. The byte-identical-across-lifetime postcondition is the contractual surface, and both decode postures satisfy it.
 
-**Coverage / mutation bar (project-policy fill-in).** All four slots use `"TBD-by-project-policy"` per `references/coverage-mutation-bar.md` — the author does not invent numbers. Per the per-layer guidance, the structural slot's `branch` metric is the most informative flavour for a stateless typed-accessor leaf (every conditional dispatch on `artifactType` and the parameterisation across the six enum members should be exercised); a mutation score paired with `branch` coverage closes the assertion-sensitivity gap, particularly for the dispatch logic that returns one of seven distinct byte-sequences. Enforcement is left to project policy.
+**Coverage / mutation bar (project-policy fill-in).** All four slots use `"TBD-by-project-policy"` per `references/coverage-mutation-bar.md` — the author does not invent numbers. Per the per-layer guidance, the structural slot's `branch` metric is the most informative flavour for a stateless typed-accessor leaf (every conditional dispatch on `artifactType` and the parameterisation across the seven enum members should be exercised); a mutation score paired with `branch` coverage closes the assertion-sensitivity gap, particularly for the dispatch logic that returns one of seven distinct byte-sequences. Enforcement is left to project policy.
 
 **Error / happy ratio.** This TestSpec has 2 error cases against 6 contract / functional cases (ratio 1:3), below the Quality Bar heuristic of ≥ 1:2. The honest reason is that the DD's error matrix has exactly one row (`ErrUnknownArtifactType`) across two callsites (`Schema`, `QualityBarChecklist`), and both callsites are covered exhaustively by TC-007 / TC-008. Bundle absence, network failure, and decode failure are structurally impossible at runtime (see *Out of scope* above), so adding cases for them would fabricate error surface. Lifting the ratio without fabricating would require either the DD to grow its error matrix or the leaf to grow more accessors — neither is in scope here.
 
@@ -83,7 +83,7 @@ The 14 cases below cover three strategy slices: **contract / functional** (one p
   expected: "RuleCatalog().bytes byte-identical to the contents of bundle/traceability/validation-rules.catalog.json as bound by //go:embed in the binary under test"
 
 - id: TC-embedded-resources-003
-  title: "Schema(t) returns wrapper whose bytes equal the bundled per-artifact JSON Schema, for every t in the canonical six-enum"
+  title: "Schema(t) returns wrapper whose bytes equal the bundled per-artifact JSON Schema, for every t in the canonical seven-enum"
   suite: "accessors-bytes"
   type: functional
   verifies:
@@ -94,7 +94,7 @@ The 14 cases below cover three strategy slices: **contract / functional** (one p
   inputs:
     instance: "NewEmbeddedResources()"
     artifactType:
-      enumerate: ["product-brief", "requirements", "architecture", "adr", "detailed-design", "test-spec"]
+      enumerate: ["product-brief", "requirements", "architecture", "adr", "detailed-design", "test-spec", "architecture-interface-detail"]
   expected: "for each artifactType in the enumerate set: Schema(artifactType) returns (schema, nil) where schema.bytes is byte-identical to the contents of bundle/artifacts/<artifactType>.schema.json as bound by //go:embed, and the returned error is nil"
 
 - id: TC-embedded-resources-004
@@ -110,7 +110,7 @@ The 14 cases below cover three strategy slices: **contract / functional** (one p
   expected: "EnvelopeSchema().bytes byte-identical to the contents of bundle/artifacts/envelope.schema.json as bound by //go:embed"
 
 - id: TC-embedded-resources-005
-  title: "QualityBarChecklist(t) returns wrapper whose bytes equal the bundled per-artifact QB JSON, for every t in the canonical six-enum"
+  title: "QualityBarChecklist(t) returns wrapper whose bytes equal the bundled per-artifact QB JSON, for every t in the canonical seven-enum"
   suite: "accessors-bytes"
   type: functional
   verifies:
@@ -121,7 +121,7 @@ The 14 cases below cover three strategy slices: **contract / functional** (one p
   inputs:
     instance: "NewEmbeddedResources()"
     artifactType:
-      enumerate: ["product-brief", "requirements", "architecture", "adr", "detailed-design", "test-spec"]
+      enumerate: ["product-brief", "requirements", "architecture", "adr", "detailed-design", "test-spec", "architecture-interface-detail"]
   expected: "for each artifactType in the enumerate set: QualityBarChecklist(artifactType) returns (qb, nil) where qb.bytes is byte-identical to the contents of bundle/artifacts/quality-bar/<artifactType>.quality-bar.json as bound by //go:embed, and the returned error is nil"
 
 - id: TC-embedded-resources-006
@@ -143,12 +143,12 @@ The 14 cases below cover three strategy slices: **contract / functional** (one p
 
 # ─── Robustness (TC-007 .. TC-008) ──────────────────────────────────────────
 # The DD's single error-matrix row across the two accessors that carry the
-# six-enum precondition. Each case forces precondition violation, asserts the
+# seven-enum precondition. Each case forces precondition violation, asserts the
 # typed-error return shape, and observes the stateless containment guarantee
 # (a subsequent valid call still returns expected bytes).
 
 - id: TC-embedded-resources-007
-  title: "Schema returns zero-value Schema and ErrUnknownArtifactType when artifactType is outside the six-enum; subsequent valid call still returns expected bytes"
+  title: "Schema returns zero-value Schema and ErrUnknownArtifactType when artifactType is outside the seven-enum; subsequent valid call still returns expected bytes"
   suite: "robustness"
   type: error
   verifies:
@@ -159,7 +159,7 @@ The 14 cases below cover three strategy slices: **contract / functional** (one p
     - "ARCH.interfaces.IFrameworkResources.errors.ErrUnknownArtifactType"
   inputs:
     instance: "NewEmbeddedResources()"
-    invalid_artifactType: "ArtifactType value not in {product-brief, requirements, architecture, adr, detailed-design, test-spec} — e.g., the zero value of ArtifactType, or a literal 'unknown-artifact'"
+    invalid_artifactType: "ArtifactType value not in {product-brief, requirements, architecture, adr, detailed-design, test-spec, architecture-interface-detail} — e.g., the zero value of ArtifactType, or a literal 'unknown-artifact'"
     follow_up_call: "Schema('requirements')"
   expected:
     return_schema: "the zero value of Schema (Schema{} with bytes field equal to a zero-length byte sequence)"
@@ -167,7 +167,7 @@ The 14 cases below cover three strategy slices: **contract / functional** (one p
     state_unchanged: "the follow_up_call Schema('requirements') returns (schema, nil) where schema.bytes is byte-identical to the contents of bundle/artifacts/requirements.schema.json (same predicate as TC-003 for artifactType='requirements')"
 
 - id: TC-embedded-resources-008
-  title: "QualityBarChecklist returns zero-value QBChecklist and ErrUnknownArtifactType when artifactType is outside the six-enum; subsequent valid call still returns expected bytes"
+  title: "QualityBarChecklist returns zero-value QBChecklist and ErrUnknownArtifactType when artifactType is outside the seven-enum; subsequent valid call still returns expected bytes"
   suite: "robustness"
   type: error
   verifies:
@@ -178,7 +178,7 @@ The 14 cases below cover three strategy slices: **contract / functional** (one p
     - "ARCH.interfaces.IFrameworkResources.errors.ErrUnknownArtifactType"
   inputs:
     instance: "NewEmbeddedResources()"
-    invalid_artifactType: "ArtifactType value not in {product-brief, requirements, architecture, adr, detailed-design, test-spec} — e.g., the zero value of ArtifactType, or a literal 'unknown-artifact'"
+    invalid_artifactType: "ArtifactType value not in {product-brief, requirements, architecture, adr, detailed-design, test-spec, architecture-interface-detail} — e.g., the zero value of ArtifactType, or a literal 'unknown-artifact'"
     follow_up_call: "QualityBarChecklist('requirements')"
   expected:
     return_qb: "the zero value of QBChecklist (QBChecklist{} with bytes field equal to a zero-length byte sequence)"
@@ -203,7 +203,7 @@ The 14 cases below cover three strategy slices: **contract / functional** (one p
   expected: "first_call.bytes byte-identical to second_call.bytes (the two byte sequences compare equal element-for-element)"
 
 - id: TC-embedded-resources-010
-  title: "Schema(t): two successive calls on the same instance return byte-identical underlying bytes, for every t in the canonical six-enum"
+  title: "Schema(t): two successive calls on the same instance return byte-identical underlying bytes, for every t in the canonical seven-enum"
   suite: "byte-stability"
   type: property
   verifies:
@@ -212,7 +212,7 @@ The 14 cases below cover three strategy slices: **contract / functional** (one p
     instance: "NewEmbeddedResources()"
     call_count: 2
     artifactType:
-      enumerate: ["product-brief", "requirements", "architecture", "adr", "detailed-design", "test-spec"]
+      enumerate: ["product-brief", "requirements", "architecture", "adr", "detailed-design", "test-spec", "architecture-interface-detail"]
   expected: "for each artifactType in the enumerate set: first_call(artifactType).bytes byte-identical to second_call(artifactType).bytes"
 
 - id: TC-embedded-resources-011
@@ -227,7 +227,7 @@ The 14 cases below cover three strategy slices: **contract / functional** (one p
   expected: "first_call.bytes byte-identical to second_call.bytes"
 
 - id: TC-embedded-resources-012
-  title: "QualityBarChecklist(t): two successive calls on the same instance return byte-identical underlying bytes, for every t in the canonical six-enum"
+  title: "QualityBarChecklist(t): two successive calls on the same instance return byte-identical underlying bytes, for every t in the canonical seven-enum"
   suite: "byte-stability"
   type: property
   verifies:
@@ -236,7 +236,7 @@ The 14 cases below cover three strategy slices: **contract / functional** (one p
     instance: "NewEmbeddedResources()"
     call_count: 2
     artifactType:
-      enumerate: ["product-brief", "requirements", "architecture", "adr", "detailed-design", "test-spec"]
+      enumerate: ["product-brief", "requirements", "architecture", "adr", "detailed-design", "test-spec", "architecture-interface-detail"]
   expected: "for each artifactType in the enumerate set: first_call(artifactType).bytes byte-identical to second_call(artifactType).bytes"
 
 - id: TC-embedded-resources-013
@@ -273,9 +273,9 @@ The 14 cases below cover three strategy slices: **contract / functional** (one p
     iterations_per_goroutine: 16
     accessors_under_test:
       - "RuleCatalog()"
-      - "Schema(artifactType) for each artifactType in {product-brief, requirements, architecture, adr, detailed-design, test-spec}"
+      - "Schema(artifactType) for each artifactType in {product-brief, requirements, architecture, adr, detailed-design, test-spec, architecture-interface-detail}"
       - "EnvelopeSchema()"
-      - "QualityBarChecklist(artifactType) for each artifactType in {product-brief, requirements, architecture, adr, detailed-design, test-spec}"
+      - "QualityBarChecklist(artifactType) for each artifactType in {product-brief, requirements, architecture, adr, detailed-design, test-spec, architecture-interface-detail}"
       - "Versions()"
     baseline: "single-threaded result captured before goroutine fan-out, per accessor (and per artifactType where parameterised)"
     test_runner_flag: "go test -race"
@@ -288,5 +288,5 @@ The 14 cases below cover three strategy slices: **contract / functional** (one p
 
 - **Bundle fixture.** Every byte-equality oracle (TC-002 .. TC-006, TC-007 / TC-008 follow-up, TC-009 .. TC-013) is satisfied by re-loading the corresponding file via `//go:embed` (or `embed.FS.ReadFile`) in the test package and comparing against the accessor's returned bytes. The test package owns its own `//go:embed bundle/...` directive pointing at the same `bundle/` tree the production binary embeds; this is the cleanest fixture mechanism (no copy, no parallel hierarchy) and keeps the test independent of any future code-side helper that might itself contain the bug under test.
 - **Why the byte-identical predicate is the oracle, not JSON-equivalence.** REQ-030's acceptance is *exact-bytes* over the bundled content (the binary-version pins schema-version 1:1); a JSON-equivalent oracle (parse-then-compare-AST) would let a re-formatting fault through. The DD's data-structure invariant *"Byte-identical to the content of ... at the binary's build time"* is the contractual surface.
-- **`ArtifactType` enum closed at six per REQ-016.** The parameterised cases (TC-003, TC-005, TC-010, TC-012) enumerate exactly the six members; the robustness cases (TC-007, TC-008) verify that any value outside the six triggers the typed error. Growing the enum is a requirements amendment, not a TestSpec amendment — when that lands, the enumerate lists grow correspondingly.
+- **`ArtifactType` enum closed at seven per requirements Glossary v2 (2026-05-12).** The parameterised cases (TC-003, TC-005, TC-010, TC-012) enumerate exactly the seven members (product-brief, requirements, architecture, adr, detailed-design, test-spec, architecture-interface-detail); the robustness cases (TC-007, TC-008) verify that any value outside the seven triggers the typed error. Growth was a coordinated requirements (Glossary) + DD (ArtifactType data structure) + TestSpec amendment landing 2026-05-12 to resolve dogfood Issue 25; future enum growth follows the same pattern.
 - **Decode-posture independence.** None of the 14 cases pins eager-vs-lazy decode. TC-014's `iterations_per_goroutine: 16` exercises both first-access (lazy decode's single-flight publication path) and subsequent-access (post-decode cached path) under contention, but neither outcome is asserted at the test boundary — only the byte-equality and race-freedom oracles are.

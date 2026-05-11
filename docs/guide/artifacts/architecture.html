@@ -146,6 +146,8 @@ recovery_status: reconstructed      # omitted on greenfield
     <p>In the bundle form the helicopter file (<code>architecture.md</code>) carries Overview, Structure Diagram, Decomposition, the slim Interface roster, Composition, Quality Attributes, Resilience, Observability + Security, and Evolution + fitness functions &mdash; everything a reviewer needs at the scope level. The per-interface DbC detail moves to <code>architecture/interfaces/&lt;NAME&gt;.md</code>, one file per interface, linked from the helicopter via the entry's <code>detail</code> field.</p>
     <p>The slim helicopter interface entry keeps a fixed shape: <code>name</code>, <code>from</code>, <code>to</code>, <code>protocol</code>, <code>contract.operation</code>, <code>contract.summary_postcondition</code> (one-line success guarantee plus halt/error behaviour), <code>contract.key_invariants</code> (1&ndash;3 IDs of load-bearing invariants the interface preserves), <code>contract.rationale</code>, and <code>detail</code> (relative path to the detail file). Full DbC clauses &mdash; <code>preconditions</code>, <code>postconditions</code>, <code>invariants</code>, <code>errors</code>, <code>quality_attributes</code>, <code>authentication</code>, <code>authorisation</code>, <code>version</code>, <code>deprecation_policy</code> &mdash; live in the detail file.</p>
 
+    <p>The detail file is itself a first-class artifact: <code>artifact_type: architecture-interface-detail</code> is required in its front-matter (envelope contract), validates against <code>schemas/artifacts/architecture-interface-detail.schema.json</code>, and is reviewed against <code>schemas/artifacts/quality-bar/architecture-interface-detail.quality-bar.json</code>. Tooling that enumerates artifact types sees seven: the six core types plus this one bundle-detail type; future bundle subtypes (decomposition-detail, &hellip;) will each register as their own type when introduced. From a craft perspective the detail file is still part of one logical artifact with its helicopter &mdash; reviewers read both together for the Spec Ambiguity Test &mdash; but the validation contract treats it as a real artifact with its own envelope shape, schema, and Quality Bar.</p>
+
     <pre><code># Slim helicopter interface entry (Rule 8 form)
 interfaces:
   - name: IValidate
@@ -527,8 +529,15 @@ interfaces:
     <pre><code># architecture/interfaces/IValidate.md (detail file) &mdash; full DbC clauses
 ---
 id: ARCH-IF-IValidate
-parent_artifact: ARCH
-interface_name: IValidate
+title: "vmodel-core — IValidate interface detail"
+artifact_type: architecture-interface-detail
+belongs_to: ARCH
+kind: architecture-interface-detail
+subject: IValidate
+scope: ""
+status: active
+date: "2026-05-04"
+version: 1
 ---
 
 # IValidate &mdash; full Design-by-Contract detail
