@@ -25,7 +25,7 @@ Execution plan for the VModelWorkflow framework following the 2026-04-18 pivot. 
 - `docs/guide/skills-architecture.html` rewritten for the post-pivot, post-build-flow world (2026-05-10).
 - `docs/guide/index.html` refreshed (2026-05-10) to reflect Phase 6 state, central config, walker tool, and 3-root-artifact treatment.
 - `scripts/walk-impact.py` shipped (2026-05-10) — candidate-set propagation walker (TARGET §8.3); 22-test TDD suite; `tests/test_walk_impact.py` + fixture tree under `tests/fixtures/walk-impact/specs/`.
-- `vmodel-core` greenfield dogfooding pilot active at `/home/stefanus/repos/vmodel-core/`.
+- `vmodel-core` greenfield dogfooding pilot active — bundled at `pilots/vmodel-core/` (2026-05-10; external repo archived). First leaf DD (`DD-embedded-resources`) landed 2026-05-11.
 - 20 research documents in `research/` — secondary substrate with explicit safety-bias caveat (authored pre-pivot; extract craft, discard ASPICE/DO-178C framing).
 
 **Recent landings (2026-05):**
@@ -34,6 +34,8 @@ Execution plan for the VModelWorkflow framework following the 2026-04-18 pivot. 
 - Pre-skill bundled shared refs retired; pre-pivot skills archived.
 - Leaf-build triplet alignment to source-code.html + unit-test.html craft + per-task file ownership enforcement.
 - wf-comparison five-phase upgrade: TOC/persona fixes, task-contract enrichment (`acceptance_criteria` / `context_to_load` / `out_of_scope`), scope-expansion HALT + `build-blocked.yaml` + auto-amend, per-gate `build-progress.yaml` + resume modes, per-task workers wrapped as agents for parallel isolated execution.
+- **vmodel-core pilot bundled into framework repo** (2026-05-10, commit 76c2686) at `pilots/vmodel-core/`; symlinks drift-proof framework canonical references (commit 7c28173); external repo archived.
+- **First leaf DD landed** (2026-05-11) — `DD-embedded-resources` (six accessors over `embed.FS`, stateless, one error code, bundle layout pinned). Authored via `/vmodel-skill-author-detailed-design`; front-matter + embedded-YAML schema-valid. Surfaced four new dogfood findings (Issues 25–28): six-vs-seven schema type gap, DEFER markers bleeding across scopes, 178k session-token cost on the simplest leaf, missing pre-built schema-validation script.
 
 ---
 
@@ -187,36 +189,42 @@ Architectural rationale — including the full Q8–Q15 and NQ-B/C/D/E decisions
 
 **Closeout signal:** vmodel-core pilot completes a forward-run end-to-end without manual intervention beyond design review.
 
-### 3.6.1 Phase 6 next-session prep — vmodel-core greenfield dogfooding
+### 3.6.1 Phase 6 next-session prep — vmodel-core leaf TestSpec authoring
 
-**Trigger.** This subsection is the session-start brief for the next conversation, which will resume vmodel-core dogfooding. The substantial 2026-05-10 work (skills-architecture.html rewrite, walker tool with TDD, 3-root-artifact propagation, index.html refresh, BACKLOG reformat) is committed; the next session picks up the actual greenfield build run.
+**Trigger.** This subsection is the session-start brief for the next conversation. The pilot has its first leaf DD (`DD-embedded-resources`, 2026-05-11); the natural next authoring step is the **sibling leaf TestSpec** that closes the V-pair for `embedded-resources`. This is also the first leaf-TestSpec rep in dogfooding — Issue 24 (typed-error coverage script's leaf-deferral pattern) surfaces precisely here.
 
 **Load at session start (in this order):**
 
-1. `CLAUDE.md` (auto-loaded).
+1. `CLAUDE.md` (auto-loaded — framework root).
 2. `docs/plan/BACKLOG.md` §1 + §3.6 + §3.6.1 (this subsection).
-3. `docs/plan/TARGET_ARCHITECTURE.md` §15 (central config) + §16 (build flow).
-4. `docs/guide/skills-architecture.html` (full skill catalog + workflows).
-5. `MEMORY.md` (auto-loaded).
-6. `~/repos/vmodel-core/.vmodel/config.yaml` + `~/repos/vmodel-core/specs/` tree (the actual project state).
+3. `docs/plan/TARGET_ARCHITECTURE.md` §5.3 (TestSpec shape) + §5.6 (review handover) + §16 (build flow).
+4. `MEMORY.md` (auto-loaded).
+5. `pilots/vmodel-core/CLAUDE.md` — pilot working-context + current-state pointer.
+6. `pilots/vmodel-core/specs/embedded-resources/detailed_design.md` — the DD the TestSpec verifies.
+7. `pilots/vmodel-core/specs/architecture.md` + `pilots/vmodel-core/specs/architecture/interfaces/IFrameworkResources.md` — DD's upstream.
+8. `pilots/vmodel-core/dogfood_findings.md` Issue 24 (leaf-testspec deferral pattern) + Issue 25 (six-vs-seven schemas, gates `validation-engine` but **not** this TestSpec).
 
-**Working directory for next session.** `/home/stefanus/repos/vmodel-core/`. The framework repo is the *reference*, not the workspace — all artifacts authored in `vmodel-core` exercise the framework's spec-flow + build-flow round-trip.
+**Working directory for next session.** `pilots/vmodel-core/` (inside this framework repo). The framework repo is both reference and workspace; the pilot is a subdirectory.
 
-**Concrete next-session deliverables (order TBD by what surfaces first):**
+**Concrete next-session deliverable.**
 
-1. **Root-product confirmation.** Inspect `vmodel-core/specs/` to confirm root product type (PB / needs / PD) and that the artifact passes its current Quality Bar.
-2. **Spec tree sanity walk.** Run `scripts/walk-impact.py PB --specs-root /home/stefanus/repos/vmodel-core/specs --format text` (and from a representative leaf) to confirm the traceability graph is healthy.
-3. **Plan-build dry run.** Invoke `/vmodel-skill-plan-build` against `vmodel-core`. Confirm `tasks.yaml` is populated with `acceptance_criteria` / `context_to_load` / `out_of_scope` for every leaf task.
-4. **Orchestrate-build first stage.** Pick one leaf, run `/vmodel-skill-orchestrate-build` constrained to that leaf. Capture the per-task file flow (current-task → render-report → review-ready → APPROVED-or-feedback). Real signal expected at this point: scope-expansion HALTs, escalations, contract-enforcement refusals.
-5. **Capture pilot signal.** Whatever surfaces feeds Cluster 5 / 6 / 7 prioritisation and the Haiku-floor eval design. Keep notes in `vmodel-core/.vmodel/.build/runs/&lt;run-id&gt;/retrospective.md`.
+Invoke `/vmodel-skill-author-testspec` for the `embedded-resources` leaf. Output: `pilots/vmodel-core/specs/embedded-resources/testspec.md`. Cases derived from `DD-embedded-resources` per the leaf-layer convention (`verifies` targets DD entries — Public Interface clauses, Data Structure invariants, error-matrix row). The DD's Notes section already lists the cue set: contract test per accessor; robustness test for `ErrUnknownArtifactType`; property test on byte-identity across calls; property test on `VersionManifest` non-empty fields; thread-safety property test.
+
+Expected signal during this session:
+
+- Closes Issue 24's noisy finding on `IFrameworkResources.ErrUnknownArtifactType` (leaf coverage finally exists).
+- First exercise of the leaf-TestSpec author skill in dogfooding — surfaces shape gaps if any.
+- Confirms whether Issue 27's session-cost pattern repeats at TestSpec scope (likely smaller — less upstream to load).
+- Issue 28 fix (pre-built schema-validation script) likely worth doing *before or after* this session — author can flag the call.
 
 **What is *not* in scope for next session:**
 
-- Building the needs/PD schemas + Quality Bars + craft pages (Cluster 7) — wait for pilot signal on whether the missing structural files actually bite during dogfooding.
-- Phase 7 work (topology discovery, gap aggregator, retrofit-specific skills, purpose-built tools).
-- Building author/review pairs for needs/PD — tied to decision γ which the pilot informs.
+- Resolving Issue 25 (six-vs-seven schemas) — gates `DD-validation-engine`, **not** this TestSpec.
+- `DD-validation-engine` authoring — comes after Issue 25 resolution.
+- `plan-build` / `orchestrate-build` runs — wait until at least one V-pair exists end-to-end.
+- Cluster 7 needs/PD structural artifacts — pilot signal still inconclusive.
 
-**Open question entering the session.** Whether the framework's own architecture (`/home/stefanus/repos/VModelWorkflow/`) — already a working multi-component codebase — should also be retrofitted using the framework, in parallel with `vmodel-core` greenfield. Not a critical-path question; resolve only if it becomes the natural next step after the greenfield run produces signal.
+**Open question entering the session.** Whether to take Issue 28 (pre-built schema-validation script) before TestSpec authoring or after. Doing it before amortises the validation cost across the next session. Doing it after preserves the V-pair completion as a focused deliverable. Stakeholder call.
 
 ### 3.7 Phase 7 — Retrofit-specific Additions — PENDING
 

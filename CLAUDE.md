@@ -86,7 +86,7 @@ Ten load-bearing principles. Canonical wording in `TARGET_ARCHITECTURE.md §3`. 
   - **Lightweight root product (PD)** — third option for root-of-tree alongside PB and needs. New skill `vmodel-skill-elicit-pd`.
   - **Schema simplifications** — DD drops `derived_from` (keeps `parent_architecture` only); TestSpec drops `derived_from` (keeps `verifies` only with layer convention); `## Open follow-ups` killed everywhere (DEFER markers are single mechanism); per-skill bundled copies of shared refs retired (sync scripts removed).
   - **Pre-pivot skills retired** — `develop-code`, `derive-test-cases`, `vmodel-skill-review-code`, `*-workspace` archived under `archive/pre-pivot-skills/`.
-  - **vmodel-core dogfooding pilot** — `/home/stefanus/repos/vmodel-core/` continues; artifacts migrated to new schema; `.vmodel/` scaffolded.
+  - **vmodel-core dogfooding pilot** — bundled at `pilots/vmodel-core/` (2026-05-10); external `/home/stefanus/repos/vmodel-core/` archived. Root-scope artifacts (needs, requirements, architecture, ADRs, testspec) authored and approved. First leaf DD (`DD-embedded-resources`) landed 2026-05-11; surfaced dogfood findings 25–28 (six-vs-seven schema gap, DEFER markers bleeding across scopes, session-token cost, missing schema-validation script). Sibling leaf TestSpec is the next authoring step.
 - **Phase 7** — Retrofit-specific additions (gated on Phase 6 dogfooding signal).
 
 Full details in `docs/plan/BACKLOG.md`.

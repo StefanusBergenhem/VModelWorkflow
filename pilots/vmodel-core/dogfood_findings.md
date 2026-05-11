@@ -510,3 +510,100 @@ The script treats the spec tree as a single layer and complains about every type
 
 **Pairs with.** Issue 17 (ID encoding), Issue 20 (typed-error case coverage discipline) — both surface from mechanical-check scripts whose assumptions don't perfectly match the spec-tree state.
 
+## 2026-05-11
+
+### Issue 25 — REQ-016 names six canonical artifact types but the framework publishes a seventh schema (`architecture-interface-detail`)
+
+**Where surfaced.** Authoring `DD-embedded-resources` (the leaf DD that owns typed accessors over `embed.FS` for the rule catalog, schema set, and Quality Bar checklist set). Defining the `ArtifactType` closed enum required reconciling two upstream sources:
+
+- **`specs/requirements.md` REQ-016 + Glossary.** The *Framework canonical schema set* glossary entry names exactly **six** per-artifact schemas: `product-brief, requirements, architecture, adr, detailed-design, test-spec`. REQ-016 obliges vmodel-core to validate each artifact against the per-artifact schema corresponding to its `artifact_type`.
+- **Framework `schemas/artifacts/`.** Publishes **seven** per-artifact schema files. The seventh — `architecture-interface-detail.schema.json` — has its own `artifact_type` const value (`architecture-interface-detail`) and is the canonical shape for the Rule-8 architecture bundle's per-interface detail files (`<scope>/architecture/interfaces/<NAME>.md`).
+
+**The gap.** The seventh schema exists structurally (Rule 8 architecture bundle files in the pilot tree right now would be subject to it, e.g. `IFrameworkResources.md`), but is not enumerated in REQ-016's contract or the Glossary. Two clean outcomes; one wrong one:
+
+1. **Amend REQ-016 + Glossary to seven types.** Treat `architecture-interface-detail` as a first-class artifact type subject to vmodel-core schema validation. The cost is small (one Glossary entry, one phrase in REQ-016, an enum member to add in `DD-embedded-resources`). This is most likely the right outcome — interface detail files are real artifacts in the spec tree and there is a real schema for them.
+2. **Mark `architecture-interface-detail` as a non-validated sub-shape of `architecture`.** Treat the interface detail files as fragments of the parent architecture artifact for validation purposes; do not publish them as a distinct `artifact_type` to vmodel-core. Requires retracting the `artifact_type: architecture-interface-detail` const from `architecture-interface-detail.schema.json` (or making it internal-only).
+3. **(Wrong.)** Quietly grow the `DD-embedded-resources` ArtifactType enum to seven without amending REQ-016. This is DD inventing past its upstream and would silently fail the requirements / DD trace test.
+
+**Pilot decision for this session.** `DD-embedded-resources` pins the ArtifactType enum at six per REQ-016 (no DD invention). The seventh schema's runtime addressability through `IFrameworkResources` is blocked on the requirements amendment.
+
+**Suggested resolution.** Pick outcome (1) or (2) at framework scope, then propagate:
+
+- **If (1):** amend `requirements.md` REQ-016, REQ-017, and the *Framework canonical schema set* / *Framework canonical Quality Bar checklist set* Glossary entries to name seven types. Amend `DD-embedded-resources` ArtifactType enum and bundle layout to include `architecture-interface-detail.schema.json`. (There is no `architecture-interface-detail.quality-bar.json` today — decide whether QB applies to detail files too.)
+- **If (2):** retract or internalise the `artifact_type` const in `architecture-interface-detail.schema.json`; document the interface-detail files as validation-scope-internal sub-shapes of `architecture` in the schema reference.
+
+**Pairs with.** Issue 16 (architecture skill: where do ADR-bound library / protocol bindings land) — both concern the gap between what the schemas publish as first-class artifact types and what the requirements layer enumerates.
+
+### Issue 26 — DEFER markers bleed across scopes when cited in prose
+
+**Where surfaced.** Authoring `DD-embedded-resources` on 2026-05-11. The DD's Overview originally cited the parent ARCH's existing `[DEFER-DD: validation-engine — JSON Schema 2020-12 validator library selection]` in prose to explain why this leaf returns raw JSON bytes (not pre-parsed Schema objects). `scripts/index-deferred-items.py` picked up the prose citation as a new DEFER-DD marker anchored at `DD-embedded-resources`. The deferral genuinely lives at `validation-engine` scope; the DD merely references it. The fix in this session was to drop the bracket form and paraphrase in prose — i.e., the author skill silently rewards rewording around the script rather than supporting honest cross-reference.
+
+**What the script does.** Matches `[DEFER-(DD|ADR): ...]` anywhere in any artifact body, regardless of whether the bracket form is an *owning* marker (this artifact owns the deferred decision) or a *citing* reference (this artifact references another artifact's deferred decision).
+
+**What `authoring-discipline.md` Rule 6 says.** A `[DEFER-<TARGET>: <topic>]` marker names a deferred decision and the artifact at which it will be answered. Implicit semantics: the marker should appear *exactly once* in the spec tree — at the artifact where it will be answered.
+
+**The gap.** There is no canonical syntax to *cite* a DEFER marker by reference. Two side effects:
+
+1. The author skill rewards paraphrasing-around-the-script over honest cross-reference; an author who cites the marker verbatim is "punished" by the index counting it twice (and by `index-deferred-items.py` inflating the apparent surface area of unresolved gaps).
+2. The defer-index conflates "this artifact owns this deferral" with "this artifact is aware of it" — different things; a human reading the index cannot tell which is which.
+
+**Suggested resolution.**
+
+1. **Script side.** Make `index-deferred-items.py` distinguish *owning* marker from *citing* prose. Two options: (a) introduce a bracket-syntax distinction (e.g., `[DEFER-DD: ...]` for owners; `[cite-DEFER-DD: <owner-artifact-id>]` or `«DEFER-DD: <owner-id>»` for citations); (b) deduplicate by topic-string equality — if the same bracket text appears in multiple artifacts, attribute the marker to the artifact whose scope matches the marker's `<scope>` segment or whose `parent_architecture` chain identifies it as the owner.
+2. **Rule 6 side.** Extend `authoring-discipline.md` Rule 6 to specify how to cite a DEFER marker from a downstream artifact without re-emitting it, or to explicitly forbid prose citation of bracket markers (forcing prose-only descriptions of upstream deferrals).
+3. **Author-skill side.** Add explicit guidance to author skills: when referencing another artifact's deferred decision, do not use the `[DEFER-XX: ...]` bracket form; describe the deferral in prose with an artifact-id citation to the owner.
+
+**Pairs with.** Issue 6 (skill template / schema mismatch — adjacent failure mode where stale skill conventions create phantom artifacts in the index).
+
+### Issue 27 — Authoring a "simple" leaf DD consumes 178k tokens of session context
+
+**Where surfaced.** Authoring `DD-embedded-resources` on 2026-05-11. The leaf is one of the simplest in the architecture: stateless, one error code, six accessors with shared shape, sub-megabyte data, every load-bearing decision inherited from ADR-002 / `IFrameworkResources`. Total message-channel context after authoring + mechanical-check sweep + dogfood-finding logging: 178k tokens (per `/context` 21% of a 1M-token window).
+
+**Approximate breakdown.**
+
+- ~30k loading the skill SKILL.md + references (`dd-purpose-and-shape`, `function-contracts`, `data-structures-by-invariant`, `error-handling`, `algorithms`, `state-and-concurrency`, `anti-patterns`, `quality-bar-checklist`) + template + worked example.
+- ~25k loading the pilot's parent ARCH, ADR-002, REQ-016 / REQ-030..032, `IFrameworkResources` detail, `partial-parent-protocol`, `authoring-discipline`.
+- ~15k schema-validation snippets (jsonschema + referencing install, registry build, validator runs — see Issue 28).
+- ~12k pre-existing `dogfood_findings.md` context (read for Issue 25 append).
+- ~80k authoring + iterative refinement + dogfood-finding drafts.
+
+**The gap.** Even on the cheapest valid leaf in the product, a single authoring session consumes ~17% of a 1M-token window on a top-tier model. Mid-tier models (Sonnet, Haiku) with smaller working windows would have to either skip references (degrading craft floor) or split authoring across multiple sessions (degrading coherence). Issue 22 captured the same shape for `architecture.md` *file* size; this issue names the *session* cost for the simplest DD. The framework's Haiku-floor eval discipline (memory: `feedback_eval_model.md`) is at risk: if the cheapest leaf overflows mid-tier context budgets, every leaf will.
+
+**Suggested resolution.** This is the dogfooding finding the framework was built to surface. Directions worth stakeholder triage:
+
+- **Reference compression.** Per-skill, can the bundled references compress to ≤10k tokens without losing craft floor? `dd-purpose-and-shape` + `function-contracts` + `data-structures-by-invariant` + `error-handling` are the load-bearing four; `algorithms` + `state-and-concurrency` + `anti-patterns` + `quality-bar-checklist` add craft pedagogy that may overlap with content already in those four.
+- **Selective reference loading.** Split SKILL.md into a thin shell that names references and a flag-set indicating which apply for this artifact's shape (stateless / stateful, greenfield / retrofit, single-state-machine / multi). For `DD-embedded-resources`: `state-and-concurrency` was mostly N/A, `retrofit-discipline` fully N/A. Both loaded anyway.
+- **Pilot upstream caching.** The pilot's ARCH + ADRs + REQ slices needed for any DD in this product are stable across DD authoring sessions. A pilot-level "what every DD in this product must know" summary (under `pilots/vmodel-core/`) would replace re-reading 5 upstream files per session.
+- **Mechanical-check tooling.** Inline schema-validation snippets (Issue 28) cost ~15k of this session's budget; a pre-built script would amortise that to a few hundred tokens per run.
+
+**Pairs with.** Issue 22 (architecture.md file size — same shape, different surface), Issue 28 (mechanical-check tooling missing → inline snippets), feedback memory `feedback_eval_model.md` (Haiku-floor evals).
+
+### Issue 28 — Schema validation is invented per-session instead of being a pre-built script
+
+**Where surfaced.** Authoring `DD-embedded-resources` on 2026-05-11. The DD author skill's Step 13 (Pre-publish mechanical self-check) lists `scripts/check-mermaid.py` and `scripts/check-id-encoding.py` as the canonical scripts but **does not** include a JSON Schema validation step. To validate front-matter against `detailed-design.schema.json` and embedded YAML blocks against the per-block `$defs`, the author session wrote two ad-hoc inline Python snippets via bash heredoc:
+
+1. Parse front-matter, build a `referencing.Registry` from every schema under `schemas/`, run a `Draft202012Validator` against `detailed-design.schema.json`.
+2. Extract every `\`\`\`yaml\` block from the body, identify which `$defs` member each should validate against (`public_interface_entry`, `data_structure_entry`, `error_matrix_row`), validate each entry.
+
+**Real defects caught only because the snippets were written.** The first run reported one front-matter error: `title: 'title' is a required property`. The `title` field had been omitted; **none of the scripts listed in Step 13 detect this**. The artifact would have shipped schema-invalid had the snippets not been written. Two of the existing scripts (`check-id-encoding.py`, `check-template-schema-fields.py`) target adjacent concerns but neither validates against the JSON Schema.
+
+**Cost side.** Writing, debugging (`jsonschema` not installed in the project venv → `pip install jsonschema referencing` → re-run), and re-running the snippets consumed ~15k of the session's token budget (Issue 27). This work is identical at every author session — every author skill across every artifact type — and so is pure waste against the schema-validation goal.
+
+**The gap.** Schema validation is the single most foundational mechanical check (it is, after all, what `vmodel-core` itself will do as a CLI per REQ-015 / REQ-016). Author skills should not invent it per session. The current Step 13 script list lets schema-invalid artifacts ship if no author thinks to add the check.
+
+**Suggested resolution.**
+
+1. **Until `vmodel-core` ships — add `scripts/check-schema-validation.py`.** Generic validator that:
+   - Reads any artifact path.
+   - Reads `artifact_type` from front-matter.
+   - Locates the corresponding `schemas/artifacts/<type>.schema.json`.
+   - Validates front-matter against the per-artifact schema (which composes the envelope).
+   - Extracts embedded YAML blocks from the body, identifies the `$defs` member by section context (`Public Interface` → `public_interface_entry`, `Data Structures` → `data_structure_entry`, error-matrix table → `error_matrix_row`).
+   - Validates each entry; emits `<file>:<line>:<rule-id>:<message>` per finding; exit 0 / 1 / 2 per the existing script convention.
+
+2. **Add the script to every author skill's Step 13 (Pre-publish mechanical self-check),** since the check is uniform across all six artifact types.
+
+3. **After `vmodel-core` ships** — retire `scripts/check-schema-validation.py`; replace the Step 13 entry with `vmodel-core validate <artifact-path>`. The script is interim scaffolding for the period before the canonical validator is available.
+
+**Pairs with.** Issue 24 (`check-typed-error-coverage` — another mechanical script whose assumptions don't perfectly match the spec-tree state), Issue 27 (session token cost — schema-validation snippets are a large slice of the waste).
+

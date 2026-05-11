@@ -33,7 +33,9 @@ pilots/vmodel-core/
 ## Current state
 
 - Root-scope `needs.md`, `requirements.md` (REQ-001..REQ-032), `architecture.md` (7 children, 8 interfaces, hexagonal pipeline composition), `testspec.md`, ADR-001 (Go) and ADR-002 (compile-time embed.FS) authored and approved.
-- No DD yet. Next planned authoring: a leaf DD — `embedded-resources` (simplest) or `validation-engine` (most load-bearing). `cli-adapter` DD is gated on REQ-024 follow-up.
+- First leaf DD landed: `DD-embedded-resources` (2026-05-11) at `specs/embedded-resources/detailed_design.md`. Authored via `/vmodel-skill-author-detailed-design`. Six-accessor typed shell over `embed.FS`, stateless, one error code (`ErrUnknownArtifactType`), bundle-layout pinned, decode posture left to implementer. Front-matter + embedded YAML blocks schema-valid. Surfaced four new dogfood findings (Issues 25–28). Sibling TestSpec not yet authored.
+- Next planned authoring: leaf TestSpec for `embedded-resources` (closes the typed-error-coverage finding from Issue 24, completes the leaf's V-pair, gives the first leaf-TestSpec dogfood rep). After that: `validation-engine` DD (most load-bearing). `cli-adapter` DD still gated on REQ-024 follow-up.
+- **Open framework decision pre-blocking further DDs touching validation surfaces:** Issue 25 — `ArtifactType` enum membership (six per REQ-016 vs seven schemas published). Resolve at framework scope before authoring `DD-validation-engine`.
 - Pre-existing authoring issues (mechanical-check sweep): see `archive/session-log.md` 2026-05-10 entry.
 
 For prior session history, see `archive/session-log.md`.
