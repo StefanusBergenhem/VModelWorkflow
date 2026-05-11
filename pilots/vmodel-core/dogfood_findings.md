@@ -607,3 +607,149 @@ The script treats the spec tree as a single layer and complains about every type
 
 **Pairs with.** Issue 24 (`check-typed-error-coverage` — another mechanical script whose assumptions don't perfectly match the spec-tree state), Issue 27 (session token cost — schema-validation snippets are a large slice of the waste).
 
+### Issue 29 — Mechanical-check script paths in SKILL.md are ambiguous (bundled vs repo-root)
+
+**Where surfaced.** Authoring TestSpec for `embedded-resources` on 2026-05-11. `vmodel-skill-author-testspec` SKILL.md Step 11 lists:
+
+> Scripts for this skill:
+> - `scripts/check-implicit-verifies.py <specs-root>` — ...
+> - `scripts/check-typed-error-coverage.py <specs-root>` — ...
+> - `scripts/check-id-encoding.py <specs-root>` — ...
+
+The literal `scripts/...` path is ambiguous between the skill's bundled `scripts/` subdir (analogous to the bundled `references/` and `templates/`) and the repo-root `scripts/`. I first invoked them as `python3 .claude/skills/vmodel-skill-author-testspec/scripts/check-implicit-verifies.py ...` and got `No such file or directory`. The scripts actually live at `/scripts/check-*.py` at the framework repo root.
+
+**The gap.** The path notation does not unambiguously name the directory. The skill bundles `references/` and `templates/` in-tree, so "scripts/" reads naturally as another bundled subdir — but it isn't. Every author skill that lists Step-11 scripts has this same ambiguity. Authors and downstream agents will hit the same misread; the bash failure mode is non-catastrophic (the agent retries with a different path) but the misread costs tokens and session time.
+
+**Suggested resolution.**
+
+- Resolve via `.vmodel/config.yaml` — add `paths.scripts` (matching the existing `paths.references` pattern). Skills then refer to `${paths.scripts}/check-implicit-verifies.py`. Framework default `paths.scripts: scripts/` resolves at the repo root; projects can relocate.
+- Apply across every author skill's Step 11 / Pre-publish self-check sections in one sweep.
+
+**Pairs with.** Issue 28 (`check-schema-validation.py` missing — sibling script-discoverability gap), Phase 6 central-config pattern (the `paths.*` family).
+
+### Issue 30 — Leaf TestSpec closing an ARCH-level typed-error must dual-cite, and the rule is buried mid-sentence
+
+**Where surfaced.** Authoring TestSpec for `embedded-resources` on 2026-05-11. The leaf TestSpec naturally cited `DD-embedded-resources.public_interface.Schema.errors.ErrUnknownArtifactType` for TC-007 / TC-008 — the layer-correct granularity per `per-layer-weight.md` (leaf → DD field). `check-typed-error-coverage.py` then reported `ARCH.interfaces.IFrameworkResources.errors.ErrUnknownArtifactType` as uncovered because it looks for the ARCH-level path literally and does not traverse the DD's `parent_architecture` / `derived_from` link back to the ARCH interface.
+
+Step 6 of `vmodel-skill-author-testspec` says:
+
+> "Typed-error enum coverage: every entry in a parent interface's `errors:` enum requires at least one case under the `error` or `fault-injection` strategy. Roll-up cases (one case covering multiple errors via shared halt-and-report path) are permissible when the parent contract treats them uniformly, but each rolled-up code MUST be cited in the case's `verifies:` list. Mechanically detected by `scripts/check-typed-error-coverage.py` at Step 11."
+
+The "each rolled-up code MUST be cited" half is buried mid-sentence and reads at first scan as covering only the roll-up case. The cross-layer dual-citation pattern (leaf closes ARCH-level typed-error by citing BOTH the DD-level error path AND the ARCH-level error path in the same case's `verifies:`) is not stated explicitly anywhere — neither in Step 6, `verifies-traceability.md`, nor `dd-traceability-cues.md`.
+
+**The gap.** A layer-correct authoring pass (leaf cites DD only) silently fails the mechanical check. The author must either: (a) add the ARCH-level citation manually after the check fails; (b) read `check-typed-error-coverage.py` source to understand what it looks for. I did (a) after the check fired. A first-time author would probably do (b), expanding token cost.
+
+**Suggested resolution.**
+
+- **Author-side fix** (cheapest). Promote the dual-citation rule to its own bullet in Step 6 with a worked example: a leaf case whose `verifies:` carries both `DD-<scope>.public_interface.<fn>.errors.<code>` and `ARCH.interfaces.<iface>.errors.<code>`. Cross-link from `verifies-traceability.md` and `dd-traceability-cues.md`.
+- **Script-side fix** (more involved, correct). Teach `check-typed-error-coverage.py` to traverse a DD's `parent_architecture` and `derived_from: [..ARCH-IF-X..]` links and infer that DD-level coverage closes the ARCH-level row. Mirrors what a human reviewer does mentally.
+
+Author-side fix is fast and visible; script-side fix is the long-term correct answer. Both warranted.
+
+**Pairs with.** Issue 24 (`check-typed-error-coverage` deferral-pattern blind spot — same script, sibling concern).
+
+### Issue 31 — QB "error/happy ratio ≥ 1:2" lacks an escape valve for leaves with small genuine error surface
+
+**Where surfaced.** Authoring TestSpec for `embedded-resources` on 2026-05-11. The DD's error matrix has exactly one row (`ErrUnknownArtifactType`) across two callsites, exhaustively covered by TC-007 / TC-008. The success/invariant surface needs 12 cases (six contract + five byte-stability + one thread-safety). Result: error/happy ratio is 2:6 = 1:3, below QB Group 2's heuristic of ≥ 1:2.
+
+`quality-bar-checklist.md` Group 2 reads:
+
+> "Error / happy ratio is at least 1:2."
+
+And the checklist's preamble says:
+
+> "When any 'Yes' cannot be honestly answered, do not ship — surface the gap."
+
+For leaves whose DD genuinely has one or two error-matrix rows (and where bundle absence / decode failure / sandbox violation are *explicitly* out of scope at the leaf — system-level or build-time, with documented rationale), no amount of honest authoring can lift the ratio without fabricating error surface. The honest move is to write an inline Overview paragraph naming the non-fit and the reason. I did this; the reviewer judged the framing legitimate.
+
+**The gap.** No documented escape pattern. Authors either: (a) silently pass — close cousin of `anti-pattern.coverage-as-quality-metric` (ratio rhetoric without surface); (b) fabricate "robustness" cases for non-existent failure modes — direct anti-pattern; (c) write inline justification each time — what I did, fine but un-documented and varies by author. Reviewers must re-judge each instance.
+
+**Suggested resolution.**
+
+- Soften the bar in `quality-bar-checklist.md` Group 2 to a conditional phrasing: *"Error / happy ratio is at least 1:2 when the parent spec's error surface supports it; otherwise the author names the non-fit and the reason in the Overview, citing which DD error-matrix rows are covered and which failure modes are out-of-scope-with-rationale."*
+- Cross-reference from `anti-patterns.md` so the legitimate-non-fit pattern is documented adjacent to the fabrication anti-pattern it's the opposite of.
+
+**Pairs with.** Refusal C (no weak assertions) and the broader honest-authoring discipline — the legitimate-non-fit is the *opposite* of the fabricated-intent refusal: the author refusing to fabricate and naming the gap instead.
+
+### Issue 32 — Review-file path convention is split between author-skill SKILL.md and pilot CLAUDE.md
+
+**Where surfaced.** Authoring TestSpec for `embedded-resources` on 2026-05-11, dispatching the review subagent. Step 0 of `vmodel-skill-author-testspec` reads:
+
+> "If `specs/.reviews/<artifact-id>-*.yaml` contains review files for this artifact: ..."
+
+Per TARGET_ARCHITECTURE §5.6 review output convention.
+
+The pilot's CLAUDE.md says:
+
+> ```
+> .vmodel/
+>   .reviews/             — Spec-side review verdict files (checked in)
+> ```
+
+So the canonical path is split: framework author-skill says `specs/.reviews/`, pilot says `.vmodel/.reviews/`. The reviewing subagent had to pick one; it picked the pilot convention. Step 0 of the *next* author-skill revision pass will look at `specs/.reviews/` (per SKILL.md) and find no review files, silently treating the artifact as never-reviewed.
+
+**The gap.** Two canonical paths. Authors and review subagents drift apart. Revision-pass Step 0 (which reads the latest review) silently loses review state if the path used at write-time differs from the path used at read-time. The drift is not detected by any mechanical check — `index-deferred-items.py` doesn't traverse review state.
+
+**Suggested resolution.**
+
+- Resolve via `.vmodel/config.yaml` `paths.reviews` (matching the existing `paths.references` pattern). Framework chooses a default; projects may override.
+- Pick the default: `.vmodel/.reviews/` matches the rest of the central-config pattern from Phase 6 Cluster 5 (config, references, build outputs all under `.vmodel/`); `specs/.reviews/` keeps reviews next to the artifacts but inverts the central-config convention. Recommend `.vmodel/.reviews/`.
+- Update every author-skill Step 0 reference and every review-skill output path to read `paths.reviews` instead of literal `specs/.reviews/`. Update TARGET §5.6 to name the central-config indirection.
+
+**Pairs with.** The `.vmodel/config.yaml` `paths.*` family introduced in Phase 6 Cluster 5. TARGET §5.6 (review output convention — currently the authoritative source for `specs/.reviews/`).
+
+### Issue 33 — Review subagent for one leaf TestSpec consumed ~100k tokens
+
+**Where surfaced.** Dispatching the review of `TS-embedded-resources` on 2026-05-11 via the general-purpose Agent (subagent_type: general-purpose, no project-bundled review-execution agent because this is a *spec-side* review, not a build-side review). The subagent reported `total_tokens: 102634, tool_uses: 24, duration_ms: 123267`.
+
+**Approximate breakdown.**
+
+- ~25k loading the review skill SKILL.md + references (review skill bundles its own checklist + anti-pattern catalog + per-layer-shape reference).
+- ~30k loading the artifact under review + parent DD + governing ADR + the `IFrameworkResources` interface detail + the referenced REQs.
+- ~15k iterative re-reads while applying QB checklist + anti-pattern sweep.
+- ~30k synthesis, finding-drafting, YAML emission, writing the review file.
+
+**The gap.** A *review* should be cheaper than authoring. The author session for the same artifact (~80k tokens just for authoring + iteration after the 60k of skill/upstream loading — see Issue 27's breakdown shape applied to this TestSpec) reflects the cost of *producing* the artifact. The review only *consumes* the artifact and applies checks. ~100k tokens for one leaf-TestSpec review producing one YAML with one info finding is a ~58% cost ratio of authoring — but the artifact-production / verdict-emission asymmetry is much larger than 58%.
+
+Multiply across the pilot's expected build flow: 7 leaves × 1–2 review iterations on the TestSpec + 1–2 review iterations on the DD + branch + root reviews → ~30–40 spec-side review passes per pilot, at ~100k each → ~3–4M tokens just on spec-side reviews before code-side review begins. At Sonnet/Haiku context budgets, the review *cannot run* in a single subagent session if the cost stays at 100k.
+
+**Suggested resolution.**
+
+- **Review-skill reference compression.** The review skill duplicates large portions of the author skill's references (anti-pattern catalog, per-layer-shape, oracle-quality). Carry a *checklist-only* slice (no pedagogy, no examples) under 5k tokens on the review side; reviewers do not need to re-learn craft, they need the gates to apply.
+- **Layer-conditional reference loading.** A leaf-TestSpec review does not need branch and root reference content; SKILL.md should branch on `level:` and load only the layer-relevant slice.
+- **Author/review handoff via structured manifest.** The author session emits (or the author skill emits) a manifest naming `(artifact_path, derived_from, governing_adrs, mechanical_check_results, author_flagged_non_fits)`. The review subagent reads the manifest and the artifact only — does not re-discover the spec tree by chasing links. Cuts the ~30k spec-tree-loading slice substantially.
+- **Pre-computed mechanical-check results consumed, not re-derived.** The review subagent in this rep was told the author had already run the mechanical checks; verify whether it re-ran them and trim if so.
+
+**Pairs with.** Issue 27 (session token cost — author side, same shape), Issue 13 (handover between author/review should be file-based — sibling concern, surfaced earlier), feedback memory `feedback_eval_model.md` (Haiku-floor eval discipline — a Haiku-budget review session at ~200k working window cannot afford 100k just to verdict one artifact).
+
+### Issue 34 — Complete leaf V-pair-completion session (TestSpec authoring + review + 5 dogfood findings) consumed ~150k parent-context tokens
+
+**Where surfaced.** TestSpec-authoring session on 2026-05-11 ending with the commit that lands `TS-embedded-resources`. `/context` reported `148.9k / 1m tokens (15%)` on Opus 4.7 (1M context). The session covered: invoking `vmodel-skill-author-testspec`, reading parent DD + ARCH interface detail + ADR-002 + REQ-030/031/032, walking skill references (per-layer-weight, dd-traceability-cues, coverage-mutation-bar, quality-bar-checklist, template), authoring the 14-case TestSpec, running three mechanical-check scripts, dispatching the review subagent (which itself consumed ~100k in its isolated context — see Issue 33), applying TC-001 tightening per F-001, drafting five new dogfood findings (Issues 29–33).
+
+**Approximate parent-context breakdown (~150k total).**
+
+- ~12k initial context (framework CLAUDE.md, pilot CLAUDE.md, memory, system prompt).
+- ~10k skill loading (`vmodel-skill-author-testspec` SKILL.md + references).
+- ~25k reading parent DD + `IFrameworkResources` interface + ADR-002 + the three REQs.
+- ~10k skill reference walks (per-layer-weight, dd-traceability-cues, coverage-mutation-bar, quality-bar-checklist, leaf-case template).
+- ~15k authoring the TestSpec + iterating + TC-001 tighten.
+- ~3k mechanical check runs + result reads.
+- ~5k review-subagent dispatch (prompt out + summary in — the subagent's internal 100k stays in its own window).
+- ~15k drafting and writing five new dogfood findings (interactive selection + ~5500 words of issue content).
+- ~10k misc tool overhead + file-context syncing.
+
+**Comparator with Issue 27.** DD authoring for the same leaf was 178k. TestSpec authoring + review + 5 findings was 150k. So a full leaf V-pair (DD + TestSpec + review + findings) costs ~328k parent-context tokens on Opus 4.7 (1M). The review subagent additionally consumes ~100k in its isolated window (Issue 33). The TestSpec session was *not* cheaper than DD authoring per artifact, despite Issue 27's prediction — the savings on upstream loading were eaten by review dispatch + finding drafting.
+
+**The gap.** On a Sonnet (200k) working window, a full V-pair-completion session would consume 75%+ of context just to land one leaf, leaving no room for downstream work in the same session. On Haiku (200k) the same shape applies. The framework's Haiku-floor eval discipline is at risk: even running a single complete leaf V-pair in a Haiku session is structurally tight.
+
+**The 60/40 split that matters.** Of ~150k, only ~75k was *load-bearing for the artifact*: skill loading, upstream reading, authoring, reviews. The other ~75k was *meta-overhead*: drafting dogfood findings (~15k), context syncing (~10k), iterative tool calls (~15k), interactive question flow (~15k), and the review-subagent handshake (~5k of parent tokens, with the bulk in the subagent). Reducing meta-overhead is the highest-leverage cost cut.
+
+**Suggested resolution.**
+
+- **Dogfood-findings batching.** Writing 5 findings inline cost ~15k. Defer finding-drafting to a dedicated session (or capture as one-liner stubs during authoring + flesh out in a batch). Trades immediate documentation for amortised token cost.
+- **Tool-output trimming.** Several Reads loaded full files (testspec template, quality-bar-checklist) when only a section was needed. The author skill could pre-name section anchors so partial Reads are the default.
+- **Review-result reconstitution.** The review-subagent's YAML output is the canonical record; the parent doesn't need to re-narrate it. A short tool-result summary suffices.
+- **Pre-built session brief.** The pilot's `pilots/vmodel-core/CLAUDE.md` already pre-loads ~10k of context. Extending it with "what every leaf TestSpec session needs to know" (per-pilot skill-reference pre-loads, common upstream anchors) would offset some skill-reference re-loading.
+
+**Pairs with.** Issue 27 (DD authoring session cost — 178k), Issue 33 (review subagent isolated cost — 100k), feedback memory `feedback_eval_model.md` (Haiku-floor eval discipline). The session-cost pattern is the dogfooding signal the framework was built to expose; Issues 27 + 33 + 34 collectively define the cost envelope of one leaf V-pair.
+

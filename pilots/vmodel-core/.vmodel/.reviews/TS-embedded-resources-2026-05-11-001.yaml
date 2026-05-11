@@ -1,0 +1,92 @@
+review:
+  document: pilots/vmodel-core/specs/embedded-resources/testspec.md
+  reviewer: vmodel-skill-review-testspec
+  date: "2026-05-11"
+
+  verdict: APPROVED
+  # Decision-table outcome:
+  #   - No hard-reject trigger fires (A / B / C / coverage-mutation section absent / broken-reference).
+  #   - No soft-reject finding accumulates.
+  #   - Spec Ambiguity Test passes (junior engineer can write the test code from TestSpec + DD + ADR-002 without guessing).
+  #   - One `info` finding surfaced — does not affect verdict per the decision table.
+
+  inputs_provided:
+    testspec_document: true
+    parent_spec: true                # DD-embedded-resources read in full
+    governing_adrs: true             # ADR-002-embed-canonical-schemas-in-binary resolved
+    derived_from_artifacts: true     # DD-embedded-resources resolves
+
+  perspectives_applied:
+    - author              # case shape, oracle specificity, derivation strategies
+    - layer-derivation    # parent-DD seam at leaf
+
+  findings:
+    - id: F-001
+      case_id: "TC-embedded-resources-001"
+      check_failed: check.oracle.weak-assertion
+      severity: info
+      category: oracle
+      evidence: |
+        TC-001 `expected.return_value: "non-nil FrameworkResources (interface satisfaction
+        enforced by Go's type system at the call site)"` paired with `side_effect: "no panic;
+        construction completes; subsequent accessor calls are valid (verified compositionally
+        by TC-002 .. TC-006)"`. The return-value clause on its own approaches the refusal-C
+        "non-null alone" tell, but is bounded by (a) citation of the DD's structural nullability
+        invariant, (b) the side_effect clause naming a concrete observable (no panic +
+        completion), and (c) explicit compositional verification routed to TC-002..TC-006.
+        Not a refusal-C hard reject because the oracle is bounded in aggregate, but the case
+        does most of its work through downstream cases — flagged as info so the implementer
+        understands TC-001's oracle is anchoring the type-system invariant and the
+        compositional verification rather than a standalone behavioural assertion.
+      recommended_action: |
+        Optional: consider tightening TC-001's oracle to a single concrete observable that
+        cannot be satisfied compositionally — e.g. asserting that `NewEmbeddedResources()`
+        returns the same pointer/value across two calls in the same process (process-singleton
+        from the DD Overview), or that the returned value's dynamic type is the concrete
+        adapter type. The current shape passes but reads as a placeholder anchor — refusal C
+        is bounded only because the side_effect and compositional pointer carry it.
+
+  summary: |
+    Verdict: APPROVED. The TestSpec is internally coherent against the parent DD: every
+    accessor's on_success postcondition has a functional case (TC-002..TC-006); the single
+    error-matrix row is covered exhaustively at both call sites (TC-007, TC-008); the
+    byte-identical-across-lifetime invariant is covered per-accessor (TC-009..TC-013); the
+    uniform thread-safety guarantee is covered by one property case enumerating all six
+    accessors (TC-014). `verifies` is non-empty and granularity-correct at leaf level
+    throughout; `derived_from` and `governing_adrs` resolve. `coverage_mutation_bar` section
+    is present with project-policy placeholders (acceptable per the matched author skill).
+
+    The three author-flagged non-fits stand:
+      (1) Error/happy ratio 1:3 below the ≥1:2 heuristic — defensible because the DD's
+          error matrix has exactly one row across two call sites and both are exhaustively
+          covered. Bundle absence / network failure / decode failure are structurally
+          impossible at runtime per the DD Overview and explicitly out of scope. Lifting
+          the ratio would require fabricating error surface absent from the DD. The
+          heuristic is a heuristic — passes when the actual error surface is exhausted.
+      (2) TC-007/TC-008 two-act shape (invalid call + follow-up valid call) — defensible
+          because the DD's on_failure postcondition explicitly names "no observable state
+          change (leaf is stateless)" and the follow-up call is the observable for that
+          guarantee. The Act remains the invalid invocation; the follow-up is part of the
+          Assert. Splitting would split the postcondition's two halves across two cases
+          and lose the in-case state-non-mutation observable.
+      (3) TC-014 thread-safety roll-up across six accessors — defensible because the DD
+          declares `thread_safety: thread-safe` uniformly on every accessor and the case
+          body enumerates each accessor in `accessors_under_test`. Splitting into six
+          cases would duplicate the fixture and race-detector configuration without
+          changing the oracle. The collapse matches the contract granularity.
+
+    One info finding on TC-001's oracle (bounded by side_effect + compositional pointers
+    to TC-002..TC-006). Does not block the verdict; surfaced so the implementer treats
+    TC-001 as an anchor case rather than the primary site of NewEmbeddedResources
+    behavioural verification.
+
+  recommended_next_action: |
+    Proceed to test-code derivation against this TestSpec (TDD red phase). The info finding
+    on TC-001 is optional to address; the matched author skill may tighten the oracle if
+    preferred, or the implementer may treat TC-001 as a thin anchor case as currently shaped.
+
+  counts:
+    hard_reject: 0
+    soft_reject: 0
+    info: 1
+    design_issue: 0

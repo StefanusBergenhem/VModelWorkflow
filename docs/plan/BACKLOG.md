@@ -25,7 +25,7 @@ Execution plan for the VModelWorkflow framework following the 2026-04-18 pivot. 
 - `docs/guide/skills-architecture.html` rewritten for the post-pivot, post-build-flow world (2026-05-10).
 - `docs/guide/index.html` refreshed (2026-05-10) to reflect Phase 6 state, central config, walker tool, and 3-root-artifact treatment.
 - `scripts/walk-impact.py` shipped (2026-05-10) — candidate-set propagation walker (TARGET §8.3); 22-test TDD suite; `tests/test_walk_impact.py` + fixture tree under `tests/fixtures/walk-impact/specs/`.
-- `vmodel-core` greenfield dogfooding pilot active — bundled at `pilots/vmodel-core/` (2026-05-10; external repo archived). First leaf DD (`DD-embedded-resources`) landed 2026-05-11.
+- `vmodel-core` greenfield dogfooding pilot active — bundled at `pilots/vmodel-core/` (2026-05-10; external repo archived). First leaf V-pair complete 2026-05-11: `DD-embedded-resources` + `TS-embedded-resources` (14 cases, review APPROVED, 1 info finding tightened). 34 dogfood findings logged.
 - 20 research documents in `research/` — secondary substrate with explicit safety-bias caveat (authored pre-pivot; extract craft, discard ASPICE/DO-178C framing).
 
 **Recent landings (2026-05):**
@@ -36,6 +36,7 @@ Execution plan for the VModelWorkflow framework following the 2026-04-18 pivot. 
 - wf-comparison five-phase upgrade: TOC/persona fixes, task-contract enrichment (`acceptance_criteria` / `context_to_load` / `out_of_scope`), scope-expansion HALT + `build-blocked.yaml` + auto-amend, per-gate `build-progress.yaml` + resume modes, per-task workers wrapped as agents for parallel isolated execution.
 - **vmodel-core pilot bundled into framework repo** (2026-05-10, commit 76c2686) at `pilots/vmodel-core/`; symlinks drift-proof framework canonical references (commit 7c28173); external repo archived.
 - **First leaf DD landed** (2026-05-11) — `DD-embedded-resources` (six accessors over `embed.FS`, stateless, one error code, bundle layout pinned). Authored via `/vmodel-skill-author-detailed-design`; front-matter + embedded-YAML schema-valid. Surfaced four new dogfood findings (Issues 25–28): six-vs-seven schema type gap, DEFER markers bleeding across scopes, 178k session-token cost on the simplest leaf, missing pre-built schema-validation script.
+- **First leaf TestSpec landed** (2026-05-11) — `TS-embedded-resources` (14 cases across 3 strategies — 6 contract / 2 robustness / 6 property, 1 thread-safety). Authored via `/vmodel-skill-author-testspec`. Mechanical checks clean on slice; closes typed-error coverage for `ARCH.interfaces.IFrameworkResources.errors.ErrUnknownArtifactType` (clears Issue 24's noisy finding). Review dispatched to subagent (`vmodel-skill-review-testspec`) → APPROVED with 1 info finding (TC-001 oracle borderline on refusal C — tightened post-review with a bounded smoke-test on three accessor outputs). Review verdict at `pilots/vmodel-core/.vmodel/.reviews/TS-embedded-resources-2026-05-11-001.yaml`. V-pair for `embedded-resources` leaf is closed. Surfaced six new dogfood findings (Issues 29–34): mechanical-script path ambiguity, leaf-typed-error dual-citation rule buried, QB error/happy ratio escape valve, review-file location split convention, review-subagent ~100k token cost, session-level ~150k token cost.
 
 ---
 
@@ -189,42 +190,53 @@ Architectural rationale — including the full Q8–Q15 and NQ-B/C/D/E decisions
 
 **Closeout signal:** vmodel-core pilot completes a forward-run end-to-end without manual intervention beyond design review.
 
-### 3.6.1 Phase 6 next-session prep — vmodel-core leaf TestSpec authoring
+### 3.6.1 Phase 6 next-session prep — Issue 25 resolution, then `validation-engine` DD
 
-**Trigger.** This subsection is the session-start brief for the next conversation. The pilot has its first leaf DD (`DD-embedded-resources`, 2026-05-11); the natural next authoring step is the **sibling leaf TestSpec** that closes the V-pair for `embedded-resources`. This is also the first leaf-TestSpec rep in dogfooding — Issue 24 (typed-error coverage script's leaf-deferral pattern) surfaces precisely here.
+**Closed prep (this section's previous content).** The 2026-05-11 session that authored `TS-embedded-resources` is complete. The V-pair for the `embedded-resources` leaf is closed (DD + TestSpec + APPROVED review + post-review tighten + 6 new dogfood findings logged: Issues 29–34). Outcomes against the previous prep's expectations:
+
+- ✓ Issue 24's noisy finding on `IFrameworkResources.ErrUnknownArtifactType` cleared by TC-007 / TC-008 dual-citing the ARCH-level path. Issue 30 captured the dual-citation discipline gap.
+- ✓ First leaf-TestSpec rep landed; surfaced four new shape-gap findings (Issues 29 / 30 / 31 / 32) in the author and review skills.
+- ✓ Issue 27's session-cost pattern repeats: TestSpec session cost was 150k (Issue 34), comparable to DD's 178k. Full V-pair: ~328k parent-context + ~100k review subagent isolated. Lower than DD authoring as predicted but eaten by review dispatch + 5-finding drafting.
+- ✗ Issue 28 (pre-built schema-validation script) not taken — TestSpec authoring went ahead without it; the new script is still pending.
+
+**Trigger for next session.** With one V-pair landed, the natural next step is the *second* leaf DD: `validation-engine`. This is the most load-bearing leaf in the pilot — it consumes from `embedded-resources` (now spec-complete), implements IC-009 / IC-010 / IC-011, and depends on a still-unresolved framework decision: **Issue 25 (six-vs-seven schemas)**. The framework's REQ-016 names six canonical artifact types; the framework actually publishes seven schemas (including `architecture-interface-detail`). `DD-validation-engine` cannot be authored without resolving which contract holds — REQ-016 amendment, schema retraction, or split into validate-known-six-only-plus-out-of-set-handling. **This is the next-session gating decision.**
+
+**Working directory for next session.** Framework root (`/home/stefanus/repos/VModelWorkflow/`) for the Issue 25 framework decision; then `pilots/vmodel-core/` for `DD-validation-engine` authoring.
+
+**Two-step next-session deliverable.**
+
+1. **Resolve Issue 25** (framework-scope decision). Options: (a) amend REQ-016 to seven types; (b) retract `architecture-interface-detail` as a canonical schema (treat as architecture detail-file convention only); (c) split — six canonical *artifact* types plus a separate *detail-file* schema with its own validation seam. Decision should consider impact on the `validate` CLI behaviour (REQ-015 / REQ-016 / REQ-017 acceptance phrasing) and on the `ArtifactType` enum in `DD-embedded-resources` (already pinned to six per the canonical-set; growing requires a coordinated requirements + DD amendment).
+2. **Author `DD-validation-engine`** via `/vmodel-skill-author-detailed-design` once (1) is resolved. Expected to be ~3–4× the surface of `DD-embedded-resources`: schema-library selection (currently DEFER-ADR in parent ARCH), rule-engine dispatch, halt-and-report semantics (IC-007), per-artifact validation strategy.
 
 **Load at session start (in this order):**
 
-1. `CLAUDE.md` (auto-loaded — framework root).
-2. `docs/plan/BACKLOG.md` §1 + §3.6 + §3.6.1 (this subsection).
-3. `docs/plan/TARGET_ARCHITECTURE.md` §5.3 (TestSpec shape) + §5.6 (review handover) + §16 (build flow).
-4. `MEMORY.md` (auto-loaded).
-5. `pilots/vmodel-core/CLAUDE.md` — pilot working-context + current-state pointer.
-6. `pilots/vmodel-core/specs/embedded-resources/detailed_design.md` — the DD the TestSpec verifies.
-7. `pilots/vmodel-core/specs/architecture.md` + `pilots/vmodel-core/specs/architecture/interfaces/IFrameworkResources.md` — DD's upstream.
-8. `pilots/vmodel-core/dogfood_findings.md` Issue 24 (leaf-testspec deferral pattern) + Issue 25 (six-vs-seven schemas, gates `validation-engine` but **not** this TestSpec).
+1. `CLAUDE.md` (auto-loaded).
+2. `MEMORY.md` (auto-loaded).
+3. `docs/plan/BACKLOG.md` §1 + §3.6 + §3.6.1 (this subsection).
+4. `docs/plan/TARGET_ARCHITECTURE.md` §5.3 (DD shape, governing_adrs propagation) + §6 (Spec Ambiguity Test) + §16 (build flow).
+5. `pilots/vmodel-core/CLAUDE.md` — pilot working-context.
+6. `pilots/vmodel-core/dogfood_findings.md` Issue 25 (six-vs-seven schemas — *the* gating decision).
+7. `pilots/vmodel-core/specs/requirements.md` REQ-015 / REQ-016 / REQ-017 (validation requirements) — the contract under amendment.
+8. `pilots/vmodel-core/specs/architecture/interfaces/IValidate.md` — interface contract `DD-validation-engine` will realise.
+9. `pilots/vmodel-core/specs/embedded-resources/detailed_design.md` — upstream-spec dependency for `validation-engine` (consumes Schema / EnvelopeSchema / QualityBarChecklist accessors).
+10. Schema set at `schemas/artifacts/` (count the publishing surface) + `references/schemas/` (symlink target in pilot).
 
-**Working directory for next session.** `pilots/vmodel-core/` (inside this framework repo). The framework repo is both reference and workspace; the pilot is a subdirectory.
+**Expected signal during the next session:**
 
-**Concrete next-session deliverable.**
-
-Invoke `/vmodel-skill-author-testspec` for the `embedded-resources` leaf. Output: `pilots/vmodel-core/specs/embedded-resources/testspec.md`. Cases derived from `DD-embedded-resources` per the leaf-layer convention (`verifies` targets DD entries — Public Interface clauses, Data Structure invariants, error-matrix row). The DD's Notes section already lists the cue set: contract test per accessor; robustness test for `ErrUnknownArtifactType`; property test on byte-identity across calls; property test on `VersionManifest` non-empty fields; thread-safety property test.
-
-Expected signal during this session:
-
-- Closes Issue 24's noisy finding on `IFrameworkResources.ErrUnknownArtifactType` (leaf coverage finally exists).
-- First exercise of the leaf-TestSpec author skill in dogfooding — surfaces shape gaps if any.
-- Confirms whether Issue 27's session-cost pattern repeats at TestSpec scope (likely smaller — less upstream to load).
-- Issue 28 fix (pre-built schema-validation script) likely worth doing *before or after* this session — author can flag the call.
+- Issue 25 resolution surfaces whether the framework's canonical-artifact-type contract is internally consistent or whether REQ-016's text drifted from publishing reality.
+- `DD-validation-engine` exercises the larger-leaf shape: multiple deferred ADRs in upstream ARCH (schema-library selection), per-artifact-type dispatch, validation result composition. Likely surfaces shape gaps in `vmodel-skill-author-detailed-design` that the simpler `embedded-resources` did not stress.
+- Session token cost (Issue 27 / 34 baseline) likely higher than DD-embedded-resources (~178k) given the load-bearing-decision count. Watch for ≥200k.
+- Issue 28 (schema-validation script) becomes more painful at the larger DD — possible session pivot to take Issue 28 first.
 
 **What is *not* in scope for next session:**
 
-- Resolving Issue 25 (six-vs-seven schemas) — gates `DD-validation-engine`, **not** this TestSpec.
-- `DD-validation-engine` authoring — comes after Issue 25 resolution.
-- `plan-build` / `orchestrate-build` runs — wait until at least one V-pair exists end-to-end.
-- Cluster 7 needs/PD structural artifacts — pilot signal still inconclusive.
+- `TS-validation-engine` authoring — comes after the DD.
+- `cli-adapter` DD — still gated on REQ-024 follow-up.
+- `plan-build` / `orchestrate-build` runs — wait until V-pairs exist for at least 2–3 leaves.
+- Cluster 7 needs/PD structural artifacts — pilot signal still inconclusive; revisit after `validation-engine` V-pair lands.
+- Issues 29–34 framework-side fixes — log them, defer until pilot has 2–3 leaf V-pairs (let pattern stabilise before authoring fixes).
 
-**Open question entering the session.** Whether to take Issue 28 (pre-built schema-validation script) before TestSpec authoring or after. Doing it before amortises the validation cost across the next session. Doing it after preserves the V-pair completion as a focused deliverable. Stakeholder call.
+**Open question entering the session.** Whether to take Issue 28 (pre-built schema-validation script) *before* `DD-validation-engine`. Arguments for *before*: the validation cost is higher per session at larger DDs (Issue 27 / 34 cost scales with surface), and a working script benefits every author skill across every artifact going forward. Arguments for *after*: `DD-validation-engine` is the more load-bearing critical path; doing Issue 28 first introduces 0.5–1 session of pure tooling work. Stakeholder call.
 
 ### 3.7 Phase 7 — Retrofit-specific Additions — PENDING
 
