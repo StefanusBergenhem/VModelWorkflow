@@ -14,3 +14,4 @@ __pycache__/
 .vmodel/.build/pipeline-state.yaml
 .vmodel/.build/runs/
 .vmodel/.build/tasks/*/log.txt
+.vmodel/.reviews/

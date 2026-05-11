@@ -592,3 +592,82 @@ Multiply across the pilot's expected build flow: 7 leaves × 1–2 review iterat
 
 **Pairs with.** Issue 27 (DD authoring session cost — 178k), Issue 33 (review subagent isolated cost — 100k), feedback memory `feedback_eval_model.md` (Haiku-floor eval discipline). The session-cost pattern is the dogfooding signal the framework was built to expose; Issues 27 + 33 + 34 collectively define the cost envelope of one leaf V-pair.
 
+---
+
+### Issue 35 — No spec-side escalation mechanism for DESIGN_ISSUE verdicts
+
+**Where surfaced.** First review of `DD-validation-engine` (2026-05-11). The review skill
+verdicted DESIGN_ISSUE — the gap is upstream in the Architecture, not in the DD itself.
+There is no framework-defined escalation artifact or routing mechanism to handle this;
+the reviewer's `recommended_next_action` is freeform prose.
+
+**The gap.** The framework has a well-specified build-side escalation format
+(`ESC-NNN.yaml` in `.vmodel/.build/escalations/`), produced by `review-execution` and
+consumed by `orchestrate-build`. The spec-side review skills (`vmodel-skill-review-*`)
+have no equivalent: when a review skill returns DESIGN_ISSUE, the verdict lives in
+`.vmodel/.reviews/<artifact>-<date>-NNN.yaml` as a forensic record, but there is nothing
+to formally route it back to the upstream artifact's author or to block downstream work
+until the Architecture is updated. In this session the gap was bridged manually by writing
+`arch-gap-001-cycle-findings.md` as a pickup note and updating this findings doc.
+
+**Suggested resolution.**
+- Define a spec-side escalation artifact format, analogous to build-side `ESC-NNN.yaml`.
+  Candidates: `.vmodel/.reviews/escalations/SPEC-ESC-NNN.yaml` carrying
+  `target_artifact`, `target_layer` (dd | architecture | requirements | adr | root),
+  `source_review`, `description`, `blocking_artifact`, `options[]`, `recommended_option`.
+- Update every `vmodel-skill-review-*` to write a SPEC-ESC file when the verdict is
+  DESIGN_ISSUE, alongside the regular review verdict file.
+- Update every `vmodel-skill-author-*` to check `.vmodel/.reviews/escalations/` for
+  open SPEC-ESC files targeting the artifact's layer before starting an author pass, and
+  surface them as context.
+
+**Pairs with.** Issue 13 (file-based handover between author/review skills — same family:
+spec-side state should live in files, not only in conversation summaries).
+
+---
+
+### Issue 36 — IGraphBuild / IValidate cycle-findings boundary under-specified in ARCH
+
+**Where surfaced.** First review of `DD-validation-engine` (2026-05-11, F-001/F-002,
+DESIGN_ISSUE hard-reject). `DD-validation-engine` cannot be brought to APPROVED until
+this is resolved.
+
+**The gap.** The root Architecture specifies two interfaces that share responsibility for
+cycle findings (both allocate REQ-012):
+
+- `IGraphBuild.Build()` → returns `(TraceabilityGraph, []Finding, error)` — cycle findings
+  as a separate out-parameter.
+- `IValidate.Validate()` → accepts `(ArtifactSet, TraceabilityGraph, ValidationMode)` —
+  no path for cycle findings to enter.
+
+`validation-engine` is the sole producer of finding-records (REQ-006), so cycle findings
+must flow through it. But the Architecture does not specify how the `[]Finding` from
+`IGraphBuild.Build` reaches `Validate`. A junior implementer authoring both graph-builder
+and validation-engine from these interfaces would have to invent the handoff.
+
+**The gap was not visible during Architecture review** because the Architecture was
+reviewed before DD authoring began; the inter-component coordination point only becomes
+ambiguous when you try to implement both leaves simultaneously.
+
+This is a case of an architectural interface gap that only surfaces at DD-authoring time
+when two sibling leaves are being designed concurrently. The Architecture review skill
+(single-artifact pass) cannot catch it without also reasoning about sibling leaf
+implementations.
+
+**Suggested resolution.** Update `specs/architecture.md` — see `arch-gap-001-cycle-findings.md`
+for the full options analysis and recommended Architecture change (option a: embed
+`CycleFindings []Finding` in `TraceabilityGraph`; update IGraphBuild postcondition;
+IValidate signature unchanged).
+
+**Suggested framework improvement.** Add a check to `vmodel-skill-review-architecture`
+that cross-references sibling interface out-parameters: when interface A returns a type X
+that is not consumed by any declared consumer of X's containing type, surface as a
+soft-reject (`check.interface.out-parameter-unconsumable`). This would have caught the
+`[]Finding` from IGraphBuild having no path into IValidate.
+
+**Pairs with.** Issue 36 is the first pilot instance of a cross-leaf coordination gap
+that architecture review missed — pairs with Issue 16 (architecture landing rules), Issue
+11 (per-skill discipline caught at review only). All three surface that single-artifact
+review passes miss cross-artifact coordination contracts.
+
+# Issue 37. sonnet agent with 200k context hit autocompact.
